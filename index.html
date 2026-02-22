@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TBot | PVZH Discord Bot</title>
+    <meta
+      name="description"
+      content="TBot is a community PVZH bot built for quick answers. Search decks by hero, look up any card, and use helpful tools without leaving your server."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee&family=Rajdhani:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="sky-glow" aria-hidden="true"></div>
+    <div class="grid-noise" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <nav class="nav">
+        <div class="brand">
+          <span class="brand-name">TBot</span>
+        </div>
+        <div class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#commands">Commands</a>
+          <a href="#gallery">Gallery</a>
+          <a href="#stats">Stats</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <a
+          class="cta"
+          href="https://discord.com/api/oauth2/authorize?client_id=1043528908148052089&permissions=378944&scope=bot"
+        >
+          Invite TBot
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="top">
+        <div class="hero-text">
+          <p class="kicker">Community PVZH companion</p>
+          <h1>Find top-tier PVZH decks by hero, archetype, and playstyle in seconds.</h1>
+          <p class="lead">
+            TBot is a community PVZH bot built for quick answers. Search decks by
+            hero, look up any card, and use helpful tools without leaving your
+            server.
+          </p>
+          <div class="hero-actions">
+            <a
+              class="cta primary"
+              href="https://discord.com/api/oauth2/authorize?client_id=1043528908148052089&permissions=378944&scope=bot"
+            >
+              Invite to Discord
+            </a>
+            <a class="cta ghost" href="#commands">See commands</a>
+          </div>
+          <div class="hero-stats">
+            <div>
+              <span class="stat">Fast search</span>
+              <span class="stat-label">Decks, heroes, cards</span>
+            </div>
+            <div>
+              <span class="stat">Utility tools</span>
+              <span class="stat-label">Keep or scrap, flips</span>
+            </div>
+            <div>
+              <span class="stat">Community-ready</span>
+              <span class="stat-label">Built for PvZH servers</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-badge reveal">
+          <div class="badge-frame">
+            <img src="assets/logo.webp" alt="TBot emblem" />
+          </div>
+          <div class="badge-caption">Deck intel on demand</div>
+        </div>
+      </section>
+
+      <section class="features" id="features">
+        <div class="section-title">
+          <p class="kicker">Features</p>
+          <h2>Built like the game: bold, fast, and packed with answers.</h2>
+        </div>
+        <div class="feature-grid">
+          <article class="feature reveal">
+            <h3>Deck discovery</h3>
+            <p>Browse hero, class, and archetype lists with filters that stay in Discord.</p>
+          </article>
+          <article class="feature reveal">
+            <h3>Card intelligence</h3>
+            <p>Summon quick card info, synergies, and comparisons on demand.</p>
+          </article>
+          <article class="feature reveal">
+            <h3>Deckbuilder tools</h3>
+            <p>Track deckbuilders, trending builds, and curated community picks.</p>
+          </article>
+          <article class="feature reveal">
+            <h3>Quick utilities</h3>
+            <p>Keep-or-scrap decisions, random deck spins, and trivia-ready extras.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="commands" id="commands">
+        <div class="section-title">
+          <p class="kicker">Command list</p>
+          <h2>Tap a command, get the answer.</h2>
+        </div>
+        <div class="command-grid">
+          <div class="command-card reveal">
+            <h4>/cardinfo</h4>
+            <p>Look up any PVZH card and view stats or details.</p>
+          </div>
+          <div class="command-card reveal">
+            <h4>/cardsearch</h4>
+            <p>Search the full card database with filters and keywords.</p>
+          </div>
+          <div class="command-card reveal">
+            <h4>/herodecks</h4>
+            <p>Browse decks by hero with interactive navigation.</p>
+          </div>
+          <div class="command-card reveal">
+            <h4>/deckbuilders</h4>
+            <p>See top deckbuilders and trending builds.</p>
+          </div>
+          <div class="command-card reveal">
+            <h4>/keeporscrap</h4>
+            <p>Get fast recommendations for card value decisions.</p>
+          </div>
+          <div class="command-card reveal">
+            <h4>/randomdeck</h4>
+            <p>Spin up a surprise deck to spark new ideas.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="gallery" id="gallery">
+        <div class="section-title">
+          <p class="kicker">Gallery</p>
+          <h2>Real snapshots from the bot in action.</h2>
+        </div>
+        <div class="gallery-grid">
+          <figure class="reveal">
+            <img src="assets/cardinfo.png" alt="Card info preview" />
+            <figcaption>Card info embeds</figcaption>
+          </figure>
+          <figure class="reveal">
+            <img src="assets/cardsearch.png" alt="Card search preview" />
+            <figcaption>Card search results</figcaption>
+          </figure>
+          <figure class="reveal">
+            <img src="assets/herodecks.png" alt="Hero decks preview" />
+            <figcaption>Hero deck menus</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="stats" id="stats">
+        <div class="section-title">
+          <p class="kicker">Stats</p>
+          <h2>Speed + clarity for every match night.</h2>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card reveal">
+            <span class="stat-number">All cards</span>
+            <span class="stat-label">Full PVZH card access</span>
+          </div>
+          <div class="stat-card reveal">
+            <span class="stat-number">Decks for days</span>
+            <span class="stat-label">Curated, useful builds</span>
+          </div>
+          <div class="stat-card reveal">
+            <span class="stat-number">All heroes</span>
+            <span class="stat-label">Every hero supported</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="faq" id="faq">
+        <div class="section-title">
+          <p class="kicker">FAQ</p>
+          <h2>Questions from the guild.</h2>
+        </div>
+        <div class="faq-list">
+          <details class="reveal">
+            <summary>Does TBot work with slash commands only?</summary>
+            <p>Yes, TBot focuses on slash commands for speed and discoverability.</p>
+          </details>
+          <details class="reveal">
+            <summary>Can I request a new feature?</summary>
+            <p>Absolutely. Drop feedback in your support channel and we will review it.</p>
+          </details>
+          <details class="reveal">
+            <summary>Is TBot free to use?</summary>
+            <p>TBot is free for community servers. Premium features can be added later.</p>
+          </details>
+        </div>
+      </section>
+
+      <section class="cta-strip">
+        <div>
+          <h2>Bring TBot to your PVZH server.</h2>
+          <p>Instantly unlock deck lookups, card data, and community tools.</p>
+        </div>
+        <a
+          class="cta primary"
+          href="https://discord.com/api/oauth2/authorize?client_id=1043528908148052089&permissions=378944&scope=bot"
+        >
+          Invite TBot
+        </a>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Built for the PVZH community.</p>
+      <p>Not affiliated with EA or PopCap.</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
