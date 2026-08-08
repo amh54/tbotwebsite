@@ -69,6 +69,11 @@ ALLOWED_HOSTS = parse_csv_env(
     default=["localhost", "127.0.0.1"],
 )
 
+# Render sets this automatically for web services.
+render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip().strip("\"'")
+if render_hostname and render_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_hostname)
+
 
 # Application definition
 
