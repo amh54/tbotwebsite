@@ -1,0 +1,42 @@
+.card-page {
+  padding: 40px;
+  min-height: 100vh;
+  background: #101416;
+  color: white;
+}
+
+.card-page h1 {
+  font-size: 48px;
+  margin-bottom: 30px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 200px);
+  justify-content: center;
+  gap: 30px;
+}
+
+.card-item {
+  text-align: center;
+}
+
+.card-item img {
+  width: 200px;
+  height: 280px;
+  object-fit: contain;
+}
+
+.card-item button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: #222;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.card-item button:hover {
+  background: #444;
+}

@@ -1,0 +1,214 @@
+.deck-page {
+  padding: 40px;
+  min-height: 100vh;
+  background: #101416;
+  color: white;
+}
+
+.deck-page h1 {
+  font-size: 48px;
+  margin-bottom: 30px;
+}
+
+.deck-browser {
+  background: #15181b;
+  border: 1px solid #23272b;
+  border-radius: 14px;
+  overflow: visible;
+  margin-bottom: 30px;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #333;
+}
+
+.tabs button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: #aaa;
+  border: none;
+  padding: 16px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.tabs button:hover {
+  background: #202020;
+  color: white;
+}
+
+.tabs button.active {
+  background: #202020;
+  color: #8fe38b;
+}
+
+.tab-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.search-container {
+  padding: 20px;
+  border-bottom: 1px solid #333;
+}
+
+.search {
+  width: 100%;
+  height: 45px;
+  padding: 0 15px;
+  background: #202020;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+}
+
+.search:focus {
+  border-color: #8fe38b;
+}
+
+.search::placeholder {
+  color: #888;
+}
+
+.filters {
+  display: flex;
+}
+
+.select-wrapper {
+  flex: 1;
+}
+
+.clear-filter-btn {
+  background: #202020;
+  color: white;
+  border: none;
+  border-left: 1px solid #333;
+  padding: 0 30px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.clear-filter-btn:hover {
+  background: #333;
+}
+
+.react-select__control {
+  background-color: #202020;
+}
+
+.react-select__menu {
+  z-index: 9999;
+}
+
+.results-count {
+  margin: 25px 0;
+
+  color: #aaa;
+}
+
+.error-message {
+  color: #ff7777;
+}
+
+.no-results {
+  color: #aaa;
+}
+
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 280px);
+  justify-content: center;
+  gap: 32px;
+}
+
+.deck-card {
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: none;
+  text-align: center;
+}
+
+.deck-card img {
+  width: auto;
+  max-width: 100%;
+  height: 260px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.deck-card h2 {
+  margin-top: 15px;
+}
+
+.deck-card button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+.navbar {
+  width: 100%;
+  background-color: #15181b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid #23272b;
+}
+
+.logo a {
+  color: #8fe38b;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.nav-links a {
+  color: #e7e0d3;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.nav-links a:hover {
+  color: #8fe38b;
+}
+@media (max-width: 900px) {
+  .deck-page {
+    padding: 20px;
+  }
+
+  .deck-page h1 {
+    font-size: 36px;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .clear-filter-btn {
+    height: 45px;
+  }
+
+  .deck-grid {
+    grid-template-columns: 1fr;
+  }
+}

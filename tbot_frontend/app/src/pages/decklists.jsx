@@ -1,0 +1,327 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import Select from "react-select";
+import DeckCard from "../components/deckcomponent";
+import "../css/decklists.css";
+
+const API_BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(
+    /\/+$/,
+    "",
+  );
+
+function DecklistsPage() {
+  const [decks, setDecks] = useState([]);
+  const [search, setSearch] = useState("");
+  const [side, setSide] = useState("All");
+  const [hero, setHero] = useState(null);
+  const [archetype, setArchetype] = useState(null);
+  const [category, setCategory] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const selectStyles = {
+    control: (base, state) => ({
+      ...base,
+      backgroundColor: "#202020",
+      borderColor: state.isFocused ? "#8fe38b" : "#444",
+      minHeight: "45px",
+      boxShadow: "none",
+      "&:hover": {
+        borderColor: "#8fe38b",
+      },
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+    menu: (base) => ({
+      ...base,
+      backgroundColor: "#202020",
+    }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isFocused ? "#333" : "#202020",
+      color: "white",
+      cursor: "pointer",
+    }),
+
+    singleValue: (base) => ({
+      ...base,
+      color: "white",
+    }),
+
+    placeholder: (base) => ({
+      ...base,
+      color: "#888",
+    }),
+
+    input: (base) => ({
+      ...base,
+      color: "white",
+    }),
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchDecks = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/decklists/`,
+          {
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        setDecks(data || []);
+
+        setError("");
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error(err);
+
+          setError(
+            "Unable to load decklists right now. Make sure Django is running.",
+          );
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDecks();
+
+    return () => controller.abort();
+  }, []);
+
+  const heroOptions = [
+    ...new Set(decks.map((deck) => deck.hero).filter(Boolean)),
+  ].map((hero) => ({
+    value: hero,
+    label: hero,
+  }));
+
+  const archetypeOptions = [
+    ...new Set(decks.map((deck) => deck.archetype).filter(Boolean)),
+  ].map((archetype) => ({
+    value: archetype,
+    label: archetype,
+  }));
+
+  const categoryOptions = [
+    ...new Set(decks.map((deck) => deck.category).filter(Boolean)),
+  ].map((deckCategory) => ({
+    value: deckCategory,
+    label: deckCategory,
+  }));
+
+  const sortedDecks = [...decks].sort((a, b) => {
+    const normalizeSide = (value) => String(value || "").toLowerCase();
+    const sideOrder = {
+      plants: 0,
+      zombies: 1,
+    };
+
+    const sideCompare =
+      (sideOrder[normalizeSide(a.side)] ?? 99) -
+      (sideOrder[normalizeSide(b.side)] ?? 99);
+
+    if (sideCompare !== 0) {
+      return sideCompare;
+    }
+
+    const heroCompare = (a.hero || "").localeCompare(b.hero || "", undefined, {
+      sensitivity: "base",
+    });
+
+    if (heroCompare !== 0) {
+      return heroCompare;
+    }
+
+    return (a.name || "").localeCompare(b.name || "", undefined, {
+      sensitivity: "base",
+    });
+  });
+
+  const filteredDecks = sortedDecks.filter((deck) => {
+    const searchValue = search.toLowerCase();
+
+    const searchMatch =
+      deck.name?.toLowerCase().includes(searchValue) ||
+      deck.creator?.toLowerCase().includes(searchValue) ||
+      deck.optimization?.toLowerCase().includes(searchValue) ||
+      deck.hero?.toLowerCase().includes(searchValue) ||
+      deck.archetype?.toLowerCase().includes(searchValue) ||
+      deck.cards?.toLowerCase().includes(searchValue);
+
+    const sideValue = (deck.side || "").toLowerCase();
+
+    const sideMatch =
+      side === "All" ||
+      (side === "Plants" && sideValue === "plants") ||
+      (side === "Zombies" && sideValue === "zombies");
+
+    const heroMatch = !hero || deck.hero === hero.value;
+
+    const archetypeMatch = !archetype || deck.archetype === archetype.value;
+    const categoryMatch = !category || deck.category === category.value;
+
+    return (
+      searchMatch && sideMatch && heroMatch && archetypeMatch && categoryMatch
+    );
+  });
+
+  if (loading) {
+    return (
+      <div className="deck-page">
+        <h1>Loading Decklists...</h1>
+      </div>
+    );
+  }
+
+  return (
+    <div className="deck-page">
+      <nav className="navbar">
+        <div className="logo">
+          <Link to="/">Tbot</Link>
+        </div>
+
+        <div className="nav-links">
+          <Link to="/">Home</Link>
+          <Link to="/decklists">Decklists</Link>
+          <Link to="/cardinformation">Card Information</Link>
+          <Link to="/heroes">Heroes</Link>
+        </div>
+      </nav>
+
+      <h1>Decklists</h1>
+
+      <div className="deck-browser">
+        <div className="tabs">
+          <button
+            type="button"
+            className={side === "All" ? "active" : ""}
+            onClick={() => setSide("All")}
+          >
+            All
+          </button>
+
+          <button
+            type="button"
+            className={side === "Plants" ? "active" : ""}
+            onClick={() => setSide("Plants")}
+          >
+            <img
+              src="https://i.ibb.co/fYHsRqP0/plants.png"
+              alt="Plants"
+              className="tab-icon"
+            />{" "}
+            Plants
+          </button>
+
+          <button
+            type="button"
+            className={side === "Zombies" ? "active" : ""}
+            onClick={() => setSide("Zombies")}
+          >
+            <img
+              src="https://i.ibb.co/pvT38Y1n/zombies.png"
+              alt="Zombies"
+              className="tab-icon"
+            />{" "}
+            Zombies
+          </button>
+        </div>
+
+        <div className="search-container">
+          <input
+            className="search"
+            placeholder="Search decks, creators, heroes, cards..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <div className="filters">
+          <div className="select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Hero"
+              options={heroOptions}
+              value={hero}
+              onChange={setHero}
+              isClearable
+            />
+          </div>
+
+          <div className="select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Archetype"
+              options={archetypeOptions}
+              value={archetype}
+              onChange={setArchetype}
+              isClearable
+            />
+          </div>
+
+          <div className="select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Deck Type"
+              options={categoryOptions}
+              value={category}
+              onChange={setCategory}
+              isClearable
+            />
+          </div>
+
+          <button
+            type="button"
+            className="clear-filter-btn"
+            onClick={() => {
+              setSearch("");
+
+              setHero(null);
+
+              setArchetype(null);
+
+              setCategory(null);
+            }}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+
+      {error ? (
+        <p className="error-message">{error}</p>
+      ) : (
+        <p className="results-count">Showing {filteredDecks.length} decks</p>
+      )}
+
+      {filteredDecks.length === 0 ? (
+        <p className="no-results">No decklists found.</p>
+      ) : (
+        <div className="deck-grid">
+          {filteredDecks.map((deck) => (
+            <DeckCard
+              key={`${deck.side}-${deck.deckid || deck.id || deck.name}`}
+              decklist={deck}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default DecklistsPage;
