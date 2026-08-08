@@ -26,7 +26,12 @@ def parse_bool_env(value, default=False):
 def parse_csv_env(value, default=None):
     if not value:
         return default or []
-    return [item.strip() for item in value.split(",") if item.strip()]
+    parsed = []
+    for item in value.split(","):
+        cleaned = item.strip().strip("\"'")
+        if cleaned:
+            parsed.append(cleaned)
+    return parsed
 
 
 def load_environment_variables():
