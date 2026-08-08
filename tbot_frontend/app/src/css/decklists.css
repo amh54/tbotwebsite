@@ -124,9 +124,9 @@
 
 .deck-grid {
   display: grid;
-  grid-template-columns: repeat(3, 280px);
+  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
   justify-content: center;
-  gap: 32px;
+  gap: 20px;
 }
 
 .deck-card {

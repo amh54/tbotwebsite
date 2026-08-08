@@ -59,25 +59,51 @@ function DeckCard({ decklist }) {
 
   return (
     <>
-      <div className="deck-card-image-only">
-        {deck.image && !imgError ? (
-          <img
-            src={deck.image}
-            alt={deck.name || "Deck image"}
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="deck-image-placeholder">No image</div>
-        )}
+      <div className="deck-listing-card">
+        <div className="deck-card-image-only">
+          {deck.image && !imgError ? (
+            <img
+              src={deck.image}
+              alt={deck.name || "Deck image"}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="deck-image-placeholder">No image</div>
+          )}
 
-        <button
-          type="button"
-          className="view-details-btn"
-          onClick={() => setOpen(true)}
-          aria-label={`View details for ${deck.name || "deck"}`}
-        >
-          View Details
-        </button>
+          <button
+            type="button"
+            className="view-details-btn"
+            onClick={() => setOpen(true)}
+            aria-label={`View details for ${deck.name || "deck"}`}
+          >
+            View Details
+          </button>
+        </div>
+
+        <div className="deck-listing-info">
+          <h3>{deck.name || "Untitled Deck"}</h3>
+          <p>
+            <span>Hero:</span> {deck.hero || "-"}
+          </p>
+          <p>
+            <span>Category:</span> {deck.category || "-"}
+          </p>
+          <p>
+            <span>Archetype:</span> {deck.archetype || "-"}
+          </p>
+          {hasValue(deck.creator) && (
+            <p>
+              <span>Creator:</span> {deck.creator}
+            </p>
+          )}
+          {hasValue(deck.optimization) && (
+            <p>
+              <span>Optimized by:</span> {deck.optimization}
+            </p>
+          )}
+
+        </div>
       </div>
 
       {open && (
