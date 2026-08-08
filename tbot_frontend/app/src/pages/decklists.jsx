@@ -11,6 +11,10 @@ const API_BASE_URL =
   );
 
 function DecklistsPage() {
+  const normalizeFilterText = (value) => String(value || "").trim();
+  const normalizeFilterKey = (value) =>
+    normalizeFilterText(value).toLowerCase();
+
   const [decks, setDecks] = useState([]);
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
@@ -113,12 +117,24 @@ function DecklistsPage() {
     label: archetype,
   }));
 
-  const categoryOptions = [
-    ...new Set(decks.map((deck) => deck.category).filter(Boolean)),
-  ].map((deckCategory) => ({
-    value: deckCategory,
-    label: deckCategory,
-  }));
+  const categoryOptions = Object.values(
+    decks.reduce((acc, deck) => {
+      const normalizedCategory = normalizeFilterText(deck.category);
+      if (!normalizedCategory) {
+        return acc;
+      }
+
+      const categoryKey = normalizeFilterKey(normalizedCategory);
+      if (!acc[categoryKey]) {
+        acc[categoryKey] = {
+          value: normalizedCategory,
+          label: normalizedCategory,
+        };
+      }
+
+      return acc;
+    }, {}),
+  );
 
   const sortedDecks = [...decks].sort((a, b) => {
     const normalizeSide = (value) => String(value || "").toLowerCase();
@@ -169,7 +185,9 @@ function DecklistsPage() {
     const heroMatch = !hero || deck.hero === hero.value;
 
     const archetypeMatch = !archetype || deck.archetype === archetype.value;
-    const categoryMatch = !category || deck.category === category.value;
+    const categoryMatch =
+      !category ||
+      normalizeFilterKey(deck.category) === normalizeFilterKey(category.value);
 
     return (
       searchMatch && sideMatch && heroMatch && archetypeMatch && categoryMatch
