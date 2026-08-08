@@ -94,6 +94,11 @@ function DeckCard({ decklist }) {
           </p>
           <p>
             <span>Cost:</span> {deck.cost || "-"}
+            <img
+              src="https://i.ibb.co/jZkdqf6y/spark.webp"
+              alt="Spark icon"
+              className="spark-icon"
+            />
           </p>
           {hasValue(deck.creator) && (
             <p>
