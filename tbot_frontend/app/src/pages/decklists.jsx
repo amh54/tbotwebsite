@@ -4,11 +4,9 @@ import Select from "react-select";
 import DeckCard from "../components/deckcomponent";
 import "../css/decklists.css";
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(
-    /\/+$/,
-    "",
-  );
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+).replace(/\/+$/, "");
 
 function DecklistsPage() {
   const normalizeFilterText = (value) => String(value || "").trim();
@@ -69,12 +67,9 @@ function DecklistsPage() {
     const controller = new AbortController();
     const fetchDecks = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/decklists/`,
-          {
-            signal: controller.signal,
-          },
-        );
+        const response = await fetch(`${API_BASE_URL}/tbotapp/decklists/`, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`);
@@ -115,7 +110,12 @@ function DecklistsPage() {
   ].map((archetype) => ({
     value: archetype,
     label: archetype,
-  }));
+  }))
+    .sort((a, b) =>
+      (a.label || "").localeCompare(b.label || "", undefined, {
+        sensitivity: "base",
+      }),
+    );
 
   const categoryOptions = Object.values(
     decks.reduce((acc, deck) => {
@@ -134,6 +134,10 @@ function DecklistsPage() {
 
       return acc;
     }, {}),
+  ).sort((a, b) =>
+    (a.label || "").localeCompare(b.label || "", undefined, {
+      sensitivity: "base",
+    }),
   );
 
   const sortedDecks = [...decks].sort((a, b) => {
@@ -282,22 +286,21 @@ function DecklistsPage() {
             <Select
               styles={selectStyles}
               menuPortalTarget={document.body}
-              placeholder="Archetype"
-              options={archetypeOptions}
-              value={archetype}
-              onChange={setArchetype}
+              placeholder="Category"
+              options={categoryOptions}
+              value={category}
+              onChange={setCategory}
               isClearable
             />
           </div>
-
           <div className="select-wrapper">
             <Select
               styles={selectStyles}
               menuPortalTarget={document.body}
-              placeholder="Deck Type"
-              options={categoryOptions}
-              value={category}
-              onChange={setCategory}
+              placeholder="Archetype"
+              options={archetypeOptions}
+              value={archetype}
+              onChange={setArchetype}
               isClearable
             />
           </div>
