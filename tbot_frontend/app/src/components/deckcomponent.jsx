@@ -92,6 +92,9 @@ function DeckCard({ decklist }) {
           <p>
             <span>Archetype:</span> {deck.archetype || "-"}
           </p>
+          <p>
+            <span>Cost:</span> {deck.cost || "-"}
+          </p>
           {hasValue(deck.creator) && (
             <p>
               <span>Creator:</span> {deck.creator}
