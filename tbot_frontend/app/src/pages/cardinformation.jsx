@@ -50,81 +50,77 @@ function CardInformation() {
     value !== null && value !== undefined && String(value).trim() !== "";
   const hasStrikethroughTrait = (traits) =>
     /strikethrough/i.test(String(traits || ""));
-  const renderTraitText = (traits) => {
-    const text = String(traits || "");
-    const antiheroMatch = /anti[-\s]?hero(?:\s*\d+)?/i.exec(text);
-    const deadlyMatch = /deadly(?:\s*\d+)?/i.exec(text);
-    const strikethroughMatch = /strikethrough(?:\s*\d+)?/i.exec(text);
-
-    if (antiheroMatch) {
-      return (
-        <>
-          <span>{text.slice(0, antiheroMatch.index)}</span>
-
-          <img
-            src={TRAIT_ICON_LINKS.antihero}
-            alt="Antihero"
-            className="card-trait-icon"
-          />
-
-          <span>{antiheroMatch[0]}</span>
-
-          <span>{text.slice(antiheroMatch.index + antiheroMatch[0].length)}</span>
-        </>
-      );
+  const renderTraitText = (text) => {
+    if (!text) {
+      return null;
     }
 
-    if (deadlyMatch) {
-      return (
-        <>
-          <span>{text.slice(0, deadlyMatch.index)}</span>
+    const traitPattern =
+      /(anti[-\s]?hero|strikethrough|deadly)(?:\s+\*+\d+)?/gi;
 
-          <img
-            src={TRAIT_ICON_LINKS.deadly}
-            alt="Deadly"
-            className="card-trait-icon"
-          />
+    const matches = [...text.matchAll(traitPattern)];
 
-          <span>{deadlyMatch[0]}</span>
-
-          <span>{text.slice(deadlyMatch.index + deadlyMatch[0].length)}</span>
-        </>
-      );
+    if (matches.length === 0) {
+      return <span>{text}</span>;
     }
 
-    if (strikethroughMatch) {
-      return (
-        <>
-          <span>{text.slice(0, strikethroughMatch.index)}</span>
+    const parts = [];
+    let lastIndex = 0;
 
-          <img
-            src={TRAIT_ICON_LINKS.strikethrough}
-            alt="Strikethrough"
-            className="card-trait-icon"
-          />
+    matches.forEach((match, index) => {
+      const matchText = match[0];
+      const traitName = match[1].toLowerCase();
 
-          <span>{strikethroughMatch[0]}</span>
+      if (match.index > lastIndex) {
+        parts.push(
+          <span key={`text-${index}`}>
+            {text.slice(lastIndex, match.index)}
+          </span>,
+        );
+      }
 
-          <span>
-            {text.slice(strikethroughMatch.index + strikethroughMatch[0].length)}
-          </span>
-        </>
+      let iconUrl = "";
+      let iconAlt = "";
+
+      if (traitName.startsWith("anti")) {
+        iconUrl = MANUAL_STAT_IMAGE_LINKS.default.antihero;
+        iconAlt = "Antihero";
+      } else if (traitName === "strikethrough") {
+        iconUrl = MANUAL_STAT_IMAGE_LINKS.default.strikethrough;
+        iconAlt = "Strikethrough";
+      } else if (traitName === "deadly") {
+        iconUrl = MANUAL_STAT_IMAGE_LINKS.default.deadly;
+        iconAlt = "Deadly";
+      }
+
+      parts.push(
+        <span className="trait-with-icon" key={`trait-${index}`}>
+          <img className="trait-icon" src={iconUrl} alt={iconAlt} />
+          <span>{matchText}</span>
+        </span>,
       );
+
+      lastIndex = match.index + matchText.length;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(<span key="text-end">{text.slice(lastIndex)}</span>);
     }
 
-    return text;
+    return parts;
   };
 
   const getPreviewStrengthIcon = (traits) =>
-    /deadly/i.test(String(traits || "")) && /strikethrough/i.test(String(traits || ""))
+    /deadly/i.test(String(traits || "")) &&
+    /strikethrough/i.test(String(traits || ""))
       ? TRAIT_ICON_LINKS.special
       : /deadly/i.test(String(traits || ""))
-      ? TRAIT_ICON_LINKS.deadly
-      : /anti[-\s]?hero/i.test(String(traits || ""))
-      ? TRAIT_ICON_LINKS.antihero
-      : hasStrikethroughTrait(traits)
-        ? TRAIT_ICON_LINKS.strikethrough
-        : STAT_ICON_LINKS.strength;
+        ? TRAIT_ICON_LINKS.deadly
+        : /anti[-\s]?hero/i.test(String(traits || ""))
+          ? TRAIT_ICON_LINKS.antihero
+          : hasStrikethroughTrait(traits)
+            ? TRAIT_ICON_LINKS.strikethrough
+            : STAT_ICON_LINKS.strength;
 
   const [cards, setCards] = useState([]);
 
@@ -153,7 +149,9 @@ function CardInformation() {
           throw new Error(message);
         }
 
-        const contentType = (response.headers.get("content-type") || "").toLowerCase();
+        const contentType = (
+          response.headers.get("content-type") || ""
+        ).toLowerCase();
         const responseText = await response.text();
         const hint = import.meta.env.VITE_API_BASE_URL
           ? "Check that VITE_API_BASE_URL points to your backend domain."
@@ -162,7 +160,9 @@ function CardInformation() {
         if (!contentType.includes("application/json")) {
           const startsLikeHtml = responseText.trim().startsWith("<");
           if (startsLikeHtml) {
-            throw new Error(`Received HTML instead of JSON from ${endpoint}. ${hint}`);
+            throw new Error(
+              `Received HTML instead of JSON from ${endpoint}. ${hint}`,
+            );
           }
           throw new Error(
             `Unexpected response type (${contentType || "unknown"}) from ${endpoint}. ${hint}`,
@@ -174,7 +174,9 @@ function CardInformation() {
         setError("");
       } catch (fetchError) {
         console.error(fetchError);
-        setError(`Unable to load cards right now. ${fetchError.message || ""}`.trim());
+        setError(
+          `Unable to load cards right now. ${fetchError.message || ""}`.trim(),
+        );
       } finally {
         setLoading(false);
       }
@@ -226,12 +228,13 @@ function CardInformation() {
               )}
 
               {hasValue(card.traits) && (
-                <p className="card-traits-line">
-                  <span className="card-field-label">Traits:</span>
-                  <span className="card-traits-value">
-                    {renderTraitText(card.traits)}
+                <div className="metadata-item trait-item">
+                  <span className="label">Traits</span>
+
+                  <span className="value trait-value">
+                    {renderTraitText(traitsText)}
                   </span>
-                </p>
+                </div>
               )}
 
               {(hasValue(card.cost) ||
