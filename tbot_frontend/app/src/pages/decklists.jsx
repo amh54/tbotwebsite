@@ -136,7 +136,7 @@ function DecklistsPage() {
             ? ""
             : " Configure VITE_API_BASE_URL in your frontend deployment settings.";
           setError(
-            `Unable to load decklists right now.${hint}`,
+            `Unable to load decklists right now.${hint} ${err.message || ""}`.trim(),
           );
         }
       } finally {
@@ -384,17 +384,19 @@ function DecklistsPage() {
         <p className="results-count">Showing {filteredDecks.length} decks</p>
       )}
 
-      {filteredDecks.length === 0 ? (
+      {!error && filteredDecks.length === 0 ? (
         <p className="no-results">No decklists found.</p>
       ) : (
-        <div className="deck-grid">
-          {filteredDecks.map((deck) => (
-            <DeckCard
-              key={`${deck.side}-${deck.deckid || deck.id || deck.name}`}
-              decklist={deck}
-            />
-          ))}
-        </div>
+        !error && (
+          <div className="deck-grid">
+            {filteredDecks.map((deck) => (
+              <DeckCard
+                key={`${deck.side}-${deck.deckid || deck.id || deck.name}`}
+                decklist={deck}
+              />
+            ))}
+          </div>
+        )
       )}
     </div>
   );
