@@ -13,17 +13,26 @@ const MANUAL_STAT_IMAGE_LINKS = {
 };
 
 function CardModal({ card, close }) {
-  const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== "";
-  const description = hasValue(card.description) ? card.description : "No description available.";
+  const hasValue = (value) =>
+    value !== null && value !== undefined && String(value).trim() !== "";
+
+  const description = hasValue(card.description)
+    ? card.description
+    : "No description available.";
+
   const traitsText = hasValue(card.traits) ? String(card.traits) : "";
   const abilityText = hasValue(card.ability) ? String(card.ability) : "";
+
   const isAntihero = /anti[-\s]?hero/i.test(traitsText);
   const isStrikethrough = /strikethrough/i.test(traitsText);
   const isDeadly = /deadly/i.test(traitsText);
-  const antiheroMatch = /anti[-\s]?hero(?:\s*\d+)?/i.exec(traitsText);
-  const strikethroughMatch = /strikethrough(?:\s*\d+)?/i.exec(traitsText);
-  const deadlyMatch = /deadly(?:\s*\d+)?/i.exec(traitsText);
-  const abilitySegments = abilityText ? abilityText.split(/(\+1\/\+1)/g) : [];
+
+  const antiheroMatch = /anti[-\s]?hero(?:\s\*\d+)?/i.exec(traitsText);
+
+  const strikethroughMatch = /strikethrough(?:\s\*\d+)?/i.exec(traitsText);
+
+  const deadlyMatch = /deadly(?:\s\*\d+)?/i.exec(traitsText);
+
   const renderIconTrait = (match, iconUrl, iconAlt, text) => (
     <>
       <span>{text.slice(0, match.index)}</span>
@@ -36,17 +45,62 @@ function CardModal({ card, close }) {
     </>
   );
 
+  const renderAbilityText = (ability) => {
+    if (!ability) {
+      return null;
+    }
+
+    const segments = ability.split(/(\+1\/\+1|conjure)/gi);
+
+    return segments.map((segment, index) => {
+      if (segment === "+1/+1") {
+        return (
+          <span className="ability-stat-pair" key={`${segment}-${index}`}>
+            <span className="ability-stat-value">+1</span>
+
+            <img
+              className="ability-stat-icon"
+              src={MANUAL_STAT_IMAGE_LINKS.default.strength}
+              alt="Attack"
+            />
+
+            <span className="ability-stat-slash">/</span>
+
+            <span className="ability-stat-value">+1</span>
+
+            <img
+              className="ability-stat-icon"
+              src={MANUAL_STAT_IMAGE_LINKS.default.health}
+              alt="Health"
+            />
+          </span>
+        );
+      }
+
+      if (/^conjure$/i.test(segment)) {
+        return (
+          <span key={`${segment}-${index}`} className="conjure-text">
+            {segment}
+          </span>
+        );
+      }
+
+      return <span key={`${segment}-${index}`}>{segment}</span>;
+    });
+  };
+
   const getManualStatImageUrl = (statKey) => {
     const cardKey = card.card_name || card.title || "";
+
     const statImages =
       MANUAL_STAT_IMAGE_LINKS[cardKey] || MANUAL_STAT_IMAGE_LINKS.default || {};
 
     const override =
-      (statKey === "strength" && isDeadly && isStrikethrough
+      statKey === "strength" && isDeadly && isStrikethrough
         ? statImages.special || MANUAL_STAT_IMAGE_LINKS.default?.special
         : statKey === "strength" && isDeadly
           ? statImages.deadly || MANUAL_STAT_IMAGE_LINKS.default?.deadly
-        : statImages[statKey] || MANUAL_STAT_IMAGE_LINKS[statKey]) || "";
+          : statImages[statKey] || MANUAL_STAT_IMAGE_LINKS[statKey] || "";
 
     return String(override).trim();
   };
@@ -69,12 +123,19 @@ function CardModal({ card, close }) {
     },
   ];
 
-  const hasStats = statRows.some((row) => hasValue(row.value) || hasValue(row.imageUrl));
+  const hasStats = statRows.some(
+    (row) => hasValue(row.value) || hasValue(row.imageUrl),
+  );
 
   return (
     <div className="card-overlay">
       <div className="card-modal">
-        <button type="button" className="close-card" onClick={close}>
+        <button
+          type="button"
+          className="close-card"
+          onClick={close}
+          aria-label="Close card details"
+        >
           ×
         </button>
 
@@ -103,12 +164,18 @@ function CardModal({ card, close }) {
                 <span className="label">Stats</span>
 
                 <div className="stat-list">
-                  {statRows.map((row) => {
+                  {statRows.map((row, index) => {
                     if (!hasValue(row.value) && !hasValue(row.imageUrl)) {
                       return null;
                     }
 
                     const statValue = hasValue(row.value) ? row.value : "-";
+
+                    const visibleRows = statRows.filter(
+                      (stat) => hasValue(stat.value) || hasValue(stat.imageUrl),
+                    );
+
+                    const isLast = index === visibleRows.length - 1;
 
                     return (
                       <span className="stat-row" key={row.label}>
@@ -126,9 +193,7 @@ function CardModal({ card, close }) {
                           </a>
                         )}
 
-                        {row.label !== statRows.at(-1).label && (
-                          <span className="stat-separator">,</span>
-                        )}
+                        {!isLast && <span className="stat-separator">,</span>}
                       </span>
                     );
                   })}
@@ -141,31 +206,7 @@ function CardModal({ card, close }) {
                 <span className="label">Ability</span>
 
                 <span className="value ability-value">
-                  {abilitySegments.length > 0 ? (
-                    abilitySegments.map((segment, index) =>
-                      segment === "+1/+1" ? (
-                        <span className="ability-stat-pair" key={`${segment}-${index}`}>
-                          <span className="ability-stat-value">+1</span>
-                          <img
-                            className="ability-stat-icon"
-                            src={MANUAL_STAT_IMAGE_LINKS.default.strength}
-                            alt="Attack"
-                          />
-                          <span className="ability-stat-slash">/</span>
-                          <span className="ability-stat-value">+1</span>
-                          <img
-                            className="ability-stat-icon"
-                            src={MANUAL_STAT_IMAGE_LINKS.default.health}
-                            alt="Health"
-                          />
-                        </span>
-                      ) : (
-                        <span key={`${segment}-${index}`}>{segment}</span>
-                      ),
-                    )
-                  ) : (
-                    card.ability
-                  )}
+                  {renderAbilityText(abilityText)}
                 </span>
               </div>
             )}
@@ -175,30 +216,30 @@ function CardModal({ card, close }) {
                 <span className="label">Traits</span>
 
                 <span className="value trait-value">
-                  {isAntihero && antiheroMatch
-                    ? renderIconTrait(
-                        antiheroMatch,
-                        MANUAL_STAT_IMAGE_LINKS.default.antihero,
-                        "Antihero",
-                        traitsText,
-                      )
-                    : isStrikethrough && strikethroughMatch
-                      ? renderIconTrait(
-                          strikethroughMatch,
-                          MANUAL_STAT_IMAGE_LINKS.default.strikethrough,
-                          "Strikethrough",
-                          traitsText,
-                        )
-                      : isDeadly && deadlyMatch
-                        ? renderIconTrait(
-                            deadlyMatch,
-                            MANUAL_STAT_IMAGE_LINKS.default.deadly,
-                            "Deadly",
-                            traitsText,
-                          )
-                      : (
-                        <span>{traitsText}</span>
-                      )}
+                  {isAntihero && antiheroMatch ? (
+                    renderIconTrait(
+                      antiheroMatch,
+                      MANUAL_STAT_IMAGE_LINKS.default.antihero,
+                      "Antihero",
+                      traitsText,
+                    )
+                  ) : isStrikethrough && strikethroughMatch ? (
+                    renderIconTrait(
+                      strikethroughMatch,
+                      MANUAL_STAT_IMAGE_LINKS.default.strikethrough,
+                      "Strikethrough",
+                      traitsText,
+                    )
+                  ) : isDeadly && deadlyMatch ? (
+                    renderIconTrait(
+                      deadlyMatch,
+                      MANUAL_STAT_IMAGE_LINKS.default.deadly,
+                      "Deadly",
+                      traitsText,
+                    )
+                  ) : (
+                    <span>{traitsText}</span>
+                  )}
                 </span>
               </div>
             )}
