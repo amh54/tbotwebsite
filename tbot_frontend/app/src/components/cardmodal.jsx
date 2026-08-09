@@ -6,6 +6,9 @@ const MANUAL_STAT_IMAGE_LINKS = {
     strength: "https://i.ibb.co/GQt785K6/strength.webp",
     health: "https://i.ibb.co/bMj86Wvg/health.webp",
     antihero: "https://i.ibb.co/zHmWTFLQ/anti-hero.webp",
+    strikethrough: "https://i.ibb.co/99KG7vjj/strikethrough.webp",
+    deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
+    special: "https://i.ibb.co/Sw0yS0Mg/special.webp",
   },
 };
 
@@ -15,8 +18,23 @@ function CardModal({ card, close }) {
   const traitsText = hasValue(card.traits) ? String(card.traits) : "";
   const abilityText = hasValue(card.ability) ? String(card.ability) : "";
   const isAntihero = /anti[-\s]?hero/i.test(traitsText);
+  const isStrikethrough = /strikethrough/i.test(traitsText);
+  const isDeadly = /deadly/i.test(traitsText);
   const antiheroMatch = /anti[-\s]?hero(?:\s*\d+)?/i.exec(traitsText);
+  const strikethroughMatch = /strikethrough(?:\s*\d+)?/i.exec(traitsText);
+  const deadlyMatch = /deadly(?:\s*\d+)?/i.exec(traitsText);
   const abilitySegments = abilityText ? abilityText.split(/(\+1\/\+1)/g) : [];
+  const renderIconTrait = (match, iconUrl, iconAlt, text) => (
+    <>
+      <span>{text.slice(0, match.index)}</span>
+
+      <img className="trait-icon" src={iconUrl} alt={iconAlt} />
+
+      <span>{match[0]}</span>
+
+      <span>{text.slice(match.index + match[0].length)}</span>
+    </>
+  );
 
   const getManualStatImageUrl = (statKey) => {
     const cardKey = card.card_name || card.title || "";
@@ -24,8 +42,10 @@ function CardModal({ card, close }) {
       MANUAL_STAT_IMAGE_LINKS[cardKey] || MANUAL_STAT_IMAGE_LINKS.default || {};
 
     const override =
-      (statKey === "strength" && isAntihero
-        ? statImages.antihero || MANUAL_STAT_IMAGE_LINKS.default?.antihero
+      (statKey === "strength" && isDeadly && isStrikethrough
+        ? statImages.special || MANUAL_STAT_IMAGE_LINKS.default?.special
+        : statKey === "strength" && isDeadly
+          ? statImages.deadly || MANUAL_STAT_IMAGE_LINKS.default?.deadly
         : statImages[statKey] || MANUAL_STAT_IMAGE_LINKS[statKey]) || "";
 
     return String(override).trim();
@@ -155,23 +175,30 @@ function CardModal({ card, close }) {
                 <span className="label">Traits</span>
 
                 <span className="value trait-value">
-                  {isAntihero && antiheroMatch ? (
-                    <>
-                      <span>{traitsText.slice(0, antiheroMatch.index)}</span>
-
-                      <img
-                        className="trait-icon"
-                        src={MANUAL_STAT_IMAGE_LINKS.default.antihero}
-                        alt="Antihero"
-                      />
-
-                      <span>{antiheroMatch[0]}</span>
-
-                      <span>{traitsText.slice(antiheroMatch.index + antiheroMatch[0].length)}</span>
-                    </>
-                  ) : (
-                    <span>{traitsText}</span>
-                  )}
+                  {isAntihero && antiheroMatch
+                    ? renderIconTrait(
+                        antiheroMatch,
+                        MANUAL_STAT_IMAGE_LINKS.default.antihero,
+                        "Antihero",
+                        traitsText,
+                      )
+                    : isStrikethrough && strikethroughMatch
+                      ? renderIconTrait(
+                          strikethroughMatch,
+                          MANUAL_STAT_IMAGE_LINKS.default.strikethrough,
+                          "Strikethrough",
+                          traitsText,
+                        )
+                      : isDeadly && deadlyMatch
+                        ? renderIconTrait(
+                            deadlyMatch,
+                            MANUAL_STAT_IMAGE_LINKS.default.deadly,
+                            "Deadly",
+                            traitsText,
+                          )
+                      : (
+                        <span>{traitsText}</span>
+                      )}
                 </span>
               </div>
             )}

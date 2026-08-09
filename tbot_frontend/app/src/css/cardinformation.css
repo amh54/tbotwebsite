@@ -57,6 +57,29 @@
   font-weight: 700;
 }
 
+.card-traits-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.card-traits-value {
+  color: #dde5ea;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  text-decoration: underline;
+}
+
+.card-trait-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
 .card-stats-line {
   display: flex;
   align-items: center;

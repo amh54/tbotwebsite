@@ -17,9 +17,93 @@ const STAT_ICON_LINKS = {
   health: "https://i.ibb.co/bMj86Wvg/health.webp",
 };
 
+const TRAIT_ICON_LINKS = {
+  antihero: "https://i.ibb.co/zHmWTFLQ/anti-hero.webp",
+  strikethrough: "https://i.ibb.co/99KG7vjj/strikethrough.webp",
+  deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
+  special: "https://i.ibb.co/Sw0yS0Mg/special.webp",
+};
+
 function CardInformation() {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
+  const hasStrikethroughTrait = (traits) =>
+    /strikethrough/i.test(String(traits || ""));
+  const renderTraitText = (traits) => {
+    const text = String(traits || "");
+    const antiheroMatch = /anti[-\s]?hero(?:\s*\d+)?/i.exec(text);
+    const deadlyMatch = /deadly(?:\s*\d+)?/i.exec(text);
+    const strikethroughMatch = /strikethrough(?:\s*\d+)?/i.exec(text);
+
+    if (antiheroMatch) {
+      return (
+        <>
+          <span>{text.slice(0, antiheroMatch.index)}</span>
+
+          <img
+            src={TRAIT_ICON_LINKS.antihero}
+            alt="Antihero"
+            className="card-trait-icon"
+          />
+
+          <span>{antiheroMatch[0]}</span>
+
+          <span>{text.slice(antiheroMatch.index + antiheroMatch[0].length)}</span>
+        </>
+      );
+    }
+
+    if (deadlyMatch) {
+      return (
+        <>
+          <span>{text.slice(0, deadlyMatch.index)}</span>
+
+          <img
+            src={TRAIT_ICON_LINKS.deadly}
+            alt="Deadly"
+            className="card-trait-icon"
+          />
+
+          <span>{deadlyMatch[0]}</span>
+
+          <span>{text.slice(deadlyMatch.index + deadlyMatch[0].length)}</span>
+        </>
+      );
+    }
+
+    if (strikethroughMatch) {
+      return (
+        <>
+          <span>{text.slice(0, strikethroughMatch.index)}</span>
+
+          <img
+            src={TRAIT_ICON_LINKS.strikethrough}
+            alt="Strikethrough"
+            className="card-trait-icon"
+          />
+
+          <span>{strikethroughMatch[0]}</span>
+
+          <span>
+            {text.slice(strikethroughMatch.index + strikethroughMatch[0].length)}
+          </span>
+        </>
+      );
+    }
+
+    return text;
+  };
+
+  const getPreviewStrengthIcon = (traits) =>
+    /deadly/i.test(String(traits || "")) && /strikethrough/i.test(String(traits || ""))
+      ? TRAIT_ICON_LINKS.special
+      : /deadly/i.test(String(traits || ""))
+      ? TRAIT_ICON_LINKS.deadly
+      : /anti[-\s]?hero/i.test(String(traits || ""))
+      ? TRAIT_ICON_LINKS.antihero
+      : hasStrikethroughTrait(traits)
+        ? TRAIT_ICON_LINKS.strikethrough
+        : STAT_ICON_LINKS.strength;
 
   const [cards, setCards] = useState([]);
 
@@ -86,6 +170,15 @@ function CardInformation() {
                 </p>
               )}
 
+              {hasValue(card.traits) && (
+                <p className="card-traits-line">
+                  <span className="card-field-label">Traits:</span>
+                  <span className="card-traits-value">
+                    {renderTraitText(card.traits)}
+                  </span>
+                </p>
+              )}
+
               {(hasValue(card.cost) ||
                 hasValue(card.strength) ||
                 hasValue(card.health)) && (
@@ -107,7 +200,7 @@ function CardInformation() {
                     <span className="card-stat-row stat-strength">
                       {card.strength}
                       <img
-                        src={STAT_ICON_LINKS.strength}
+                        src={getPreviewStrengthIcon(card.traits)}
                         alt="Strength"
                         className="card-stat-icon"
                       />
