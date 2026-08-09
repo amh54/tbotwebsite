@@ -145,9 +145,7 @@ function CardInformation() {
 
         <div className="nav-links">
           <Link to="/">Home</Link>
-
           <Link to="/decklists">Decklists</Link>
-
           <Link to="/cardinformation">Card Information</Link>
         </div>
       </nav>

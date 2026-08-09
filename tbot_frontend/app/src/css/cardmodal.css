@@ -186,6 +186,30 @@
   flex: 0 0 auto;
 }
 
+.ability-value {
+  display: inline;
+}
+
+.ability-stat-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
+}
+
+.ability-stat-value,
+.ability-stat-slash {
+  line-height: 1;
+}
+
+.ability-stat-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+
 .stat-list {
   display: flex;
   flex-wrap: wrap;
@@ -257,6 +281,11 @@
   .description-text,
   .value {
     line-height: 1.45;
+  }
+
+  .ability-stat-icon {
+    width: 14px;
+    height: 14px;
   }
 
   .close-card {
