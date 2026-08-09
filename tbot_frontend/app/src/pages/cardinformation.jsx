@@ -5,11 +5,32 @@ import CardModal from "../components/cardmodal";
 
 import "../css/cardinformation.css";
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(
-    /\/+$/,
-    "",
-  );
+const getApiBaseUrl = () => {
+  const stripTrailingSlashes = (value) => {
+    let normalized = value;
+    while (normalized.endsWith("/")) {
+      normalized = normalized.slice(0, -1);
+    }
+    return normalized;
+  };
+
+  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
+  if (envBaseUrl) {
+    return stripTrailingSlashes(envBaseUrl);
+  }
+
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+    if (isLocalhost) {
+      return "http://localhost:8000";
+    }
+  }
+
+  return "";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const STAT_ICON_LINKS = {
   cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",

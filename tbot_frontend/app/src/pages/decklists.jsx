@@ -4,9 +4,33 @@ import Select from "react-select";
 import DeckCard from "../components/deckcomponent";
 import "../css/decklists.css";
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
-).replace(/\/+$/, "");
+const getApiBaseUrl = () => {
+  const stripTrailingSlashes = (value) => {
+    let normalized = value;
+    while (normalized.endsWith("/")) {
+      normalized = normalized.slice(0, -1);
+    }
+    return normalized;
+  };
+
+  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
+  if (envBaseUrl) {
+    return stripTrailingSlashes(envBaseUrl);
+  }
+
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+    if (isLocalhost) {
+      return "http://localhost:8000";
+    }
+  }
+
+  // On deployed frontends, fallback to same-origin route when API base URL is not set.
+  return "";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 function DecklistsPage() {
   const normalizeFilterText = (value) => String(value || "").trim();
@@ -90,7 +114,8 @@ function DecklistsPage() {
     const controller = new AbortController();
     const fetchDecks = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/tbotapp/decklists/`, {
+        const decklistsEndpoint = `${API_BASE_URL}/tbotapp/decklists/`;
+        const response = await fetch(decklistsEndpoint, {
           signal: controller.signal,
         });
 
@@ -107,8 +132,11 @@ function DecklistsPage() {
         if (err.name !== "AbortError") {
           console.error(err);
 
+          const hint = import.meta.env.VITE_API_BASE_URL
+            ? ""
+            : " Configure VITE_API_BASE_URL in your frontend deployment settings.";
           setError(
-            "Unable to load decklists right now. Make sure Django is running.",
+            `Unable to load decklists right now.${hint}`,
           );
         }
       } finally {
