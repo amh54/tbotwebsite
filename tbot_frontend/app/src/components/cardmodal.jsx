@@ -67,62 +67,66 @@ function CardModal({ card, close }) {
   };
 
   // Bolds specific trigger phrases ONLY inside the Ability field.
-  const renderAbilityText = (ability) => {
-    if (!ability) {
-      return null;
+ const renderAbilityText = (ability) => {
+  if (!ability) {
+    return null;
+  }
+
+  const segments = String(ability).split(
+    /(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights|\+1\/\+1|conjure)/gi
+  );
+
+  return segments.map((segment, index) => {
+    // Bold ability trigger phrases
+    if (
+      /^(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)$/i.test(
+        segment.trim()
+      )
+    ) {
+      return (
+        <strong key={`${segment}-${index}`}>
+          {segment}
+        </strong>
+      );
     }
 
-    const segments = String(ability).split(
-      /(when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights|\+1\/\+1|conjure)/gi,
-    );
+    // +1/+1 stat icons
+    if (segment === "+1/+1") {
+      return (
+        <span className="ability-stat-pair" key={`${segment}-${index}`}>
+          <span className="ability-stat-value">+1</span>
 
-    return segments.map((segment, index) => {
-      // Bold ability triggers
-      if (
-        /^(when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)$/i.test(
-          segment.trim(),
-        )
-      ) {
-        return <strong key={`${segment}-${index}`}>{segment}</strong>;
-      }
+          <img
+            className="ability-stat-icon"
+            src={MANUAL_STAT_IMAGE_LINKS.default.strength}
+            alt="Attack"
+          />
 
-      // +1/+1 stat icons
-      if (segment === "+1/+1") {
-        return (
-          <span className="ability-stat-pair" key={`${segment}-${index}`}>
-            <span className="ability-stat-value">+1</span>
+          <span className="ability-stat-slash">/</span>
 
-            <img
-              className="ability-stat-icon"
-              src={MANUAL_STAT_IMAGE_LINKS.default.strength}
-              alt="Attack"
-            />
+          <span className="ability-stat-value">+1</span>
 
-            <span className="ability-stat-slash">/</span>
+          <img
+            className="ability-stat-icon"
+            src={MANUAL_STAT_IMAGE_LINKS.default.health}
+            alt="Health"
+          />
+        </span>
+      );
+    }
 
-            <span className="ability-stat-value">+1</span>
+    // Conjure
+    if (/^conjure$/i.test(segment)) {
+      return (
+        <span key={`${segment}-${index}`} className="conjure-text">
+          {segment}
+        </span>
+      );
+    }
 
-            <img
-              className="ability-stat-icon"
-              src={MANUAL_STAT_IMAGE_LINKS.default.health}
-              alt="Health"
-            />
-          </span>
-        );
-      }
-
-      // Conjure
-      if (/^conjure$/i.test(segment)) {
-        return (
-          <span key={`${segment}-${index}`} className="conjure-text">
-            {segment}
-          </span>
-        );
-      }
-
-      return <span key={`${segment}-${index}`}>{segment}</span>;
-    });
-  };
+    return <span key={`${segment}-${index}`}>{segment}</span>;
+  });
+};
 
   const getManualStatImageUrl = (statKey) => {
     const cardKey = card.card_name || card.title || "";
