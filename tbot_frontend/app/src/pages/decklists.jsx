@@ -12,6 +12,29 @@ function DecklistsPage() {
   const normalizeFilterText = (value) => String(value || "").trim();
   const normalizeFilterKey = (value) =>
     normalizeFilterText(value).toLowerCase();
+  const HERO_ALIAS = {
+    bc: "beta-carrotina",
+    ct: "citron",
+    sf: "solar flare",
+    cz: "Chompzilla",
+    gs: "Green Shadow",
+    gk: "Grass Knuckles",
+    sp: "spudow",
+    nc: "Night Cap",
+    ro: "Rose",
+    cc: "Captain Combustible",
+    sb: "super brainz",
+    sm: "The Smash",
+    if: "Impfinity",
+    rb: "Rustbolt",
+    eb: "Electric Boogaloo",
+    bf: "Brain Freeze",
+    pb: "Professor Brainstorm",
+    im: "Immorticia",
+    zm: "Z-Mech",
+    nt: "Neptuna",
+    hg: "Huge-Giganticus"
+  };
 
   const [decks, setDecks] = useState([]);
   const [search, setSearch] = useState("");
@@ -169,15 +192,19 @@ function DecklistsPage() {
   });
 
   const filteredDecks = sortedDecks.filter((deck) => {
-    const searchValue = search.toLowerCase();
+    const searchValue = String(search || "").trim().toLowerCase();
+    const heroAliasMatch = (HERO_ALIAS[searchValue] || "").toLowerCase();
+    const expandedSearchValue = heroAliasMatch || searchValue;
+    const isHeroShortcutSearch = Boolean(heroAliasMatch);
 
-    const searchMatch =
-      deck.name?.toLowerCase().includes(searchValue) ||
-      deck.creator?.toLowerCase().includes(searchValue) ||
-      deck.optimization?.toLowerCase().includes(searchValue) ||
-      deck.hero?.toLowerCase().includes(searchValue) ||
-      deck.archetype?.toLowerCase().includes(searchValue) ||
-      deck.cards?.toLowerCase().includes(searchValue);
+    const searchMatch = isHeroShortcutSearch
+      ? deck.hero?.toLowerCase().includes(expandedSearchValue)
+      : deck.name?.toLowerCase().includes(expandedSearchValue) ||
+        deck.creator?.toLowerCase().includes(expandedSearchValue) ||
+        deck.optimization?.toLowerCase().includes(expandedSearchValue) ||
+        deck.hero?.toLowerCase().includes(expandedSearchValue) ||
+        deck.archetype?.toLowerCase().includes(expandedSearchValue) ||
+        deck.cards?.toLowerCase().includes(expandedSearchValue);
 
     const sideValue = (deck.side || "").toLowerCase();
 
