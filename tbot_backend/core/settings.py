@@ -74,6 +74,17 @@ render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip().strip("\"'")
 if render_hostname and render_hostname not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(render_hostname)
 
+vercel_hostname = os.getenv("VERCEL_URL", "").strip().strip("\"'")
+if vercel_hostname:
+    if "://" in vercel_hostname:
+        vercel_hostname = vercel_hostname.split("://", 1)[1]
+    if vercel_hostname not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(vercel_hostname)
+
+# Helpful default when deploying on Vercel previews and production domains.
+if parse_bool_env(os.getenv("VERCEL"), default=False) and ".vercel.app" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(".vercel.app")
+
 
 # Application definition
 
@@ -108,6 +119,22 @@ CORS_ALLOWED_ORIGINS = parse_csv_env(
         "http://127.0.0.1:4173",
     ],
 )
+
+CSRF_TRUSTED_ORIGINS = parse_csv_env(
+    os.getenv("CSRF_TRUSTED_ORIGINS"),
+    default=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+)
+
+if vercel_hostname:
+    vercel_origin = f"https://{vercel_hostname}"
+    if vercel_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(vercel_origin)
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 ROOT_URLCONF = 'core.urls'
 
