@@ -170,12 +170,15 @@ if not DB_ENGINE:
 if DB_ENGINE == 'django.db.backends.mysql':
 
     db_options = {}
-    if parse_bool_env(os.getenv("DB_SSL"), default=False):
+    db_ssl_default = parse_bool_env(os.getenv("VERCEL"), default=False)
+    if parse_bool_env(os.getenv("DB_SSL"), default=db_ssl_default):
         # PyMySQL enables TLS when ssl options are provided; empty dict allows
         # the default cert chain on providers that require encrypted transport.
         db_options["ssl"] = {}
 
     db_connect_timeout = os.getenv("DB_CONNECT_TIMEOUT", "").strip()
+    if not db_connect_timeout and parse_bool_env(os.getenv("VERCEL"), default=False):
+        db_connect_timeout = "10"
     if db_connect_timeout:
         try:
             db_options["connect_timeout"] = int(db_connect_timeout)
