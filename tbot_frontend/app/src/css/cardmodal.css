@@ -129,6 +129,11 @@
   white-space: pre-wrap;
 }
 
+.description-text strong {
+  font-weight: 700;
+  color: #ffffff;
+}
+
 .modal-metadata {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -213,6 +218,12 @@
   flex: 0 0 auto;
 }
 
+.conjure-text {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
 .stat-list {
   display: flex;
   flex-wrap: wrap;
@@ -249,15 +260,13 @@
   margin-right: 6px;
   color: #e5e9f0;
 }
-.conjure-text {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
+
 @media (max-width: 900px) {
   .card-modal {
     width: min(1000px, 95%);
-    grid-template-columns: minmax(130px, 38%) minmax(0, 1fr);
+    grid-template-columns:
+      minmax(130px, 38%)
+      minmax(0, 1fr);
     gap: 14px;
     padding: 12px;
   }

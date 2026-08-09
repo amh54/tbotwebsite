@@ -17,10 +17,11 @@ function CardModal({ card, close }) {
     value !== null && value !== undefined && String(value).trim() !== "";
 
   const description = hasValue(card.description)
-    ? card.description
+    ? String(card.description)
     : "No description available.";
 
   const traitsText = hasValue(card.traits) ? String(card.traits) : "";
+
   const abilityText = hasValue(card.ability) ? String(card.ability) : "";
 
   const isAntihero = /anti[-\s]?hero/i.test(traitsText);
@@ -44,6 +45,29 @@ function CardModal({ card, close }) {
       <span>{text.slice(match.index + match[0].length)}</span>
     </>
   );
+
+  const renderDescriptionText = (text) => {
+    if (!text) {
+      return null;
+    }
+
+    const triggerPattern =
+      /(when revealed in an environment|when revealed on heights|when this enters a lane|when hurt|when destroyed|when revealed|zombie evolution|end of turn)/gi;
+
+    const segments = String(text).split(triggerPattern);
+
+    return segments.map((segment, index) => {
+      if (
+        /^(when revealed in an environment|when revealed on heights|when this enters a lane|when hurt|when destroyed|when revealed|zombie evolution|end of turn)$/i.test(
+          segment.trim(),
+        )
+      ) {
+        return <strong key={`${segment}-${index}`}>{segment}</strong>;
+      }
+
+      return <span key={`${segment}-${index}`}>{segment}</span>;
+    });
+  };
 
   const renderAbilityText = (ability) => {
     if (!ability) {
@@ -123,9 +147,11 @@ function CardModal({ card, close }) {
     },
   ];
 
-  const hasStats = statRows.some(
+  const visibleStatRows = statRows.filter(
     (row) => hasValue(row.value) || hasValue(row.imageUrl),
   );
+
+  const hasStats = visibleStatRows.length > 0;
 
   return (
     <div className="card-overlay">
@@ -155,7 +181,9 @@ function CardModal({ card, close }) {
           <section className="modal-section description-section">
             <h3>Description</h3>
 
-            <p className="description-text">{description}</p>
+            <p className="description-text">
+              {renderDescriptionText(description)}
+            </p>
           </section>
 
           <section className="modal-metadata">
@@ -164,18 +192,10 @@ function CardModal({ card, close }) {
                 <span className="label">Stats</span>
 
                 <div className="stat-list">
-                  {statRows.map((row, index) => {
-                    if (!hasValue(row.value) && !hasValue(row.imageUrl)) {
-                      return null;
-                    }
-
+                  {visibleStatRows.map((row, index) => {
                     const statValue = hasValue(row.value) ? row.value : "-";
 
-                    const visibleRows = statRows.filter(
-                      (stat) => hasValue(stat.value) || hasValue(stat.imageUrl),
-                    );
-
-                    const isLast = index === visibleRows.length - 1;
+                    const isLast = index === visibleStatRows.length - 1;
 
                     return (
                       <span className="stat-row" key={row.label}>
