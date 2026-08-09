@@ -67,66 +67,173 @@ function CardModal({ card, close }) {
   };
 
   // Bolds specific trigger phrases ONLY inside the Ability field.
- const renderAbilityText = (ability) => {
+const renderAbilityText = (ability) => {
   if (!ability) {
     return null;
   }
 
-  const segments = String(ability).split(
-    /(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights|\+1\/\+1|conjure)/gi
-  );
+  const text = String(ability);
 
-  return segments.map((segment, index) => {
-    // Bold ability trigger phrases
-    if (
-      /^(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)$/i.test(
-        segment.trim()
-      )
-    ) {
-      return (
-        <strong key={`${segment}-${index}`}>
-          {segment}
-        </strong>
+  const pattern =
+    /(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)|(\+\d+\/\+\d+)|(\+\d+)\s*(strength|health)|(\d+)\s*(brainz|strength|health)|(conjure)/gi;
+
+  const matches = [...text.matchAll(pattern)];
+
+  if (matches.length === 0) {
+    return <span>{text}</span>;
+  }
+
+  const parts = [];
+  let lastIndex = 0;
+
+  matches.forEach((match, index) => {
+    const fullMatch = match[0];
+    const matchIndex = match.index;
+
+    // Text before the match
+    if (matchIndex > lastIndex) {
+      parts.push(
+        <span key={`text-${index}`}>
+          {text.slice(lastIndex, matchIndex)}
+        </span>,
       );
     }
 
-    // +1/+1 stat icons
-    if (segment === "+1/+1") {
-      return (
-        <span className="ability-stat-pair" key={`${segment}-${index}`}>
-          <span className="ability-stat-value">+1</span>
+    if (match[1]) {
+      parts.push(
+        <strong key={`trigger-${index}`}>
+          {match[1]}
+        </strong>,
+      );
+    }
+
+    // +2/+2
+    else if (match[2]) {
+      const [strength, health] =
+        match[2].split("/");
+
+      parts.push(
+        <span
+          className="ability-stat-pair"
+          key={`stats-${index}`}
+        >
+          <span className="ability-stat-value">
+            {strength}
+          </span>
 
           <img
             className="ability-stat-icon"
             src={MANUAL_STAT_IMAGE_LINKS.default.strength}
-            alt="Attack"
+            alt="Strength"
           />
 
-          <span className="ability-stat-slash">/</span>
+          <span className="ability-stat-slash">
+            /
+          </span>
 
-          <span className="ability-stat-value">+1</span>
+          <span className="ability-stat-value">
+            {health}
+          </span>
 
           <img
             className="ability-stat-icon"
             src={MANUAL_STAT_IMAGE_LINKS.default.health}
             alt="Health"
           />
-        </span>
+        </span>,
+      );
+    }
+
+    // +1 Strength / +2 Health
+    else if (match[3]) {
+      const value = match[3];
+      const stat = match[4].toLowerCase();
+
+      const icon =
+        stat === "strength"
+          ? MANUAL_STAT_IMAGE_LINKS.default.strength
+          : MANUAL_STAT_IMAGE_LINKS.default.health;
+
+      parts.push(
+        <span
+          className="ability-stat-pair"
+          key={`stat-${index}`}
+        >
+          <span className="ability-stat-value">
+            {value}
+          </span>
+
+          <img
+            className="ability-stat-icon"
+            src={icon}
+            alt={stat}
+          />
+        </span>,
+      );
+    }
+
+    // 1 Brainz / 2 Brainz
+    else if (match[5]) {
+      const value = match[5];
+      const stat = match[6].toLowerCase();
+
+      let icon = null;
+
+      if (stat === "brainz") {
+        icon = MANUAL_STAT_IMAGE_LINKS.default.cost;
+      } else if (stat === "strength") {
+        icon = MANUAL_STAT_IMAGE_LINKS.default.strength;
+      } else if (stat === "health") {
+        icon = MANUAL_STAT_IMAGE_LINKS.default.health;
+      }
+
+      parts.push(
+        <span
+          className="ability-stat-pair"
+          key={`number-stat-${index}`}
+        >
+          <span className="ability-stat-value">
+            {value}
+          </span>
+
+          {icon && (
+            <img
+              className="ability-stat-icon"
+              src={icon}
+              alt={stat}
+            />
+          )}
+        </span>,
       );
     }
 
     // Conjure
-    if (/^conjure$/i.test(segment)) {
-      return (
-        <span key={`${segment}-${index}`} className="conjure-text">
-          {segment}
-        </span>
+    else if (match[7]) {
+      parts.push(
+        <span
+          className="conjure-text"
+          key={`conjure-${index}`}
+        >
+          {match[7]}
+        </span>,
       );
     }
 
-    return <span key={`${segment}-${index}`}>{segment}</span>;
+    lastIndex = matchIndex + fullMatch.length;
   });
+
+  // Remaining text
+  if (lastIndex < text.length) {
+    parts.push(
+      <span key="text-end">
+        {text.slice(lastIndex)}
+      </span>,
+    );
+  }
+
+  return parts;
 };
+
 
   const getManualStatImageUrl = (statKey) => {
     const cardKey = card.card_name || card.title || "";
