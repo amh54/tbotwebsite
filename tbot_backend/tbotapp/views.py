@@ -39,7 +39,10 @@ def decklists(request):
         return Response(serializer.data)
     except DatabaseError as exc:
         logger.exception("Decklist query failed")
-        payload = {"error": "Database query failed for decklists."}
+        payload = {
+            "error": "Database query failed for decklists.",
+            "error_type": exc.__class__.__name__,
+        }
         if include_error_detail():
             payload["detail"] = str(exc)
         return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -58,7 +61,10 @@ def card_information(request):
         return Response(serializer.data)
     except DatabaseError as exc:
         logger.exception("Card query failed")
-        payload = {"error": "Database query failed for card information."}
+        payload = {
+            "error": "Database query failed for card information.",
+            "error_type": exc.__class__.__name__,
+        }
         if include_error_detail():
             payload["detail"] = str(exc)
         return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
