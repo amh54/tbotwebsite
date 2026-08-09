@@ -15,9 +15,27 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import path, include
+from django.views import View
+
+
+class ApiRootView(View):
+    http_method_names = ["get"]
+
+    def get(self, _request):
+        return JsonResponse(
+            {
+                "status": "ok",
+                "endpoints": [
+                    "/tbotapp/decklists/",
+                    "/tbotapp/cardinformation/",
+                ],
+            }
+        )
 
 urlpatterns = [
+    path('', ApiRootView.as_view(), name='api_root'),
     path('admin/', admin.site.urls),
     path('tbotapp/', include('tbotapp.urls')),
 ]
