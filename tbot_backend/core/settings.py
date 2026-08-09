@@ -170,6 +170,16 @@ if not DB_ENGINE:
 if DB_ENGINE == 'django.db.backends.mysql':
 
     db_options = {}
+    db_conn_max_age = os.getenv("DB_CONN_MAX_AGE", "").strip()
+    if db_conn_max_age:
+        try:
+            conn_max_age = int(db_conn_max_age)
+        except ValueError:
+            conn_max_age = 0
+    else:
+        # Serverless functions should avoid persistent DB connections.
+        conn_max_age = 0 if parse_bool_env(os.getenv("VERCEL"), default=False) else 60
+
     db_ssl_default = parse_bool_env(os.getenv("VERCEL"), default=False)
     if parse_bool_env(os.getenv("DB_SSL"), default=db_ssl_default):
         # PyMySQL enables TLS when ssl options are provided; empty dict allows
@@ -193,7 +203,7 @@ if DB_ENGINE == 'django.db.backends.mysql':
             'PASSWORD': os.getenv('DB_PASSWORD'),
             'HOST': os.getenv('DB_HOST'),
             'PORT': int(os.getenv('DB_PORT', '3306')),
-            'CONN_MAX_AGE': 60,
+            'CONN_MAX_AGE': conn_max_age,
             'OPTIONS': db_options,
         }
     }
