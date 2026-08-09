@@ -22,68 +22,26 @@ function CardModal({ card, close }) {
     : "No description available.";
 
   const traitsText = hasValue(card.traits) ? String(card.traits) : "";
-
   const abilityText = hasValue(card.ability) ? String(card.ability) : "";
-
   const statsText = hasValue(card.stats) ? String(card.stats) : "";
 
-  const isAntihero = /anti[-\s]?hero/i.test(traitsText);
-  const isStrikethrough = /strikethrough/i.test(traitsText);
-  const isDeadly = /deadly/i.test(traitsText);
-
-  const antiheroMatch = /anti[-\s]?hero(?:\s\*+\d+)?/i.exec(traitsText);
-
-  const strikethroughMatch = /strikethrough(?:\s\*+\d+)?/i.exec(traitsText);
-
-  const deadlyMatch = /deadly(?:\s\*+\d+)?/i.exec(traitsText);
-
-  const renderIconTrait = (match, iconUrl, iconAlt, text) => {
-    if (!match) {
-      return <span>{text}</span>;
-    }
-
-    return (
-      <>
-        <span>{text.slice(0, match.index)}</span>
-
-        <img className="trait-icon" src={iconUrl} alt={iconAlt} />
-
-        <span>{match[0]}</span>
-
-        <span>{text.slice(match.index + match[0].length)}</span>
-      </>
-    );
-  };
-
   /*
-   * Description intentionally only formats the existing
-   * trigger phrases.
-   */
-  const renderDescriptionText = (text) => {
-    if (!text) {
-      return null;
-    }
-
-    const triggerPattern =
-      /(when revealed in an environment|when revealed on heights|when this enters a lane|when hurt|when destroyed|when revealed|zombie evolution|end of turn)/gi;
-
-    const segments = String(text).split(triggerPattern);
-
-    return segments.map((segment, index) => {
-      if (
-        /^(when revealed in an environment|when revealed on heights|when this enters a lane|when hurt|when destroyed|when revealed|zombie evolution|end of turn)$/i.test(
-          segment.trim(),
-        )
-      ) {
-        return <strong key={`${segment}-${index}`}>{segment}</strong>;
-      }
-
-      return <span key={`${segment}-${index}`}>{segment}</span>;
-    });
-  };
-
-  /*
-   * Converts Discord custom emojis into website icons.
+   * ============================================================
+   * DISCORD EMOJI -> WEBSITE IMAGE
+   * ============================================================
+   *
+   * This function ONLY looks at the emoji name.
+   *
+   * <:strength:123>      -> strength.webp
+   * <:health:123>        -> health.webp
+   * <:brainz:123>        -> brainz.webp
+   * <:antihero:123>      -> anti-hero.webp
+   * <:strikethrough:123> -> strikethrough.webp
+   * <:deadly:123>        -> deadly.webp
+   * <:special:123>       -> special.webp
+   * <:freeze:123>        -> freeze.webp
+   *
+   * It does NOT use traits to determine what an emoji is.
    */
   const getEmojiIcon = (emoji) => {
     const normalized = String(emoji || "").toLowerCase();
@@ -109,20 +67,6 @@ function CardModal({ card, close }) {
       };
     }
 
-    if (normalized.startsWith("<:deadly:")) {
-      return {
-        url: MANUAL_STAT_IMAGE_LINKS.default.deadly,
-        alt: "Deadly",
-      };
-    }
-
-    if (normalized.startsWith("<:freeze:")) {
-      return {
-        url: MANUAL_STAT_IMAGE_LINKS.default.freeze,
-        alt: "Freeze",
-      };
-    }
-
     if (normalized.startsWith("<:antihero:")) {
       return {
         url: MANUAL_STAT_IMAGE_LINKS.default.antihero,
@@ -137,17 +81,76 @@ function CardModal({ card, close }) {
       };
     }
 
+    if (normalized.startsWith("<:deadly:")) {
+      return {
+        url: MANUAL_STAT_IMAGE_LINKS.default.deadly,
+        alt: "Deadly",
+      };
+    }
+
+    if (normalized.startsWith("<:special:")) {
+      return {
+        url: MANUAL_STAT_IMAGE_LINKS.default.special,
+        alt: "Special",
+      };
+    }
+
+    if (normalized.startsWith("<:freeze:")) {
+      return {
+        url: MANUAL_STAT_IMAGE_LINKS.default.freeze,
+        alt: "Freeze",
+      };
+    }
+
     return null;
   };
 
   /*
-   * Stats:
+   * ============================================================
+   * DESCRIPTION
+   * ============================================================
    *
-   * Discord emoji IDs in the stats database field
-   * are converted into the appropriate website images.
+   * Only the existing trigger phrases are bolded.
+   */
+  const renderDescriptionText = (text) => {
+    if (!text) {
+      return null;
+    }
+
+    const triggerPattern =
+      /(when revealed in an environment|when revealed on heights|when this enters a lane|when hurt|when destroyed|when revealed|zombie evolution|end of turn)/gi;
+
+    const segments = String(text).split(triggerPattern);
+
+    return segments.map((segment, index) => {
+      if (
+        /^(when revealed in an environment|when revealed on heights|when this enters a lane|when hurt|when destroyed|when revealed|zombie evolution|end of turn)$/i.test(
+          segment.trim(),
+        )
+      ) {
+        return <strong key={`description-${index}`}>{segment}</strong>;
+      }
+
+      return <span key={`description-${index}`}>{segment}</span>;
+    });
+  };
+
+  /*
+   * ============================================================
+   * STATS
+   * ============================================================
    *
-   * Everything else stays exactly as it appears
-   * in the database.
+   * Stats are read ONLY from card.stats.
+   *
+   * Example:
+   *
+   * 3 <:brainz:123> 4 <:strength:456> 5 <:health:789>
+   *
+   * becomes:
+   *
+   * 3 [brainz image] 4 [strength image] 5 [health image]
+   *
+   * A Strength emoji can NEVER become Anti-Hero here.
    */
   const renderStatsText = (stats) => {
     if (!stats) {
@@ -156,9 +159,14 @@ function CardModal({ card, close }) {
 
     const text = String(stats);
 
-    const pattern = /(<:[^:>]+:\d+>)/gi;
+    /*
+     * Matches Discord custom emojis:
+     *
+     * <:name:id>
+     */
+    const emojiPattern = /(<:[^:>]+:\d+>)/gi;
 
-    const matches = [...text.matchAll(pattern)];
+    const matches = [...text.matchAll(emojiPattern)];
 
     if (matches.length === 0) {
       return <span>{text}</span>;
@@ -171,6 +179,9 @@ function CardModal({ card, close }) {
       const fullMatch = match[0];
       const matchIndex = match.index;
 
+      /*
+       * Text before the emoji.
+       */
       if (matchIndex > lastIndex) {
         parts.push(
           <span key={`stats-text-${index}`}>
@@ -179,6 +190,10 @@ function CardModal({ card, close }) {
         );
       }
 
+      /*
+       * Convert the Discord emoji into the correct
+       * website image.
+       */
       const icon = getEmojiIcon(fullMatch);
 
       if (icon) {
@@ -191,12 +206,19 @@ function CardModal({ card, close }) {
           />,
         );
       } else {
+        /*
+         * Unknown emoji:
+         * leave the original Discord emoji untouched.
+         */
         parts.push(<span key={`stats-unknown-${index}`}>{fullMatch}</span>);
       }
 
       lastIndex = matchIndex + fullMatch.length;
     });
 
+    /*
+     * Text after the final emoji.
+     */
     if (lastIndex < text.length) {
       parts.push(<span key="stats-end">{text.slice(lastIndex)}</span>);
     }
@@ -205,13 +227,23 @@ function CardModal({ card, close }) {
   };
 
   /*
-   * Ability formatting:
+   * ============================================================
+   * ABILITY
+   * ============================================================
    *
-   * <Discord emoji> -> image
-   * **__text__**    -> bold + underline
-   * __**text**__    -> bold + underline
-   * **text**        -> bold
-   * __text__        -> underline
+   * Handles:
+   *
+   * <:emoji:id>
+   *
+   * **bold**
+   *
+   * __underline__
+   *
+   * **__bold + underline__**
+   *
+   * __**bold + underline**__
+   *
+   * Emoji handling is completely independent of traits.
    */
   const renderAbilityText = (ability) => {
     if (!ability) {
@@ -236,16 +268,21 @@ function CardModal({ card, close }) {
       const fullMatch = match[0];
       const matchIndex = match.index;
 
+      /*
+       * Normal text before the matched section.
+       */
       if (matchIndex > lastIndex) {
         parts.push(
-          <span key={`text-${index}`}>
+          <span key={`ability-text-${index}`}>
             {text.slice(lastIndex, matchIndex)}
           </span>,
         );
       }
 
       /*
-       * Discord custom emoji
+       * ========================================================
+       * DISCORD EMOJI
+       * ========================================================
        */
       if (match[1]) {
         const icon = getEmojiIcon(match[1]);
@@ -253,19 +290,23 @@ function CardModal({ card, close }) {
         if (icon) {
           parts.push(
             <img
-              key={`icon-${index}`}
+              key={`ability-icon-${index}`}
               className="ability-stat-icon"
               src={icon.url}
               alt={icon.alt}
             />,
           );
         } else {
-          parts.push(<span key={`unknown-emoji-${index}`}>{match[1]}</span>);
+          parts.push(<span key={`ability-unknown-${index}`}>{match[1]}</span>);
         }
       } else if (match[2]) {
 
       /*
+       * ========================================================
+       * BOLD + UNDERLINE
+       *
        * **__text__**
+       * ========================================================
        */
         const formattedText = match[2].slice(4, -4);
 
@@ -277,7 +318,11 @@ function CardModal({ card, close }) {
       } else if (match[3]) {
 
       /*
+       * ========================================================
+       * UNDERLINE + BOLD
+       *
        * __**text**__
+       * ========================================================
        */
         const formattedText = match[3].slice(4, -4);
 
@@ -289,7 +334,11 @@ function CardModal({ card, close }) {
       } else if (match[4]) {
 
       /*
+       * ========================================================
+       * BOLD
+       *
        * **text**
+       * ========================================================
        */
         const formattedText = match[4].slice(2, -2);
 
@@ -297,7 +346,11 @@ function CardModal({ card, close }) {
       } else if (match[5]) {
 
       /*
+       * ========================================================
+       * UNDERLINE
+       *
        * __text__
+       * ========================================================
        */
         const formattedText = match[5].slice(2, -2);
 
@@ -307,8 +360,79 @@ function CardModal({ card, close }) {
       lastIndex = matchIndex + fullMatch.length;
     });
 
+    /*
+     * Text after the final match.
+     */
     if (lastIndex < text.length) {
-      parts.push(<span key="text-end">{text.slice(lastIndex)}</span>);
+      parts.push(<span key="ability-text-end">{text.slice(lastIndex)}</span>);
+    }
+
+    return parts;
+  };
+
+  /*
+   * ============================================================
+   * TRAITS
+   * ============================================================
+   *
+   * Traits are handled separately from stats.
+   */
+  const renderTraitText = (text) => {
+    if (!text) {
+      return null;
+    }
+
+    const traitPattern =
+      /(anti[-\s]?hero|strikethrough|deadly)(?:\s+\*+\d+)?/gi;
+
+    const matches = [...String(text).matchAll(traitPattern)];
+
+    if (matches.length === 0) {
+      return <span>{text}</span>;
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const matchText = match[0];
+      const traitName = match[1].toLowerCase();
+
+      if (match.index > lastIndex) {
+        parts.push(
+          <span key={`trait-text-${index}`}>
+            {text.slice(lastIndex, match.index)}
+          </span>,
+        );
+      }
+
+      let iconUrl = "";
+      let iconAlt = "";
+
+      if (traitName.startsWith("anti")) {
+        iconUrl = MANUAL_STAT_IMAGE_LINKS.default.antihero;
+        iconAlt = "Antihero";
+      } else if (traitName === "strikethrough") {
+        iconUrl = MANUAL_STAT_IMAGE_LINKS.default.strikethrough;
+        iconAlt = "Strikethrough";
+      } else if (traitName === "deadly") {
+        iconUrl = MANUAL_STAT_IMAGE_LINKS.default.deadly;
+        iconAlt = "Deadly";
+      }
+
+      parts.push(
+        <span className="trait-with-icon" key={`trait-${index}`}>
+          <img className="trait-icon" src={iconUrl} alt={iconAlt} />
+
+          <span>{matchText}</span>
+        </span>,
+      );
+
+      lastIndex = match.index + matchText.length;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(<span key="trait-text-end">{text.slice(lastIndex)}</span>);
     }
 
     return parts;
@@ -317,13 +441,13 @@ function CardModal({ card, close }) {
   const hasStats = hasValue(card.stats);
 
   return (
-    <div className="card-overlay" onClick={close}>
+    <div className="card-modal-overlay" onClick={close}>
       <div className="card-modal" onClick={(event) => event.stopPropagation()}>
         <button
           type="button"
-          className="close-card"
+          className="card-modal-close"
           onClick={close}
-          aria-label="Close card"
+          aria-label="Close"
         >
           ×
         </button>
@@ -375,30 +499,7 @@ function CardModal({ card, close }) {
                 <span className="label">Traits</span>
 
                 <span className="value trait-value">
-                  {isAntihero && antiheroMatch ? (
-                    renderIconTrait(
-                      antiheroMatch,
-                      MANUAL_STAT_IMAGE_LINKS.default.antihero,
-                      "Antihero",
-                      traitsText,
-                    )
-                  ) : isStrikethrough && strikethroughMatch ? (
-                    renderIconTrait(
-                      strikethroughMatch,
-                      MANUAL_STAT_IMAGE_LINKS.default.strikethrough,
-                      "Strikethrough",
-                      traitsText,
-                    )
-                  ) : isDeadly && deadlyMatch ? (
-                    renderIconTrait(
-                      deadlyMatch,
-                      MANUAL_STAT_IMAGE_LINKS.default.deadly,
-                      "Deadly",
-                      traitsText,
-                    )
-                  ) : (
-                    <span>{traitsText}</span>
-                  )}
+                  {renderTraitText(traitsText)}
                 </span>
               </div>
             )}
