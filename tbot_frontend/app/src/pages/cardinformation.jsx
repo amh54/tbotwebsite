@@ -90,10 +90,10 @@ function CardInformation() {
                 hasValue(card.strength) ||
                 hasValue(card.health)) && (
                 <p className="card-stats-line">
-                  <span>Stats:</span>
+                  <span className="card-field-label">Stats:</span>
 
                   {hasValue(card.cost) && (
-                    <span className="card-stat-row">
+                    <span className="card-stat-row stat-cost">
                       {card.cost}
                       <img
                         src={STAT_ICON_LINKS.cost}
@@ -104,7 +104,7 @@ function CardInformation() {
                   )}
 
                   {hasValue(card.strength) && (
-                    <span className="card-stat-row">
+                    <span className="card-stat-row stat-strength">
                       {card.strength}
                       <img
                         src={STAT_ICON_LINKS.strength}
@@ -115,7 +115,7 @@ function CardInformation() {
                   )}
 
                   {hasValue(card.health) && (
-                    <span className="card-stat-row">
+                    <span className="card-stat-row stat-health">
                       {card.health}
                       <img
                         src={STAT_ICON_LINKS.health}

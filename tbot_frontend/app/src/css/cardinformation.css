@@ -52,7 +52,7 @@
   font-size: 1rem;
 }
 
-.card-item-info p span {
+.card-item-info p > span:first-child {
   color: #8fe38b;
   font-weight: 700;
 }
@@ -68,8 +68,20 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #dde5ea;
+  color: #ffffff;
   font-weight: 600;
+}
+
+.card-stat-row.stat-cost {
+  color: #f8d2e6;
+}
+
+.card-stat-row.stat-strength {
+  color: #baf5a3;
+}
+
+.card-stat-row.stat-health {
+  color: #ffc0c0;
 }
 
 .card-stat-icon {
