@@ -8,20 +8,25 @@ import "../css/cardinformation.css";
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
     let normalized = value;
+
     while (normalized.endsWith("/")) {
       normalized = normalized.slice(0, -1);
     }
+
     return normalized;
   };
 
   const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
+
   if (envBaseUrl) {
     return stripTrailingSlashes(envBaseUrl);
   }
 
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
+
     const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+
     if (isLocalhost) {
       return "http://localhost:8000";
     }
@@ -48,8 +53,10 @@ const TRAIT_ICON_LINKS = {
 function CardInformation() {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
+
   const hasStrikethroughTrait = (traits) =>
     /strikethrough/i.test(String(traits || ""));
+
   const renderTraitText = (text) => {
     if (!text) {
       return null;
@@ -58,7 +65,7 @@ function CardInformation() {
     const traitPattern =
       /(anti[-\s]?hero|strikethrough|deadly)(?:\s+\*+\d+)?/gi;
 
-    const matches = [...text.matchAll(traitPattern)];
+    const matches = [...String(text).matchAll(traitPattern)];
 
     if (matches.length === 0) {
       return <span>{text}</span>;
@@ -83,19 +90,20 @@ function CardInformation() {
       let iconAlt = "";
 
       if (traitName.startsWith("anti")) {
-        iconUrl = MANUAL_STAT_IMAGE_LINKS.default.antihero;
+        iconUrl = TRAIT_ICON_LINKS.antihero;
         iconAlt = "Antihero";
       } else if (traitName === "strikethrough") {
-        iconUrl = MANUAL_STAT_IMAGE_LINKS.default.strikethrough;
+        iconUrl = TRAIT_ICON_LINKS.strikethrough;
         iconAlt = "Strikethrough";
       } else if (traitName === "deadly") {
-        iconUrl = MANUAL_STAT_IMAGE_LINKS.default.deadly;
+        iconUrl = TRAIT_ICON_LINKS.deadly;
         iconAlt = "Deadly";
       }
 
       parts.push(
         <span className="trait-with-icon" key={`trait-${index}`}>
           <img className="trait-icon" src={iconUrl} alt={iconAlt} />
+
           <span>{matchText}</span>
         </span>,
       );
@@ -110,20 +118,29 @@ function CardInformation() {
     return parts;
   };
 
-  const getPreviewStrengthIcon = (traits) =>
-    /deadly/i.test(String(traits || "")) &&
-    /strikethrough/i.test(String(traits || ""))
-      ? TRAIT_ICON_LINKS.special
-      : /deadly/i.test(String(traits || ""))
-        ? TRAIT_ICON_LINKS.deadly
-        : /anti[-\s]?hero/i.test(String(traits || ""))
-          ? TRAIT_ICON_LINKS.antihero
-          : hasStrikethroughTrait(traits)
-            ? TRAIT_ICON_LINKS.strikethrough
-            : STAT_ICON_LINKS.strength;
+  const getPreviewStrengthIcon = (traits) => {
+    const traitText = String(traits || "");
+
+    if (/deadly/i.test(traitText) && /strikethrough/i.test(traitText)) {
+      return TRAIT_ICON_LINKS.special;
+    }
+
+    if (/deadly/i.test(traitText)) {
+      return TRAIT_ICON_LINKS.deadly;
+    }
+
+    if (/anti[-\s]?hero/i.test(traitText)) {
+      return TRAIT_ICON_LINKS.antihero;
+    }
+
+    if (hasStrikethroughTrait(traitText)) {
+      return TRAIT_ICON_LINKS.strikethrough;
+    }
+
+    return STAT_ICON_LINKS.strength;
+  };
 
   const [cards, setCards] = useState([]);
-
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [loading, setLoading] = useState(true);
@@ -133,47 +150,60 @@ function CardInformation() {
     const fetchCards = async () => {
       try {
         const endpoint = `${API_BASE_URL}/tbotapp/cardinformation/`;
+
         const response = await fetch(endpoint);
+
         if (!response.ok) {
           let message = `Request failed with status ${response.status}`;
+
           try {
             const errorPayload = await response.json();
+
             if (errorPayload?.detail) {
               message = `${message}: ${errorPayload.detail}`;
             } else if (errorPayload?.error) {
               message = `${message}: ${errorPayload.error}`;
             }
           } catch (_error) {
-            // Ignore non-JSON error payloads and keep status-based message.
+            // Ignore non-JSON error payloads.
           }
+
           throw new Error(message);
         }
 
         const contentType = (
           response.headers.get("content-type") || ""
         ).toLowerCase();
+
         const responseText = await response.text();
+
         const hint = import.meta.env.VITE_API_BASE_URL
           ? "Check that VITE_API_BASE_URL points to your backend domain."
           : "VITE_API_BASE_URL is missing; set it in frontend deployment settings.";
 
         if (!contentType.includes("application/json")) {
           const startsLikeHtml = responseText.trim().startsWith("<");
+
           if (startsLikeHtml) {
             throw new Error(
               `Received HTML instead of JSON from ${endpoint}. ${hint}`,
             );
           }
+
           throw new Error(
-            `Unexpected response type (${contentType || "unknown"}) from ${endpoint}. ${hint}`,
+            `Unexpected response type (${
+              contentType || "unknown"
+            }) from ${endpoint}. ${hint}`,
           );
         }
 
         const data = JSON.parse(responseText);
+
         setCards(Array.isArray(data) ? data : []);
         setError("");
       } catch (fetchError) {
         console.error(fetchError);
+
         setError(
           `Unable to load cards right now. ${fetchError.message || ""}`.trim(),
         );
@@ -187,16 +217,16 @@ function CardInformation() {
 
   if (loading) {
     return (
-      <div className="card-page">
-        <h1>Loading Cards...</h1>
+      <div className="card-information-page">
+        <p>Loading Cards...</p>
       </div>
     );
   }
 
   return (
-    <div className="card-page">
+    <div className="card-information-page">
       <nav className="navbar">
-        <div className="logo">
+        <div className="nav-brand">
           <Link to="/">Tbot</Link>
         </div>
 
@@ -228,13 +258,13 @@ function CardInformation() {
               )}
 
               {hasValue(card.traits) && (
-                <div className="metadata-item trait-item">
-                  <span className="label">Traits</span>
+                <p className="card-traits-line">
+                  <span className="card-field-label">Traits:</span>
 
-                  <span className="value trait-value">
-                    {renderTraitText(traitsText)}
+                  <span className="card-traits-value">
+                    {renderTraitText(String(card.traits))}
                   </span>
-                </div>
+                </p>
               )}
 
               {(hasValue(card.cost) ||
@@ -246,6 +276,7 @@ function CardInformation() {
                   {hasValue(card.cost) && (
                     <span className="card-stat-row stat-cost">
                       {card.cost}
+
                       <img
                         src={STAT_ICON_LINKS.cost}
                         alt="Cost"
@@ -257,6 +288,7 @@ function CardInformation() {
                   {hasValue(card.strength) && (
                     <span className="card-stat-row stat-strength">
                       {card.strength}
+
                       <img
                         src={getPreviewStrengthIcon(card.traits)}
                         alt="Strength"
@@ -268,6 +300,7 @@ function CardInformation() {
                   {hasValue(card.health) && (
                     <span className="card-stat-row stat-health">
                       {card.health}
+
                       <img
                         src={STAT_ICON_LINKS.health}
                         alt="Health"
