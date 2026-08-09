@@ -123,6 +123,25 @@ function DecklistsPage() {
           throw new Error(`Request failed with status ${response.status}`);
         }
 
+        const contentType = (response.headers.get("content-type") || "").toLowerCase();
+        if (!contentType.includes("application/json")) {
+          const responseText = await response.text();
+          const startsLikeHtml = responseText.trim().startsWith("<");
+          const hint = import.meta.env.VITE_API_BASE_URL
+            ? "Check that VITE_API_BASE_URL points to your backend domain."
+            : "VITE_API_BASE_URL is missing; set it in frontend deployment settings.";
+
+          if (startsLikeHtml) {
+            throw new Error(
+              `Received HTML instead of JSON from ${decklistsEndpoint}. ${hint}`,
+            );
+          }
+
+          throw new Error(
+            `Unexpected response type (${contentType || "unknown"}) from ${decklistsEndpoint}. ${hint}`,
+          );
+        }
+
         const data = await response.json();
 
         setDecks(data || []);
