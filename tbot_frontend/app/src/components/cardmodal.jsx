@@ -77,15 +77,7 @@ function CardModal({ card, close }) {
   };
 
   /*
-   * Converts Discord custom emoji strings from the
-   * database into the image icons used by the website.
-   *
-   * Examples:
-   * <:Brainz:123456789>
-   * <:Strength:123456789>
-   * <:Health:123456789>
-   * <:Deadly:123456789>
-   * <:freeze:123456789>
+   * Converts Discord custom emoji strings from the database into the image icons used by the website.
    */
   const getEmojiIcon = (emoji) => {
     const normalized = String(emoji || "").toLowerCase();
@@ -149,14 +141,8 @@ function CardModal({ card, close }) {
 
     const text = String(ability);
 
-    /*
-     * Order matters.
-     *
-     * Discord emoji is matched separately so the actual
-     * <:Brainz:ID> text never gets rendered.
-     */
     const pattern =
-      /(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)|(\+\d+\/\+\d+)|(\+\d+)|(⭐)|(<:[^:>]+:\d+>)|(conjure)/gi;
+      /(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)|(\+\d+\/\+\d+)|(\+\d+)|(⭐)|(<:[^:>]+:\d+>)|(\*\*__.*?__\*\*)|(__.*?__)|(conjure)/gi;
 
     const matches = [...text.matchAll(pattern)];
 
@@ -171,9 +157,6 @@ function CardModal({ card, close }) {
       const fullMatch = match[0];
       const matchIndex = match.index;
 
-      /*
-       * Normal text before the match.
-       */
       if (matchIndex > lastIndex) {
         parts.push(
           <span key={`text-${index}`}>
@@ -182,18 +165,13 @@ function CardModal({ card, close }) {
         );
       }
 
-      /*
-       * Ability trigger.
-       */
+      // Bold ability trigger phrases
       if (match[1]) {
         parts.push(<strong key={`trigger-${index}`}>{match[1]}</strong>);
-      } else if (match[2]) {
+      }
 
-      /*
-       * +2/+2, +1/+1, etc.
-       *
-       * These get their own Strength and Health icons.
-       */
+      // +2/+2, +1/+1, etc.
+      else if (match[2]) {
         const [strength, health] = match[2].split("/");
 
         parts.push(
@@ -217,24 +195,19 @@ function CardModal({ card, close }) {
             />
           </span>,
         );
-      } else if (match[3]) {
+      }
 
-      /*
-       * Standalone +1, +2, etc.
-       */
+      // +1, +2, etc.
+      else if (match[3]) {
         parts.push(
           <span className="ability-stat-value" key={`value-${index}`}>
             {match[3]}
           </span>,
         );
-      } else if (match[5]) {
+      }
 
-      /*
-       * Discord custom emoji.
-       *
-       * The emoji text itself is NOT rendered.
-       * Only the replacement image is rendered.
-       */
+      // Discord custom emoji
+      else if (match[5]) {
         const icon = getEmojiIcon(match[5]);
 
         if (icon) {
@@ -247,14 +220,31 @@ function CardModal({ card, close }) {
             />,
           );
         }
-      } else if (match[6]) {
+      }
 
-      /*
-       * Conjure.
-       */
+      // **__text__** = bold + underline
+      else if (match[6]) {
+        const formattedText = match[6].slice(4, -4);
+
+        parts.push(
+          <strong key={`bold-underline-${index}`}>
+            <u>{formattedText}</u>
+          </strong>,
+        );
+      }
+
+      // __text__ = underline
+      else if (match[7]) {
+        const formattedText = match[7].slice(2, -2);
+
+        parts.push(<u key={`underline-${index}`}>{formattedText}</u>);
+      }
+
+      // Conjure
+      else if (match[8]) {
         parts.push(
           <span className="conjure-text" key={`conjure-${index}`}>
-            {match[6]}
+            {match[8]}
           </span>,
         );
       }
@@ -262,9 +252,6 @@ function CardModal({ card, close }) {
       lastIndex = matchIndex + fullMatch.length;
     });
 
-    /*
-     * Remaining text after the final match.
-     */
     if (lastIndex < text.length) {
       parts.push(<span key="text-end">{text.slice(lastIndex)}</span>);
     }
