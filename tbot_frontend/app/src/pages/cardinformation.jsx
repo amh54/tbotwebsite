@@ -11,7 +11,16 @@ const API_BASE_URL =
     "",
   );
 
+const STAT_ICON_LINKS = {
+  cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
+  strength: "https://i.ibb.co/GQt785K6/strength.webp",
+  health: "https://i.ibb.co/bMj86Wvg/health.webp",
+};
+
 function CardInformation() {
+  const hasValue = (value) =>
+    value !== null && value !== undefined && String(value).trim() !== "";
+
   const [cards, setCards] = useState([]);
 
   const [selectedCard, setSelectedCard] = useState(null);
@@ -64,9 +73,70 @@ function CardInformation() {
       <div className="card-grid">
         {cards.map((card) => (
           <div className="card-item" key={card.cardid}>
-            <img src={card.thumbnail} alt={card.card_name} />
+            <div className="card-item-media">
+              <img src={card.thumbnail} alt={card.card_name} />
+            </div>
 
-            <button onClick={() => setSelectedCard(card)}>View Details</button>
+            <div className="card-item-info">
+              <h2>{card.card_name || "Unknown Card"}</h2>
+
+              {hasValue(card.card_type) && (
+                <p>
+                  <span>Type:</span> {card.card_type}
+                </p>
+              )}
+
+              {(hasValue(card.cost) ||
+                hasValue(card.strength) ||
+                hasValue(card.health)) && (
+                <p className="card-stats-line">
+                  <span>Stats:</span>
+
+                  {hasValue(card.cost) && (
+                    <span className="card-stat-row">
+                      {card.cost}
+                      <img
+                        src={STAT_ICON_LINKS.cost}
+                        alt="Cost"
+                        className="card-stat-icon"
+                      />
+                    </span>
+                  )}
+
+                  {hasValue(card.strength) && (
+                    <span className="card-stat-row">
+                      {card.strength}
+                      <img
+                        src={STAT_ICON_LINKS.strength}
+                        alt="Strength"
+                        className="card-stat-icon"
+                      />
+                    </span>
+                  )}
+
+                  {hasValue(card.health) && (
+                    <span className="card-stat-row">
+                      {card.health}
+                      <img
+                        src={STAT_ICON_LINKS.health}
+                        alt="Health"
+                        className="card-stat-icon"
+                      />
+                    </span>
+                  )}
+                </p>
+              )}
+
+              {hasValue(card.set_rarity) && (
+                <p>
+                  <span>Rarity:</span> {card.set_rarity}
+                </p>
+              )}
+
+              <button type="button" onClick={() => setSelectedCard(card)}>
+                View Details
+              </button>
+            </div>
           </div>
         ))}
       </div>
