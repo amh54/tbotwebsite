@@ -163,7 +163,12 @@
 .stats-item {
   grid-column: 1 / -1;
 }
-
+.stats-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
 .trait-item {
   min-height: 0;
 }

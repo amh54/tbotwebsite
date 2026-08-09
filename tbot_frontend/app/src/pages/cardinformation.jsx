@@ -57,6 +57,128 @@ function CardInformation() {
   const hasStrikethroughTrait = (traits) =>
     /strikethrough/i.test(String(traits || ""));
 
+  /*
+   * Convert Discord custom emoji to the website icon.
+   */
+  const getEmojiIcon = (emoji) => {
+    const normalized = String(emoji || "").toLowerCase();
+
+    if (normalized.startsWith("<:brainz:")) {
+      return {
+        url: STAT_ICON_LINKS.cost,
+        alt: "Brainz",
+      };
+    }
+
+    if (normalized.startsWith("<:strength:")) {
+      return {
+        url: STAT_ICON_LINKS.strength,
+        alt: "Strength",
+      };
+    }
+
+    if (normalized.startsWith("<:health:")) {
+      return {
+        url: STAT_ICON_LINKS.health,
+        alt: "Health",
+      };
+    }
+
+    if (normalized.startsWith("<:deadly:")) {
+      return {
+        url: TRAIT_ICON_LINKS.deadly,
+        alt: "Deadly",
+      };
+    }
+
+    if (normalized.startsWith("<:freeze:")) {
+      return {
+        url: "https://i.ibb.co/hFPRcrp6/freeze.webp",
+        alt: "Freeze",
+      };
+    }
+
+    if (normalized.startsWith("<:antihero:")) {
+      return {
+        url: TRAIT_ICON_LINKS.antihero,
+        alt: "Antihero",
+      };
+    }
+
+    if (normalized.startsWith("<:strikethrough:")) {
+      return {
+        url: TRAIT_ICON_LINKS.strikethrough,
+        alt: "Strikethrough",
+      };
+    }
+
+    return null;
+  };
+
+  /*
+   * Stats now come entirely from card.stats.
+   *
+   * Example database value:
+   *
+   * 3 <:Brainz:ID>, 4 <:Strength:ID>, 5 <:Health:ID>
+   *
+   * The Discord emojis are replaced with the website icons.
+   */
+  const renderStatsText = (stats) => {
+    if (!stats) {
+      return null;
+    }
+
+    const text = String(stats);
+
+    const pattern = /(<:[^:>]+:\d+>)/gi;
+
+    const matches = [...text.matchAll(pattern)];
+
+    if (matches.length === 0) {
+      return <span>{text}</span>;
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        parts.push(
+          <span key={`stats-text-${index}`}>
+            {text.slice(lastIndex, matchIndex)}
+          </span>,
+        );
+      }
+
+      const icon = getEmojiIcon(fullMatch);
+
+      if (icon) {
+        parts.push(
+          <img
+            key={`stats-icon-${index}`}
+            src={icon.url}
+            alt={icon.alt}
+            className="card-stat-icon"
+          />,
+        );
+      } else {
+        parts.push(<span key={`stats-unknown-${index}`}>{fullMatch}</span>);
+      }
+
+      lastIndex = matchIndex + fullMatch.length;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(<span key="stats-end">{text.slice(lastIndex)}</span>);
+    }
+
+    return parts;
+  };
+
   const renderTraitText = (text) => {
     if (!text) {
       return null;
@@ -118,28 +240,6 @@ function CardInformation() {
     return parts;
   };
 
-  const getPreviewStrengthIcon = (traits) => {
-    const traitText = String(traits || "");
-
-    if (/deadly/i.test(traitText) && /strikethrough/i.test(traitText)) {
-      return TRAIT_ICON_LINKS.special;
-    }
-
-    if (/deadly/i.test(traitText)) {
-      return TRAIT_ICON_LINKS.deadly;
-    }
-
-    if (/anti[-\s]?hero/i.test(traitText)) {
-      return TRAIT_ICON_LINKS.antihero;
-    }
-
-    if (hasStrikethroughTrait(traitText)) {
-      return TRAIT_ICON_LINKS.strikethrough;
-    }
-
-    return STAT_ICON_LINKS.strength;
-  };
-
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
 
@@ -191,9 +291,9 @@ function CardInformation() {
           }
 
           throw new Error(
-            `Unexpected response type (${
+            `Unexpected response type ${
               contentType || "unknown"
-            }) from ${endpoint}. ${hint}`,
+            } from ${endpoint}. ${hint}`,
           );
         }
 
@@ -216,19 +316,13 @@ function CardInformation() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="card-information-page">
-        <p>Loading Cards...</p>
-      </div>
-    );
+    return <div>Loading Cards...</div>;
   }
 
   return (
-    <div className="card-information-page">
+    <div className="card-page">
       <nav className="navbar">
-        <div className="nav-brand">
-          <Link to="/">Tbot</Link>
-        </div>
+        <div className="nav-brand">Tbot</div>
 
         <div className="nav-links">
           <Link to="/">Home</Link>
@@ -267,47 +361,13 @@ function CardInformation() {
                 </p>
               )}
 
-              {(hasValue(card.cost) ||
-                hasValue(card.strength) ||
-                hasValue(card.health)) && (
+              {hasValue(card.stats) && (
                 <p className="card-stats-line">
                   <span className="card-field-label">Stats:</span>
 
-                  {hasValue(card.cost) && (
-                    <span className="card-stat-row stat-cost">
-                      {card.cost}
-
-                      <img
-                        src={STAT_ICON_LINKS.cost}
-                        alt="Cost"
-                        className="card-stat-icon"
-                      />
-                    </span>
-                  )}
-
-                  {hasValue(card.strength) && (
-                    <span className="card-stat-row stat-strength">
-                      {card.strength}
-
-                      <img
-                        src={getPreviewStrengthIcon(card.traits)}
-                        alt="Strength"
-                        className="card-stat-icon"
-                      />
-                    </span>
-                  )}
-
-                  {hasValue(card.health) && (
-                    <span className="card-stat-row stat-health">
-                      {card.health}
-
-                      <img
-                        src={STAT_ICON_LINKS.health}
-                        alt="Health"
-                        className="card-stat-icon"
-                      />
-                    </span>
-                  )}
+                  <span className="card-stats-value">
+                    {renderStatsText(String(card.stats))}
+                  </span>
                 </p>
               )}
 

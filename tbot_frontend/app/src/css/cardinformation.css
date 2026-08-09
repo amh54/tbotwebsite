@@ -112,6 +112,20 @@
   height: 18px;
   object-fit: contain;
 }
+.card-stats-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.card-stats-value .card-stat-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
 
 .card-item button {
   margin-top: 10px;
