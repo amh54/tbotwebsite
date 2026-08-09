@@ -21,22 +21,19 @@ function CardModal({ card, close }) {
     : "No description available.";
 
   const traitsText = hasValue(card.traits) ? String(card.traits) : "";
-
   const abilityText = hasValue(card.ability) ? String(card.ability) : "";
 
   const isAntihero = /anti[-\s]?hero/i.test(traitsText);
   const isStrikethrough = /strikethrough/i.test(traitsText);
   const isDeadly = /deadly/i.test(traitsText);
 
-  const antiheroMatch = /anti[-\s]?hero(?:\s\*\d+)?/i.exec(traitsText);
-
-  const strikethroughMatch = /strikethrough(?:\s\*\d+)?/i.exec(traitsText);
-
-  const deadlyMatch = /deadly(?:\s\*\d+)?/i.exec(traitsText);
+  const antiheroMatch = /anti[-\s]?hero(?:\s*\*\d+)?/i.exec(traitsText);
+  const strikethroughMatch = /strikethrough(?:\s*\*\d+)?/i.exec(traitsText);
+  const deadlyMatch = /deadly(?:\s*\*\d+)?/i.exec(traitsText);
 
   const renderIconTrait = (match, iconUrl, iconAlt, text) => (
     <>
-      <span>{text.slice(0, match.index)}</span>
+      {text.slice(0, match.index)}
 
       <img className="trait-icon" src={iconUrl} alt={iconAlt} />
 
@@ -69,14 +66,27 @@ function CardModal({ card, close }) {
     });
   };
 
+  // Bolds specific trigger phrases ONLY inside the Ability field.
   const renderAbilityText = (ability) => {
     if (!ability) {
       return null;
     }
 
-    const segments = ability.split(/(\+1\/\+1|conjure)/gi);
+    const segments = String(ability).split(
+      /(when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights|\+1\/\+1|conjure)/gi,
+    );
 
     return segments.map((segment, index) => {
+      // Bold ability triggers
+      if (
+        /^(when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)$/i.test(
+          segment.trim(),
+        )
+      ) {
+        return <strong key={`${segment}-${index}`}>{segment}</strong>;
+      }
+
+      // +1/+1 stat icons
       if (segment === "+1/+1") {
         return (
           <span className="ability-stat-pair" key={`${segment}-${index}`}>
@@ -101,6 +111,7 @@ function CardModal({ card, close }) {
         );
       }
 
+      // Conjure
       if (/^conjure$/i.test(segment)) {
         return (
           <span key={`${segment}-${index}`} className="conjure-text">
@@ -154,14 +165,9 @@ function CardModal({ card, close }) {
   const hasStats = visibleStatRows.length > 0;
 
   return (
-    <div className="card-overlay">
-      <div className="card-modal">
-        <button
-          type="button"
-          className="close-card"
-          onClick={close}
-          aria-label="Close card details"
-        >
+    <div className="card-overlay" onClick={close}>
+      <div className="card-modal" onClick={(event) => event.stopPropagation()}>
+        <button className="modal-close" onClick={close} aria-label="Close">
           ×
         </button>
 
