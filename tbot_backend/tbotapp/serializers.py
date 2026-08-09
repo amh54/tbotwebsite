@@ -3,11 +3,12 @@ from .models import Decklist, ZombieCards
 
 
 class DeckSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Decklist
         fields = "__all__"
-class ZombieCardsSerializer(serializers.ModelSerializer):
+
+
+class ZombieCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = ZombieCards
         fields = [
