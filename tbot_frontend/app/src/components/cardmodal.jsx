@@ -142,7 +142,7 @@ function CardModal({ card, close }) {
     const text = String(ability);
 
     const pattern =
-      /(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)|(\+\d+\/\+\d+)|(\+\d+)|(⭐)|(<:[^:>]+:\d+>)|(\*\*__.*?__\*\*)|(__.*?__)|(conjure)/gi;
+      /(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)|(\+\d+\/\+\d+)|(\+\d+)|(<:[^:>]+:\d+>)|(\*\*__.*?__\*\*)|(__\*\*.*?\*\*__)|(\*\*.*?\*\*)|(__.*?__)|(conjure)/gi;
 
     const matches = [...text.matchAll(pattern)];
 
@@ -165,12 +165,12 @@ function CardModal({ card, close }) {
         );
       }
 
-      // Bold ability trigger phrases
+      // Ability trigger phrases
       if (match[1]) {
         parts.push(<strong key={`trigger-${index}`}>{match[1]}</strong>);
       }
 
-      // +2/+2, +1/+1, etc.
+      // +2/+2
       else if (match[2]) {
         const [strength, health] = match[2].split("/");
 
@@ -197,7 +197,7 @@ function CardModal({ card, close }) {
         );
       }
 
-      // +1, +2, etc.
+      // +1, +2
       else if (match[3]) {
         parts.push(
           <span className="ability-stat-value" key={`value-${index}`}>
@@ -207,8 +207,8 @@ function CardModal({ card, close }) {
       }
 
       // Discord custom emoji
-      else if (match[5]) {
-        const icon = getEmojiIcon(match[5]);
+      else if (match[4]) {
+        const icon = getEmojiIcon(match[4]);
 
         if (icon) {
           parts.push(
@@ -223,8 +223,8 @@ function CardModal({ card, close }) {
       }
 
       // **__text__** = bold + underline
-      else if (match[6]) {
-        const formattedText = match[6].slice(4, -4);
+      else if (match[5]) {
+        const formattedText = match[5].slice(4, -4);
 
         parts.push(
           <strong key={`bold-underline-${index}`}>
@@ -233,18 +233,36 @@ function CardModal({ card, close }) {
         );
       }
 
-      // __text__ = underline
+      // __**text**__ = bold + underline
+      else if (match[6]) {
+        const formattedText = match[6].slice(4, -4);
+
+        parts.push(
+          <strong key={`underline-bold-${index}`}>
+            <u>{formattedText}</u>
+          </strong>,
+        );
+      }
+
+      // **text** = bold
       else if (match[7]) {
         const formattedText = match[7].slice(2, -2);
+
+        parts.push(<strong key={`bold-${index}`}>{formattedText}</strong>);
+      }
+
+      // __text__ = underline
+      else if (match[8]) {
+        const formattedText = match[8].slice(2, -2);
 
         parts.push(<u key={`underline-${index}`}>{formattedText}</u>);
       }
 
       // Conjure
-      else if (match[8]) {
+      else if (match[9]) {
         parts.push(
           <span className="conjure-text" key={`conjure-${index}`}>
-            {match[8]}
+            {match[9]}
           </span>,
         );
       }
