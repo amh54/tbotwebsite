@@ -25,22 +25,21 @@ class Decklist(models.Model):
 class ZombieCards(models.Model):
     cardid = models.SmallIntegerField(primary_key=True)
     card_type = models.CharField(max_length=50)
-    card_name = models.CharField(max_length=200)
-    title = models.CharField(max_length=100)
+    card_name = models.CharField(max_length=200, blank=True)
+    title = models.CharField(max_length=100, blank=True)
     stats = models.CharField(max_length=300, blank=True)
-    description = models.CharField(max_length=100)
-    ability = models.CharField(max_length=300)
-    thumbnail = models.CharField(max_length=330)
-    traits = models.CharField(max_length=150)
-    set_rarity = models.CharField(max_length=50)
-    flavor_text = models.CharField(max_length=300)
-    aliases = models.CharField(max_length=160)
-    button = models.CharField(max_length=130)
-    button_emoji = models.CharField(max_length=130)
-    button2 = models.CharField(max_length=130)
-    button_emoji2 = models.CharField(max_length=130)
+    description = models.CharField(max_length=100, blank=True)
+    ability = models.CharField(max_length=300, blank=True)
+    thumbnail = models.CharField(max_length=330, blank=True)
+    traits = models.CharField(max_length=150, blank=True)
+    set_rarity = models.CharField(max_length=50, blank=True)
+    flavor_text = models.CharField(max_length=300, blank=True)
+    aliases = models.CharField(max_length=160, blank=True)
+    button = models.CharField(max_length=130, blank=True)
+    button_emoji = models.CharField(max_length=130, blank=True)
+    button2 = models.CharField(max_length=130, blank=True)
+    button_emoji2 = models.CharField(max_length=130, blank=True)
 
     class Meta:
         db_table = "zombiecards"
         managed = False
-  
