@@ -124,13 +124,13 @@ function DecklistsPage() {
         }
 
         const contentType = (response.headers.get("content-type") || "").toLowerCase();
-        if (!contentType.includes("application/json")) {
-          const responseText = await response.text();
-          const startsLikeHtml = responseText.trim().startsWith("<");
-          const hint = import.meta.env.VITE_API_BASE_URL
-            ? "Check that VITE_API_BASE_URL points to your backend domain."
-            : "VITE_API_BASE_URL is missing; set it in frontend deployment settings.";
+        const responseText = await response.text();
+        const hint = import.meta.env.VITE_API_BASE_URL
+          ? "Check that VITE_API_BASE_URL points to your backend domain."
+          : "VITE_API_BASE_URL is missing; set it in frontend deployment settings.";
 
+        if (!contentType.includes("application/json")) {
+          const startsLikeHtml = responseText.trim().startsWith("<");
           if (startsLikeHtml) {
             throw new Error(
               `Received HTML instead of JSON from ${decklistsEndpoint}. ${hint}`,
@@ -142,7 +142,21 @@ function DecklistsPage() {
           );
         }
 
-        const data = await response.json();
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (_parseError) {
+          const startsLikeHtml = responseText.trim().startsWith("<");
+          if (startsLikeHtml) {
+            throw new Error(
+              `Received HTML instead of JSON from ${decklistsEndpoint}. ${hint}`,
+            );
+          }
+
+          throw new Error(
+            `Invalid JSON received from ${decklistsEndpoint}. ${hint}`,
+          );
+        }
 
         setDecks(data || []);
 

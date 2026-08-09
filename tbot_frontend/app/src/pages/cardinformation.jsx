@@ -131,22 +131,45 @@ function CardInformation() {
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/tbotapp/cardinformation/`)
-      .then((response) => response.json())
+    const fetchCards = async () => {
+      try {
+        const endpoint = `${API_BASE_URL}/tbotapp/cardinformation/`;
+        const response = await fetch(endpoint);
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
 
-      .then((data) => {
-        setCards(data);
+        const contentType = (response.headers.get("content-type") || "").toLowerCase();
+        const responseText = await response.text();
+        const hint = import.meta.env.VITE_API_BASE_URL
+          ? "Check that VITE_API_BASE_URL points to your backend domain."
+          : "VITE_API_BASE_URL is missing; set it in frontend deployment settings.";
 
+        if (!contentType.includes("application/json")) {
+          const startsLikeHtml = responseText.trim().startsWith("<");
+          if (startsLikeHtml) {
+            throw new Error(`Received HTML instead of JSON from ${endpoint}. ${hint}`);
+          }
+          throw new Error(
+            `Unexpected response type (${contentType || "unknown"}) from ${endpoint}. ${hint}`,
+          );
+        }
+
+        const data = JSON.parse(responseText);
+        setCards(Array.isArray(data) ? data : []);
+        setError("");
+      } catch (fetchError) {
+        console.error(fetchError);
+        setError(`Unable to load cards right now. ${fetchError.message || ""}`.trim());
+      } finally {
         setLoading(false);
-      })
+      }
+    };
 
-      .catch((error) => {
-        console.error(error);
-
-        setLoading(false);
-      });
+    fetchCards();
   }, []);
 
   if (loading) {
@@ -172,6 +195,8 @@ function CardInformation() {
       </nav>
 
       <h1>Card Information</h1>
+
+      {error && <p className="error-message">{error}</p>}
 
       <div className="card-grid">
         {cards.map((card) => (
