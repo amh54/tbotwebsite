@@ -120,7 +120,18 @@ function DecklistsPage() {
         });
 
         if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
+          let message = `Request failed with status ${response.status}`;
+          try {
+            const errorPayload = await response.json();
+            if (errorPayload?.detail) {
+              message = `${message}: ${errorPayload.detail}`;
+            } else if (errorPayload?.error) {
+              message = `${message}: ${errorPayload.error}`;
+            }
+          } catch (_error) {
+            // Ignore non-JSON error payloads and keep status-based message.
+          }
+          throw new Error(message);
         }
 
         const contentType = (response.headers.get("content-type") || "").toLowerCase();

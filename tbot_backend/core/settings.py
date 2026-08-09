@@ -169,6 +169,19 @@ if not DB_ENGINE:
 
 if DB_ENGINE == 'django.db.backends.mysql':
 
+    db_options = {}
+    if parse_bool_env(os.getenv("DB_SSL"), default=False):
+        # PyMySQL enables TLS when ssl options are provided; empty dict allows
+        # the default cert chain on providers that require encrypted transport.
+        db_options["ssl"] = {}
+
+    db_connect_timeout = os.getenv("DB_CONNECT_TIMEOUT", "").strip()
+    if db_connect_timeout:
+        try:
+            db_options["connect_timeout"] = int(db_connect_timeout)
+        except ValueError:
+            pass
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -178,6 +191,7 @@ if DB_ENGINE == 'django.db.backends.mysql':
             'HOST': os.getenv('DB_HOST'),
             'PORT': int(os.getenv('DB_PORT', '3306')),
             'CONN_MAX_AGE': 60,
+            'OPTIONS': db_options,
         }
     }
 elif DB_ENGINE == 'django.db.backends.sqlite3':
