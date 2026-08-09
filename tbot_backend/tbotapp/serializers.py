@@ -1,7 +1,13 @@
 from rest_framework import serializers
-from .models import ZombieCards
+from .models import Decklist, ZombieCards
 
-class ZombieCardSerializer(serializers.ModelSerializer):
+
+class DeckSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Decklist
+        fields = "__all__"
+class ZombieCardsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ZombieCards
         fields = [
