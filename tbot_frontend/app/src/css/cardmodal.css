@@ -172,6 +172,33 @@
   white-space: pre-wrap;
 }
 
+.ability-value {
+  display: inline;
+}
+
+.ability-stat-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 2px;
+  vertical-align: middle;
+}
+
+.ability-stat-value {
+  font-weight: 700;
+}
+
+.ability-stat-slash {
+  margin: 0 1px;
+  font-weight: 700;
+}
+
+.ability-stat-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
 .trait-value {
   text-decoration: underline;
   display: inline-flex;

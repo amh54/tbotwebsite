@@ -13,8 +13,10 @@ function CardModal({ card, close }) {
   const hasValue = (value) => value !== null && value !== undefined && String(value).trim() !== "";
   const description = hasValue(card.description) ? card.description : "No description available.";
   const traitsText = hasValue(card.traits) ? String(card.traits) : "";
+  const abilityText = hasValue(card.ability) ? String(card.ability) : "";
   const isAntihero = /anti[-\s]?hero/i.test(traitsText);
   const antiheroMatch = /anti[-\s]?hero(?:\s*\d+)?/i.exec(traitsText);
+  const abilitySegments = abilityText ? abilityText.split(/(\+1\/\+1)/g) : [];
 
   const getManualStatImageUrl = (statKey) => {
     const cardKey = card.card_name || card.title || "";
@@ -118,7 +120,33 @@ function CardModal({ card, close }) {
               <div className="metadata-item">
                 <span className="label">Ability</span>
 
-                <span className="value">{card.ability}</span>
+                <span className="value ability-value">
+                  {abilitySegments.length > 0 ? (
+                    abilitySegments.map((segment, index) =>
+                      segment === "+1/+1" ? (
+                        <span className="ability-stat-pair" key={`${segment}-${index}`}>
+                          <span className="ability-stat-value">+1</span>
+                          <img
+                            className="ability-stat-icon"
+                            src={MANUAL_STAT_IMAGE_LINKS.default.strength}
+                            alt="Attack"
+                          />
+                          <span className="ability-stat-slash">/</span>
+                          <span className="ability-stat-value">+1</span>
+                          <img
+                            className="ability-stat-icon"
+                            src={MANUAL_STAT_IMAGE_LINKS.default.health}
+                            alt="Health"
+                          />
+                        </span>
+                      ) : (
+                        <span key={`${segment}-${index}`}>{segment}</span>
+                      ),
+                    )
+                  ) : (
+                    card.ability
+                  )}
+                </span>
               </div>
             )}
 
