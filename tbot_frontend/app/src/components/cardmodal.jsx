@@ -9,6 +9,7 @@ const MANUAL_STAT_IMAGE_LINKS = {
     strikethrough: "https://i.ibb.co/99KG7vjj/strikethrough.webp",
     deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
     special: "https://i.ibb.co/Sw0yS0Mg/special.webp",
+    freeze: "https://i.ibb.co/hFPRcrp6/freeze.webp",
   },
 };
 
@@ -21,15 +22,18 @@ function CardModal({ card, close }) {
     : "No description available.";
 
   const traitsText = hasValue(card.traits) ? String(card.traits) : "";
+
   const abilityText = hasValue(card.ability) ? String(card.ability) : "";
 
   const isAntihero = /anti[-\s]?hero/i.test(traitsText);
   const isStrikethrough = /strikethrough/i.test(traitsText);
   const isDeadly = /deadly/i.test(traitsText);
 
-  const antiheroMatch = /anti[-\s]?hero(?:\s*\*\d+)?/i.exec(traitsText);
-  const strikethroughMatch = /strikethrough(?:\s*\*\d+)?/i.exec(traitsText);
-  const deadlyMatch = /deadly(?:\s*\*\d+)?/i.exec(traitsText);
+  const antiheroMatch = /anti[-\s]?hero(?:\s\*\*\d+)?/i.exec(traitsText);
+
+  const strikethroughMatch = /strikethrough(?:\s\*\*\d+)?/i.exec(traitsText);
+
+  const deadlyMatch = /deadly(?:\s\*\*\d+)?/i.exec(traitsText);
 
   const renderIconTrait = (match, iconUrl, iconAlt, text) => (
     <>
@@ -66,7 +70,66 @@ function CardModal({ card, close }) {
     });
   };
 
-  // Bolds specific trigger phrases ONLY inside the Ability field.
+  // Converts Discord custom emojis stored in the database
+  // into the corresponding image icons.
+  const getEmojiIcon = (emoji) => {
+    const normalizedEmoji = String(emoji || "").toLowerCase();
+
+    if (normalizedEmoji.startsWith("<:brainz:")) {
+      return {
+        url: MANUAL_STAT_IMAGE_LINKS.default.cost,
+        alt: "Brainz",
+      };
+    }
+
+    if (normalizedEmoji.startsWith("<:strength:")) {
+      return {
+        url: MANUAL_STAT_IMAGE_LINKS.default.strength,
+        alt: "Strength",
+      };
+    }
+
+    if (normalizedEmoji.startsWith("<:health:")) {
+      return {
+        url: MANUAL_STAT_IMAGE_LINKS.default.health,
+        alt: "Health",
+      };
+    }
+
+    if (normalizedEmoji.startsWith("<:deadly:")) {
+      return {
+        url: MANUAL_STAT_IMAGE_LINKS.default.deadly,
+        alt: "Deadly",
+      };
+    }
+
+    if (normalizedEmoji.startsWith("<:freeze:")) {
+      return {
+        url: MANUAL_STAT_IMAGE_LINKS.default.freeze,
+        alt: "Freeze",
+      };
+    }
+
+    if (normalizedEmoji.startsWith("<:antihero:")) {
+      return {
+        url: MANUAL_STAT_IMAGE_LINKS.default.antihero,
+        alt: "Antihero",
+      };
+    }
+
+    if (normalizedEmoji.startsWith("<:strikethrough:")) {
+      return {
+        url: MANUAL_STAT_IMAGE_LINKS.default.strikethrough,
+        alt: "Strikethrough",
+      };
+    }
+
+    return null;
+  };
+
+  // Bolds specific trigger phrases ONLY inside
+  // the Ability field and replaces Discord emojis
+  // with the corresponding image icons.
   const renderAbilityText = (ability) => {
     if (!ability) {
       return null;
@@ -75,7 +138,7 @@ function CardModal({ card, close }) {
     const text = String(ability);
 
     const pattern =
-      /(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)|(\+\d+\/\+\d+)|(\+\d+)|(<:Brainz:\d+>|<:Strength:\d+>|<:Health:\d+>)|(conjure)/gi;
+      /(when played|when hurt|when destroyed|when this enters a lane|when revealed in an environment|when revealed|zombie evolution|end of turn|when revealed on heights)|(\+\d+\/\+\d+)|(\+\d+)|(⭐)|(<:[^:>]+:\d+>)|(conjure)/gi;
 
     const matches = [...text.matchAll(pattern)];
 
@@ -132,6 +195,8 @@ function CardModal({ card, close }) {
       }
 
       // +1, +2, etc.
+      // The actual Strength/Health emoji immediately
+      // following it will be handled separately.
       else if (match[3]) {
         parts.push(
           <span className="ability-stat-value" key={`value-${index}`}>
@@ -140,41 +205,27 @@ function CardModal({ card, close }) {
         );
       }
 
-      // Discord custom emoji tokens
-      else if (match[4]) {
-        const emoji = match[4].toLowerCase();
+      // Discord custom emoji
+      else if (match[5]) {
+        const icon = getEmojiIcon(match[5]);
 
-        let imageUrl = "";
-        let altText = "";
-
-        if (emoji.startsWith("<:brainz:")) {
-          imageUrl = MANUAL_STAT_IMAGE_LINKS.default.cost;
-          altText = "Brainz";
-        } else if (emoji.startsWith("<:strength:")) {
-          imageUrl = MANUAL_STAT_IMAGE_LINKS.default.strength;
-          altText = "Strength";
-        } else if (emoji.startsWith("<:health:")) {
-          imageUrl = MANUAL_STAT_IMAGE_LINKS.default.health;
-          altText = "Health";
-        }
-
-        if (imageUrl) {
+        if (icon) {
           parts.push(
             <img
               key={`icon-${index}`}
               className="ability-stat-icon"
-              src={imageUrl}
-              alt={altText}
+              src={icon.url}
+              alt={icon.alt}
             />,
           );
         }
       }
 
       // Conjure
-      else if (match[5]) {
+      else if (match[6]) {
         parts.push(
           <span className="conjure-text" key={`conjure-${index}`}>
-            {match[5]}
+            {match[6]}
           </span>,
         );
       }
@@ -231,128 +282,131 @@ function CardModal({ card, close }) {
   const hasStats = visibleStatRows.length > 0;
 
   return (
-    <div className="card-overlay" onClick={close}>
-      <div className="card-modal" onClick={(event) => event.stopPropagation()}>
-        <button className="modal-close" onClick={close} aria-label="Close">
-          ×
-        </button>
+    <div className="card-modal" onClick={(event) => event.stopPropagation()}>
+      <button
+        className="modal-close"
+        onClick={close}
+        type="button"
+        aria-label="Close"
+      >
+        ×
+      </button>
 
-        <img
-          className="modal-card-image"
-          src={card.thumbnail}
-          alt={card.card_name}
-        />
+      <img
+        className="modal-card-image"
+        src={card.thumbnail}
+        alt={card.card_name}
+      />
 
-        <div className="modal-info">
-          <div className="modal-header">
-            <h2 className="modal-title">{card.card_name}</h2>
+      <div className="modal-info">
+        <div className="modal-header">
+          <h2 className="modal-title">{card.card_name}</h2>
 
-            <span className="card-type">{card.card_type}</span>
-          </div>
-
-          <section className="modal-section description-section">
-            <h3>Description</h3>
-
-            <p className="description-text">
-              {renderDescriptionText(description)}
-            </p>
-          </section>
-
-          <section className="modal-metadata">
-            {hasStats && (
-              <div className="metadata-item stats-item">
-                <span className="label">Stats</span>
-
-                <div className="stat-list">
-                  {visibleStatRows.map((row, index) => {
-                    const statValue = hasValue(row.value) ? row.value : "-";
-
-                    const isLast = index === visibleStatRows.length - 1;
-
-                    return (
-                      <span className="stat-row" key={row.label}>
-                        <span className="stat-value">{statValue}</span>
-
-                        {hasValue(row.imageUrl) && (
-                          <a
-                            className="stat-image-link"
-                            href={row.imageUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`${row.label} image link`}
-                          >
-                            <img src={row.imageUrl} alt={row.label} />
-                          </a>
-                        )}
-
-                        {!isLast && <span className="stat-separator">,</span>}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {hasValue(card.ability) && (
-              <div className="metadata-item">
-                <span className="label">Ability</span>
-
-                <span className="value ability-value">
-                  {renderAbilityText(abilityText)}
-                </span>
-              </div>
-            )}
-
-            {hasValue(card.traits) && (
-              <div className="metadata-item trait-item">
-                <span className="label">Traits</span>
-
-                <span className="value trait-value">
-                  {isAntihero && antiheroMatch ? (
-                    renderIconTrait(
-                      antiheroMatch,
-                      MANUAL_STAT_IMAGE_LINKS.default.antihero,
-                      "Antihero",
-                      traitsText,
-                    )
-                  ) : isStrikethrough && strikethroughMatch ? (
-                    renderIconTrait(
-                      strikethroughMatch,
-                      MANUAL_STAT_IMAGE_LINKS.default.strikethrough,
-                      "Strikethrough",
-                      traitsText,
-                    )
-                  ) : isDeadly && deadlyMatch ? (
-                    renderIconTrait(
-                      deadlyMatch,
-                      MANUAL_STAT_IMAGE_LINKS.default.deadly,
-                      "Deadly",
-                      traitsText,
-                    )
-                  ) : (
-                    <span>{traitsText}</span>
-                  )}
-                </span>
-              </div>
-            )}
-
-            {hasValue(card.set_rarity) && (
-              <div className="metadata-item">
-                <span className="label">Rarity</span>
-
-                <span className="value">{card.set_rarity}</span>
-              </div>
-            )}
-
-            {hasValue(card.flavor_text) && (
-              <div className="metadata-item full-width-item">
-                <span className="label">Flavor Text</span>
-
-                <span className="value">{card.flavor_text}</span>
-              </div>
-            )}
-          </section>
+          <span className="card-type">{card.card_type}</span>
         </div>
+
+        <section className="modal-section description-section">
+          <h3>Description</h3>
+
+          <p className="description-text">
+            {renderDescriptionText(description)}
+          </p>
+        </section>
+
+        <section className="modal-metadata">
+          {hasStats && (
+            <div className="metadata-item stats-item">
+              <span className="label">Stats</span>
+
+              <div className="stat-list">
+                {visibleStatRows.map((row, index) => {
+                  const statValue = hasValue(row.value) ? row.value : "-";
+
+                  const isLast = index === visibleStatRows.length - 1;
+
+                  return (
+                    <span className="stat-row" key={row.label}>
+                      <span className="stat-value">{statValue}</span>
+
+                      {hasValue(row.imageUrl) && (
+                        <a
+                          className="stat-image-link"
+                          href={row.imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${row.label} image link`}
+                        >
+                          <img src={row.imageUrl} alt={row.label} />
+                        </a>
+                      )}
+
+                      {!isLast && <span className="stat-separator">,</span>}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {hasValue(card.ability) && (
+            <div className="metadata-item">
+              <span className="label">Ability</span>
+
+              <span className="value ability-value">
+                {renderAbilityText(abilityText)}
+              </span>
+            </div>
+          )}
+
+          {hasValue(card.traits) && (
+            <div className="metadata-item trait-item">
+              <span className="label">Traits</span>
+
+              <span className="value trait-value">
+                {isAntihero && antiheroMatch ? (
+                  renderIconTrait(
+                    antiheroMatch,
+                    MANUAL_STAT_IMAGE_LINKS.default.antihero,
+                    "Antihero",
+                    traitsText,
+                  )
+                ) : isStrikethrough && strikethroughMatch ? (
+                  renderIconTrait(
+                    strikethroughMatch,
+                    MANUAL_STAT_IMAGE_LINKS.default.strikethrough,
+                    "Strikethrough",
+                    traitsText,
+                  )
+                ) : isDeadly && deadlyMatch ? (
+                  renderIconTrait(
+                    deadlyMatch,
+                    MANUAL_STAT_IMAGE_LINKS.default.deadly,
+                    "Deadly",
+                    traitsText,
+                  )
+                ) : (
+                  <span>{traitsText}</span>
+                )}
+              </span>
+            </div>
+          )}
+
+          {hasValue(card.set_rarity) && (
+            <div className="metadata-item">
+              <span className="label">Rarity</span>
+
+              <span className="value">{card.set_rarity}</span>
+            </div>
+          )}
+
+          {hasValue(card.flavor_text) && (
+            <div className="metadata-item full-width-item">
+              <span className="label">Flavor Text</span>
+
+              <span className="value">{card.flavor_text}</span>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
