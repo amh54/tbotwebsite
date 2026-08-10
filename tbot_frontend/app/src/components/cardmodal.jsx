@@ -24,7 +24,7 @@ const MANUAL_STAT_IMAGE_LINKS = {
   kabloom: "https://i.ibb.co/4gWkPT7f/kabloom.webp",
   megagrow: "https://i.ibb.co/svc6sx30/megagrow.webp",
   smarty: "https://i.ibb.co/V0bL3RYk/smarty.webp",
-  solar: "https://i.ibb.co/V0bL3RYk/smarty.webp",
+  solar: "https://i.ibb.co/YFMMD4DZ/solar.webp",
   beastly: "https://i.ibb.co/xS6b10P5/beastly.webp",
   brainy: "https://i.ibb.co/d40zFh8r/Brainy.webp",
   crazy: "https://i.ibb.co/HTvzSsXX/crazy.webp",
