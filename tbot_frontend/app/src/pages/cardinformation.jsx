@@ -47,181 +47,147 @@ const STAT_ICON_LINKS = {
 
 const TRAIT_ICON_LINKS = {
   antihero: "https://i.ibb.co/zHmWTFLQ/anti-hero.webp",
+
   strikethrough: "https://i.ibb.co/99KG7vjj/strikethrough.webp",
+
   deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
+
   special: "https://i.ibb.co/Sw0yS0Mg/special.webp",
+
   freeze: "https://i.ibb.co/hFPRcrp6/freeze.webp",
+
   bullseye: "https://i.ibb.co/tTp9zzdh/Bullseye.webp",
+
   frenzy: "https://i.ibb.co/0RC4sW0b/frenzy.webp",
+
   armored: "https://i.ibb.co/SXTYdVry/armored.webp",
+
   overshoot: "https://i.ibb.co/prbYt2DX/overshoot.webp",
+
   untrickable: "https://i.ibb.co/235QDZsg/untrickable.webp",
+
   doublestrike: "https://i.ibb.co/9HcptVCN/doublestrike.webp",
 };
 
 const CLASS_ICON_LINKS = {
   guardian: "https://i.ibb.co/q339dYKK/guardian.webp",
+
   kabloom: "https://i.ibb.co/4gWkPT7f/kabloom.webp",
+
   megagrow: "https://i.ibb.co/svc6sx30/megagrow.webp",
+
   smarty: "https://i.ibb.co/V0bL3RYk/smarty.webp",
+
   solar: "https://i.ibb.co/V0bL3RYk/smarty.webp",
+
   beastly: "https://i.ibb.co/xS6b10P5/beastly.webp",
+
   brainy: "https://i.ibb.co/d40zFh8r/Brainy.webp",
+
   crazy: "https://i.ibb.co/HTvzSsXX/crazy.webp",
+
   hearty: "https://i.ibb.co/ynKbzV8v/hearty.webp",
+
   sneaky: "https://i.ibb.co/Hf5m7ndh/sneaky.webp",
-};
-
-const normalizeEmojiName = (name) =>
-  String(name || "")
-    .toLowerCase()
-    .replace(/[-_\s]/g, "");
-
-const getDiscordEmoji = (value) => {
-  const match = String(value || "").match(/<:([^:>]+):(\d+)>/i);
-
-  if (!match) {
-    return null;
-  }
-
-  return {
-    name: match[1],
-    id: match[2],
-    key: normalizeEmojiName(match[1]),
-    full: match[0],
-  };
-};
-
-const getEmojiIcon = (emoji) => {
-  const parsed = getDiscordEmoji(emoji);
-
-  if (!parsed) {
-    return null;
-  }
-
-  const iconMap = {
-    brainz: {
-      url: STAT_ICON_LINKS.cost,
-      alt: "Brainz",
-    },
-
-    strength: {
-      url: STAT_ICON_LINKS.strength,
-      alt: "Strength",
-    },
-
-    health: {
-      url: STAT_ICON_LINKS.health,
-      alt: "Health",
-    },
-
-    sun: {
-      url: STAT_ICON_LINKS.sun,
-      alt: "Sun",
-    },
-
-    healthstrength: {
-      url: STAT_ICON_LINKS.healthstrength,
-      alt: "Health and Strength",
-    },
-
-    deadly: {
-      url: TRAIT_ICON_LINKS.deadly,
-      alt: "Deadly",
-    },
-
-    freeze: {
-      url: TRAIT_ICON_LINKS.freeze,
-      alt: "Freeze",
-    },
-
-    antihero: {
-      url: TRAIT_ICON_LINKS.antihero,
-      alt: "Anti-Hero",
-    },
-
-    strikethrough: {
-      url: TRAIT_ICON_LINKS.strikethrough,
-      alt: "Strikethrough",
-    },
-
-    special: {
-      url: TRAIT_ICON_LINKS.special,
-      alt: "Special",
-    },
-
-    bullseye: {
-      url: TRAIT_ICON_LINKS.bullseye,
-      alt: "Bullseye",
-    },
-
-    frenzy: {
-      url: TRAIT_ICON_LINKS.frenzy,
-      alt: "Frenzy",
-    },
-
-    armored: {
-      url: TRAIT_ICON_LINKS.armored,
-      alt: "Armored",
-    },
-
-    overshoot: {
-      url: TRAIT_ICON_LINKS.overshoot,
-      alt: "Overshoot",
-    },
-
-    untrickable: {
-      url: TRAIT_ICON_LINKS.untrickable,
-      alt: "Untrickable",
-    },
-
-    doublestrike: {
-      url: TRAIT_ICON_LINKS.doublestrike,
-      alt: "Double Strike",
-    },
-  };
-
-  if (iconMap[parsed.key]) {
-    return iconMap[parsed.key];
-  }
-
-  if (CLASS_ICON_LINKS[parsed.key]) {
-    return {
-      url: CLASS_ICON_LINKS[parsed.key],
-      alt: parsed.name,
-    };
-  }
-
-  return null;
-};
-
-const getTitleClassIcon = (title) => {
-  const match = String(title || "").match(/<:([^:>]+):(\d+)>/i);
-
-  if (!match) {
-    return null;
-  }
-
-  const icon = getEmojiIcon(match[0]);
-
-  if (!icon || !CLASS_ICON_LINKS[normalizeEmojiName(match[1])]) {
-    return null;
-  }
-
-  return icon;
-};
-
-const cleanTitle = (title) => {
-  return String(title || "")
-    .replace(/<:([^:>]+):\d+>/gi, "")
-    .replace(/\*\*/g, "")
-    .replace(/__/g, "")
-    .trim();
 };
 
 function CardInformation() {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
+
+  const getEmojiIcon = (emoji) => {
+    const match = String(emoji || "").match(/^<:([^:]+):\d+>$/);
+
+    if (!match) {
+      return null;
+    }
+
+    const emojiName = match[1].toLowerCase().replace(/[-_\s]/g, "");
+
+    const iconMap = {
+      brainz: {
+        url: STAT_ICON_LINKS.cost,
+        alt: "Brainz",
+      },
+
+      strength: {
+        url: STAT_ICON_LINKS.strength,
+        alt: "Strength",
+      },
+
+      health: {
+        url: STAT_ICON_LINKS.health,
+        alt: "Health",
+      },
+
+      sun: {
+        url: STAT_ICON_LINKS.sun,
+        alt: "Sun",
+      },
+
+      healthstrength: {
+        url: STAT_ICON_LINKS.healthstrength,
+        alt: "Health and Strength",
+      },
+
+      deadly: {
+        url: TRAIT_ICON_LINKS.deadly,
+        alt: "Deadly",
+      },
+
+      freeze: {
+        url: TRAIT_ICON_LINKS.freeze,
+        alt: "Freeze",
+      },
+
+      antihero: {
+        url: TRAIT_ICON_LINKS.antihero,
+        alt: "Anti-Hero",
+      },
+
+      strikethrough: {
+        url: TRAIT_ICON_LINKS.strikethrough,
+        alt: "Strikethrough",
+      },
+
+      special: {
+        url: TRAIT_ICON_LINKS.special,
+        alt: "Special",
+      },
+
+      bullseye: {
+        url: TRAIT_ICON_LINKS.bullseye,
+        alt: "Bullseye",
+      },
+
+      frenzy: {
+        url: TRAIT_ICON_LINKS.frenzy,
+        alt: "Frenzy",
+      },
+
+      armored: {
+        url: TRAIT_ICON_LINKS.armored,
+        alt: "Armored",
+      },
+
+      overshoot: {
+        url: TRAIT_ICON_LINKS.overshoot,
+        alt: "Overshoot",
+      },
+
+      untrickable: {
+        url: TRAIT_ICON_LINKS.untrickable,
+        alt: "Untrickable",
+      },
+
+      doublestrike: {
+        url: TRAIT_ICON_LINKS.doublestrike,
+        alt: "Double Strike",
+      },
+    };
+
+    return iconMap[emojiName] || null;
+  };
 
   const renderStatsText = (stats) => {
     if (!stats) {
@@ -266,9 +232,11 @@ function CardInformation() {
           />,
         );
       } else {
-        const emojiName = fullEmoji.replace(/^<:([^:>]+):\d+>$/, "$1");
-
-        parts.push(<span key={`stats-unknown-${index}`}>{emojiName}</span>);
+        parts.push(
+          <span key={`stats-unknown-${index}`}>
+            {fullEmoji.replace(/^<:([^:>]+):\d+>$/, "$1")}
+          </span>,
+        );
       }
 
       lastIndex = matchIndex + fullEmoji.length + formatting.length;
@@ -289,6 +257,7 @@ function CardInformation() {
     const value = String(text);
 
     const emojiPattern = /<:[^:>]+:\d+>/gi;
+
     const emojiMatches = [...value.matchAll(emojiPattern)];
 
     if (emojiMatches.length > 0) {
@@ -302,11 +271,11 @@ function CardInformation() {
         if (matchIndex > lastIndex) {
           const normalText = value.slice(lastIndex, matchIndex);
 
-          const cleaned = normalText.replace(/__/g, "").replace(/\*\*/g, "");
-
-          if (cleaned) {
-            parts.push(<span key={`trait-text-${index}`}>{cleaned}</span>);
-          }
+          parts.push(
+            <span key={`trait-text-${index}`}>
+              {normalText.replace(/\*\*/g, "").replace(/__/g, "")}
+            </span>,
+          );
         }
 
         const icon = getEmojiIcon(fullMatch);
@@ -332,8 +301,8 @@ function CardInformation() {
       if (lastIndex < value.length) {
         const remaining = value
           .slice(lastIndex)
-          .replace(/__/g, "")
-          .replace(/\*\*/g, "");
+          .replace(/\*\*/g, "")
+          .replace(/__/g, "");
 
         if (remaining) {
           parts.push(<span key="trait-end">{remaining}</span>);
@@ -357,7 +326,7 @@ function CardInformation() {
 
     matches.forEach((match, index) => {
       const matchText = match[0];
-      const traitName = normalizeEmojiName(match[1]);
+      const traitName = match[1].toLowerCase().replace(/[-\s]/g, "");
 
       if (match.index > lastIndex) {
         parts.push(
@@ -419,6 +388,7 @@ function CardInformation() {
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -490,12 +460,12 @@ function CardInformation() {
   }, []);
 
   if (loading) {
-    return <div>Loading Cards...</div>;
+    return <p>Loading Cards...</p>;
   }
 
   return (
     <div className="card-information-page">
-      <nav>
+      <nav className="card-information-nav">
         <Link to="/">Home</Link>
         <Link to="/decklists">Decklists</Link>
         <Link to="/cardinformation">Card Information</Link>
@@ -506,67 +476,53 @@ function CardInformation() {
       {error && <p className="error-message">{error}</p>}
 
       <div className="card-grid">
-        {cards.map((card) => {
-          const classIcon = getTitleClassIcon(card.title);
-
-          return (
-            <div className="card-item" key={card.cardid}>
-              <div className="card-item-media">
-                <img src={card.thumbnail} alt={card.card_name} />
-              </div>
-
-              <div className="card-item-info">
-                <h2 className="card-name-with-class">
-                  <span>{card.card_name || "Unknown Card"}</span>
-
-                  {classIcon && (
-                    <img
-                      src={classIcon.url}
-                      alt={classIcon.alt}
-                      className="card-class-icon"
-                    />
-                  )}
-                </h2>
-
-                {hasValue(card.card_type) && (
-                  <p>
-                    <span>Type:</span> {card.card_type}
-                  </p>
-                )}
-
-                {hasValue(card.traits) && (
-                  <p className="card-traits-line">
-                    <span className="card-field-label">Traits:</span>
-
-                    <span className="card-traits-value">
-                      {renderTraitText(String(card.traits))}
-                    </span>
-                  </p>
-                )}
-
-                {hasValue(card.stats) && (
-                  <p className="card-stats-line">
-                    <span className="card-field-label">Stats:</span>
-
-                    <span className="card-stats-value">
-                      {renderStatsText(String(card.stats))}
-                    </span>
-                  </p>
-                )}
-
-                {hasValue(card.set_rarity) && (
-                  <p>
-                    <span>Rarity:</span> {card.set_rarity}
-                  </p>
-                )}
-
-                <button type="button" onClick={() => setSelectedCard(card)}>
-                  View Details
-                </button>
-              </div>
+        {cards.map((card) => (
+          <div className="card-item" key={card.cardid}>
+            <div className="card-item-media">
+              <img src={card.thumbnail} alt={card.card_name} />
             </div>
-          );
-        })}
+
+            <div className="card-item-info">
+              <h2>{card.card_name || "Unknown Card"}</h2>
+
+              {hasValue(card.card_type) && (
+                <p>
+                  <span>Type:</span> {card.card_type}
+                </p>
+              )}
+
+              {hasValue(card.traits) && (
+                <p className="card-traits-line">
+                  <span className="card-field-label">Traits:</span>
+
+                  <span className="card-traits-value">
+                    {renderTraitText(String(card.traits))}
+                  </span>
+                </p>
+              )}
+
+              {hasValue(card.stats) && (
+                <p className="card-stats-line">
+                  <span className="card-field-label">Stats:</span>
+
+                  <span className="card-stats-value">
+                    {renderStatsText(String(card.stats))}
+                  </span>
+                </p>
+              )}
+
+              {hasValue(card.set_rarity) && (
+                <p>
+                  <span>Rarity:</span> {card.set_rarity}
+                </p>
+              )}
+
+              <button type="button" onClick={() => setSelectedCard(card)}>
+                View Details
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {selectedCard !== null && (
