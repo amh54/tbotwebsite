@@ -97,18 +97,14 @@
   flex-wrap: wrap;
 }
 
+
 .card-modal-title-class-icon {
-  width: 18px !important;
-  height: 18px !important;
-  max-width: 18px !important;
-  max-height: 18px !important;
-  min-width: 18px;
-  min-height: 18px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   display: inline-block;
   vertical-align: middle;
-  margin-right: 5px;
-  flex: 0 0 18px;
+  margin-right: 4px;
 }
 
 .card-type {
