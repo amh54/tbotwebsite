@@ -309,7 +309,7 @@ function CardInformation() {
   }
 
   return (
-    <div className="card-information-page">
+    <div className="card-page">
       <nav>
         <div className="nav-links">
           <Link to="/">Home</Link>
@@ -364,12 +364,7 @@ function CardInformation() {
                 </p>
               )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedCard(card);
-                }}
-              >
+              <button type="button" onClick={() => setSelectedCard(card)}>
                 View Details
               </button>
             </div>

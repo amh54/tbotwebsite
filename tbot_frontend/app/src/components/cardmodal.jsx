@@ -13,17 +13,25 @@ const MANUAL_STAT_IMAGE_LINKS = {
 
 function CardModal({ card, close }) {
   const hasValue = (value) =>
-    value !== null && value !== undefined && String(value).trim() !== "";
+    value !== null &&
+    value !== undefined &&
+    String(value).trim() !== "";
 
   const description = hasValue(card.description)
     ? String(card.description)
     : "No description available.";
 
-  const traitsText = hasValue(card.traits) ? String(card.traits) : "";
+  const traitsText = hasValue(card.traits)
+    ? String(card.traits)
+    : "";
 
-  const abilityText = hasValue(card.ability) ? String(card.ability) : "";
+  const abilityText = hasValue(card.ability)
+    ? String(card.ability)
+    : "";
 
-  const statsText = hasValue(card.stats) ? String(card.stats) : "";
+  const statsText = hasValue(card.stats)
+    ? String(card.stats)
+    : "";
 
   const getEmojiIcon = (emoji) => {
     const normalized = String(emoji || "").toLowerCase();
@@ -95,7 +103,9 @@ function CardModal({ card, close }) {
     const triggerPattern =
       /(when revealed in an environment|when revealed on heights|when this enters a lane|when hurt|when destroyed|when revealed|zombie evolution|end of turn)/gi;
 
-    const segments = String(text).split(triggerPattern);
+    const segments = String(text).split(
+      triggerPattern,
+    );
 
     return segments.map((segment, index) => {
       if (
@@ -103,10 +113,18 @@ function CardModal({ card, close }) {
           segment.trim(),
         )
       ) {
-        return <strong key={`description-${index}`}>{segment}</strong>;
+        return (
+          <strong key={`description-${index}`}>
+            {segment}
+          </strong>
+        );
       }
 
-      return <span key={`description-${index}`}>{segment}</span>;
+      return (
+        <span key={`description-${index}`}>
+          {segment}
+        </span>
+      );
     });
   };
 
@@ -151,14 +169,23 @@ function CardModal({ card, close }) {
           />,
         );
       } else {
-        parts.push(<span key={`stats-unknown-${index}`}>{fullMatch}</span>);
+        parts.push(
+          <span key={`stats-unknown-${index}`}>
+            {fullMatch}
+          </span>,
+        );
       }
 
-      lastIndex = matchIndex + fullMatch.length;
+      lastIndex =
+        matchIndex + fullMatch.length;
     });
 
     if (lastIndex < text.length) {
-      parts.push(<span key="stats-end">{text.slice(lastIndex)}</span>);
+      parts.push(
+        <span key="stats-end">
+          {text.slice(lastIndex)}
+        </span>,
+      );
     }
 
     return parts;
@@ -208,39 +235,66 @@ function CardModal({ card, close }) {
             />,
           );
         } else {
-          parts.push(<span key={`ability-unknown-${index}`}>{match[1]}</span>);
+          parts.push(
+            <span
+              key={`ability-unknown-${index}`}
+            >
+              {match[1]}
+            </span>,
+          );
         }
       } else if (match[2]) {
-        const formattedText = match[2].slice(4, -4);
+        const formattedText =
+          match[2].slice(4, -4);
 
         parts.push(
-          <strong key={`bold-underline-${index}`}>
+          <strong
+            key={`bold-underline-${index}`}
+          >
             <u>{formattedText}</u>
           </strong>,
         );
       } else if (match[3]) {
-        const formattedText = match[3].slice(4, -4);
+        const formattedText =
+          match[3].slice(4, -4);
 
         parts.push(
-          <strong key={`underline-bold-${index}`}>
+          <strong
+            key={`underline-bold-${index}`}
+          >
             <u>{formattedText}</u>
           </strong>,
         );
       } else if (match[4]) {
-        const formattedText = match[4].slice(2, -2);
+        const formattedText =
+          match[4].slice(2, -2);
 
-        parts.push(<strong key={`bold-${index}`}>{formattedText}</strong>);
+        parts.push(
+          <strong key={`bold-${index}`}>
+            {formattedText}
+          </strong>,
+        );
       } else if (match[5]) {
-        const formattedText = match[5].slice(2, -2);
+        const formattedText =
+          match[5].slice(2, -2);
 
-        parts.push(<u key={`underline-${index}`}>{formattedText}</u>);
+        parts.push(
+          <u key={`underline-${index}`}>
+            {formattedText}
+          </u>,
+        );
       }
 
-      lastIndex = matchIndex + fullMatch.length;
+      lastIndex =
+        matchIndex + fullMatch.length;
     });
 
     if (lastIndex < text.length) {
-      parts.push(<span key="ability-text-end">{text.slice(lastIndex)}</span>);
+      parts.push(
+        <span key="ability-text-end">
+          {text.slice(lastIndex)}
+        </span>,
+      );
     }
 
     return parts;
@@ -254,7 +308,9 @@ function CardModal({ card, close }) {
     const traitPattern =
       /(anti[-\s]?hero|strikethrough|deadly)(?:\s+\*+\d+)?/gi;
 
-    const matches = [...String(text).matchAll(traitPattern)];
+    const matches = [...String(text).matchAll(
+      traitPattern,
+    )];
 
     if (matches.length === 0) {
       return <span>{text}</span>;
@@ -270,7 +326,10 @@ function CardModal({ card, close }) {
       if (match.index > lastIndex) {
         parts.push(
           <span key={`trait-text-${index}`}>
-            {text.slice(lastIndex, match.index)}
+            {text.slice(
+              lastIndex,
+              match.index,
+            )}
           </span>,
         );
       }
@@ -279,42 +338,67 @@ function CardModal({ card, close }) {
       let iconAlt = "";
 
       if (traitName.startsWith("anti")) {
-        iconUrl = MANUAL_STAT_IMAGE_LINKS.antihero;
+        iconUrl =
+          MANUAL_STAT_IMAGE_LINKS.antihero;
         iconAlt = "Antihero";
-      } else if (traitName === "strikethrough") {
-        iconUrl = MANUAL_STAT_IMAGE_LINKS.strikethrough;
+      } else if (
+        traitName === "strikethrough"
+      ) {
+        iconUrl =
+          MANUAL_STAT_IMAGE_LINKS.strikethrough;
         iconAlt = "Strikethrough";
       } else if (traitName === "deadly") {
-        iconUrl = MANUAL_STAT_IMAGE_LINKS.deadly;
+        iconUrl =
+          MANUAL_STAT_IMAGE_LINKS.deadly;
         iconAlt = "Deadly";
       }
 
       parts.push(
-        <span className="trait-with-icon" key={`trait-${index}`}>
-          <img className="trait-icon" src={iconUrl} alt={iconAlt} />
+        <span
+          className="trait-with-icon"
+          key={`trait-${index}`}
+        >
+          <img
+            className="trait-icon"
+            src={iconUrl}
+            alt={iconAlt}
+          />
 
           <span>{matchText}</span>
         </span>,
       );
 
-      lastIndex = match.index + matchText.length;
+      lastIndex =
+        match.index + matchText.length;
     });
 
     if (lastIndex < text.length) {
-      parts.push(<span key="trait-text-end">{text.slice(lastIndex)}</span>);
+      parts.push(
+        <span key="trait-text-end">
+          {text.slice(lastIndex)}
+        </span>,
+      );
     }
 
     return parts;
   };
 
   return (
-    <div className="card-modal-overlay" onClick={close}>
-      <div className="card-modal" onClick={(event) => event.stopPropagation()}>
+    <div
+      className="card-overlay"
+      onClick={close}
+    >
+      <div
+        className="card-modal"
+        onClick={(event) =>
+          event.stopPropagation()
+        }
+      >
         <button
           type="button"
-          className="card-modal-close"
+          className="close-card"
           onClick={close}
-          aria-label="Close"
+          aria-label="Close card details"
         >
           ×
         </button>
@@ -327,23 +411,31 @@ function CardModal({ card, close }) {
 
         <div className="modal-info">
           <div className="modal-header">
-            <h2 className="modal-title">{card.card_name}</h2>
+            <h2 className="modal-title">
+              {card.card_name}
+            </h2>
 
-            <span className="card-type">{card.card_type}</span>
+            <span className="card-type">
+              {card.card_type}
+            </span>
           </div>
 
           <section className="modal-section description-section">
             <h3>Description</h3>
 
             <p className="description-text">
-              {renderDescriptionText(description)}
+              {renderDescriptionText(
+                description,
+              )}
             </p>
           </section>
 
           <section className="modal-metadata">
             {hasValue(card.stats) && (
               <div className="metadata-item stats-item">
-                <span className="label">Stats</span>
+                <span className="label">
+                  Stats
+                </span>
 
                 <span className="value stats-value">
                   {renderStatsText(statsText)}
@@ -353,37 +445,53 @@ function CardModal({ card, close }) {
 
             {hasValue(card.ability) && (
               <div className="metadata-item">
-                <span className="label">Ability</span>
+                <span className="label">
+                  Ability
+                </span>
 
                 <span className="value ability-value">
-                  {renderAbilityText(abilityText)}
+                  {renderAbilityText(
+                    abilityText,
+                  )}
                 </span>
               </div>
             )}
 
             {hasValue(card.traits) && (
               <div className="metadata-item trait-item">
-                <span className="label">Traits</span>
+                <span className="label">
+                  Traits
+                </span>
 
                 <span className="value trait-value">
-                  {renderTraitText(traitsText)}
+                  {renderTraitText(
+                    traitsText,
+                  )}
                 </span>
               </div>
             )}
 
             {hasValue(card.set_rarity) && (
               <div className="metadata-item">
-                <span className="label">Rarity</span>
+                <span className="label">
+                  Rarity
+                </span>
 
-                <span className="value">{card.set_rarity}</span>
+                <span className="value">
+                  {card.set_rarity}
+                </span>
               </div>
             )}
 
             {hasValue(card.flavor_text) && (
               <div className="metadata-item full-width-item">
-                <span className="label">Flavor Text</span>
+                <span className="label">
+                  Flavor Text
+                </span>
 
-                <span className="value">{card.flavor_text}</span>
+                <span className="value">
+                  {card.flavor_text}
+                </span>
               </div>
             )}
           </section>
