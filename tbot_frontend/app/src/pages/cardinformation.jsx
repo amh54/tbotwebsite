@@ -77,12 +77,12 @@ const normalizeText = (value) =>
     .replace(/\s+/g, " ");
 
 const removeDiscordEmojis = (value) => {
-  return String(value ?? "").replace(/<a?:[^:>]+:\d+>/gi, "");
+  return String(value ?? "").replace(/\<a?:[^:>]+:\d+>/gi, "");
 };
 
 const normalizeTraitName = (trait) => {
   let value = removeDiscordEmojis(trait)
-    .replace(/[_~`]/g, "")
+    .replace(/[\_\~\`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -183,6 +183,14 @@ const isSuperpower = (card) => {
 
   return (
     description.includes("superpower") || description.includes("super power")
+  );
+};
+
+const isSuperhero = (card) => {
+  const description = normalizeText(card.description);
+
+  return (
+    description.includes("superhero") || description.includes("super hero")
   );
 };
 
@@ -293,7 +301,7 @@ function CardInformation() {
         alt: "Brainy",
       },
       crazy: {
-        url: CLASS_ICON_LINKS.crazy,
+        url: CLASS_ICON_ICON_LINKS.crazy,
         alt: "Crazy",
       },
       hearty: {
@@ -650,13 +658,11 @@ function CardInformation() {
     const searchValue = normalizeText(search);
 
     const getCardGroup = (card) => {
-      const description = normalizeText(card.description);
-
-      if (description.includes("superhero")) {
+      if (isSuperhero(card)) {
         return 0;
       }
 
-      if (description.includes("superpower")) {
+      if (isSuperpower(card)) {
         return 1;
       }
 
@@ -664,6 +670,10 @@ function CardInformation() {
     };
 
     const result = cards.filter((card) => {
+      if (normalizeText(card.side) !== normalizeText(side)) {
+        return false;
+      }
+
       const stats = getCardStats(card.stats);
       const cardTraits = getTraitNames(card.traits);
 
@@ -750,6 +760,7 @@ function CardInformation() {
     });
   }, [
     cards,
+    side,
     search,
     classFilter,
     costFilter,
@@ -778,11 +789,9 @@ function CardInformation() {
 
   if (loading) {
     return (
-      <div className="card-page">
-        <nav className="navbar">
-          <div className="logo">
-            <Link to="/">Home</Link>
-          </div>
+      <div className="card-information-page">
+        <nav>
+          <Link to="/">Home</Link>
 
           <div className="nav-links">
             <Link to="/">Home</Link>
@@ -798,11 +807,9 @@ function CardInformation() {
   }
 
   return (
-    <div className="card-page">
-      <nav className="navbar">
-        <div className="logo">
-          <Link to="/">Home</Link>
-        </div>
+    <div className="card-information-page">
+      <nav>
+        <Link to="/">Home</Link>
 
         <div className="nav-links">
           <Link to="/">Home</Link>
