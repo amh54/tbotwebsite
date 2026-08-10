@@ -669,11 +669,25 @@ function CardInformation() {
   const filteredCards = useMemo(() => {
     const searchValue = normalizeText(search);
 
-    const result = cards.filter((card) => {
-      if (normalizeText(card.side) !== normalizeText(side)) {
-        return false;
+    const getCardGroup = (card) => {
+      const description = normalizeText(card.description);
+
+      // Superheroes have no description.
+      if (!hasValue(card.description)) {
+        return 0;
       }
 
+      // Superpowers are identified by "Superpower Trick"
+      // in the description field.
+      if (description.includes("superpower trick")) {
+        return 1;
+      }
+
+      // Everything else is a normal card.
+      return 2;
+    };
+
+    const result = cards.filter((card) => {
       const stats = getCardStats(card.stats);
       const cardTraits = getTraitNames(card.traits);
 
@@ -736,36 +750,36 @@ function CardInformation() {
     });
 
     return result.sort((a, b) => {
+      // FIRST: Superheroes
+      // SECOND: Superpowers
+      // THIRD: Regular cards
       const groupDifference = getCardGroup(a) - getCardGroup(b);
 
       if (groupDifference !== 0) {
         return groupDifference;
       }
 
+      // Within each group:
+      // cost first
       const aStats = getCardStats(a.stats);
       const bStats = getCardStats(b.stats);
 
-      const aCost =
-        aStats.cost !== null ? aStats.cost : Number.MAX_SAFE_INTEGER;
-
-      const bCost =
-        bStats.cost !== null ? bStats.cost : Number.MAX_SAFE_INTEGER;
+      const aCost = aStats.cost ?? Infinity;
+      const bCost = bStats.cost ?? Infinity;
 
       if (aCost !== bCost) {
         return aCost - bCost;
       }
 
+      // Then alphabetical card name
       return String(a.card_name || "").localeCompare(
         String(b.card_name || ""),
         undefined,
-        {
-          sensitivity: "base",
-        },
+        { sensitivity: "base" },
       );
     });
   }, [
     cards,
-    side,
     search,
     classFilter,
     costFilter,
