@@ -86,7 +86,7 @@ const normalizeTraitName = (trait) => {
     .replace(/\s+/g, " ")
     .trim();
 
-  value = value.replace(/\s+\d+\s$/g, "").trim();
+  value = value.replace(/\s+\d+\s*$/g, "").trim();
 
   const normalized = normalizeText(value);
 
@@ -177,15 +177,27 @@ const getCardStats = (stats) => {
   };
 };
 
+const normalizeSide = (side) => {
+  const normalized = normalizeText(side);
+
+  if (normalized === "plants" || normalized === "plant") {
+    return "Plants";
+  }
+
+  if (normalized === "zombie" || normalized === "zombies") {
+    return "Zombie";
+  }
+
+  return String(side ?? "").trim();
+};
+
 function CardInformation() {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
 
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
-
   const [side, setSide] = useState("Plants");
-
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState(null);
   const [costFilter, setCostFilter] = useState(null);
@@ -194,7 +206,6 @@ function CardInformation() {
   const [traitFilter, setTraitFilter] = useState(null);
   const [setFilter, setSetFilter] = useState(null);
   const [rarityFilter, setRarityFilter] = useState(null);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -441,8 +452,6 @@ function CardInformation() {
   useEffect(() => {
     const fetchCards = async () => {
       try {
-        setLoading(true);
-
         const endpoint = `${API_BASE_URL}/tbotapp/cardinformation/`;
 
         const response = await fetch(endpoint);
@@ -458,7 +467,7 @@ function CardInformation() {
             } else if (errorPayload?.error) {
               message = `${message}: ${errorPayload.error}`;
             }
-          } catch (_error) {}
+          } catch (error) {}
 
           throw new Error(message);
         }
@@ -505,6 +514,10 @@ function CardInformation() {
     fetchCards();
   }, []);
 
+  const sideCards = useMemo(() => {
+    return cards.filter((card) => normalizeSide(card.side) === side);
+  }, [cards, side]);
+
   const filterData = useMemo(() => {
     const classes = new Set();
     const costs = new Set();
@@ -514,7 +527,7 @@ function CardInformation() {
     const sets = new Set();
     const rarities = new Set();
 
-    cards.forEach((card) => {
+    sideCards.forEach((card) => {
       if (hasValue(card.card_type)) {
         classes.add(String(card.card_type).trim());
       }
@@ -564,7 +577,7 @@ function CardInformation() {
 
       rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
     };
-  }, [cards]);
+  }, [sideCards]);
 
   const classOptions = filterData.classes.map((value) => ({
     value,
@@ -649,15 +662,7 @@ function CardInformation() {
   const filteredCards = useMemo(() => {
     const searchValue = normalizeText(search);
 
-    const result = cards.filter((card) => {
-      const cardSide = normalizeText(card.side);
-
-      const selectedSide = side === "Plants" ? "plants" : "zombie";
-
-      if (cardSide !== selectedSide) {
-        return false;
-      }
-
+    const filtered = sideCards.filter((card) => {
       const stats = getCardStats(card.stats);
       const cardTraits = getTraitNames(card.traits);
 
@@ -718,55 +723,32 @@ function CardInformation() {
         rarityMatch
       );
     });
-    return result.sort((a, b) => {
-      const aType = normalizeText(a.card_type);
-      const bType = normalizeText(b.card_type);
 
-      const aName = normalizeText(a.card_name);
-      const bName = normalizeText(b.card_name);
-
-      const aStats = getCardStats(a.stats);
-      const bStats = getCardStats(b.stats);
-
-      const aIsHero = aType === "hero" || aType === "heroes";
-
-      const bIsHero = bType === "hero" || bType === "heroes";
-
-      if (aIsHero && !bIsHero) {
-        return -1;
-      }
-
-      if (!aIsHero && bIsHero) {
-        return 1;
-      }
-
-      if (aIsHero && bIsHero) {
-        return aName.localeCompare(bName, undefined, { sensitivity: "base" });
-      }
-
-      const classCompare = aType.localeCompare(bType, undefined, {
-        sensitivity: "base",
-      });
+    return filtered.sort((a, b) => {
+      const classCompare = normalizeText(a.card_type).localeCompare(
+        normalizeText(b.card_type),
+      );
 
       if (classCompare !== 0) {
         return classCompare;
       }
 
-      const aCost =
-        aStats.cost === null ? Number.MAX_SAFE_INTEGER : aStats.cost;
+      const aCost = getCardStats(a.stats).cost;
+      const bCost = getCardStats(b.stats).cost;
 
-      const bCost =
-        bStats.cost === null ? Number.MAX_SAFE_INTEGER : bStats.cost;
+      const normalizedACost = aCost === null ? Infinity : aCost;
+      const normalizedBCost = bCost === null ? Infinity : bCost;
 
-      if (aCost !== bCost) {
-        return aCost - bCost;
+      if (normalizedACost !== normalizedBCost) {
+        return normalizedACost - normalizedBCost;
       }
 
-      return aName.localeCompare(bName, undefined, { sensitivity: "base" });
+      return normalizeText(a.card_name).localeCompare(
+        normalizeText(b.card_name),
+      );
     });
   }, [
-    cards,
-    side,
+    sideCards,
     search,
     classFilter,
     costFilter,
@@ -786,6 +768,11 @@ function CardInformation() {
     setTraitFilter(null);
     setSetFilter(null);
     setRarityFilter(null);
+  };
+
+  const changeSide = (newSide) => {
+    setSide(newSide);
+    clearFilters();
   };
 
   if (loading) {
@@ -826,29 +813,20 @@ function CardInformation() {
 
       <h1>Card Information</h1>
 
-      {error && <p className="error-message">{error}</p>}
-
       <div className="card-browser">
-        {/* PLANTS / ZOMBIES */}
-        <div className="card-side-tabs">
+        <div className="tabs">
           <button
             type="button"
             className={side === "Plants" ? "active" : ""}
-            onClick={() => {
-              setSide("Plants");
-              clearFilters();
-            }}
+            onClick={() => changeSide("Plants")}
           >
             Plants
           </button>
 
           <button
             type="button"
-            className={side === "Zombies" ? "active" : ""}
-            onClick={() => {
-              setSide("Zombies");
-              clearFilters();
-            }}
+            className={side === "Zombie" ? "active" : ""}
+            onClick={() => changeSide("Zombie")}
           >
             Zombies
           </button>
@@ -958,7 +936,9 @@ function CardInformation() {
         </div>
       </div>
 
-      {!error && (
+      {error ? (
+        <p className="error-message">{error}</p>
+      ) : (
         <p className="card-results-count">
           Showing {filteredCards.length}{" "}
           {side === "Plants" ? "Plant" : "Zombie"} cards
