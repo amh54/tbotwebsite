@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import Select from "react-select";
 
 import CardModal from "../components/cardmodal";
 
@@ -72,399 +73,397 @@ const CLASS_ICON_LINKS = {
   sneaky: "https://i.ibb.co/nqFdR6HJ/Pv-ZH-Sneaky-Icon.png",
 };
 
-const CLASS_NAMES = [
-  "Guardian",
-  "Kabloom",
-  "Mega-Grow",
-  "Smarty",
-  "Solar",
-  "Beastly",
-  "Brainy",
-  "Crazy",
-  "Hearty",
-  "Sneaky",
-];
-
 const normalizeText = (value) =>
   String(value ?? "")
     .trim()
     .toLowerCase();
 
-const normalizeClassName = (value) => {
-  const normalized = normalizeText(value);
+const getSetName = (setRarity) => {
+  if (!setRarity) {
+    return "";
+  }
 
-  const aliases = {
-    "mega grow": "Mega-Grow",
-    "mega-grow": "Mega-Grow",
-    megagrow: "Mega-Grow",
-    "anti hero": "Anti-Hero",
-    antihero: "Anti-Hero",
-    "double strike": "Double Strike",
-    doublestrike: "Double Strike",
-    "super rare": "Super-Rare",
-    "super-rare": "Super-Rare",
-  };
+  const parts = String(setRarity).split(" - ");
 
-  return aliases[normalized] || String(value || "").trim();
+  return parts[0]?.trim() || "";
+};
+
+const getRarityName = (setRarity) => {
+  if (!setRarity) {
+    return "";
+  }
+
+  const parts = String(setRarity).split(" - ");
+
+  return parts[1]?.trim() || "";
 };
 
 /*
- * Gets class information from whichever class field
- * the API supplies.
+ * Stats are stored like:
  *
- * This supports:
- *   card.class
- *   card.classes
- *   card.card_class
- *   card.card_classes
+ * 0 <Brainz> 1 <Strength> 1 <Health>
  *
- * It also supports comma-separated or array values.
+ * or:
+ *
+ * 1 <Brainz> 2 <Strength> 2 <Health>
+ *
+ * Therefore:
+ *
+ * numbers[0] = Cost
+ * numbers[1] = Attack
+ * numbers[2] = Health
  */
-const getCardClasses = (card) => {
-  const rawValue =
-    card.class ?? card.classes ?? card.card_class ?? card.card_classes ?? "";
-
-  if (Array.isArray(rawValue)) {
-    return rawValue
-      .flatMap((value) => String(value).split(","))
-      .map(normalizeClassName)
-      .filter(Boolean);
-  }
-
-  return String(rawValue).split(",").map(normalizeClassName).filter(Boolean);
-};
-
-/*
- * The traits field has this structure:
- *
- * SET - RARITY - TRAIT(S)
- *
- * Examples:
- *
- * Premium - Common - Bullseye
- * Galactic - Legendary - Deadly
- * Basic - Uncommon
- *
- * The first section is SET.
- * The second section is RARITY.
- * Everything after that is TRAITS.
- */
-const parseTraits = (value) => {
-  const raw = String(value ?? "").trim();
-
-  if (!raw) {
-    return {
-      set: "",
-      rarity: "",
-      traits: [],
-    };
-  }
-
-  const sections = raw
-    .split("-")
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  const set = sections[0] || "";
-  const rarity = sections[1] || "";
-
-  const traitText = sections.slice(2).join(" - ");
-
-  const traits = traitText
-    .split(",")
-    .map((trait) =>
-      trait
-        .replace(/<:[^:>]+:\d+>/g, "")
-        .replace(/__/g, "")
-        .trim(),
-    )
-    .filter(Boolean);
+const getCardStats = (stats) => {
+  const numbers = String(stats || "").match(/\d+/g) || [];
 
   return {
-    set,
-    rarity,
-    traits,
+    cost: numbers[0] !== undefined ? Number(numbers[0]) : null,
+    attack: numbers[1] !== undefined ? Number(numbers[1]) : null,
+    health: numbers[2] !== undefined ? Number(numbers[2]) : null,
   };
 };
 
-const getEmojiIcon = (emoji) => {
-  const match = String(emoji || "").match(/^<:([^:]+):\d+>$/);
-
-  if (!match) {
-    return null;
+const getTraitNames = (traits) => {
+  if (!traits) {
+    return [];
   }
 
-  const emojiName = match[1].toLowerCase().replace(/[-_\s]/g, "");
-
-  const iconMap = {
-    brainz: {
-      url: STAT_ICON_LINKS.cost,
-      alt: "Brainz",
-    },
-
-    strength: {
-      url: STAT_ICON_LINKS.strength,
-      alt: "Strength",
-    },
-
-    health: {
-      url: STAT_ICON_LINKS.health,
-      alt: "Health",
-    },
-
-    sun: {
-      url: STAT_ICON_LINKS.sun,
-      alt: "Sun",
-    },
-
-    healthstrength: {
-      url: STAT_ICON_LINKS.healthstrength,
-      alt: "Health and Strength",
-    },
-
-    deadly: {
-      url: TRAIT_ICON_LINKS.deadly,
-      alt: "Deadly",
-    },
-
-    freeze: {
-      url: TRAIT_ICON_LINKS.freeze,
-      alt: "Freeze",
-    },
-
-    antihero: {
-      url: TRAIT_ICON_LINKS.antihero,
-      alt: "Anti-Hero",
-    },
-
-    strikethrough: {
-      url: TRAIT_ICON_LINKS.strikethrough,
-      alt: "Strikethrough",
-    },
-
-    special: {
-      url: TRAIT_ICON_LINKS.special,
-      alt: "Special",
-    },
-
-    bullseye: {
-      url: TRAIT_ICON_LINKS.bullseye,
-      alt: "Bullseye",
-    },
-
-    frenzy: {
-      url: TRAIT_ICON_LINKS.frenzy,
-      alt: "Frenzy",
-    },
-
-    armored: {
-      url: TRAIT_ICON_LINKS.armored,
-      alt: "Armored",
-    },
-
-    overshoot: {
-      url: TRAIT_ICON_LINKS.overshoot,
-      alt: "Overshoot",
-    },
-
-    untrickable: {
-      url: TRAIT_ICON_LINKS.untrickable,
-      alt: "Untrickable",
-    },
-
-    doublestrike: {
-      url: TRAIT_ICON_LINKS.doublestrike,
-      alt: "Double Strike",
-    },
-
-    guardian: {
-      url: CLASS_ICON_LINKS.guardian,
-      alt: "Guardian",
-    },
-
-    kabloom: {
-      url: CLASS_ICON_LINKS.kabloom,
-      alt: "Kabloom",
-    },
-
-    megagrow: {
-      url: CLASS_ICON_LINKS.megagrow,
-      alt: "Mega-Grow",
-    },
-
-    smarty: {
-      url: CLASS_ICON_LINKS.smarty,
-      alt: "Smarty",
-    },
-
-    solar: {
-      url: CLASS_ICON_LINKS.solar,
-      alt: "Solar",
-    },
-
-    beastly: {
-      url: CLASS_ICON_LINKS.beastly,
-      alt: "Beastly",
-    },
-
-    brainy: {
-      url: CLASS_ICON_LINKS.brainy,
-      alt: "Brainy",
-    },
-
-    crazy: {
-      url: CLASS_ICON_LINKS.crazy,
-      alt: "Crazy",
-    },
-
-    hearty: {
-      url: CLASS_ICON_LINKS.hearty,
-      alt: "Hearty",
-    },
-
-    sneaky: {
-      url: CLASS_ICON_LINKS.sneaky,
-      alt: "Sneaky",
-    },
-  };
-
-  return iconMap[emojiName] || null;
-};
-
-const renderTitleText = (title) => {
-  if (!title) {
-    return null;
-  }
-
-  const text = String(title);
-  const emojiPattern = /<:[^:>]+:\d+>/gi;
-  const matches = [...text.matchAll(emojiPattern)];
-
-  if (matches.length === 0) {
-    return <span>{text}</span>;
-  }
-
-  const parts = [];
-  let lastIndex = 0;
-
-  matches.forEach((match, index) => {
-    const fullMatch = match[0];
-    const matchIndex = match.index;
-
-    if (matchIndex > lastIndex) {
-      parts.push(
-        <span key={`title-text-${index}`}>
-          {text.slice(lastIndex, matchIndex)}
-        </span>,
-      );
-    }
-
-    const icon = getEmojiIcon(fullMatch);
-
-    if (icon) {
-      parts.push(
-        <img
-          key={`title-icon-${index}`}
-          src={icon.url}
-          alt={icon.alt}
-          className="card-title-class-icon"
-        />,
-      );
-    }
-
-    lastIndex = matchIndex + fullMatch.length;
-  });
-
-  if (lastIndex < text.length) {
-    parts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
-  }
-
-  return <span className="card-title-content">{parts}</span>;
-};
-
-const renderStatsText = (stats) => {
-  if (!stats) {
-    return null;
-  }
-
-  const text = String(stats);
-  const pattern = /(<:[^:>]+:\d+>)/gi;
-  const matches = [...text.matchAll(pattern)];
-
-  if (matches.length === 0) {
-    return <span>{text}</span>;
-  }
-
-  const parts = [];
-  let lastIndex = 0;
-
-  matches.forEach((match, index) => {
-    const fullEmoji = match[1];
-    const matchIndex = match.index;
-
-    if (matchIndex > lastIndex) {
-      parts.push(
-        <span key={`stats-text-${index}`}>
-          {text.slice(lastIndex, matchIndex)}
-        </span>,
-      );
-    }
-
-    const icon = getEmojiIcon(fullEmoji);
-
-    if (icon) {
-      parts.push(
-        <img
-          key={`stats-icon-${index}`}
-          src={icon.url}
-          alt={icon.alt}
-          className="card-stat-icon"
-        />,
-      );
-    }
-
-    lastIndex = matchIndex + fullEmoji.length;
-  });
-
-  if (lastIndex < text.length) {
-    parts.push(<span key="stats-end">{text.slice(lastIndex)}</span>);
-  }
-
-  return parts;
-};
-
-const renderTraitNames = (traits) => {
-  if (!traits || traits.length === 0) {
-    return null;
-  }
-
-  return (
-    <span className="trait-rendered">
-      {traits.map((trait, index) => (
-        <span className="trait-name" key={`${trait}-${index}`}>
-          {trait}
-        </span>
-      ))}
-    </span>
-  );
+  return String(traits)
+    .split(/[,|]/)
+    .map((trait) => trait.trim())
+    .filter(Boolean);
 };
 
 function CardInformation() {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
 
+  const getEmojiIcon = (emoji) => {
+    const match = String(emoji || "").match(/^<:([^:]+):\d+>$/);
+
+    if (!match) {
+      return null;
+    }
+
+    const emojiName = match[1].toLowerCase().replace(/[-_\s]/g, "");
+
+    const iconMap = {
+      brainz: {
+        url: STAT_ICON_LINKS.cost,
+        alt: "Brainz",
+      },
+
+      strength: {
+        url: STAT_ICON_LINKS.strength,
+        alt: "Strength",
+      },
+
+      health: {
+        url: STAT_ICON_LINKS.health,
+        alt: "Health",
+      },
+
+      sun: {
+        url: STAT_ICON_LINKS.sun,
+        alt: "Sun",
+      },
+
+      healthstrength: {
+        url: STAT_ICON_LINKS.healthstrength,
+        alt: "Health and Strength",
+      },
+
+      deadly: {
+        url: TRAIT_ICON_LINKS.deadly,
+        alt: "Deadly",
+      },
+
+      freeze: {
+        url: TRAIT_ICON_LINKS.freeze,
+        alt: "Freeze",
+      },
+
+      antihero: {
+        url: TRAIT_ICON_LINKS.antihero,
+        alt: "Anti-Hero",
+      },
+
+      strikethrough: {
+        url: TRAIT_ICON_LINKS.strikethrough,
+        alt: "Strikethrough",
+      },
+
+      special: {
+        url: TRAIT_ICON_LINKS.special,
+        alt: "Special",
+      },
+
+      bullseye: {
+        url: TRAIT_ICON_LINKS.bullseye,
+        alt: "Bullseye",
+      },
+
+      frenzy: {
+        url: TRAIT_ICON_LINKS.frenzy,
+        alt: "Frenzy",
+      },
+
+      armored: {
+        url: TRAIT_ICON_LINKS.armored,
+        alt: "Armored",
+      },
+
+      overshoot: {
+        url: TRAIT_ICON_LINKS.overshoot,
+        alt: "Overshoot",
+      },
+
+      untrickable: {
+        url: TRAIT_ICON_LINKS.untrickable,
+        alt: "Untrickable",
+      },
+
+      doublestrike: {
+        url: TRAIT_ICON_LINKS.doublestrike,
+        alt: "Double Strike",
+      },
+
+      guardian: {
+        url: CLASS_ICON_LINKS.guardian,
+        alt: "Guardian",
+      },
+
+      kabloom: {
+        url: CLASS_ICON_LINKS.kabloom,
+        alt: "Kabloom",
+      },
+
+      megagrow: {
+        url: CLASS_ICON_LINKS.megagrow,
+        alt: "Mega-Grow",
+      },
+
+      smarty: {
+        url: CLASS_ICON_LINKS.smarty,
+        alt: "Smarty",
+      },
+
+      solar: {
+        url: CLASS_ICON_LINKS.solar,
+        alt: "Solar",
+      },
+
+      beastly: {
+        url: CLASS_ICON_LINKS.beastly,
+        alt: "Beastly",
+      },
+
+      brainy: {
+        url: CLASS_ICON_LINKS.brainy,
+        alt: "Brainy",
+      },
+
+      crazy: {
+        url: CLASS_ICON_LINKS.crazy,
+        alt: "Crazy",
+      },
+
+      hearty: {
+        url: CLASS_ICON_LINKS.hearty,
+        alt: "Hearty",
+      },
+
+      sneaky: {
+        url: CLASS_ICON_LINKS.sneaky,
+        alt: "Sneaky",
+      },
+    };
+
+    return iconMap[emojiName] || null;
+  };
+
+  const renderTitleText = (title) => {
+    if (!title) {
+      return null;
+    }
+
+    const text = String(title);
+
+    const emojiPattern = /<:[^:>]+:\d+>/gi;
+    const matches = [...text.matchAll(emojiPattern)];
+
+    if (matches.length === 0) {
+      return <span>{text}</span>;
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        parts.push(
+          <span key={`title-text-${index}`}>
+            {text.slice(lastIndex, matchIndex)}
+          </span>,
+        );
+      }
+
+      const icon = getEmojiIcon(fullMatch);
+
+      if (icon) {
+        parts.push(
+          <img
+            key={`title-icon-${index}`}
+            src={icon.url}
+            alt={icon.alt}
+            className="card-title-class-icon"
+          />,
+        );
+      }
+
+      lastIndex = matchIndex + fullMatch.length;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
+    }
+
+    return <span className="card-title-content">{parts}</span>;
+  };
+
+  const renderStatsText = (stats) => {
+    if (!stats) {
+      return null;
+    }
+
+    const text = String(stats);
+
+    const pattern = /(<:[^:>]+:\d+>)/gi;
+    const matches = [...text.matchAll(pattern)];
+
+    if (matches.length === 0) {
+      return <span>{text}</span>;
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullEmoji = match[1];
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        parts.push(
+          <span key={`stats-text-${index}`}>
+            {text.slice(lastIndex, matchIndex)}
+          </span>,
+        );
+      }
+
+      const icon = getEmojiIcon(fullEmoji);
+
+      if (icon) {
+        parts.push(
+          <img
+            key={`stats-icon-${index}`}
+            src={icon.url}
+            alt={icon.alt}
+            className="card-stat-icon"
+          />,
+        );
+      }
+
+      lastIndex = matchIndex + fullEmoji.length;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(<span key="stats-end">{text.slice(lastIndex)}</span>);
+    }
+
+    return parts;
+  };
+
+  /*
+   * Traits are already stored cleanly in the database:
+   *
+   * Amphibious
+   *
+   * We only use this renderer to handle any __Trait__ formatting
+   * that may still exist in older records.
+   */
+  const renderTraitText = (text) => {
+    if (!text) {
+      return null;
+    }
+
+    const value = String(text);
+
+    const pattern = /(<:[^:>]+:\d+>)|(__[\s\S]*?__)/gi;
+    const matches = [...value.matchAll(pattern)];
+
+    if (matches.length === 0) {
+      return <span>{value}</span>;
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        parts.push(
+          <span key={`trait-text-${index}`}>
+            {value.slice(lastIndex, matchIndex)}
+          </span>,
+        );
+      }
+
+      if (match[1]) {
+        const icon = getEmojiIcon(match[1]);
+
+        if (icon) {
+          parts.push(
+            <img
+              key={`trait-icon-${index}`}
+              className="trait-icon"
+              src={icon.url}
+              alt={icon.alt}
+            />,
+          );
+        }
+      } else if (match[2]) {
+        const traitName = match[2].slice(2, -2);
+
+        parts.push(<u key={`trait-underline-${index}`}>{traitName}</u>);
+      }
+
+      lastIndex = matchIndex + fullMatch.length;
+    });
+
+    if (lastIndex < value.length) {
+      parts.push(<span key="trait-text-end">{value.slice(lastIndex)}</span>);
+    }
+
+    return <span className="trait-rendered">{parts}</span>;
+  };
+
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [search, setSearch] = useState("");
 
-  const [selectedClass, setSelectedClass] = useState("");
-  const [selectedCost, setSelectedCost] = useState("");
-  const [selectedHealth, setSelectedHealth] = useState("");
-  const [selectedAttack, setSelectedAttack] = useState("");
-  const [selectedTrait, setSelectedTrait] = useState("");
-  const [selectedSet, setSelectedSet] = useState("");
-  const [selectedRarity, setSelectedRarity] = useState("");
+  const [classFilter, setClassFilter] = useState(null);
+  const [costFilter, setCostFilter] = useState(null);
+  const [attackFilter, setAttackFilter] = useState(null);
+  const [healthFilter, setHealthFilter] = useState(null);
+  const [traitFilter, setTraitFilter] = useState(null);
+  const [setFilter, setSetFilter] = useState(null);
+  const [rarityFilter, setRarityFilter] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -498,8 +497,22 @@ function CardInformation() {
 
         const responseText = await response.text();
 
+        const hint = import.meta.env.VITE_API_BASE_URL
+          ? "Check that VITE_API_BASE_URL points to your backend domain."
+          : "VITE_API_BASE_URL is missing; set it in frontend deployment settings.";
+
         if (!contentType.includes("application/json")) {
-          throw new Error(`Received a non-JSON response from ${endpoint}.`);
+          if (responseText.trim().startsWith("<")) {
+            throw new Error(
+              `Received HTML instead of JSON from ${endpoint}. ${hint}`,
+            );
+          }
+
+          throw new Error(
+            `Unexpected response type ${
+              contentType || "unknown"
+            } from ${endpoint}. ${hint}`,
+          );
         }
 
         const data = JSON.parse(responseText);
@@ -520,30 +533,13 @@ function CardInformation() {
     fetchCards();
   }, []);
 
-  const processedCards = useMemo(() => {
-    return cards.map((card) => {
-      const parsedTraits = parseTraits(card.traits);
-
-      const classes = getCardClasses(card);
-
-      const cost = Number(card.cost);
-      const attack = Number(card.attack ?? card.strength);
-      const health = Number(card.health);
-
-      return {
-        ...card,
-        parsedSet: parsedTraits.set,
-        parsedRarity: parsedTraits.rarity,
-        parsedTraits: parsedTraits.traits,
-        parsedClasses: classes,
-        parsedCost: Number.isFinite(cost) ? cost : null,
-        parsedAttack: Number.isFinite(attack) ? attack : null,
-        parsedHealth: Number.isFinite(health) ? health : null,
-      };
-    });
-  }, [cards]);
-
-  const filterOptions = useMemo(() => {
+  /*
+   * Build filter options from the RAW database values.
+   *
+   * This is important because we don't want the filters to
+   * depend on how the values are rendered on screen.
+   */
+  const filterData = useMemo(() => {
     const classes = new Set();
     const costs = new Set();
     const attacks = new Set();
@@ -552,29 +548,38 @@ function CardInformation() {
     const sets = new Set();
     const rarities = new Set();
 
-    processedCards.forEach((card) => {
-      card.parsedClasses.forEach((value) => classes.add(value));
-
-      if (card.parsedCost !== null) {
-        costs.add(card.parsedCost);
+    cards.forEach((card) => {
+      if (hasValue(card.card_type)) {
+        classes.add(String(card.card_type).trim());
       }
 
-      if (card.parsedAttack !== null) {
-        attacks.add(card.parsedAttack);
+      const stats = getCardStats(card.stats);
+
+      if (stats.cost !== null) {
+        costs.add(stats.cost);
       }
 
-      if (card.parsedHealth !== null) {
-        healths.add(card.parsedHealth);
+      if (stats.attack !== null) {
+        attacks.add(stats.attack);
       }
 
-      card.parsedTraits.forEach((value) => traits.add(value));
-
-      if (card.parsedSet) {
-        sets.add(card.parsedSet);
+      if (stats.health !== null) {
+        healths.add(stats.health);
       }
 
-      if (card.parsedRarity) {
-        rarities.add(card.parsedRarity);
+      getTraitNames(card.traits).forEach((trait) => {
+        traits.add(trait);
+      });
+
+      const setName = getSetName(card.set_rarity);
+      const rarityName = getRarityName(card.set_rarity);
+
+      if (setName) {
+        sets.add(setName);
+      }
+
+      if (rarityName) {
+        rarities.add(rarityName);
       }
     });
 
@@ -593,55 +598,145 @@ function CardInformation() {
 
       rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
     };
-  }, [processedCards]);
+  }, [cards]);
+
+  const classOptions = filterData.classes.map((value) => ({
+    value,
+    label: value,
+  }));
+
+  const costOptions = filterData.costs.map((value) => ({
+    value,
+    label: String(value),
+  }));
+
+  const attackOptions = filterData.attacks.map((value) => ({
+    value,
+    label: String(value),
+  }));
+
+  const healthOptions = filterData.healths.map((value) => ({
+    value,
+    label: String(value),
+  }));
+
+  const traitOptions = filterData.traits.map((value) => ({
+    value,
+    label: value,
+  }));
+
+  const setOptions = filterData.sets.map((value) => ({
+    value,
+    label: value,
+  }));
+
+  const rarityOptions = filterData.rarities.map((value) => ({
+    value,
+    label: value,
+  }));
+
+  const selectStyles = {
+    control: (base, state) => ({
+      ...base,
+      backgroundColor: "#202020",
+      borderColor: state.isFocused ? "#8fe38b" : "#444",
+      minHeight: "45px",
+      boxShadow: "none",
+      "&:hover": {
+        borderColor: "#8fe38b",
+      },
+    }),
+
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+
+    menu: (base) => ({
+      ...base,
+      backgroundColor: "#202020",
+    }),
+
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isFocused ? "#333" : "#202020",
+      color: "white",
+      cursor: "pointer",
+    }),
+
+    singleValue: (base) => ({
+      ...base,
+      color: "white",
+    }),
+
+    placeholder: (base) => ({
+      ...base,
+      color: "#888",
+    }),
+
+    input: (base) => ({
+      ...base,
+      color: "white",
+    }),
+  };
 
   const filteredCards = useMemo(() => {
     const searchValue = normalizeText(search);
 
-    return processedCards.filter((card) => {
+    return cards.filter((card) => {
+      const stats = getCardStats(card.stats);
+
+      const cardTraits = getTraitNames(card.traits);
+
+      /*
+       * Search across the actual useful card fields.
+       *
+       * Discord emoji IDs are NOT part of the search logic.
+       */
       const searchableText = [
         card.card_name,
         card.title,
         card.card_type,
-        card.parsedSet,
-        card.parsedRarity,
-        ...card.parsedClasses,
-        ...card.parsedTraits,
+        card.description,
+        card.ability,
+        card.traits,
+        card.set_rarity,
+        card.flavor_text,
+        card.aliases,
       ]
-        .filter(Boolean)
+        .filter(hasValue)
         .join(" ")
         .toLowerCase();
 
       const searchMatch = !searchValue || searchableText.includes(searchValue);
 
       const classMatch =
-        !selectedClass ||
-        card.parsedClasses.some(
-          (value) => normalizeText(value) === normalizeText(selectedClass),
-        );
+        !classFilter ||
+        normalizeText(card.card_type) === normalizeText(classFilter.value);
 
-      const costMatch =
-        !selectedCost || card.parsedCost === Number(selectedCost);
+      const costMatch = !costFilter || stats.cost === Number(costFilter.value);
 
       const attackMatch =
-        !selectedAttack || card.parsedAttack === Number(selectedAttack);
+        !attackFilter || stats.attack === Number(attackFilter.value);
 
       const healthMatch =
-        !selectedHealth || card.parsedHealth === Number(selectedHealth);
+        !healthFilter || stats.health === Number(healthFilter.value);
 
       const traitMatch =
-        !selectedTrait ||
-        card.parsedTraits.some(
-          (value) => normalizeText(value) === normalizeText(selectedTrait),
+        !traitFilter ||
+        cardTraits.some(
+          (trait) => normalizeText(trait) === normalizeText(traitFilter.value),
         );
 
       const setMatch =
-        !selectedSet ||
-        normalizeText(card.parsedSet) === normalizeText(selectedSet);
+        !setFilter ||
+        normalizeText(getSetName(card.set_rarity)) ===
+          normalizeText(setFilter.value);
 
       const rarityMatch =
-        !selectedRarity ||
-        normalizeText(card.parsedRarity) === normalizeText(selectedRarity);
+        !rarityFilter ||
+        normalizeText(getRarityName(card.set_rarity)) ===
+          normalizeText(rarityFilter.value);
 
       return (
         searchMatch &&
@@ -655,31 +750,42 @@ function CardInformation() {
       );
     });
   }, [
-    processedCards,
+    cards,
     search,
-    selectedClass,
-    selectedCost,
-    selectedAttack,
-    selectedHealth,
-    selectedTrait,
-    selectedSet,
-    selectedRarity,
+    classFilter,
+    costFilter,
+    attackFilter,
+    healthFilter,
+    traitFilter,
+    setFilter,
+    rarityFilter,
   ]);
 
   const clearFilters = () => {
     setSearch("");
-    setSelectedClass("");
-    setSelectedCost("");
-    setSelectedAttack("");
-    setSelectedHealth("");
-    setSelectedTrait("");
-    setSelectedSet("");
-    setSelectedRarity("");
+    setClassFilter(null);
+    setCostFilter(null);
+    setAttackFilter(null);
+    setHealthFilter(null);
+    setTraitFilter(null);
+    setSetFilter(null);
+    setRarityFilter(null);
   };
 
   if (loading) {
     return (
       <div className="card-page">
+        <nav className="navbar">
+          <div className="nav-brand">Tbot</div>
+
+          <div className="nav-links">
+            <Link to="/">Home</Link>
+            <Link to="/decklists">Decklists</Link>
+            <Link to="/cardinformation">Card Information</Link>
+            <Link to="/heroes">Heroes</Link>
+          </div>
+        </nav>
+
         <p>Loading Cards...</p>
       </div>
     );
@@ -706,107 +812,100 @@ function CardInformation() {
         <div className="card-search-container">
           <input
             className="card-search"
-            placeholder="Search cards, traits, classes, sets, rarity..."
+            placeholder="Search cards, abilities, traits, aliases..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
 
         <div className="card-filters">
-          <select
-            value={selectedClass}
-            onChange={(event) => setSelectedClass(event.target.value)}
-          >
-            <option value="">Class</option>
+          <div className="card-select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Class"
+              options={classOptions}
+              value={classFilter}
+              onChange={setClassFilter}
+              isClearable
+            />
+          </div>
 
-            {filterOptions.classes.map((value) => (
-              <option value={value} key={value}>
-                {value}
-              </option>
-            ))}
-          </select>
+          <div className="card-select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Cost"
+              options={costOptions}
+              value={costFilter}
+              onChange={setCostFilter}
+              isClearable
+            />
+          </div>
 
-          <select
-            value={selectedCost}
-            onChange={(event) => setSelectedCost(event.target.value)}
-          >
-            <option value="">Cost</option>
+          <div className="card-select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Attack"
+              options={attackOptions}
+              value={attackFilter}
+              onChange={setAttackFilter}
+              isClearable
+            />
+          </div>
 
-            {filterOptions.costs.map((value) => (
-              <option value={value} key={value}>
-                {value}
-              </option>
-            ))}
-          </select>
+          <div className="card-select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Health"
+              options={healthOptions}
+              value={healthFilter}
+              onChange={setHealthFilter}
+              isClearable
+            />
+          </div>
 
-          <select
-            value={selectedAttack}
-            onChange={(event) => setSelectedAttack(event.target.value)}
-          >
-            <option value="">Attack</option>
+          <div className="card-select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Trait"
+              options={traitOptions}
+              value={traitFilter}
+              onChange={setTraitFilter}
+              isClearable
+            />
+          </div>
 
-            {filterOptions.attacks.map((value) => (
-              <option value={value} key={value}>
-                {value}
-              </option>
-            ))}
-          </select>
+          <div className="card-select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Set"
+              options={setOptions}
+              value={setFilter}
+              onChange={setSetFilter}
+              isClearable
+            />
+          </div>
 
-          <select
-            value={selectedHealth}
-            onChange={(event) => setSelectedHealth(event.target.value)}
-          >
-            <option value="">Health</option>
-
-            {filterOptions.healths.map((value) => (
-              <option value={value} key={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedTrait}
-            onChange={(event) => setSelectedTrait(event.target.value)}
-          >
-            <option value="">Trait</option>
-
-            {filterOptions.traits.map((value) => (
-              <option value={value} key={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedSet}
-            onChange={(event) => setSelectedSet(event.target.value)}
-          >
-            <option value="">Set</option>
-
-            {filterOptions.sets.map((value) => (
-              <option value={value} key={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedRarity}
-            onChange={(event) => setSelectedRarity(event.target.value)}
-          >
-            <option value="">Rarity</option>
-
-            {filterOptions.rarities.map((value) => (
-              <option value={value} key={value}>
-                {value}
-              </option>
-            ))}
-          </select>
+          <div className="card-select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Rarity"
+              options={rarityOptions}
+              value={rarityFilter}
+              onChange={setRarityFilter}
+              isClearable
+            />
+          </div>
 
           <button
             type="button"
-            className="clear-card-filters"
+            className="clear-card-filter-btn"
             onClick={clearFilters}
           >
             Clear
@@ -814,64 +913,76 @@ function CardInformation() {
         </div>
       </div>
 
-      <p className="results-count">Showing {filteredCards.length} cards</p>
+      {!error && (
+        <p className="card-results-count">
+          Showing {filteredCards.length} cards
+        </p>
+      )}
 
       {!error && filteredCards.length === 0 ? (
-        <p className="no-results">No cards found.</p>
+        <p className="no-card-results">No cards found.</p>
       ) : (
-        <div className="card-grid">
-          {filteredCards.map((card) => (
-            <div className="card-item" key={card.cardid}>
-              <div className="card-item-media">
-                <img src={card.thumbnail} alt={card.card_name} />
+        !error && (
+          <div className="card-grid">
+            {filteredCards.map((card) => (
+              <div className="card-item" key={card.cardid}>
+                <div className="card-item-media">
+                  <img src={card.thumbnail} alt={card.card_name} />
+                </div>
+
+                <div className="card-item-info">
+                  <h2 className="card-item-title">
+                    {hasValue(card.title)
+                      ? renderTitleText(card.title)
+                      : card.card_name || "Unknown Card"}
+                  </h2>
+
+                  {hasValue(card.card_type) && (
+                    <p>
+                      <span>Class:</span> {card.card_type}
+                    </p>
+                  )}
+
+                  {hasValue(card.traits) && (
+                    <p className="card-traits-line">
+                      <span className="card-field-label">Traits:</span>
+
+                      <span className="card-traits-value">
+                        {renderTraitText(String(card.traits))}
+                      </span>
+                    </p>
+                  )}
+
+                  {hasValue(card.stats) && (
+                    <p className="card-stats-line">
+                      <span className="card-field-label">Stats:</span>
+
+                      <span className="card-stats-value">
+                        {renderStatsText(String(card.stats))}
+                      </span>
+                    </p>
+                  )}
+
+                  {hasValue(card.set_rarity) && (
+                    <p>
+                      <span>Set:</span> {getSetName(card.set_rarity)}
+                    </p>
+                  )}
+
+                  {hasValue(card.set_rarity) && (
+                    <p>
+                      <span>Rarity:</span> {getRarityName(card.set_rarity)}
+                    </p>
+                  )}
+
+                  <button type="button" onClick={() => setSelectedCard(card)}>
+                    View Details
+                  </button>
+                </div>
               </div>
-
-              <div className="card-item-info">
-                <h2 className="card-item-title">
-                  {hasValue(card.title)
-                    ? renderTitleText(card.title)
-                    : card.card_name || "Unknown Card"}
-                </h2>
-
-                {hasValue(card.card_type) && (
-                  <p>
-                    <span>Type:</span> {card.card_type}
-                  </p>
-                )}
-
-                {hasValue(card.traits) && (
-                  <p className="card-traits-line">
-                    <span className="card-field-label">Traits:</span>
-
-                    <span className="card-traits-value">
-                      {renderTraitNames(card.parsedTraits)}
-                    </span>
-                  </p>
-                )}
-
-                {hasValue(card.stats) && (
-                  <p className="card-stats-line">
-                    <span className="card-field-label">Stats:</span>
-
-                    <span className="card-stats-value">
-                      {renderStatsText(String(card.stats))}
-                    </span>
-                  </p>
-                )}
-
-                {hasValue(card.set_rarity) && (
-                  <p>
-                    <span>Rarity:</span> {card.set_rarity}
-                  </p>
-                )}
-
-                <button type="button" onClick={() => setSelectedCard(card)}>
-                  View Details
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       )}
 
       {selectedCard !== null && (

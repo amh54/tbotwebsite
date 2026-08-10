@@ -10,6 +10,10 @@
   margin-bottom: 30px;
 }
 
+/* =========================
+   SEARCH + FILTERS
+   ========================= */
+
 .card-browser {
   width: 100%;
   margin-bottom: 25px;
@@ -23,11 +27,12 @@
 .card-search {
   width: 100%;
   box-sizing: border-box;
-  padding: 13px 16px;
+  min-height: 45px;
+  padding: 10px 14px;
   background: #202020;
   color: white;
   border: 1px solid #444;
-  border-radius: 7px;
+  border-radius: 6px;
   font-size: 1rem;
   outline: none;
 }
@@ -42,52 +47,48 @@
 
 .card-filters {
   display: grid;
-  grid-template-columns:
-    repeat(7, minmax(120px, 1fr))
-    auto;
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 12px;
   align-items: center;
 }
 
-.card-filters select {
-  width: 100%;
-  min-height: 45px;
-  padding: 0 12px;
-  background: #202020;
-  color: white;
-  border: 1px solid #444;
-  border-radius: 7px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  outline: none;
+.card-select-wrapper {
+  min-width: 0;
 }
 
-.card-filters select:hover,
-.card-filters select:focus {
-  border-color: #8fe38b;
-}
-
-.clear-card-filters {
+.clear-card-filter-btn {
   min-height: 45px;
-  padding: 0 18px;
+  padding: 10px 20px;
   background: #222;
   color: white;
   border: 1px solid #444;
-  border-radius: 7px;
+  border-radius: 6px;
   cursor: pointer;
-  white-space: nowrap;
+  font-size: 1rem;
 }
 
-.clear-card-filters:hover {
-  background: #333;
+.clear-card-filter-btn:hover {
+  background: #444;
   border-color: #8fe38b;
 }
 
-.results-count {
-  margin: 15px 0 20px;
-  color: #aeb8bd;
-  font-size: 0.95rem;
+.card-results-count {
+  margin: 0 0 20px;
+  color: #aaa;
 }
+
+.no-card-results {
+  color: #aaa;
+  font-size: 1.1rem;
+}
+
+.error-message {
+  color: #ff7777;
+}
+
+/* =========================
+   CARD GRID
+   ========================= */
 
 .card-grid {
   display: grid;
@@ -166,9 +167,13 @@
   font-weight: 700;
 }
 
+/* =========================
+   TRAITS
+   ========================= */
+
 .card-traits-line {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
@@ -177,7 +182,14 @@
   color: #dde5ea;
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   flex-wrap: wrap;
+
+  /*
+   * Do NOT underline the entire traits container.
+   * Individual trait names are underlined by <u>.
+   */
+  text-decoration: none;
 }
 
 .trait-rendered {
@@ -187,11 +199,25 @@
   flex-wrap: wrap;
 }
 
-.trait-name {
+.trait-rendered u {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
+
+.trait-icon {
+  width: 18px;
+  height: 18px;
+  max-width: 18px;
+  max-height: 18px;
+  object-fit: contain;
+  vertical-align: middle;
+  flex: 0 0 18px;
+}
+
+/* =========================
+   STATS
+   ========================= */
 
 .card-stats-line {
   display: flex;
@@ -218,6 +244,10 @@
   font-weight: 600;
 }
 
+/* =========================
+   BUTTON
+   ========================= */
+
 .card-item button {
   margin-top: 10px;
   width: fit-content;
@@ -233,59 +263,15 @@
   background: #444;
 }
 
-.error-message {
-  color: #ff6b6b;
-}
+/* =========================
+   RESPONSIVE
+   ========================= */
 
-.no-results {
-  color: #aeb8bd;
-}
-
-/* Navigation */
-
-.navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 30px;
-}
-
-.nav-brand {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.nav-links {
-  display: flex;
-  gap: 20px;
-}
-
-.nav-links a {
-  color: white;
-  text-decoration: none;
-}
-
-.nav-links a:hover {
-  color: #8fe38b;
-}
-
-/* Tablet */
-
-@media (max-width: 1200px) {
+@media (max-width: 1100px) {
   .card-filters {
-    grid-template-columns: repeat(4, minmax(130px, 1fr));
-  }
-
-  .clear-card-filters {
-    width: 100%;
-  }
-
-  .card-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
   }
 }
-
-/* Mobile */
 
 @media (max-width: 900px) {
   .card-page {
@@ -297,14 +283,17 @@
   }
 
   .card-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
   }
 
   .card-item {
     grid-template-columns:
       minmax(130px, 38%)
       minmax(0, 1fr);
-
     gap: 10px;
     padding: 10px;
   }
@@ -331,28 +320,22 @@
     min-height: 18px;
     flex-basis: 18px;
   }
-
-  .navbar {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .nav-links {
-    flex-wrap: wrap;
-  }
 }
 
 @media (max-width: 540px) {
-  .card-item {
-    grid-template-columns: 1fr;
+  .card-page {
+    padding: 15px;
   }
 
   .card-filters {
     grid-template-columns: 1fr;
   }
 
+  .card-item {
+    grid-template-columns: 1fr;
+  }
+
   .card-item-media img {
-    max-height: 320px;
+    max-height: 350px;
   }
 }
