@@ -76,16 +76,118 @@ const CLASS_ICON_LINKS = {
 const normalizeText = (value) =>
   String(value ?? "")
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+/*
+ * Remove Discord custom emojis completely.
+ *
+ * Example:
+ * <:Strength:1062501774612779039>
+ *
+ * becomes:
+ * ""
+ */
+const removeDiscordEmojis = (value) => {
+  return String(value ?? "").replace(/<a?:[^:>]+:\d+>/gi, "");
+};
+
+/*
+ * Normalize a trait into the actual trait name.
+ *
+ * Examples:
+ *
+ * "Overshoot 2"       -> "Overshoot"
+ * "Overshoot 3"       -> "Overshoot"
+ * "Anti-Hero 2"       -> "Anti-Hero"
+ * "Armored 1"         -> "Armored"
+ * "Armored"           -> "Armored"
+ * "<:foo:123> Armored" -> "Armored"
+ */
+const normalizeTraitName = (trait) => {
+  let value = removeDiscordEmojis(trait)
+    .replace(/[*_~`]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  /*
+   * Remove a trailing numeric value.
+   *
+   * This is specifically for traits such as:
+   * Overshoot 2
+   * Overshoot 3
+   * Anti-Hero 2
+   *
+   * It does NOT affect normal trait names.
+   */
+  value = value.replace(/\s+\d+\s*$/g, "").trim();
+
+  /*
+   * Normalize common spelling/capitalization variants.
+   */
+  const normalized = normalizeText(value);
+
+  const canonicalTraits = {
+    "anti hero": "Anti-Hero",
+    "anti-hero": "Anti-Hero",
+    amphibious: "Amphibious",
+    armored: "Armored",
+    bullseye: "Bullseye",
+    deadly: "Deadly",
+    freeze: "Freeze",
+    frenzy: "Frenzy",
+    "double strike": "Double Strike",
+    doublestrike: "Double Strike",
+    overshoot: "Overshoot",
+    special: "Special",
+    strikethrough: "Strikethrough",
+    untrickable: "Untrickable",
+  };
+
+  return canonicalTraits[normalized] || value;
+};
+
+/*
+ * Get every trait from the database value.
+ *
+ * This handles:
+ *
+ * "Amphibious"
+ * "Overshoot 2"
+ * "Overshoot 3"
+ * "Anti-Hero 2, Armored"
+ *
+ * and returns ONLY canonical trait names.
+ */
+const getTraitNames = (traits) => {
+  if (!traits) {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      String(traits)
+        .split(/[,|;]/)
+        .map((trait) => normalizeTraitName(trait))
+        .filter(Boolean),
+    ),
+  ];
+};
 
 const getSetName = (setRarity) => {
   if (!setRarity) {
     return "";
   }
 
-  const parts = String(setRarity).split(" - ");
+  const value = String(setRarity).trim();
 
-  return parts[0]?.trim() || "";
+  const separatorIndex = value.lastIndexOf(" - ");
+
+  if (separatorIndex === -1) {
+    return "";
+  }
+
+  return value.slice(0, separatorIndex).trim();
 };
 
 const getRarityName = (setRarity) => {
@@ -93,45 +195,36 @@ const getRarityName = (setRarity) => {
     return "";
   }
 
-  const parts = String(setRarity).split(" - ");
+  const value = String(setRarity).trim();
 
-  return parts[1]?.trim() || "";
+  const separatorIndex = value.lastIndexOf(" - ");
+
+  if (separatorIndex === -1) {
+    const normalized = normalizeText(value);
+
+    const knownRarities = new Set([
+      "common",
+      "uncommon",
+      "rare",
+      "super-rare",
+      "legendary",
+    ]);
+
+    return knownRarities.has(normalized) ? value : "";
+  }
+
+  return value.slice(separatorIndex + 3).trim();
 };
-
-/*
- * Stats are stored like:
- *
- * 0 <Brainz> 1 <Strength> 1 <Health>
- *
- * or:
- *
- * 1 <Brainz> 2 <Strength> 2 <Health>
- *
- * Therefore:
- *
- * numbers[0] = Cost
- * numbers[1] = Attack
- * numbers[2] = Health
- */
 const getCardStats = (stats) => {
-  const numbers = String(stats || "").match(/\d+/g) || [];
+  const cleanStats = removeDiscordEmojis(stats).replace(/\s+/g, " ").trim();
+
+  const numbers = cleanStats.match(/\d+/g) || [];
 
   return {
     cost: numbers[0] !== undefined ? Number(numbers[0]) : null,
     attack: numbers[1] !== undefined ? Number(numbers[1]) : null,
     health: numbers[2] !== undefined ? Number(numbers[2]) : null,
   };
-};
-
-const getTraitNames = (traits) => {
-  if (!traits) {
-    return [];
-  }
-
-  return String(traits)
-    .split(/[,|]/)
-    .map((trait) => trait.trim())
-    .filter(Boolean);
 };
 
 function CardInformation() {
@@ -386,70 +479,23 @@ function CardInformation() {
     return parts;
   };
 
-  /*
-   * Traits are already stored cleanly in the database:
-   *
-   * Amphibious
-   *
-   * We only use this renderer to handle any __Trait__ formatting
-   * that may still exist in older records.
-   */
   const renderTraitText = (text) => {
-    if (!text) {
+    const traitNames = getTraitNames(text);
+
+    if (traitNames.length === 0) {
       return null;
     }
 
-    const value = String(text);
-
-    const pattern = /(<:[^:>]+:\d+>)|(__[\s\S]*?__)/gi;
-    const matches = [...value.matchAll(pattern)];
-
-    if (matches.length === 0) {
-      return <span>{value}</span>;
-    }
-
-    const parts = [];
-    let lastIndex = 0;
-
-    matches.forEach((match, index) => {
-      const fullMatch = match[0];
-      const matchIndex = match.index;
-
-      if (matchIndex > lastIndex) {
-        parts.push(
-          <span key={`trait-text-${index}`}>
-            {value.slice(lastIndex, matchIndex)}
-          </span>,
-        );
-      }
-
-      if (match[1]) {
-        const icon = getEmojiIcon(match[1]);
-
-        if (icon) {
-          parts.push(
-            <img
-              key={`trait-icon-${index}`}
-              className="trait-icon"
-              src={icon.url}
-              alt={icon.alt}
-            />,
-          );
-        }
-      } else if (match[2]) {
-        const traitName = match[2].slice(2, -2);
-
-        parts.push(<u key={`trait-underline-${index}`}>{traitName}</u>);
-      }
-
-      lastIndex = matchIndex + fullMatch.length;
-    });
-
-    if (lastIndex < value.length) {
-      parts.push(<span key="trait-text-end">{value.slice(lastIndex)}</span>);
-    }
-
-    return <span className="trait-rendered">{parts}</span>;
+    return (
+      <span className="trait-rendered">
+        {traitNames.map((trait, index) => (
+          <span key={`${trait}-${index}`}>
+            <u>{trait}</u>
+            {index < traitNames.length - 1 && ", "}
+          </span>
+        ))}
+      </span>
+    );
   };
 
   const [cards, setCards] = useState([]);
@@ -533,12 +579,6 @@ function CardInformation() {
     fetchCards();
   }, []);
 
-  /*
-   * Build filter options from the RAW database values.
-   *
-   * This is important because we don't want the filters to
-   * depend on how the values are rendered on screen.
-   */
   const filterData = useMemo(() => {
     const classes = new Set();
     const costs = new Set();
@@ -685,22 +725,16 @@ function CardInformation() {
 
     return cards.filter((card) => {
       const stats = getCardStats(card.stats);
-
       const cardTraits = getTraitNames(card.traits);
-
-      /*
-       * Search across the actual useful card fields.
-       *
-       * Discord emoji IDs are NOT part of the search logic.
-       */
       const searchableText = [
         card.card_name,
         card.title,
         card.card_type,
         card.description,
         card.ability,
-        card.traits,
-        card.set_rarity,
+        ...cardTraits,
+        getSetName(card.set_rarity),
+        getRarityName(card.set_rarity),
         card.flavor_text,
         card.aliases,
       ]
@@ -718,10 +752,8 @@ function CardInformation() {
 
       const attackMatch =
         !attackFilter || stats.attack === Number(attackFilter.value);
-
       const healthMatch =
         !healthFilter || stats.health === Number(healthFilter.value);
-
       const traitMatch =
         !traitFilter ||
         cardTraits.some(
@@ -775,9 +807,7 @@ function CardInformation() {
   if (loading) {
     return (
       <div className="card-page">
-        <nav className="navbar">
-          <div className="nav-brand">Tbot</div>
-
+        <nav>
           <div className="nav-links">
             <Link to="/">Home</Link>
             <Link to="/decklists">Decklists</Link>
@@ -793,9 +823,7 @@ function CardInformation() {
 
   return (
     <div className="card-page">
-      <nav className="navbar">
-        <div className="nav-brand">Tbot</div>
-
+      <nav>
         <div className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
