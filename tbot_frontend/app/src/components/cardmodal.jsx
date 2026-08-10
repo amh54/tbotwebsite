@@ -20,7 +20,9 @@ function CardModal({ card, close }) {
     : "No description available.";
 
   const traitsText = hasValue(card.traits) ? String(card.traits) : "";
+
   const abilityText = hasValue(card.ability) ? String(card.ability) : "";
+
   const statsText = hasValue(card.stats) ? String(card.stats) : "";
 
   const getEmojiIcon = (emoji) => {
@@ -305,8 +307,6 @@ function CardModal({ card, close }) {
     return parts;
   };
 
-  const hasStats = hasValue(card.stats);
-
   return (
     <div className="card-modal-overlay" onClick={close}>
       <div className="card-modal" onClick={(event) => event.stopPropagation()}>
@@ -341,7 +341,7 @@ function CardModal({ card, close }) {
           </section>
 
           <section className="modal-metadata">
-            {hasStats && (
+            {hasValue(card.stats) && (
               <div className="metadata-item stats-item">
                 <span className="label">Stats</span>
 

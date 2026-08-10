@@ -123,7 +123,6 @@ function CardInformation() {
     }
 
     const text = String(stats);
-
     const pattern = /(<:[^:>]+:\d+>)/gi;
     const matches = [...text.matchAll(pattern)];
 
@@ -226,7 +225,7 @@ function CardInformation() {
     });
 
     if (lastIndex < text.length) {
-      parts.push(<span key="text-end">{text.slice(lastIndex)}</span>);
+      parts.push(<span key="trait-text-end">{text.slice(lastIndex)}</span>);
     }
 
     return parts;
@@ -311,9 +310,7 @@ function CardInformation() {
 
   return (
     <div className="card-information-page">
-      <nav className="navbar">
-        <div className="nav-brand">Tbot</div>
-
+      <nav>
         <div className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
@@ -367,7 +364,12 @@ function CardInformation() {
                 </p>
               )}
 
-              <button type="button" onClick={() => setSelectedCard(card)}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCard(card);
+                }}
+              >
                 View Details
               </button>
             </div>
@@ -375,7 +377,7 @@ function CardInformation() {
         ))}
       </div>
 
-      {selectedCard && (
+      {selectedCard !== null && (
         <CardModal card={selectedCard} close={() => setSelectedCard(null)} />
       )}
     </div>
