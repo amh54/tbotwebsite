@@ -9,19 +9,51 @@
   font-size: 48px;
   margin-bottom: 30px;
 }
+.card-tabs {
+  display: flex;
+  border-bottom: 1px solid #333;
+  background: #15181b;
+  border-radius: 14px 14px 0 0;
+  overflow: hidden;
+}
 
-/* =========================
-   SEARCH + FILTERS
-   ========================= */
+.card-tabs button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #aaa;
+  border: none;
+  padding: 16px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.card-tabs button:hover {
+  background: #202020;
+  color: white;
+}
+
+.card-tabs button.active {
+  background: #202020;
+  color: #8fe38b;
+}
 
 .card-browser {
   width: 100%;
   margin-bottom: 25px;
+  background: #15181b;
+  border: 1px solid #23272b;
+  border-radius: 14px;
+  overflow: visible;
 }
-
 .card-search-container {
   width: 100%;
-  margin-bottom: 15px;
+  padding: 20px;
+  margin-bottom: 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid #333;
 }
 
 .card-search {
@@ -50,8 +82,8 @@
   grid-template-columns: repeat(4, minmax(160px, 1fr));
   gap: 12px;
   align-items: center;
+  padding: 20px;
 }
-
 .card-select-wrapper {
   min-width: 0;
 }

@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Select from "react-select";
-
 import CardModal from "../components/cardmodal";
-
 import "../css/cardinformation.css";
 
 const getApiBaseUrl = () => {
@@ -13,7 +11,6 @@ const getApiBaseUrl = () => {
     while (normalized.endsWith("/")) {
       normalized = normalized.slice(0, -1);
     }
-
     return normalized;
   };
 
@@ -25,9 +22,7 @@ const getApiBaseUrl = () => {
 
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
-
     const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
-
     if (isLocalhost) {
       return "http://localhost:8000";
     }
@@ -79,52 +74,18 @@ const normalizeText = (value) =>
     .toLowerCase()
     .replace(/\s+/g, " ");
 
-/*
- * Remove Discord custom emojis completely.
- *
- * Example:
- * <:Strength:1062501774612779039>
- *
- * becomes:
- * ""
- */
 const removeDiscordEmojis = (value) => {
   return String(value ?? "").replace(/<a?:[^:>]+:\d+>/gi, "");
 };
 
-/*
- * Normalize a trait into the actual trait name.
- *
- * Examples:
- *
- * "Overshoot 2"       -> "Overshoot"
- * "Overshoot 3"       -> "Overshoot"
- * "Anti-Hero 2"       -> "Anti-Hero"
- * "Armored 1"         -> "Armored"
- * "Armored"           -> "Armored"
- * "<:foo:123> Armored" -> "Armored"
- */
 const normalizeTraitName = (trait) => {
   let value = removeDiscordEmojis(trait)
-    .replace(/[*_~`]/g, "")
+    .replace(/[_~`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
-  /*
-   * Remove a trailing numeric value.
-   *
-   * This is specifically for traits such as:
-   * Overshoot 2
-   * Overshoot 3
-   * Anti-Hero 2
-   *
-   * It does NOT affect normal trait names.
-   */
-  value = value.replace(/\s+\d+\s*$/g, "").trim();
+  value = value.replace(/\s+\d+\s$/g, "").trim();
 
-  /*
-   * Normalize common spelling/capitalization variants.
-   */
   const normalized = normalizeText(value);
 
   const canonicalTraits = {
@@ -147,18 +108,6 @@ const normalizeTraitName = (trait) => {
   return canonicalTraits[normalized] || value;
 };
 
-/*
- * Get every trait from the database value.
- *
- * This handles:
- *
- * "Amphibious"
- * "Overshoot 2"
- * "Overshoot 3"
- * "Anti-Hero 2, Armored"
- *
- * and returns ONLY canonical trait names.
- */
 const getTraitNames = (traits) => {
   if (!traits) {
     return [];
@@ -215,6 +164,7 @@ const getRarityName = (setRarity) => {
 
   return value.slice(separatorIndex + 3).trim();
 };
+
 const getCardStats = (stats) => {
   const cleanStats = removeDiscordEmojis(stats).replace(/\s+/g, " ").trim();
 
@@ -225,6 +175,49 @@ const getCardStats = (stats) => {
     attack: numbers[1] !== undefined ? Number(numbers[1]) : null,
     health: numbers[2] !== undefined ? Number(numbers[2]) : null,
   };
+};
+
+const sortCards = (cards) => {
+  return [...cards].sort((a, b) => {
+    const aName = String(a.card_name || "").trim();
+    const bName = String(b.card_name || "").trim();
+    const aIsHero = normalizeText(a.card_type) === "hero";
+    const bIsHero = normalizeText(b.card_type) === "hero";
+
+    if (aIsHero !== bIsHero) {
+      return aIsHero ? -1 : 1;
+    }
+    if (aIsHero && bIsHero) {
+      return aName.localeCompare(bName, undefined, {
+        sensitivity: "base",
+      });
+    }
+
+    const aClass = String(a.card_type || "").trim();
+    const bClass = String(b.card_type || "").trim();
+
+    const classComparison = aClass.localeCompare(bClass, undefined, {
+      sensitivity: "base",
+    });
+
+    if (classComparison !== 0) {
+      return classComparison;
+    }
+
+    const aStats = getCardStats(a.stats);
+    const bStats = getCardStats(b.stats);
+
+    const aCost = aStats.cost ?? Number.MAX_SAFE_INTEGER;
+    const bCost = bStats.cost ?? Number.MAX_SAFE_INTEGER;
+
+    if (aCost !== bCost) {
+      return aCost - bCost;
+    }
+
+    return aName.localeCompare(bName, undefined, {
+      sensitivity: "base",
+    });
+  });
 };
 
 function CardInformation() {
@@ -501,6 +494,8 @@ function CardInformation() {
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
 
+  const [side, setSide] = useState("Plants");
+
   const [search, setSearch] = useState("");
 
   const [classFilter, setClassFilter] = useState(null);
@@ -624,7 +619,11 @@ function CardInformation() {
     });
 
     return {
-      classes: [...classes].sort((a, b) => a.localeCompare(b)),
+      classes: [...classes].sort((a, b) =>
+        a.localeCompare(b, undefined, {
+          sensitivity: "base",
+        }),
+      ),
 
       costs: [...costs].sort((a, b) => a - b),
 
@@ -632,11 +631,23 @@ function CardInformation() {
 
       healths: [...healths].sort((a, b) => a - b),
 
-      traits: [...traits].sort((a, b) => a.localeCompare(b)),
+      traits: [...traits].sort((a, b) =>
+        a.localeCompare(b, undefined, {
+          sensitivity: "base",
+        }),
+      ),
 
-      sets: [...sets].sort((a, b) => a.localeCompare(b)),
+      sets: [...sets].sort((a, b) =>
+        a.localeCompare(b, undefined, {
+          sensitivity: "base",
+        }),
+      ),
 
-      rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
+      rarities: [...rarities].sort((a, b) =>
+        a.localeCompare(b, undefined, {
+          sensitivity: "base",
+        }),
+      ),
     };
   }, [cards]);
 
@@ -682,6 +693,7 @@ function CardInformation() {
       borderColor: state.isFocused ? "#8fe38b" : "#444",
       minHeight: "45px",
       boxShadow: "none",
+
       "&:hover": {
         borderColor: "#8fe38b",
       },
@@ -723,9 +735,15 @@ function CardInformation() {
   const filteredCards = useMemo(() => {
     const searchValue = normalizeText(search);
 
-    return cards.filter((card) => {
+    const sideCards = cards.filter((card) => {
+      return normalizeText(card.side) === normalizeText(side);
+    });
+
+    const filtered = sideCards.filter((card) => {
       const stats = getCardStats(card.stats);
+
       const cardTraits = getTraitNames(card.traits);
+
       const searchableText = [
         card.card_name,
         card.title,
@@ -752,8 +770,10 @@ function CardInformation() {
 
       const attackMatch =
         !attackFilter || stats.attack === Number(attackFilter.value);
+
       const healthMatch =
         !healthFilter || stats.health === Number(healthFilter.value);
+
       const traitMatch =
         !traitFilter ||
         cardTraits.some(
@@ -781,8 +801,11 @@ function CardInformation() {
         rarityMatch
       );
     });
+
+    return sortCards(filtered);
   }, [
     cards,
+    side,
     search,
     classFilter,
     costFilter,
@@ -795,6 +818,7 @@ function CardInformation() {
 
   const clearFilters = () => {
     setSearch("");
+
     setClassFilter(null);
     setCostFilter(null);
     setAttackFilter(null);
@@ -802,14 +826,19 @@ function CardInformation() {
     setTraitFilter(null);
     setSetFilter(null);
     setRarityFilter(null);
+
+    setSide("Plants");
   };
 
   if (loading) {
     return (
       <div className="card-page">
-        <nav>
-          <div className="nav-links">
+        <nav className="navbar">
+          <div className="logo">
             <Link to="/">Home</Link>
+          </div>
+
+          <div className="nav-links">
             <Link to="/decklists">Decklists</Link>
             <Link to="/cardinformation">Card Information</Link>
             <Link to="/heroes">Heroes</Link>
@@ -823,9 +852,12 @@ function CardInformation() {
 
   return (
     <div className="card-page">
-      <nav>
-        <div className="nav-links">
+      <nav className="navbar">
+        <div className="logo">
           <Link to="/">Home</Link>
+        </div>
+
+        <div className="nav-links">
           <Link to="/decklists">Decklists</Link>
           <Link to="/cardinformation">Card Information</Link>
           <Link to="/heroes">Heroes</Link>
@@ -837,6 +869,24 @@ function CardInformation() {
       {error && <p className="error-message">{error}</p>}
 
       <div className="card-browser">
+        <div className="card-tabs">
+          <button
+            type="button"
+            className={side === "Plants" ? "active" : ""}
+            onClick={() => setSide("Plants")}
+          >
+            Plants
+          </button>
+
+          <button
+            type="button"
+            className={side === "Zombie" ? "active" : ""}
+            onClick={() => setSide("Zombie")}
+          >
+            Zombies
+          </button>
+        </div>
+
         <div className="card-search-container">
           <input
             className="card-search"
@@ -943,12 +993,15 @@ function CardInformation() {
 
       {!error && (
         <p className="card-results-count">
-          Showing {filteredCards.length} cards
+          Showing {filteredCards.length}{" "}
+          {side === "Plants" ? "Plant" : "Zombie"} cards
         </p>
       )}
 
       {!error && filteredCards.length === 0 ? (
-        <p className="no-card-results">No cards found.</p>
+        <p className="no-card-results">
+          No {side === "Plants" ? "Plant" : "Zombie"} cards found.
+        </p>
       ) : (
         !error && (
           <div className="card-grid">
