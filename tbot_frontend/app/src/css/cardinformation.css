@@ -16,6 +16,40 @@
   border-radius: 14px 14px 0 0;
   overflow: hidden;
 }
+/* =========================
+SIDE SELECTOR
+========================= */
+
+.card-side-tabs {
+  display: flex;
+  width: 100%;
+  margin-bottom: 15px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card-side-tabs button {
+  flex: 1;
+  min-height: 45px;
+  background: #202020;
+  color: #aaa;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.card-side-tabs button:hover {
+  background: #333;
+  color: white;
+}
+
+.card-side-tabs button.active {
+  background: #202020;
+  color: #8fe38b;
+  box-shadow: inset 0 -3px 0 #8fe38b;
+}
 
 .card-tabs button {
   flex: 1;

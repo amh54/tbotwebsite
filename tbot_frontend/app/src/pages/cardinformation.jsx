@@ -11,6 +11,7 @@ const getApiBaseUrl = () => {
     while (normalized.endsWith("/")) {
       normalized = normalized.slice(0, -1);
     }
+
     return normalized;
   };
 
@@ -23,6 +24,7 @@ const getApiBaseUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
     const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+
     if (isLocalhost) {
       return "http://localhost:8000";
     }
@@ -80,7 +82,7 @@ const removeDiscordEmojis = (value) => {
 
 const normalizeTraitName = (trait) => {
   let value = removeDiscordEmojis(trait)
-    .replace(/[_~`]/g, "")
+    .replace(/[\_\~\`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -129,7 +131,6 @@ const getSetName = (setRarity) => {
   }
 
   const value = String(setRarity).trim();
-
   const separatorIndex = value.lastIndexOf(" - ");
 
   if (separatorIndex === -1) {
@@ -145,7 +146,6 @@ const getRarityName = (setRarity) => {
   }
 
   const value = String(setRarity).trim();
-
   const separatorIndex = value.lastIndexOf(" - ");
 
   if (separatorIndex === -1) {
@@ -177,52 +177,26 @@ const getCardStats = (stats) => {
   };
 };
 
-const sortCards = (cards) => {
-  return [...cards].sort((a, b) => {
-    const aName = String(a.card_name || "").trim();
-    const bName = String(b.card_name || "").trim();
-    const aIsHero = normalizeText(a.card_type) === "hero";
-    const bIsHero = normalizeText(b.card_type) === "hero";
-
-    if (aIsHero !== bIsHero) {
-      return aIsHero ? -1 : 1;
-    }
-    if (aIsHero && bIsHero) {
-      return aName.localeCompare(bName, undefined, {
-        sensitivity: "base",
-      });
-    }
-
-    const aClass = String(a.card_type || "").trim();
-    const bClass = String(b.card_type || "").trim();
-
-    const classComparison = aClass.localeCompare(bClass, undefined, {
-      sensitivity: "base",
-    });
-
-    if (classComparison !== 0) {
-      return classComparison;
-    }
-
-    const aStats = getCardStats(a.stats);
-    const bStats = getCardStats(b.stats);
-
-    const aCost = aStats.cost ?? Number.MAX_SAFE_INTEGER;
-    const bCost = bStats.cost ?? Number.MAX_SAFE_INTEGER;
-
-    if (aCost !== bCost) {
-      return aCost - bCost;
-    }
-
-    return aName.localeCompare(bName, undefined, {
-      sensitivity: "base",
-    });
-  });
-};
-
 function CardInformation() {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
+
+  const [cards, setCards] = useState([]);
+  const [selectedCard, setSelectedCard] = useState(null);
+
+  const [side, setSide] = useState("Plants");
+
+  const [search, setSearch] = useState("");
+  const [classFilter, setClassFilter] = useState(null);
+  const [costFilter, setCostFilter] = useState(null);
+  const [attackFilter, setAttackFilter] = useState(null);
+  const [healthFilter, setHealthFilter] = useState(null);
+  const [traitFilter, setTraitFilter] = useState(null);
+  const [setFilter, setSetFilter] = useState(null);
+  const [rarityFilter, setRarityFilter] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const getEmojiIcon = (emoji) => {
     const match = String(emoji || "").match(/^<:([^:]+):\d+>$/);
@@ -238,127 +212,102 @@ function CardInformation() {
         url: STAT_ICON_LINKS.cost,
         alt: "Brainz",
       },
-
       strength: {
         url: STAT_ICON_LINKS.strength,
         alt: "Strength",
       },
-
       health: {
         url: STAT_ICON_LINKS.health,
         alt: "Health",
       },
-
       sun: {
         url: STAT_ICON_LINKS.sun,
         alt: "Sun",
       },
-
       healthstrength: {
         url: STAT_ICON_LINKS.healthstrength,
         alt: "Health and Strength",
       },
-
       deadly: {
         url: TRAIT_ICON_LINKS.deadly,
         alt: "Deadly",
       },
-
       freeze: {
         url: TRAIT_ICON_LINKS.freeze,
         alt: "Freeze",
       },
-
       antihero: {
         url: TRAIT_ICON_LINKS.antihero,
         alt: "Anti-Hero",
       },
-
       strikethrough: {
         url: TRAIT_ICON_LINKS.strikethrough,
         alt: "Strikethrough",
       },
-
       special: {
         url: TRAIT_ICON_LINKS.special,
         alt: "Special",
       },
-
       bullseye: {
         url: TRAIT_ICON_LINKS.bullseye,
         alt: "Bullseye",
       },
-
       frenzy: {
         url: TRAIT_ICON_LINKS.frenzy,
         alt: "Frenzy",
       },
-
       armored: {
         url: TRAIT_ICON_LINKS.armored,
         alt: "Armored",
       },
-
       overshoot: {
         url: TRAIT_ICON_LINKS.overshoot,
         alt: "Overshoot",
       },
-
       untrickable: {
         url: TRAIT_ICON_LINKS.untrickable,
         alt: "Untrickable",
       },
-
       doublestrike: {
         url: TRAIT_ICON_LINKS.doublestrike,
         alt: "Double Strike",
       },
-
       guardian: {
         url: CLASS_ICON_LINKS.guardian,
         alt: "Guardian",
       },
-
       kabloom: {
         url: CLASS_ICON_LINKS.kabloom,
         alt: "Kabloom",
       },
-
       megagrow: {
         url: CLASS_ICON_LINKS.megagrow,
         alt: "Mega-Grow",
       },
-
       smarty: {
         url: CLASS_ICON_LINKS.smarty,
         alt: "Smarty",
       },
-
       solar: {
         url: CLASS_ICON_LINKS.solar,
         alt: "Solar",
       },
-
       beastly: {
         url: CLASS_ICON_LINKS.beastly,
         alt: "Beastly",
       },
-
       brainy: {
         url: CLASS_ICON_LINKS.brainy,
         alt: "Brainy",
       },
-
       crazy: {
         url: CLASS_ICON_LINKS.crazy,
         alt: "Crazy",
       },
-
       hearty: {
         url: CLASS_ICON_LINKS.hearty,
         alt: "Hearty",
       },
-
       sneaky: {
         url: CLASS_ICON_LINKS.sneaky,
         alt: "Sneaky",
@@ -374,7 +323,6 @@ function CardInformation() {
     }
 
     const text = String(title);
-
     const emojiPattern = /<:[^:>]+:\d+>/gi;
     const matches = [...text.matchAll(emojiPattern)];
 
@@ -426,7 +374,6 @@ function CardInformation() {
     }
 
     const text = String(stats);
-
     const pattern = /(<:[^:>]+:\d+>)/gi;
     const matches = [...text.matchAll(pattern)];
 
@@ -491,27 +438,11 @@ function CardInformation() {
     );
   };
 
-  const [cards, setCards] = useState([]);
-  const [selectedCard, setSelectedCard] = useState(null);
-
-  const [side, setSide] = useState("Plants");
-
-  const [search, setSearch] = useState("");
-
-  const [classFilter, setClassFilter] = useState(null);
-  const [costFilter, setCostFilter] = useState(null);
-  const [attackFilter, setAttackFilter] = useState(null);
-  const [healthFilter, setHealthFilter] = useState(null);
-  const [traitFilter, setTraitFilter] = useState(null);
-  const [setFilter, setSetFilter] = useState(null);
-  const [rarityFilter, setRarityFilter] = useState(null);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
   useEffect(() => {
     const fetchCards = async () => {
       try {
+        setLoading(true);
+
         const endpoint = `${API_BASE_URL}/tbotapp/cardinformation/`;
 
         const response = await fetch(endpoint);
@@ -619,11 +550,7 @@ function CardInformation() {
     });
 
     return {
-      classes: [...classes].sort((a, b) =>
-        a.localeCompare(b, undefined, {
-          sensitivity: "base",
-        }),
-      ),
+      classes: [...classes].sort((a, b) => a.localeCompare(b)),
 
       costs: [...costs].sort((a, b) => a - b),
 
@@ -631,23 +558,11 @@ function CardInformation() {
 
       healths: [...healths].sort((a, b) => a - b),
 
-      traits: [...traits].sort((a, b) =>
-        a.localeCompare(b, undefined, {
-          sensitivity: "base",
-        }),
-      ),
+      traits: [...traits].sort((a, b) => a.localeCompare(b)),
 
-      sets: [...sets].sort((a, b) =>
-        a.localeCompare(b, undefined, {
-          sensitivity: "base",
-        }),
-      ),
+      sets: [...sets].sort((a, b) => a.localeCompare(b)),
 
-      rarities: [...rarities].sort((a, b) =>
-        a.localeCompare(b, undefined, {
-          sensitivity: "base",
-        }),
-      ),
+      rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
     };
   }, [cards]);
 
@@ -693,7 +608,6 @@ function CardInformation() {
       borderColor: state.isFocused ? "#8fe38b" : "#444",
       minHeight: "45px",
       boxShadow: "none",
-
       "&:hover": {
         borderColor: "#8fe38b",
       },
@@ -735,13 +649,16 @@ function CardInformation() {
   const filteredCards = useMemo(() => {
     const searchValue = normalizeText(search);
 
-    const sideCards = cards.filter((card) => {
-      return normalizeText(card.side) === normalizeText(side);
-    });
+    const result = cards.filter((card) => {
+      const cardSide = normalizeText(card.side);
 
-    const filtered = sideCards.filter((card) => {
+      const selectedSide = side === "Plants" ? "plants" : "zombie";
+
+      if (cardSide !== selectedSide) {
+        return false;
+      }
+
       const stats = getCardStats(card.stats);
-
       const cardTraits = getTraitNames(card.traits);
 
       const searchableText = [
@@ -801,8 +718,52 @@ function CardInformation() {
         rarityMatch
       );
     });
+    return result.sort((a, b) => {
+      const aType = normalizeText(a.card_type);
+      const bType = normalizeText(b.card_type);
 
-    return sortCards(filtered);
+      const aName = normalizeText(a.card_name);
+      const bName = normalizeText(b.card_name);
+
+      const aStats = getCardStats(a.stats);
+      const bStats = getCardStats(b.stats);
+
+      const aIsHero = aType === "hero" || aType === "heroes";
+
+      const bIsHero = bType === "hero" || bType === "heroes";
+
+      if (aIsHero && !bIsHero) {
+        return -1;
+      }
+
+      if (!aIsHero && bIsHero) {
+        return 1;
+      }
+
+      if (aIsHero && bIsHero) {
+        return aName.localeCompare(bName, undefined, { sensitivity: "base" });
+      }
+
+      const classCompare = aType.localeCompare(bType, undefined, {
+        sensitivity: "base",
+      });
+
+      if (classCompare !== 0) {
+        return classCompare;
+      }
+
+      const aCost =
+        aStats.cost === null ? Number.MAX_SAFE_INTEGER : aStats.cost;
+
+      const bCost =
+        bStats.cost === null ? Number.MAX_SAFE_INTEGER : bStats.cost;
+
+      if (aCost !== bCost) {
+        return aCost - bCost;
+      }
+
+      return aName.localeCompare(bName, undefined, { sensitivity: "base" });
+    });
   }, [
     cards,
     side,
@@ -818,7 +779,6 @@ function CardInformation() {
 
   const clearFilters = () => {
     setSearch("");
-
     setClassFilter(null);
     setCostFilter(null);
     setAttackFilter(null);
@@ -826,8 +786,6 @@ function CardInformation() {
     setTraitFilter(null);
     setSetFilter(null);
     setRarityFilter(null);
-
-    setSide("Plants");
   };
 
   if (loading) {
@@ -839,6 +797,7 @@ function CardInformation() {
           </div>
 
           <div className="nav-links">
+            <Link to="/">Home</Link>
             <Link to="/decklists">Decklists</Link>
             <Link to="/cardinformation">Card Information</Link>
             <Link to="/heroes">Heroes</Link>
@@ -858,6 +817,7 @@ function CardInformation() {
         </div>
 
         <div className="nav-links">
+          <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
           <Link to="/cardinformation">Card Information</Link>
           <Link to="/heroes">Heroes</Link>
@@ -869,19 +829,26 @@ function CardInformation() {
       {error && <p className="error-message">{error}</p>}
 
       <div className="card-browser">
-        <div className="card-tabs">
+        {/* PLANTS / ZOMBIES */}
+        <div className="card-side-tabs">
           <button
             type="button"
             className={side === "Plants" ? "active" : ""}
-            onClick={() => setSide("Plants")}
+            onClick={() => {
+              setSide("Plants");
+              clearFilters();
+            }}
           >
             Plants
           </button>
 
           <button
             type="button"
-            className={side === "Zombie" ? "active" : ""}
-            onClick={() => setSide("Zombie")}
+            className={side === "Zombies" ? "active" : ""}
+            onClick={() => {
+              setSide("Zombies");
+              clearFilters();
+            }}
           >
             Zombies
           </button>
