@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import CardModal from "../components/cardmodal";
+
 import "../css/cardinformation.css";
 
 const getApiBaseUrl = () => {
@@ -58,7 +59,6 @@ const TRAIT_ICON_LINKS = {
 function CardInformation() {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
-
   const getEmojiIcon = (emoji) => {
     const normalized = String(emoji || "").toLowerCase();
 
@@ -162,7 +162,9 @@ function CardInformation() {
     }
 
     const text = String(stats);
-    const pattern = /(<:[^:>]+:\d+>)/gi;
+
+    const pattern = /(<:[^:>]+:\d+>)(\*{0,2}|_{0,2})?/gi;
+
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
@@ -173,9 +175,9 @@ function CardInformation() {
     let lastIndex = 0;
 
     matches.forEach((match, index) => {
-      const fullMatch = match[0];
+      const fullEmoji = match[1];
+      const formatting = match[2] || "";
       const matchIndex = match.index;
-
       if (matchIndex > lastIndex) {
         parts.push(
           <span key={`stats-text-${index}`}>
@@ -184,7 +186,7 @@ function CardInformation() {
         );
       }
 
-      const icon = getEmojiIcon(fullMatch);
+      const icon = getEmojiIcon(fullEmoji);
 
       if (icon) {
         parts.push(
@@ -196,10 +198,9 @@ function CardInformation() {
           />,
         );
       } else {
-        parts.push(<span key={`stats-unknown-${index}`}>{fullMatch}</span>);
+        parts.push(<span key={`stats-unknown-${index}`}>{fullEmoji}</span>);
       }
-
-      lastIndex = matchIndex + fullMatch.length;
+      lastIndex = matchIndex + fullEmoji.length + formatting.length;
     });
 
     if (lastIndex < text.length) {
@@ -215,7 +216,7 @@ function CardInformation() {
     }
 
     const traitPattern =
-      /(anti[-\s]?hero|strikethrough|deadly|bullseye|frenzy|armored|overshoot|special|freeze)(?:\s+\*+\d+)?/gi;
+      /(anti[-\s]?hero|strikethrough|deadly|bullseye|frenzy|armored|overshoot|freeze|special)(?:\s+\*+\d+)?/gi;
 
     const matches = [...String(text).matchAll(traitPattern)];
 
@@ -228,7 +229,7 @@ function CardInformation() {
 
     matches.forEach((match, index) => {
       const matchText = match[0];
-      const traitName = match[1].toLowerCase().replace(/[\s-]/g, "");
+      const traitName = match[1].toLowerCase();
 
       if (match.index > lastIndex) {
         parts.push(
@@ -241,7 +242,7 @@ function CardInformation() {
       let iconUrl = "";
       let iconAlt = "";
 
-      if (traitName === "antihero") {
+      if (traitName.startsWith("anti")) {
         iconUrl = TRAIT_ICON_LINKS.antihero;
         iconAlt = "Anti-Hero";
       } else if (traitName === "strikethrough") {
@@ -262,12 +263,12 @@ function CardInformation() {
       } else if (traitName === "overshoot") {
         iconUrl = TRAIT_ICON_LINKS.overshoot;
         iconAlt = "Overshoot";
-      } else if (traitName === "special") {
-        iconUrl = TRAIT_ICON_LINKS.special;
-        iconAlt = "Special";
       } else if (traitName === "freeze") {
         iconUrl = TRAIT_ICON_LINKS.freeze;
         iconAlt = "Freeze";
+      } else if (traitName === "special") {
+        iconUrl = TRAIT_ICON_LINKS.special;
+        iconAlt = "Special";
       }
 
       if (iconUrl) {
@@ -350,6 +351,7 @@ function CardInformation() {
         const data = JSON.parse(responseText);
 
         setCards(Array.isArray(data) ? data : []);
+
         setError("");
       } catch (fetchError) {
         console.error(fetchError);
@@ -371,12 +373,10 @@ function CardInformation() {
 
   return (
     <div className="card-page">
-      <nav>
-        <div className="nav-links">
-          <Link to="/">Home</Link>
-          <Link to="/decklists">Decklists</Link>
-          <Link to="/cardinformation">Card Information</Link>
-        </div>
+      <nav className="page-nav">
+        <Link to="/">Home</Link>
+        <Link to="/decklists">Decklists</Link>
+        <Link to="/cards">Card Information</Link>
       </nav>
 
       <h1>Card Information</h1>
