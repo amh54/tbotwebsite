@@ -509,6 +509,143 @@ function CardInformation() {
     fetchCards();
   }, []);
 
+  const filterData = useMemo(() => {
+    const classes = new Set();
+    const costs = new Set();
+    const attacks = new Set();
+    const healths = new Set();
+    const traits = new Set();
+    const sets = new Set();
+    const rarities = new Set();
+
+    cards
+      .filter((card) => normalizeText(card.side) === normalizeText(side))
+      .forEach((card) => {
+        if (hasValue(card.card_type)) {
+          classes.add(String(card.card_type).trim());
+        }
+
+        const stats = getCardStats(card.stats);
+
+        if (stats.cost !== null) {
+          costs.add(stats.cost);
+        }
+
+        if (stats.attack !== null) {
+          attacks.add(stats.attack);
+        }
+
+        if (stats.health !== null) {
+          healths.add(stats.health);
+        }
+
+        getTraitNames(card.traits).forEach((trait) => {
+          traits.add(trait);
+        });
+
+        const setName = getSetName(card.set_rarity);
+        const rarityName = getRarityName(card.set_rarity);
+
+        if (setName) {
+          sets.add(setName);
+        }
+
+        if (rarityName) {
+          rarities.add(rarityName);
+        }
+      });
+
+    return {
+      classes: [...classes].sort((a, b) => a.localeCompare(b)),
+      costs: [...costs].sort((a, b) => a - b),
+      attacks: [...attacks].sort((a, b) => a - b),
+      healths: [...healths].sort((a, b) => a - b),
+      traits: [...traits].sort((a, b) => a.localeCompare(b)),
+      sets: [...sets].sort((a, b) => a.localeCompare(b)),
+      rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
+    };
+  }, [cards, side]);
+
+  const classOptions = filterData.classes.map((value) => ({
+    value,
+    label: value,
+  }));
+
+  const costOptions = filterData.costs.map((value) => ({
+    value,
+    label: String(value),
+  }));
+
+  const attackOptions = filterData.attacks.map((value) => ({
+    value,
+    label: String(value),
+  }));
+
+  const healthOptions = filterData.healths.map((value) => ({
+    value,
+    label: String(value),
+  }));
+
+  const traitOptions = filterData.traits.map((value) => ({
+    value,
+    label: value,
+  }));
+
+  const setOptions = filterData.sets.map((value) => ({
+    value,
+    label: value,
+  }));
+
+  const rarityOptions = filterData.rarities.map((value) => ({
+    value,
+    label: value,
+  }));
+
+  const selectStyles = {
+    control: (base, state) => ({
+      ...base,
+      backgroundColor: "#202020",
+      borderColor: state.isFocused ? "#8fe38b" : "#444",
+      minHeight: "45px",
+      boxShadow: "none",
+      "&:hover": {
+        borderColor: "#8fe38b",
+      },
+    }),
+
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+
+    menu: (base) => ({
+      ...base,
+      backgroundColor: "#202020",
+    }),
+
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isFocused ? "#333" : "#202020",
+      color: "white",
+      cursor: "pointer",
+    }),
+
+    singleValue: (base) => ({
+      ...base,
+      color: "white",
+    }),
+
+    placeholder: (base) => ({
+      ...base,
+      color: "#888",
+    }),
+
+    input: (base) => ({
+      ...base,
+      color: "white",
+    }),
+  };
+
   const filteredCards = useMemo(() => {
     const searchValue = normalizeText(search);
 
@@ -613,201 +750,6 @@ function CardInformation() {
     });
   }, [
     cards,
-    search,
-    classFilter,
-    costFilter,
-    attackFilter,
-    healthFilter,
-    traitFilter,
-    setFilter,
-    rarityFilter,
-  ]);
-
-  const classOptions = filterData.classes.map((value) => ({
-    value,
-    label: value,
-  }));
-
-  const costOptions = filterData.costs.map((value) => ({
-    value,
-    label: String(value),
-  }));
-
-  const attackOptions = filterData.attacks.map((value) => ({
-    value,
-    label: String(value),
-  }));
-
-  const healthOptions = filterData.healths.map((value) => ({
-    value,
-    label: String(value),
-  }));
-
-  const traitOptions = filterData.traits.map((value) => ({
-    value,
-    label: value,
-  }));
-
-  const setOptions = filterData.sets.map((value) => ({
-    value,
-    label: value,
-  }));
-
-  const rarityOptions = filterData.rarities.map((value) => ({
-    value,
-    label: value,
-  }));
-
-  const selectStyles = {
-    control: (base, state) => ({
-      ...base,
-      backgroundColor: "#202020",
-      borderColor: state.isFocused ? "#8fe38b" : "#444",
-      minHeight: "45px",
-      boxShadow: "none",
-      "&:hover": {
-        borderColor: "#8fe38b",
-      },
-    }),
-
-    menuPortal: (base) => ({
-      ...base,
-      zIndex: 9999,
-    }),
-
-    menu: (base) => ({
-      ...base,
-      backgroundColor: "#202020",
-    }),
-
-    option: (base, state) => ({
-      ...base,
-      backgroundColor: state.isFocused ? "#333" : "#202020",
-      color: "white",
-      cursor: "pointer",
-    }),
-
-    singleValue: (base) => ({
-      ...base,
-      color: "white",
-    }),
-
-    placeholder: (base) => ({
-      ...base,
-      color: "#888",
-    }),
-
-    input: (base) => ({
-      ...base,
-      color: "white",
-    }),
-  };
-
-  const filteredCards = useMemo(() => {
-    const searchValue = normalizeText(search);
-
-    const result = cards.filter((card) => {
-      const cardSide = normalizeText(card.side);
-
-      if (cardSide !== normalizeText(side)) {
-        return false;
-      }
-
-      const stats = getCardStats(card.stats);
-      const cardTraits = getTraitNames(card.traits);
-
-      const searchableText = [
-        card.card_name,
-        card.title,
-        card.card_type,
-        card.description,
-        card.ability,
-        ...cardTraits,
-        getSetName(card.set_rarity),
-        getRarityName(card.set_rarity),
-        card.flavor_text,
-        card.aliases,
-      ]
-        .filter(hasValue)
-        .join(" ")
-        .toLowerCase();
-
-      const searchMatch = !searchValue || searchableText.includes(searchValue);
-
-      const classMatch =
-        !classFilter ||
-        normalizeText(card.card_type) === normalizeText(classFilter.value);
-
-      const costMatch = !costFilter || stats.cost === Number(costFilter.value);
-
-      const attackMatch =
-        !attackFilter || stats.attack === Number(attackFilter.value);
-
-      const healthMatch =
-        !healthFilter || stats.health === Number(healthFilter.value);
-
-      const traitMatch =
-        !traitFilter ||
-        cardTraits.some(
-          (trait) => normalizeText(trait) === normalizeText(traitFilter.value),
-        );
-
-      const setMatch =
-        !setFilter ||
-        normalizeText(getSetName(card.set_rarity)) ===
-          normalizeText(setFilter.value);
-
-      const rarityMatch =
-        !rarityFilter ||
-        normalizeText(getRarityName(card.set_rarity)) ===
-          normalizeText(rarityFilter.value);
-
-      return (
-        searchMatch &&
-        classMatch &&
-        costMatch &&
-        attackMatch &&
-        healthMatch &&
-        traitMatch &&
-        setMatch &&
-        rarityMatch
-      );
-    });
-
-    result.sort((a, b) => {
-      const aSuperpower = isSuperpower(a);
-      const bSuperpower = isSuperpower(b);
-
-      if (aSuperpower !== bSuperpower) {
-        return aSuperpower ? -1 : 1;
-      }
-
-      const aCost = getCardStats(a.stats).cost;
-      const bCost = getCardStats(b.stats).cost;
-
-      if (aCost === null && bCost !== null) {
-        return 1;
-      }
-
-      if (aCost !== null && bCost === null) {
-        return -1;
-      }
-
-      if (aCost !== bCost) {
-        return (aCost ?? Infinity) - (bCost ?? Infinity);
-      }
-
-      return String(a.card_name || "").localeCompare(
-        String(b.card_name || ""),
-        undefined,
-        { sensitivity: "base" },
-      );
-    });
-
-    return result;
-  }, [
-    cards,
-    side,
     search,
     classFilter,
     costFilter,
