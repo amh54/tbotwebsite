@@ -15,6 +15,7 @@ class ZombieCardSerializer(serializers.ModelSerializer):
             "cardid",
             "card_type",
             "card_name",
+            "side",
             "title",
             "stats",
             "description",

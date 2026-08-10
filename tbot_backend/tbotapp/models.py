@@ -26,6 +26,7 @@ class ZombieCards(models.Model):
     cardid = models.SmallIntegerField(primary_key=True)
     card_type = models.CharField(max_length=50)
     card_name = models.CharField(max_length=200, blank=True)
+    side = models.CharField(max_length=20, null=True, blank=True)
     title = models.CharField(max_length=100, blank=True)
     stats = models.CharField(max_length=300, blank=True)
     description = models.CharField(max_length=100, blank=True)
