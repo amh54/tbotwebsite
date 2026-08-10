@@ -10,6 +10,86 @@
   margin-bottom: 30px;
 }
 
+/* =========================
+   SEARCH / FILTERS
+   ========================= */
+
+.card-browser {
+  margin-bottom: 25px;
+}
+
+.search-container {
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 16px;
+  background: #202020;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 6px;
+  font-size: 1rem;
+  outline: none;
+}
+
+.search::placeholder {
+  color: #888;
+}
+
+.search:focus {
+  border-color: #8fe38b;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.select-wrapper {
+  min-width: 0;
+}
+
+.clear-filter-btn {
+  min-height: 45px;
+  padding: 0 20px;
+  background: #222;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.15s ease;
+}
+
+.clear-filter-btn:hover {
+  background: #444;
+}
+
+.results-count {
+  margin: 0 0 20px;
+  color: #aeb8bd;
+  font-size: 0.95rem;
+}
+
+.error-message {
+  color: #ff7b7b;
+  margin-bottom: 20px;
+}
+
+.no-results {
+  color: #aeb8bd;
+  font-size: 1.1rem;
+}
+
+/* =========================
+   CARD GRID
+   ========================= */
+
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
@@ -21,8 +101,10 @@
   border: 1px solid #2a2f34;
   border-radius: 12px;
   padding: 12px;
+
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
+
   gap: 14px;
   align-items: start;
 }
@@ -51,6 +133,10 @@
   line-height: 1.2;
 }
 
+/* =========================
+   TITLE
+   ========================= */
+
 .card-title-content {
   display: inline-flex;
   align-items: center;
@@ -76,20 +162,61 @@
   gap: 0;
 }
 
+/* =========================
+   GENERAL INFORMATION
+   ========================= */
+
 .card-item-info p {
   margin: 0;
   color: #dde5ea;
   font-size: 1rem;
 }
 
-.card-item-info p > span:first-child {
+.card-field-label {
   color: #8fe38b;
   font-weight: 700;
 }
 
-.card-traits-line {
+/* =========================
+   CLASSES
+   ========================= */
+
+.card-classes-line {
   display: flex;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.card-classes-value {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-class-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-class-icon {
+  width: 18px;
+  height: 18px;
+  max-width: 18px;
+  max-height: 18px;
+  object-fit: contain;
+  display: inline-block;
+}
+
+/* =========================
+   TRAITS
+   ========================= */
+
+.card-traits-line {
+  display: flex;
+  align-items: flex-start;
   gap: 8px;
   flex-wrap: wrap;
 }
@@ -100,7 +227,18 @@
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
-  text-decoration: underline;
+}
+
+.card-set {
+  color: #ffffff;
+}
+
+.card-rarity {
+  color: #ffffff;
+}
+
+.trait-separator {
+  color: #dde5ea;
 }
 
 .trait-rendered {
@@ -110,14 +248,14 @@
   flex-wrap: wrap;
 }
 
-.trait-with-icon {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
+/*
+ * This is the important part:
+ *
+ * __Deadly__ becomes an actual underlined
+ * "Deadly" instead of displaying __Deadly__.
+ */
 .trait-name {
-  text-decoration: underline;
+  text-decoration-line: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
@@ -131,6 +269,10 @@
   vertical-align: middle;
   flex: 0 0 18px;
 }
+
+/* =========================
+   STATS
+   ========================= */
 
 .card-stats-line {
   display: flex;
@@ -157,6 +299,10 @@
   font-weight: 600;
 }
 
+/* =========================
+   BUTTON
+   ========================= */
+
 .card-item button {
   margin-top: 10px;
   width: fit-content;
@@ -172,6 +318,16 @@
   background: #444;
 }
 
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 1100px) {
+  .filters {
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .card-page {
     padding: 20px;
@@ -179,6 +335,10 @@
 
   .card-page h1 {
     font-size: 36px;
+  }
+
+  .filters {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
   }
 
   .card-grid {
@@ -189,6 +349,7 @@
     grid-template-columns:
       minmax(130px, 38%)
       minmax(0, 1fr);
+
     gap: 10px;
     padding: 10px;
   }
@@ -218,7 +379,15 @@
 }
 
 @media (max-width: 540px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
   .card-item {
     grid-template-columns: 1fr;
+  }
+
+  .card-item-media img {
+    max-height: 320px;
   }
 }
