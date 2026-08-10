@@ -69,7 +69,7 @@ const CLASS_ICON_LINKS = {
   brainy: "https://i.ibb.co/d40zFh8r/Brainy.webp",
   crazy: "https://i.ibb.co/HTvzSsXX/crazy.webp",
   hearty: "https://i.ibb.co/ynKbzV8v/hearty.webp",
-  sneaky: "https://i.ibb.co/8CQ3jRy/sneaky.webp",
+  sneaky: "https://i.ibb.co/nqFdR6HJ/Pv-ZH-Sneaky-Icon.png",
 };
 
 function CardInformation() {
