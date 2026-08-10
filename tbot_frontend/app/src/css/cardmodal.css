@@ -101,13 +101,12 @@
   line-height: 1;
 }
 .card-title-icon {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   vertical-align: middle;
-  margin-left: 6px;
+  margin-right: 5px;
 }
-
 .modal-section {
   display: flex;
   flex-direction: column;
