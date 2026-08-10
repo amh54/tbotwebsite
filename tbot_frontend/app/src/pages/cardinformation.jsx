@@ -384,6 +384,7 @@ function CardInformation() {
 
       if (lastIndex < value.length) {
         const remaining = value.slice(lastIndex);
+
         const cleaned = remaining.replace(/__/g, "").replace(/\*\*/g, "");
 
         if (cleaned) {
@@ -534,7 +535,7 @@ function CardInformation() {
   }
 
   return (
-    <div className="card-information-page">
+    <div className="card-page">
       <nav>
         <Link to="/">Home</Link>
         <Link to="/decklists">Decklists</Link>

@@ -41,9 +41,7 @@ function CardModal({ card, close }) {
     : "No description available.";
 
   const traitsText = hasValue(card.traits) ? String(card.traits) : "";
-
   const abilityText = hasValue(card.ability) ? String(card.ability) : "";
-
   const statsText = hasValue(card.stats) ? String(card.stats) : "";
 
   const getEmojiIcon = (emoji) => {
@@ -463,6 +461,7 @@ function CardModal({ card, close }) {
 
       if (lastIndex < value.length) {
         const remaining = value.slice(lastIndex);
+
         const cleaned = remaining.replace(/__/g, "").replace(/\*\*/g, "");
 
         if (cleaned) {
@@ -500,88 +499,90 @@ function CardModal({ card, close }) {
   };
 
   return (
-    <div className="card-modal" onClick={(event) => event.stopPropagation()}>
-      <button
-        type="button"
-        className="card-modal-close"
-        onClick={close}
-        aria-label="Close"
-      >
-        ×
-      </button>
+    <div className="card-overlay" onClick={close}>
+      <div className="card-modal" onClick={(event) => event.stopPropagation()}>
+        <button
+          type="button"
+          className="close-card"
+          onClick={close}
+          aria-label="Close card details"
+        >
+          ×
+        </button>
 
-      <img
-        className="modal-card-image"
-        src={card.thumbnail}
-        alt={card.card_name}
-      />
+        <img
+          className="modal-card-image"
+          src={card.thumbnail}
+          alt={card.card_name}
+        />
 
-      <div className="modal-info">
-        <div className="modal-header">
-          <h2 className="modal-title">
-            {hasValue(card.title)
-              ? renderTitleText(card.title)
-              : card.card_name}
-          </h2>
+        <div className="modal-info">
+          <div className="modal-header">
+            <h2 className="modal-title">
+              {hasValue(card.title)
+                ? renderTitleText(card.title)
+                : card.card_name}
+            </h2>
 
-          <span className="card-type">{card.card_type}</span>
+            <span className="card-type">{card.card_type}</span>
+          </div>
+
+          <section className="modal-section description-section">
+            <h3>Description</h3>
+
+            <p className="description-text">
+              {renderDescriptionText(description)}
+            </p>
+          </section>
+
+          <section className="modal-metadata">
+            {hasValue(card.stats) && (
+              <div className="metadata-item stats-item">
+                <span className="label">Stats</span>
+
+                <span className="value stats-value">
+                  {renderStatsText(statsText)}
+                </span>
+              </div>
+            )}
+
+            {hasValue(card.ability) && (
+              <div className="metadata-item">
+                <span className="label">Ability</span>
+
+                <span className="value ability-value">
+                  {renderAbilityText(abilityText)}
+                </span>
+              </div>
+            )}
+
+            {hasValue(card.traits) && (
+              <div className="metadata-item trait-item">
+                <span className="label">Traits</span>
+
+                <span className="value trait-value">
+                  {renderTraitText(traitsText)}
+                </span>
+              </div>
+            )}
+
+            {hasValue(card.set_rarity) && (
+              <div className="metadata-item">
+                <span className="label">Rarity</span>
+
+                <span className="value">{card.set_rarity}</span>
+              </div>
+            )}
+
+            {hasValue(card.flavor_text) && (
+              <div className="metadata-item full-width-item">
+                <span className="label">Flavor Text</span>
+
+                <span className="value">{card.flavor_text}</span>
+              </div>
+            )}
+          </section>
         </div>
-
-        <section className="modal-section description-section">
-          <h3>Description</h3>
-
-          <p className="description-text">
-            {renderDescriptionText(description)}
-          </p>
-        </section>
-
-        <section className="modal-metadata">
-          {hasValue(card.stats) && (
-            <div className="metadata-item stats-item">
-              <span className="label">Stats</span>
-
-              <span className="value stats-value">
-                {renderStatsText(statsText)}
-              </span>
-            </div>
-          )}
-
-          {hasValue(card.ability) && (
-            <div className="metadata-item">
-              <span className="label">Ability</span>
-
-              <span className="value ability-value">
-                {renderAbilityText(abilityText)}
-              </span>
-            </div>
-          )}
-
-          {hasValue(card.traits) && (
-            <div className="metadata-item trait-item">
-              <span className="label">Traits</span>
-
-              <span className="value trait-value">
-                {renderTraitText(traitsText)}
-              </span>
-            </div>
-          )}
-
-          {hasValue(card.set_rarity) && (
-            <div className="metadata-item">
-              <span className="label">Rarity</span>
-
-              <span className="value">{card.set_rarity}</span>
-            </div>
-          )}
-
-          {hasValue(card.flavor_text) && (
-            <div className="metadata-item full-width-item">
-              <span className="label">Flavor Text</span>
-
-              <span className="value">{card.flavor_text}</span>
-            </div>
-          )}
-        </section>
       </div>
     </div>
   );
