@@ -216,7 +216,7 @@ function CardInformation() {
     }
 
     const traitPattern =
-      /(anti[-\s]?hero|strikethrough|deadly|bullseye|frenzy|armored|overshoot|freeze|special)(?:\s+\*+\d+)?/gi;
+      /(<:[^:>]+:\d+>)__([^_]+?)__(?:\s*)|(<:[^:>]+:\d+>)(?:\s*)/gi;
 
     const matches = [...String(text).matchAll(traitPattern)];
 
@@ -228,62 +228,53 @@ function CardInformation() {
     let lastIndex = 0;
 
     matches.forEach((match, index) => {
-      const matchText = match[0];
-      const traitName = match[1].toLowerCase();
+      const matchIndex = match.index;
 
-      if (match.index > lastIndex) {
+      if (matchIndex > lastIndex) {
         parts.push(
           <span key={`trait-text-${index}`}>
-            {text.slice(lastIndex, match.index)}
+            {text.slice(lastIndex, matchIndex)}
           </span>,
         );
       }
+      if (match[1]) {
+        const emoji = match[1];
+        const traitText = match[2];
 
-      let iconUrl = "";
-      let iconAlt = "";
+        const icon = getEmojiIcon(emoji);
 
-      if (traitName.startsWith("anti")) {
-        iconUrl = TRAIT_ICON_LINKS.antihero;
-        iconAlt = "Anti-Hero";
-      } else if (traitName === "strikethrough") {
-        iconUrl = TRAIT_ICON_LINKS.strikethrough;
-        iconAlt = "Strikethrough";
-      } else if (traitName === "deadly") {
-        iconUrl = TRAIT_ICON_LINKS.deadly;
-        iconAlt = "Deadly";
-      } else if (traitName === "bullseye") {
-        iconUrl = TRAIT_ICON_LINKS.bullseye;
-        iconAlt = "Bullseye";
-      } else if (traitName === "frenzy") {
-        iconUrl = TRAIT_ICON_LINKS.frenzy;
-        iconAlt = "Frenzy";
-      } else if (traitName === "armored") {
-        iconUrl = TRAIT_ICON_LINKS.armored;
-        iconAlt = "Armored";
-      } else if (traitName === "overshoot") {
-        iconUrl = TRAIT_ICON_LINKS.overshoot;
-        iconAlt = "Overshoot";
-      } else if (traitName === "freeze") {
-        iconUrl = TRAIT_ICON_LINKS.freeze;
-        iconAlt = "Freeze";
-      } else if (traitName === "special") {
-        iconUrl = TRAIT_ICON_LINKS.special;
-        iconAlt = "Special";
+        if (icon) {
+          parts.push(
+            <span className="trait-with-icon" key={`trait-${index}`}>
+              <img className="trait-icon" src={icon.url} alt={icon.alt} />
+
+              <span>{traitText}</span>
+            </span>,
+          );
+        } else {
+          parts.push(<span key={`trait-${index}`}>{traitText}</span>);
+        }
+
+        lastIndex = matchIndex + match[0].length;
+        return;
       }
+      if (match[3]) {
+        const emoji = match[3];
+        const icon = getEmojiIcon(emoji);
 
-      if (iconUrl) {
-        parts.push(
-          <span className="trait-with-icon" key={`trait-${index}`}>
-            <img className="trait-icon" src={iconUrl} alt={iconAlt} />
+        if (icon) {
+          parts.push(
+            <img
+              key={`trait-icon-${index}`}
+              className="trait-icon"
+              src={icon.url}
+              alt={icon.alt}
+            />,
+          );
+        }
 
-            <span>{matchText}</span>
-          </span>,
-        );
-      } else {
-        parts.push(<span key={`trait-${index}`}>{matchText}</span>);
+        lastIndex = matchIndex + match[0].length;
       }
-
-      lastIndex = match.index + matchText.length;
     });
 
     if (lastIndex < text.length) {
