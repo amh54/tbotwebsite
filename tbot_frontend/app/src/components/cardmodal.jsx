@@ -188,29 +188,18 @@ function CardModal({ card, close }) {
     return iconMap[emojiName] || null;
   };
 
-  /*
-   * The title contains the Discord class emoji.
-   *
-   * Example:
-   *
-   * <:Hearty:123456> **Swabbie**
-   *
-   * becomes:
-   *
-   * [Hearty image] Swabbie
-   */
   const renderTitleText = (title) => {
     if (!title) {
       return null;
     }
 
-    const text = String(title);
+    const text = String(title).replace(/\*\*/g, "").replace(/__/g, "");
 
     const emojiPattern = /<:[^:>]+:\d+>/gi;
     const matches = [...text.matchAll(emojiPattern)];
 
     if (matches.length === 0) {
-      return <span>{text.replace(/\*\*/g, "").replace(/__/g, "")}</span>;
+      return <span>{text}</span>;
     }
 
     const parts = [];
@@ -221,11 +210,9 @@ function CardModal({ card, close }) {
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
-        const normalText = text.slice(lastIndex, matchIndex);
-
         parts.push(
           <span key={`title-text-${index}`}>
-            {normalText.replace(/\*\*/g, "").replace(/__/g, "").trim()}
+            {text.slice(lastIndex, matchIndex)}
           </span>,
         );
       }
@@ -251,13 +238,7 @@ function CardModal({ card, close }) {
     });
 
     if (lastIndex < text.length) {
-      const remainingText = text.slice(lastIndex);
-
-      parts.push(
-        <span key="title-end">
-          {remainingText.replace(/\*\*/g, "").replace(/__/g, "").trim()}
-        </span>,
-      );
+      parts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
     }
 
     return <span className="card-modal-title-content">{parts}</span>;
@@ -472,7 +453,66 @@ function CardModal({ card, close }) {
       return <span className="trait-rendered">{parts}</span>;
     }
 
-    return <span>{value}</span>;
+    const traitPattern =
+      /(anti[-\s]?hero|strikethrough|deadly|bullseye|frenzy|armored|overshoot|untrickable|doublestrike|freeze|special)/gi;
+
+    const matches = [...value.matchAll(traitPattern)];
+
+    if (matches.length === 0) {
+      return <span>{value}</span>;
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    const iconMap = {
+      antihero: [MANUAL_STAT_IMAGE_LINKS.antihero, "Anti-Hero"],
+      strikethrough: [MANUAL_STAT_IMAGE_LINKS.strikethrough, "Strikethrough"],
+      deadly: [MANUAL_STAT_IMAGE_LINKS.deadly, "Deadly"],
+      bullseye: [MANUAL_STAT_IMAGE_LINKS.bullseye, "Bullseye"],
+      frenzy: [MANUAL_STAT_IMAGE_LINKS.frenzy, "Frenzy"],
+      armored: [MANUAL_STAT_IMAGE_LINKS.armored, "Armored"],
+      overshoot: [MANUAL_STAT_IMAGE_LINKS.overshoot, "Overshoot"],
+      untrickable: [MANUAL_STAT_IMAGE_LINKS.untrickable, "Untrickable"],
+      doublestrike: [MANUAL_STAT_IMAGE_LINKS.doublestrike, "Double Strike"],
+      freeze: [MANUAL_STAT_IMAGE_LINKS.freeze, "Freeze"],
+      special: [MANUAL_STAT_IMAGE_LINKS.special, "Special"],
+    };
+
+    matches.forEach((match, index) => {
+      const matchText = match[0];
+      const traitName = match[1].toLowerCase().replace(/[-\s]/g, "");
+
+      if (match.index > lastIndex) {
+        parts.push(
+          <span key={`trait-text-${index}`}>
+            {value.slice(lastIndex, match.index)}
+          </span>,
+        );
+      }
+
+      const icon = iconMap[traitName];
+
+      if (icon) {
+        parts.push(
+          <span className="trait-with-icon" key={`trait-${index}`}>
+            <img className="trait-icon" src={icon[0]} alt={icon[1]} />
+
+            <span className="trait-name">{matchText}</span>
+          </span>,
+        );
+      } else {
+        parts.push(<span key={`trait-${index}`}>{matchText}</span>);
+      }
+
+      lastIndex = match.index + matchText.length;
+    });
+
+    if (lastIndex < value.length) {
+      parts.push(<span key="trait-text-end">{value.slice(lastIndex)}</span>);
+    }
+
+    return <span className="trait-rendered">{parts}</span>;
   };
 
   const renderDescriptionText = (text) => {
@@ -524,7 +564,9 @@ function CardModal({ card, close }) {
                 : card.card_name}
             </h2>
 
-            <span className="card-type">{card.card_type}</span>
+            {hasValue(card.card_type) && (
+              <span className="card-type">{card.card_type}</span>
+            )}
           </div>
 
           <section className="modal-section description-section">

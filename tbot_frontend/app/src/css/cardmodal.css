@@ -6,6 +6,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .card-modal {
@@ -17,25 +18,36 @@
   overflow: auto;
   padding: 24px;
   border-radius: 12px;
+
   display: grid;
   grid-template-columns:
     minmax(190px, 40%)
     minmax(0, 1fr);
+
   gap: 22px;
   align-items: start;
+
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+
+  isolation: isolate;
 }
 
 .card-modal::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center /
-    cover no-repeat;
+
+  background-image: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+
   filter: blur(12px);
   opacity: 0.15;
+
   transform: scale(1.1);
-  z-index: 0;
+
+  z-index: -1;
   pointer-events: none;
 }
 
@@ -43,13 +55,19 @@
   position: absolute;
   right: 18px;
   top: 12px;
+
   width: 35px;
   height: 35px;
+
   border-radius: 50%;
   border: none;
+
   background: #242424;
   color: #ffffff;
+
   font-size: 22px;
+  line-height: 1;
+
   cursor: pointer;
   z-index: 5;
 }
@@ -59,22 +77,30 @@
 }
 
 .modal-card-image {
+  display: block;
   width: 100%;
   max-width: 420px;
+
   object-fit: contain;
+
   border-radius: 8px;
+
   position: relative;
   z-index: 1;
 }
 
 .modal-info {
   flex: 1;
+
   display: flex;
   flex-direction: column;
   gap: 18px;
+
   position: relative;
   z-index: 1;
+
   padding: 4px 8px;
+
   min-width: 0;
 }
 
@@ -95,26 +121,34 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
+  gap: 2px;
 }
-
 
 .card-modal-title-class-icon {
   width: 18px;
   height: 18px;
+  max-width: 18px;
+  max-height: 18px;
+
   object-fit: contain;
   display: inline-block;
   vertical-align: middle;
+
   margin-right: 4px;
 }
 
 .card-type {
   display: inline-flex;
   align-items: center;
+
   padding: 4px 10px;
+
   border-radius: 999px;
   border: 1px solid rgba(143, 227, 139, 0.35);
+
   background: #1f1f1f;
   color: #ffffff;
+
   font-size: 0.9rem;
   font-weight: 700;
   line-height: 1;
@@ -128,8 +162,10 @@
 
 .modal-section h3 {
   margin: 0;
+
   font-size: 0.96rem;
   color: #f2f2f2;
+
   text-transform: none !important;
   letter-spacing: 0.04em;
 }
@@ -163,12 +199,17 @@
   display: grid;
   align-content: start;
   justify-items: start;
+
   gap: 6px;
+
   background: rgba(255, 255, 255, 0.04);
+
   border: 1px solid #333;
   border-radius: 10px;
+
   padding: 14px;
   min-height: 80px;
+
   transition:
     border-color 0.2s ease,
     background 0.2s ease;
@@ -207,10 +248,28 @@
 }
 
 .trait-value {
-  text-decoration: underline;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.trait-rendered {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.trait-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trait-name {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 .trait-icon {
@@ -218,7 +277,9 @@
   height: 18px;
   max-width: 18px;
   max-height: 18px;
+
   object-fit: contain;
+
   flex: 0 0 18px;
 }
 
@@ -243,8 +304,10 @@
   height: 16px;
   max-width: 16px;
   max-height: 16px;
+
   object-fit: contain;
   vertical-align: middle;
+
   flex: 0 0 16px;
 }
 
@@ -266,6 +329,7 @@
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+
   margin-right: 6px;
 }
 
@@ -284,6 +348,7 @@
   height: 18px;
   max-width: 18px;
   max-height: 18px;
+
   object-fit: contain;
   border-radius: 4px;
 }
@@ -294,11 +359,17 @@
 }
 
 @media (max-width: 900px) {
+  .card-overlay {
+    padding: 10px;
+  }
+
   .card-modal {
     width: min(1000px, 95%);
+
     grid-template-columns:
       minmax(130px, 38%)
       minmax(0, 1fr);
+
     gap: 14px;
     padding: 12px;
   }
@@ -321,8 +392,10 @@
     height: 18px !important;
     max-width: 18px !important;
     max-height: 18px !important;
+
     min-width: 18px;
     min-height: 18px;
+
     flex-basis: 18px;
   }
 
@@ -352,8 +425,10 @@
   .close-card {
     right: 10px;
     top: 8px;
+
     width: 30px;
     height: 30px;
+
     font-size: 18px;
   }
 
@@ -366,5 +441,10 @@
   .card-modal {
     grid-template-columns: 1fr;
     max-height: 92vh;
+  }
+
+  .modal-card-image {
+    max-height: 55vh;
+    margin: 0 auto;
   }
 }

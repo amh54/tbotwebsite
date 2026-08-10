@@ -273,7 +273,7 @@ function CardInformation() {
       parts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
     }
 
-    return parts;
+    return <span className="card-title-content">{parts}</span>;
   };
 
   const renderStatsText = (stats) => {
@@ -283,8 +283,7 @@ function CardInformation() {
 
     const text = String(stats);
 
-    const pattern = /(<:[^:>]+:\d+>)(\*{0,2}|_{0,2})?/gi;
-
+    const pattern = /(<:[^:>]+:\d+>)/gi;
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
@@ -296,7 +295,6 @@ function CardInformation() {
 
     matches.forEach((match, index) => {
       const fullEmoji = match[1];
-      const formatting = match[2] || "";
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
@@ -324,7 +322,7 @@ function CardInformation() {
         parts.push(<span key={`stats-unknown-${index}`}>{emojiName}</span>);
       }
 
-      lastIndex = matchIndex + fullEmoji.length + formatting.length;
+      lastIndex = matchIndex + fullEmoji.length;
     });
 
     if (lastIndex < text.length) {
@@ -353,11 +351,9 @@ function CardInformation() {
         const matchIndex = match.index;
 
         if (matchIndex > lastIndex) {
-          const normalText = value.slice(lastIndex, matchIndex);
-
           parts.push(
             <span key={`trait-text-${index}`}>
-              {normalText.replace(/__/g, "").replace(/\*\*/g, "")}
+              {value.slice(lastIndex, matchIndex)}
             </span>,
           );
         }
@@ -383,84 +379,20 @@ function CardInformation() {
       });
 
       if (lastIndex < value.length) {
-        const remaining = value.slice(lastIndex);
-
-        const cleaned = remaining.replace(/__/g, "").replace(/\*\*/g, "");
-
-        if (cleaned) {
-          parts.push(<span key="trait-end">{cleaned}</span>);
-        }
+        parts.push(<span key="trait-end">{value.slice(lastIndex)}</span>);
       }
 
       return <span className="trait-rendered">{parts}</span>;
     }
 
-    const traitPattern =
-      /(anti[-\s]?hero|strikethrough|deadly|bullseye|frenzy|armored|overshoot|untrickable|doublestrike|freeze|special)/gi;
-
-    const matches = [...value.matchAll(traitPattern)];
-
-    if (matches.length === 0) {
-      return <span>{value}</span>;
-    }
-
-    const parts = [];
-    let lastIndex = 0;
-
-    matches.forEach((match, index) => {
-      const matchText = match[0];
-      const traitName = match[1].toLowerCase().replace(/[-\s]/g, "");
-
-      if (match.index > lastIndex) {
-        parts.push(
-          <span key={`trait-text-${index}`}>
-            {value.slice(lastIndex, match.index)}
-          </span>,
-        );
-      }
-
-      const iconMap = {
-        antihero: [TRAIT_ICON_LINKS.antihero, "Anti-Hero"],
-        strikethrough: [TRAIT_ICON_LINKS.strikethrough, "Strikethrough"],
-        deadly: [TRAIT_ICON_LINKS.deadly, "Deadly"],
-        bullseye: [TRAIT_ICON_LINKS.bullseye, "Bullseye"],
-        frenzy: [TRAIT_ICON_LINKS.frenzy, "Frenzy"],
-        armored: [TRAIT_ICON_LINKS.armored, "Armored"],
-        overshoot: [TRAIT_ICON_LINKS.overshoot, "Overshoot"],
-        untrickable: [TRAIT_ICON_LINKS.untrickable, "Untrickable"],
-        doublestrike: [TRAIT_ICON_LINKS.doublestrike, "Double Strike"],
-        freeze: [TRAIT_ICON_LINKS.freeze, "Freeze"],
-        special: [TRAIT_ICON_LINKS.special, "Special"],
-      };
-
-      const icon = iconMap[traitName];
-
-      if (icon) {
-        parts.push(
-          <span className="trait-with-icon" key={`trait-${index}`}>
-            <img className="trait-icon" src={icon[0]} alt={icon[1]} />
-
-            <span>{matchText}</span>
-          </span>,
-        );
-      } else {
-        parts.push(<span key={`trait-${index}`}>{matchText}</span>);
-      }
-
-      lastIndex = match.index + matchText.length;
-    });
-
-    if (lastIndex < value.length) {
-      parts.push(<span key="trait-text-end">{value.slice(lastIndex)}</span>);
-    }
-
-    return parts;
+    return <span>{value}</span>;
   };
 
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -515,6 +447,7 @@ function CardInformation() {
         const data = JSON.parse(responseText);
 
         setCards(Array.isArray(data) ? data : []);
+
         setError("");
       } catch (fetchError) {
         console.error(fetchError);
@@ -531,15 +464,19 @@ function CardInformation() {
   }, []);
 
   if (loading) {
-    return <div>Loading Cards...</div>;
+    return (
+      <div className="card-page">
+        <p>Loading Cards...</p>
+      </div>
+    );
   }
 
   return (
     <div className="card-page">
-      <nav>
+      <nav className="page-nav">
         <Link to="/">Home</Link>
         <Link to="/decklists">Decklists</Link>
-        <Link to="/cardinformation">Card Information</Link>
+        <Link to="/card-information">Card Information</Link>
       </nav>
 
       <h1>Card Information</h1>
