@@ -178,6 +178,12 @@ const getCardStats = (stats) => {
   };
 };
 
+const isSuperhero = (card) => {
+  const description = normalizeText(card.description);
+
+  return description.includes("superhero");
+};
+
 const isSuperpower = (card) => {
   const description = normalizeText(card.description);
 
@@ -186,12 +192,16 @@ const isSuperpower = (card) => {
   );
 };
 
-const isSuperhero = (card) => {
-  const description = normalizeText(card.description);
+const getCardGroup = (card) => {
+  if (isSuperhero(card)) {
+    return 0;
+  }
 
-  return (
-    description.includes("superhero") || description.includes("super hero")
-  );
+  if (isSuperpower(card)) {
+    return 1;
+  }
+
+  return 2;
 };
 
 function CardInformation() {
@@ -301,7 +311,7 @@ function CardInformation() {
         alt: "Brainy",
       },
       crazy: {
-        url: CLASS_ICON_ICON_LINKS.crazy,
+        url: CLASS_ICON_LINKS.crazy,
         alt: "Crazy",
       },
       hearty: {
@@ -551,8 +561,8 @@ function CardInformation() {
           traits.add(trait);
         });
 
-        const setName = getSetName(card.set_rarity);
         const rarityName = getRarityName(card.set_rarity);
+        const setName = getSetName(card.set_rarity);
 
         if (setName) {
           sets.add(setName);
@@ -657,18 +667,6 @@ function CardInformation() {
   const filteredCards = useMemo(() => {
     const searchValue = normalizeText(search);
 
-    const getCardGroup = (card) => {
-      if (isSuperhero(card)) {
-        return 0;
-      }
-
-      if (isSuperpower(card)) {
-        return 1;
-      }
-
-      return 2;
-    };
-
     const result = cards.filter((card) => {
       if (normalizeText(card.side) !== normalizeText(side)) {
         return false;
@@ -745,8 +743,11 @@ function CardInformation() {
       const aStats = getCardStats(a.stats);
       const bStats = getCardStats(b.stats);
 
-      const aCost = aStats.cost ?? Infinity;
-      const bCost = bStats.cost ?? Infinity;
+      const aCost =
+        aStats.cost !== null ? aStats.cost : Number.MAX_SAFE_INTEGER;
+
+      const bCost =
+        bStats.cost !== null ? bStats.cost : Number.MAX_SAFE_INTEGER;
 
       if (aCost !== bCost) {
         return aCost - bCost;
@@ -755,7 +756,9 @@ function CardInformation() {
       return String(a.card_name || "").localeCompare(
         String(b.card_name || ""),
         undefined,
-        { sensitivity: "base" },
+        {
+          sensitivity: "base",
+        },
       );
     });
   }, [
@@ -790,9 +793,7 @@ function CardInformation() {
   if (loading) {
     return (
       <div className="card-information-page">
-        <nav>
-          <Link to="/">Home</Link>
-
+        <nav className="navbar">
           <div className="nav-links">
             <Link to="/">Home</Link>
             <Link to="/decklists">Decklists</Link>
@@ -808,9 +809,7 @@ function CardInformation() {
 
   return (
     <div className="card-information-page">
-      <nav>
-        <Link to="/">Home</Link>
-
+      <nav className="navbar">
         <div className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
