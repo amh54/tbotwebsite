@@ -23,9 +23,8 @@ const getApiBaseUrl = () => {
 
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
-    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
 
-    if (isLocalhost) {
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
       return "http://localhost:8000";
     }
   }
@@ -79,6 +78,9 @@ const normalizeText = (value) =>
 const removeDiscordEmojis = (value) => {
   return String(value ?? "").replace(/\<a?:[^:>]+:\d+>/gi, "");
 };
+
+const hasValue = (value) =>
+  value !== null && value !== undefined && String(value).trim() !== "";
 
 const normalizeTraitName = (trait) => {
   let value = removeDiscordEmojis(trait)
@@ -178,20 +180,6 @@ const getCardStats = (stats) => {
   };
 };
 
-const isSuperhero = (card) => {
-  const description = normalizeText(card.description);
-
-  return description.includes("superhero");
-};
-
-const isSuperpower = (card) => {
-  const description = normalizeText(card.description);
-
-  return (
-    description.includes("superpower") || description.includes("super power")
-  );
-};
-
 const getCardGroup = (card) => {
   const description = normalizeText(card.description);
 
@@ -199,7 +187,10 @@ const getCardGroup = (card) => {
     return 0;
   }
 
-  if (description.includes("superpower")) {
+  if (
+    description.includes("superpower trick") ||
+    description.includes("super power trick")
+  ) {
     return 1;
   }
 
@@ -207,8 +198,19 @@ const getCardGroup = (card) => {
 };
 
 function CardInformation() {
-  const hasValue = (value) =>
-    value !== null && value !== undefined && String(value).trim() !== "";
+  const [cards, setCards] = useState([]);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [side, setSide] = useState("Plants");
+  const [search, setSearch] = useState("");
+  const [classFilter, setClassFilter] = useState(null);
+  const [costFilter, setCostFilter] = useState(null);
+  const [attackFilter, setAttackFilter] = useState(null);
+  const [healthFilter, setHealthFilter] = useState(null);
+  const [traitFilter, setTraitFilter] = useState(null);
+  const [setFilter, setSetFilter] = useState(null);
+  const [rarityFilter, setRarityFilter] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const getEmojiIcon = (emoji) => {
     const match = String(emoji || "").match(/^<:([^:]+):\d+>$/);
@@ -450,20 +452,6 @@ function CardInformation() {
     );
   };
 
-  const [cards, setCards] = useState([]);
-  const [selectedCard, setSelectedCard] = useState(null);
-  const [side, setSide] = useState("Plants");
-  const [search, setSearch] = useState("");
-  const [classFilter, setClassFilter] = useState(null);
-  const [costFilter, setCostFilter] = useState(null);
-  const [attackFilter, setAttackFilter] = useState(null);
-  const [healthFilter, setHealthFilter] = useState(null);
-  const [traitFilter, setTraitFilter] = useState(null);
-  const [setFilter, setSetFilter] = useState(null);
-  const [rarityFilter, setRarityFilter] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
   useEffect(() => {
     const fetchCards = async () => {
       try {
@@ -563,8 +551,8 @@ function CardInformation() {
           traits.add(trait);
         });
 
-        const rarityName = getRarityName(card.set_rarity);
         const setName = getSetName(card.set_rarity);
+        const rarityName = getRarityName(card.set_rarity);
 
         if (setName) {
           sets.add(setName);
@@ -669,25 +657,13 @@ function CardInformation() {
   const filteredCards = useMemo(() => {
     const searchValue = normalizeText(search);
 
-    const getCardGroup = (card) => {
-      const description = normalizeText(card.description);
-
-      // Superheroes have no description.
-      if (!hasValue(card.description)) {
-        return 0;
-      }
-
-      // Superpowers are identified by "Superpower Trick"
-      // in the description field.
-      if (description.includes("superpower trick")) {
-        return 1;
-      }
-
-      // Everything else is a normal card.
-      return 2;
-    };
-
     const result = cards.filter((card) => {
+      const cardSide = normalizeText(card.side);
+
+      if (cardSide !== normalizeText(side)) {
+        return false;
+      }
+
       const stats = getCardStats(card.stats);
       const cardTraits = getTraitNames(card.traits);
 
@@ -750,36 +726,34 @@ function CardInformation() {
     });
 
     return result.sort((a, b) => {
-      // FIRST: Superheroes
-      // SECOND: Superpowers
-      // THIRD: Regular cards
       const groupDifference = getCardGroup(a) - getCardGroup(b);
 
       if (groupDifference !== 0) {
         return groupDifference;
       }
 
-      // Within each group:
-      // cost first
       const aStats = getCardStats(a.stats);
       const bStats = getCardStats(b.stats);
 
       const aCost = aStats.cost ?? Infinity;
+
       const bCost = bStats.cost ?? Infinity;
 
       if (aCost !== bCost) {
         return aCost - bCost;
       }
 
-      // Then alphabetical card name
       return String(a.card_name || "").localeCompare(
         String(b.card_name || ""),
         undefined,
-        { sensitivity: "base" },
+        {
+          sensitivity: "base",
+        },
       );
     });
   }, [
     cards,
+    side,
     search,
     classFilter,
     costFilter,
@@ -809,7 +783,7 @@ function CardInformation() {
   if (loading) {
     return (
       <div className="card-information-page">
-        <nav className="navbar">
+        <nav>
           <div className="nav-links">
             <Link to="/">Home</Link>
             <Link to="/decklists">Decklists</Link>
@@ -825,7 +799,7 @@ function CardInformation() {
 
   return (
     <div className="card-information-page">
-      <nav className="navbar">
+      <nav>
         <div className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
