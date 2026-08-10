@@ -18,7 +18,6 @@ function HomePage() {
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
           <Link to="/cardinformation">Card Information</Link>
-          <Link to="/heroes">Heroes</Link>
         </div>
       </nav>
 
