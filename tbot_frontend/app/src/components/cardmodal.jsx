@@ -1,7 +1,7 @@
 import "../css/cardmodal.css";
 
-const ICON_LINKS = {
-  brainz: "https://i.ibb.co/Q30j2CgC/brainz.webp",
+const MANUAL_STAT_IMAGE_LINKS = {
+  cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
   strength: "https://i.ibb.co/GQt785K6/strength.webp",
   health: "https://i.ibb.co/bMj86Wvg/health.webp",
   antihero: "https://i.ibb.co/zHmWTFLQ/anti-hero.webp",
@@ -28,56 +28,56 @@ function CardModal({ card, close }) {
 
     if (normalized.startsWith("<:brainz:")) {
       return {
-        url: ICON_LINKS.brainz,
+        url: MANUAL_STAT_IMAGE_LINKS.cost,
         alt: "Brainz",
       };
     }
 
     if (normalized.startsWith("<:strength:")) {
       return {
-        url: ICON_LINKS.strength,
+        url: MANUAL_STAT_IMAGE_LINKS.strength,
         alt: "Strength",
       };
     }
 
     if (normalized.startsWith("<:health:")) {
       return {
-        url: ICON_LINKS.health,
+        url: MANUAL_STAT_IMAGE_LINKS.health,
         alt: "Health",
       };
     }
 
     if (normalized.startsWith("<:antihero:")) {
       return {
-        url: ICON_LINKS.antihero,
+        url: MANUAL_STAT_IMAGE_LINKS.antihero,
         alt: "Antihero",
       };
     }
 
     if (normalized.startsWith("<:strikethrough:")) {
       return {
-        url: ICON_LINKS.strikethrough,
+        url: MANUAL_STAT_IMAGE_LINKS.strikethrough,
         alt: "Strikethrough",
       };
     }
 
     if (normalized.startsWith("<:deadly:")) {
       return {
-        url: ICON_LINKS.deadly,
+        url: MANUAL_STAT_IMAGE_LINKS.deadly,
         alt: "Deadly",
       };
     }
 
     if (normalized.startsWith("<:special:")) {
       return {
-        url: ICON_LINKS.special,
+        url: MANUAL_STAT_IMAGE_LINKS.special,
         alt: "Special",
       };
     }
 
     if (normalized.startsWith("<:freeze:")) {
       return {
-        url: ICON_LINKS.freeze,
+        url: MANUAL_STAT_IMAGE_LINKS.freeze,
         alt: "Freeze",
       };
     }
@@ -114,6 +114,7 @@ function CardModal({ card, close }) {
     }
 
     const text = String(stats);
+
     const emojiPattern = /(<:[^:>]+:\d+>)/gi;
     const matches = [...text.matchAll(emojiPattern)];
 
@@ -276,19 +277,20 @@ function CardModal({ card, close }) {
       let iconAlt = "";
 
       if (traitName.startsWith("anti")) {
-        iconUrl = ICON_LINKS.antihero;
+        iconUrl = MANUAL_STAT_IMAGE_LINKS.antihero;
         iconAlt = "Antihero";
       } else if (traitName === "strikethrough") {
-        iconUrl = ICON_LINKS.strikethrough;
+        iconUrl = MANUAL_STAT_IMAGE_LINKS.strikethrough;
         iconAlt = "Strikethrough";
       } else if (traitName === "deadly") {
-        iconUrl = ICON_LINKS.deadly;
+        iconUrl = MANUAL_STAT_IMAGE_LINKS.deadly;
         iconAlt = "Deadly";
       }
 
       parts.push(
         <span className="trait-with-icon" key={`trait-${index}`}>
           <img className="trait-icon" src={iconUrl} alt={iconAlt} />
+
           <span>{matchText}</span>
         </span>,
       );
@@ -303,85 +305,89 @@ function CardModal({ card, close }) {
     return parts;
   };
 
+  const hasStats = hasValue(card.stats);
+
   return (
-    <div className="card-modal" onClick={(event) => event.stopPropagation()}>
-      <button
-        className="card-modal-close"
-        type="button"
-        onClick={close}
-        aria-label="Close"
-      >
-        ×
-      </button>
+    <div className="card-modal-overlay" onClick={close}>
+      <div className="card-modal" onClick={(event) => event.stopPropagation()}>
+        <button
+          type="button"
+          className="card-modal-close"
+          onClick={close}
+          aria-label="Close"
+        >
+          ×
+        </button>
 
-      <img
-        className="modal-card-image"
-        src={card.thumbnail}
-        alt={card.card_name}
-      />
+        <img
+          className="modal-card-image"
+          src={card.thumbnail}
+          alt={card.card_name}
+        />
 
-      <div className="modal-info">
-        <div className="modal-header">
-          <h2 className="modal-title">{card.card_name}</h2>
+        <div className="modal-info">
+          <div className="modal-header">
+            <h2 className="modal-title">{card.card_name}</h2>
 
-          <span className="card-type">{card.card_type}</span>
+            <span className="card-type">{card.card_type}</span>
+          </div>
+
+          <section className="modal-section description-section">
+            <h3>Description</h3>
+
+            <p className="description-text">
+              {renderDescriptionText(description)}
+            </p>
+          </section>
+
+          <section className="modal-metadata">
+            {hasStats && (
+              <div className="metadata-item stats-item">
+                <span className="label">Stats</span>
+
+                <span className="value stats-value">
+                  {renderStatsText(statsText)}
+                </span>
+              </div>
+            )}
+
+            {hasValue(card.ability) && (
+              <div className="metadata-item">
+                <span className="label">Ability</span>
+
+                <span className="value ability-value">
+                  {renderAbilityText(abilityText)}
+                </span>
+              </div>
+            )}
+
+            {hasValue(card.traits) && (
+              <div className="metadata-item trait-item">
+                <span className="label">Traits</span>
+
+                <span className="value trait-value">
+                  {renderTraitText(traitsText)}
+                </span>
+              </div>
+            )}
+
+            {hasValue(card.set_rarity) && (
+              <div className="metadata-item">
+                <span className="label">Rarity</span>
+
+                <span className="value">{card.set_rarity}</span>
+              </div>
+            )}
+
+            {hasValue(card.flavor_text) && (
+              <div className="metadata-item full-width-item">
+                <span className="label">Flavor Text</span>
+
+                <span className="value">{card.flavor_text}</span>
+              </div>
+            )}
+          </section>
         </div>
-
-        <section className="modal-section description-section">
-          <h3>Description</h3>
-
-          <p className="description-text">
-            {renderDescriptionText(description)}
-          </p>
-        </section>
-
-        <section className="modal-metadata">
-          {hasValue(card.stats) && (
-            <div className="metadata-item stats-item">
-              <span className="label">Stats</span>
-
-              <span className="value stats-value">
-                {renderStatsText(statsText)}
-              </span>
-            </div>
-          )}
-
-          {hasValue(card.ability) && (
-            <div className="metadata-item">
-              <span className="label">Ability</span>
-
-              <span className="value ability-value">
-                {renderAbilityText(abilityText)}
-              </span>
-            </div>
-          )}
-
-          {hasValue(card.traits) && (
-            <div className="metadata-item trait-item">
-              <span className="label">Traits</span>
-
-              <span className="value trait-value">
-                {renderTraitText(traitsText)}
-              </span>
-            </div>
-          )}
-
-          {hasValue(card.set_rarity) && (
-            <div className="metadata-item">
-              <span className="label">Rarity</span>
-
-              <span className="value">{card.set_rarity}</span>
-            </div>
-          )}
-
-          {hasValue(card.flavor_text) && (
-            <div className="metadata-item full-width-item">
-              <span className="label">Flavor Text</span>
-
-              <span className="value">{card.flavor_text}</span>
-            </div>
-          )}
-        </section>
       </div>
     </div>
   );

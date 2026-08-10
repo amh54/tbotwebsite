@@ -37,10 +37,13 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-const ICON_LINKS = {
-  brainz: "https://i.ibb.co/Q30j2CgC/brainz.webp",
+const STAT_ICON_LINKS = {
+  cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
   strength: "https://i.ibb.co/GQt785K6/strength.webp",
   health: "https://i.ibb.co/bMj86Wvg/health.webp",
+};
+
+const TRAIT_ICON_LINKS = {
   antihero: "https://i.ibb.co/zHmWTFLQ/anti-hero.webp",
   strikethrough: "https://i.ibb.co/99KG7vjj/strikethrough.webp",
   deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
@@ -57,57 +60,57 @@ function CardInformation() {
 
     if (normalized.startsWith("<:brainz:")) {
       return {
-        url: ICON_LINKS.brainz,
+        url: STAT_ICON_LINKS.cost,
         alt: "Brainz",
       };
     }
 
     if (normalized.startsWith("<:strength:")) {
       return {
-        url: ICON_LINKS.strength,
+        url: STAT_ICON_LINKS.strength,
         alt: "Strength",
       };
     }
 
     if (normalized.startsWith("<:health:")) {
       return {
-        url: ICON_LINKS.health,
+        url: STAT_ICON_LINKS.health,
         alt: "Health",
+      };
+    }
+
+    if (normalized.startsWith("<:deadly:")) {
+      return {
+        url: TRAIT_ICON_LINKS.deadly,
+        alt: "Deadly",
+      };
+    }
+
+    if (normalized.startsWith("<:freeze:")) {
+      return {
+        url: TRAIT_ICON_LINKS.freeze,
+        alt: "Freeze",
       };
     }
 
     if (normalized.startsWith("<:antihero:")) {
       return {
-        url: ICON_LINKS.antihero,
+        url: TRAIT_ICON_LINKS.antihero,
         alt: "Antihero",
       };
     }
 
     if (normalized.startsWith("<:strikethrough:")) {
       return {
-        url: ICON_LINKS.strikethrough,
+        url: TRAIT_ICON_LINKS.strikethrough,
         alt: "Strikethrough",
-      };
-    }
-
-    if (normalized.startsWith("<:deadly:")) {
-      return {
-        url: ICON_LINKS.deadly,
-        alt: "Deadly",
       };
     }
 
     if (normalized.startsWith("<:special:")) {
       return {
-        url: ICON_LINKS.special,
+        url: TRAIT_ICON_LINKS.special,
         alt: "Special",
-      };
-    }
-
-    if (normalized.startsWith("<:freeze:")) {
-      return {
-        url: ICON_LINKS.freeze,
-        alt: "Freeze",
       };
     }
 
@@ -120,6 +123,7 @@ function CardInformation() {
     }
 
     const text = String(stats);
+
     const pattern = /(<:[^:>]+:\d+>)/gi;
     const matches = [...text.matchAll(pattern)];
 
@@ -200,13 +204,13 @@ function CardInformation() {
       let iconAlt = "";
 
       if (traitName.startsWith("anti")) {
-        iconUrl = ICON_LINKS.antihero;
+        iconUrl = TRAIT_ICON_LINKS.antihero;
         iconAlt = "Antihero";
       } else if (traitName === "strikethrough") {
-        iconUrl = ICON_LINKS.strikethrough;
+        iconUrl = TRAIT_ICON_LINKS.strikethrough;
         iconAlt = "Strikethrough";
       } else if (traitName === "deadly") {
-        iconUrl = ICON_LINKS.deadly;
+        iconUrl = TRAIT_ICON_LINKS.deadly;
         iconAlt = "Deadly";
       }
 
@@ -222,7 +226,7 @@ function CardInformation() {
     });
 
     if (lastIndex < text.length) {
-      parts.push(<span key="trait-text-end">{text.slice(lastIndex)}</span>);
+      parts.push(<span key="text-end">{text.slice(lastIndex)}</span>);
     }
 
     return parts;
@@ -230,6 +234,7 @@ function CardInformation() {
 
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -251,9 +256,7 @@ function CardInformation() {
             } else if (errorPayload?.error) {
               message = `${message}: ${errorPayload.error}`;
             }
-          } catch (_error) {
-            // Ignore non-JSON error responses.
-          }
+          } catch (_error) {}
 
           throw new Error(message);
         }
@@ -308,7 +311,9 @@ function CardInformation() {
 
   return (
     <div className="card-information-page">
-      <nav>
+      <nav className="navbar">
+        <div className="nav-brand">Tbot</div>
+
         <div className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
