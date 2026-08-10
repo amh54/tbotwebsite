@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import CardModal from "../components/cardmodal";
-
 import "../css/cardinformation.css";
 
 const getApiBaseUrl = () => {
@@ -41,6 +40,7 @@ const STAT_ICON_LINKS = {
   cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
   strength: "https://i.ibb.co/GQt785K6/strength.webp",
   health: "https://i.ibb.co/bMj86Wvg/health.webp",
+  sun: "https://i.ibb.co/3mwp3d6s/sun.webp",
 };
 
 const TRAIT_ICON_LINKS = {
@@ -49,6 +49,10 @@ const TRAIT_ICON_LINKS = {
   deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
   special: "https://i.ibb.co/Sw0yS0Mg/special.webp",
   freeze: "https://i.ibb.co/hFPRcrp6/freeze.webp",
+  bullseye: "https://i.ibb.co/tTp9zzdh/Bullseye.webp",
+  frenzy: "https://i.ibb.co/0RC4sW0b/frenzy.webp",
+  armored: "https://i.ibb.co/SXTYdVry/armored.webp",
+  overshoot: "https://i.ibb.co/prbYt2DX/overshoot.webp",
 };
 
 function CardInformation() {
@@ -79,6 +83,13 @@ function CardInformation() {
       };
     }
 
+    if (normalized.startsWith("<:sun:")) {
+      return {
+        url: STAT_ICON_LINKS.sun,
+        alt: "Sun",
+      };
+    }
+
     if (normalized.startsWith("<:deadly:")) {
       return {
         url: TRAIT_ICON_LINKS.deadly,
@@ -96,7 +107,7 @@ function CardInformation() {
     if (normalized.startsWith("<:antihero:")) {
       return {
         url: TRAIT_ICON_LINKS.antihero,
-        alt: "Antihero",
+        alt: "Anti-Hero",
       };
     }
 
@@ -111,6 +122,34 @@ function CardInformation() {
       return {
         url: TRAIT_ICON_LINKS.special,
         alt: "Special",
+      };
+    }
+
+    if (normalized.startsWith("<:bullseye:")) {
+      return {
+        url: TRAIT_ICON_LINKS.bullseye,
+        alt: "Bullseye",
+      };
+    }
+
+    if (normalized.startsWith("<:frenzy:")) {
+      return {
+        url: TRAIT_ICON_LINKS.frenzy,
+        alt: "Frenzy",
+      };
+    }
+
+    if (normalized.startsWith("<:armored:")) {
+      return {
+        url: TRAIT_ICON_LINKS.armored,
+        alt: "Armored",
+      };
+    }
+
+    if (normalized.startsWith("<:overshoot:")) {
+      return {
+        url: TRAIT_ICON_LINKS.overshoot,
+        alt: "Overshoot",
       };
     }
 
@@ -176,7 +215,7 @@ function CardInformation() {
     }
 
     const traitPattern =
-      /(anti[-\s]?hero|strikethrough|deadly)(?:\s+\*+\d+)?/gi;
+      /(anti[-\s]?hero|strikethrough|deadly|bullseye|frenzy|armored|overshoot|special|freeze)(?:\s+\*+\d+)?/gi;
 
     const matches = [...String(text).matchAll(traitPattern)];
 
@@ -189,7 +228,7 @@ function CardInformation() {
 
     matches.forEach((match, index) => {
       const matchText = match[0];
-      const traitName = match[1].toLowerCase();
+      const traitName = match[1].toLowerCase().replace(/[\s-]/g, "");
 
       if (match.index > lastIndex) {
         parts.push(
@@ -202,24 +241,46 @@ function CardInformation() {
       let iconUrl = "";
       let iconAlt = "";
 
-      if (traitName.startsWith("anti")) {
+      if (traitName === "antihero") {
         iconUrl = TRAIT_ICON_LINKS.antihero;
-        iconAlt = "Antihero";
+        iconAlt = "Anti-Hero";
       } else if (traitName === "strikethrough") {
         iconUrl = TRAIT_ICON_LINKS.strikethrough;
         iconAlt = "Strikethrough";
       } else if (traitName === "deadly") {
         iconUrl = TRAIT_ICON_LINKS.deadly;
         iconAlt = "Deadly";
+      } else if (traitName === "bullseye") {
+        iconUrl = TRAIT_ICON_LINKS.bullseye;
+        iconAlt = "Bullseye";
+      } else if (traitName === "frenzy") {
+        iconUrl = TRAIT_ICON_LINKS.frenzy;
+        iconAlt = "Frenzy";
+      } else if (traitName === "armored") {
+        iconUrl = TRAIT_ICON_LINKS.armored;
+        iconAlt = "Armored";
+      } else if (traitName === "overshoot") {
+        iconUrl = TRAIT_ICON_LINKS.overshoot;
+        iconAlt = "Overshoot";
+      } else if (traitName === "special") {
+        iconUrl = TRAIT_ICON_LINKS.special;
+        iconAlt = "Special";
+      } else if (traitName === "freeze") {
+        iconUrl = TRAIT_ICON_LINKS.freeze;
+        iconAlt = "Freeze";
       }
 
-      parts.push(
-        <span className="trait-with-icon" key={`trait-${index}`}>
-          <img className="trait-icon" src={iconUrl} alt={iconAlt} />
+      if (iconUrl) {
+        parts.push(
+          <span className="trait-with-icon" key={`trait-${index}`}>
+            <img className="trait-icon" src={iconUrl} alt={iconAlt} />
 
-          <span>{matchText}</span>
-        </span>,
-      );
+            <span>{matchText}</span>
+          </span>,
+        );
+      } else {
+        parts.push(<span key={`trait-${index}`}>{matchText}</span>);
+      }
 
       lastIndex = match.index + matchText.length;
     });
