@@ -339,26 +339,33 @@ function CardInformation() {
 
     const value = String(text);
 
-    const emojiPattern = /<:[^:>]+:\d+>/gi;
-    const emojiMatches = [...value.matchAll(emojiPattern)];
+    // Match Discord custom emojis OR __underlined__ trait text.
+    const pattern = /(<:[^:>]+:\d+>)|(__[\s\S]*?__)/gi;
+    const matches = [...value.matchAll(pattern)];
 
-    if (emojiMatches.length > 0) {
-      const parts = [];
-      let lastIndex = 0;
+    if (matches.length === 0) {
+      return <span>{value}</span>;
+    }
 
-      emojiMatches.forEach((match, index) => {
-        const fullMatch = match[0];
-        const matchIndex = match.index;
+    const parts = [];
+    let lastIndex = 0;
 
-        if (matchIndex > lastIndex) {
-          parts.push(
-            <span key={`trait-text-${index}`}>
-              {value.slice(lastIndex, matchIndex)}
-            </span>,
-          );
-        }
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const matchIndex = match.index;
 
-        const icon = getEmojiIcon(fullMatch);
+      // Normal text before this match
+      if (matchIndex > lastIndex) {
+        parts.push(
+          <span key={`trait-text-${index}`}>
+            {value.slice(lastIndex, matchIndex)}
+          </span>,
+        );
+      }
+
+      // Custom Discord emoji
+      if (match[1]) {
+        const icon = getEmojiIcon(match[1]);
 
         if (icon) {
           parts.push(
@@ -370,24 +377,27 @@ function CardInformation() {
             />,
           );
         } else {
-          const emojiName = fullMatch.replace(/^<:([^:>]+):\d+>$/, "$1");
+          const emojiName = match[1].replace(/^<:([^:>]+):\d+>$/, "$1");
 
           parts.push(<span key={`trait-unknown-${index}`}>{emojiName}</span>);
         }
-
-        lastIndex = matchIndex + fullMatch.length;
-      });
-
-      if (lastIndex < value.length) {
-        parts.push(<span key="trait-end">{value.slice(lastIndex)}</span>);
       }
 
-      return <span className="trait-rendered">{parts}</span>;
+      // __Trait__ → actual underline
+      else if (match[2]) {
+        const traitName = match[2].slice(2, -2);
+
+        parts.push(<u key={`trait-underline-${index}`}>{traitName}</u>);
+      }
+
+      lastIndex = matchIndex + fullMatch.length;
+    });
+    if (lastIndex < value.length) {
+      parts.push(<span key="trait-text-end">{value.slice(lastIndex)}</span>);
     }
 
-    return <span>{value}</span>;
+    return <span className="trait-rendered">{parts}</span>;
   };
-
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
 

@@ -253,6 +253,11 @@
   gap: 6px;
 }
 
+.trait-value u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .trait-rendered {
   display: inline-flex;
   align-items: center;
