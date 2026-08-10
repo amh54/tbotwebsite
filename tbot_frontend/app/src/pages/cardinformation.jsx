@@ -47,47 +47,28 @@ const STAT_ICON_LINKS = {
 
 const TRAIT_ICON_LINKS = {
   antihero: "https://i.ibb.co/zHmWTFLQ/anti-hero.webp",
-
   strikethrough: "https://i.ibb.co/99KG7vjj/strikethrough.webp",
-
   deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
-
   special: "https://i.ibb.co/Sw0yS0Mg/special.webp",
-
   freeze: "https://i.ibb.co/hFPRcrp6/freeze.webp",
-
   bullseye: "https://i.ibb.co/tTp9zzdh/Bullseye.webp",
-
   frenzy: "https://i.ibb.co/0RC4sW0b/frenzy.webp",
-
   armored: "https://i.ibb.co/SXTYdVry/armored.webp",
-
   overshoot: "https://i.ibb.co/prbYt2DX/overshoot.webp",
-
   untrickable: "https://i.ibb.co/235QDZsg/untrickable.webp",
-
   doublestrike: "https://i.ibb.co/9HcptVCN/doublestrike.webp",
 };
 
 const CLASS_ICON_LINKS = {
   guardian: "https://i.ibb.co/q339dYKK/guardian.webp",
-
   kabloom: "https://i.ibb.co/4gWkPT7f/kabloom.webp",
-
   megagrow: "https://i.ibb.co/svc6sx30/megagrow.webp",
-
   smarty: "https://i.ibb.co/V0bL3RYk/smarty.webp",
-
   solar: "https://i.ibb.co/V0bL3RYk/smarty.webp",
-
   beastly: "https://i.ibb.co/xS6b10P5/beastly.webp",
-
   brainy: "https://i.ibb.co/d40zFh8r/Brainy.webp",
-
   crazy: "https://i.ibb.co/HTvzSsXX/crazy.webp",
-
   hearty: "https://i.ibb.co/ynKbzV8v/hearty.webp",
-
   sneaky: "https://i.ibb.co/Hf5m7ndh/sneaky.webp",
 };
 
@@ -184,9 +165,115 @@ function CardInformation() {
         url: TRAIT_ICON_LINKS.doublestrike,
         alt: "Double Strike",
       },
+
+      guardian: {
+        url: CLASS_ICON_LINKS.guardian,
+        alt: "Guardian",
+      },
+
+      kabloom: {
+        url: CLASS_ICON_LINKS.kabloom,
+        alt: "Kabloom",
+      },
+
+      megagrow: {
+        url: CLASS_ICON_LINKS.megagrow,
+        alt: "Mega-Grow",
+      },
+
+      smarty: {
+        url: CLASS_ICON_LINKS.smarty,
+        alt: "Smarty",
+      },
+
+      solar: {
+        url: CLASS_ICON_LINKS.solar,
+        alt: "Solar",
+      },
+
+      beastly: {
+        url: CLASS_ICON_LINKS.beastly,
+        alt: "Beastly",
+      },
+
+      brainy: {
+        url: CLASS_ICON_LINKS.brainy,
+        alt: "Brainy",
+      },
+
+      crazy: {
+        url: CLASS_ICON_LINKS.crazy,
+        alt: "Crazy",
+      },
+
+      hearty: {
+        url: CLASS_ICON_LINKS.hearty,
+        alt: "Hearty",
+      },
+
+      sneaky: {
+        url: CLASS_ICON_LINKS.sneaky,
+        alt: "Sneaky",
+      },
     };
 
     return iconMap[emojiName] || null;
+  };
+
+  const renderTitleText = (title) => {
+    if (!title) {
+      return null;
+    }
+
+    const text = String(title);
+
+    const emojiPattern = /<:[^:>]+:\d+>/gi;
+    const matches = [...text.matchAll(emojiPattern)];
+
+    if (matches.length === 0) {
+      return <span>{text}</span>;
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        parts.push(
+          <span key={`title-text-${index}`}>
+            {text.slice(lastIndex, matchIndex)}
+          </span>,
+        );
+      }
+
+      const icon = getEmojiIcon(fullMatch);
+
+      if (icon) {
+        parts.push(
+          <img
+            key={`title-icon-${index}`}
+            src={icon.url}
+            alt={icon.alt}
+            className="card-title-class-icon"
+          />,
+        );
+      } else {
+        const emojiName = fullMatch.replace(/^<:([^:>]+):\d+>$/, "$1");
+
+        parts.push(<span key={`title-unknown-${index}`}>{emojiName}</span>);
+      }
+
+      lastIndex = matchIndex + fullMatch.length;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
+    }
+
+    return parts;
   };
 
   const renderStatsText = (stats) => {
@@ -232,11 +319,9 @@ function CardInformation() {
           />,
         );
       } else {
-        parts.push(
-          <span key={`stats-unknown-${index}`}>
-            {fullEmoji.replace(/^<:([^:>]+):\d+>$/, "$1")}
-          </span>,
-        );
+        const emojiName = fullEmoji.replace(/^<:([^:>]+):\d+>$/, "$1");
+
+        parts.push(<span key={`stats-unknown-${index}`}>{emojiName}</span>);
       }
 
       lastIndex = matchIndex + fullEmoji.length + formatting.length;
@@ -257,7 +342,6 @@ function CardInformation() {
     const value = String(text);
 
     const emojiPattern = /<:[^:>]+:\d+>/gi;
-
     const emojiMatches = [...value.matchAll(emojiPattern)];
 
     if (emojiMatches.length > 0) {
@@ -273,7 +357,7 @@ function CardInformation() {
 
           parts.push(
             <span key={`trait-text-${index}`}>
-              {normalText.replace(/\*\*/g, "").replace(/__/g, "")}
+              {normalText.replace(/__/g, "").replace(/\*\*/g, "")}
             </span>,
           );
         }
@@ -299,13 +383,11 @@ function CardInformation() {
       });
 
       if (lastIndex < value.length) {
-        const remaining = value
-          .slice(lastIndex)
-          .replace(/\*\*/g, "")
-          .replace(/__/g, "");
+        const remaining = value.slice(lastIndex);
+        const cleaned = remaining.replace(/__/g, "").replace(/\*\*/g, "");
 
-        if (remaining) {
-          parts.push(<span key="trait-end">{remaining}</span>);
+        if (cleaned) {
+          parts.push(<span key="trait-end">{cleaned}</span>);
         }
       }
 
@@ -313,7 +395,7 @@ function CardInformation() {
     }
 
     const traitPattern =
-      /(anti[-\s]?hero|strikethrough|deadly|bullseye|frenzy|armored|overshoot|freeze|special|untrickable|double[-\s]?strike)/gi;
+      /(anti[-\s]?hero|strikethrough|deadly|bullseye|frenzy|armored|overshoot|untrickable|doublestrike|freeze|special)/gi;
 
     const matches = [...value.matchAll(traitPattern)];
 
@@ -338,26 +420,16 @@ function CardInformation() {
 
       const iconMap = {
         antihero: [TRAIT_ICON_LINKS.antihero, "Anti-Hero"],
-
         strikethrough: [TRAIT_ICON_LINKS.strikethrough, "Strikethrough"],
-
         deadly: [TRAIT_ICON_LINKS.deadly, "Deadly"],
-
         bullseye: [TRAIT_ICON_LINKS.bullseye, "Bullseye"],
-
         frenzy: [TRAIT_ICON_LINKS.frenzy, "Frenzy"],
-
         armored: [TRAIT_ICON_LINKS.armored, "Armored"],
-
         overshoot: [TRAIT_ICON_LINKS.overshoot, "Overshoot"],
-
-        freeze: [TRAIT_ICON_LINKS.freeze, "Freeze"],
-
-        special: [TRAIT_ICON_LINKS.special, "Special"],
-
         untrickable: [TRAIT_ICON_LINKS.untrickable, "Untrickable"],
-
         doublestrike: [TRAIT_ICON_LINKS.doublestrike, "Double Strike"],
+        freeze: [TRAIT_ICON_LINKS.freeze, "Freeze"],
+        special: [TRAIT_ICON_LINKS.special, "Special"],
       };
 
       const icon = iconMap[traitName];
@@ -388,7 +460,6 @@ function CardInformation() {
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -443,7 +514,6 @@ function CardInformation() {
         const data = JSON.parse(responseText);
 
         setCards(Array.isArray(data) ? data : []);
-
         setError("");
       } catch (fetchError) {
         console.error(fetchError);
@@ -460,12 +530,12 @@ function CardInformation() {
   }, []);
 
   if (loading) {
-    return <p>Loading Cards...</p>;
+    return <div>Loading Cards...</div>;
   }
 
   return (
     <div className="card-information-page">
-      <nav className="card-information-nav">
+      <nav>
         <Link to="/">Home</Link>
         <Link to="/decklists">Decklists</Link>
         <Link to="/cardinformation">Card Information</Link>
@@ -483,7 +553,11 @@ function CardInformation() {
             </div>
 
             <div className="card-item-info">
-              <h2>{card.card_name || "Unknown Card"}</h2>
+              <h2 className="card-item-title">
+                {hasValue(card.title)
+                  ? renderTitleText(card.title)
+                  : card.card_name || "Unknown Card"}
+              </h2>
 
               {hasValue(card.card_type) && (
                 <p>

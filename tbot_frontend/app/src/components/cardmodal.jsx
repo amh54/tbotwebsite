@@ -2,55 +2,33 @@ import "../css/cardmodal.css";
 
 const MANUAL_STAT_IMAGE_LINKS = {
   cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
-
   strength: "https://i.ibb.co/GQt785K6/strength.webp",
-
   health: "https://i.ibb.co/bMj86Wvg/health.webp",
-
   sun: "https://i.ibb.co/3mwp3d6s/sun.webp",
-
   healthstrength: "https://i.ibb.co/9344x8fP/healthstrength.webp",
 
   antihero: "https://i.ibb.co/zHmWTFLQ/anti-hero.webp",
-
   strikethrough: "https://i.ibb.co/99KG7vjj/strikethrough.webp",
-
   deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
-
   special: "https://i.ibb.co/Sw0yS0Mg/special.webp",
-
   freeze: "https://i.ibb.co/hFPRcrp6/freeze.webp",
 
   bullseye: "https://i.ibb.co/tTp9zzdh/Bullseye.webp",
-
   frenzy: "https://i.ibb.co/0RC4sW0b/frenzy.webp",
-
   armored: "https://i.ibb.co/SXTYdVry/armored.webp",
-
   overshoot: "https://i.ibb.co/prbYt2DX/overshoot.webp",
-
   untrickable: "https://i.ibb.co/235QDZsg/untrickable.webp",
-
   doublestrike: "https://i.ibb.co/9HcptVCN/doublestrike.webp",
 
   guardian: "https://i.ibb.co/q339dYKK/guardian.webp",
-
   kabloom: "https://i.ibb.co/4gWkPT7f/kabloom.webp",
-
   megagrow: "https://i.ibb.co/svc6sx30/megagrow.webp",
-
   smarty: "https://i.ibb.co/V0bL3RYk/smarty.webp",
-
   solar: "https://i.ibb.co/V0bL3RYk/smarty.webp",
-
   beastly: "https://i.ibb.co/xS6b10P5/beastly.webp",
-
   brainy: "https://i.ibb.co/d40zFh8r/Brainy.webp",
-
   crazy: "https://i.ibb.co/HTvzSsXX/crazy.webp",
-
   hearty: "https://i.ibb.co/ynKbzV8v/hearty.webp",
-
   sneaky: "https://i.ibb.co/Hf5m7ndh/sneaky.webp",
 };
 
@@ -211,6 +189,18 @@ function CardModal({ card, close }) {
 
     return iconMap[emojiName] || null;
   };
+
+  /*
+   * The title contains the Discord class emoji.
+   *
+   * Example:
+   *
+   * <:Hearty:123456> **Swabbie**
+   *
+   * becomes:
+   *
+   * [Hearty image] Swabbie
+   */
   const renderTitleText = (title) => {
     if (!title) {
       return null;
@@ -219,11 +209,10 @@ function CardModal({ card, close }) {
     const text = String(title);
 
     const emojiPattern = /<:[^:>]+:\d+>/gi;
-
     const matches = [...text.matchAll(emojiPattern)];
 
     if (matches.length === 0) {
-      return text.replace(/\*\*/g, "").replace(/__/g, "");
+      return <span>{text.replace(/\*\*/g, "").replace(/__/g, "")}</span>;
     }
 
     const parts = [];
@@ -236,11 +225,11 @@ function CardModal({ card, close }) {
       if (matchIndex > lastIndex) {
         const normalText = text.slice(lastIndex, matchIndex);
 
-        const cleanedText = normalText.replace(/\*\*/g, "").replace(/__/g, "");
-
-        if (cleanedText) {
-          parts.push(<span key={`title-text-${index}`}>{cleanedText}</span>);
-        }
+        parts.push(
+          <span key={`title-text-${index}`}>
+            {normalText.replace(/\*\*/g, "").replace(/__/g, "").trim()}
+          </span>,
+        );
       }
 
       const icon = getEmojiIcon(fullMatch);
@@ -251,7 +240,7 @@ function CardModal({ card, close }) {
             key={`title-icon-${index}`}
             src={icon.url}
             alt={icon.alt}
-            className="card-title-icon"
+            className="card-modal-title-class-icon"
           />,
         );
       } else {
@@ -264,17 +253,16 @@ function CardModal({ card, close }) {
     });
 
     if (lastIndex < text.length) {
-      const remainingText = text
-        .slice(lastIndex)
-        .replace(/\*\*/g, "")
-        .replace(/__/g, "");
+      const remainingText = text.slice(lastIndex);
 
-      if (remainingText) {
-        parts.push(<span key="title-text-end">{remainingText}</span>);
-      }
+      parts.push(
+        <span key="title-end">
+          {remainingText.replace(/\*\*/g, "").replace(/__/g, "").trim()}
+        </span>,
+      );
     }
 
-    return parts;
+    return <span className="card-modal-title-content">{parts}</span>;
   };
 
   const renderStatsText = (stats) => {
@@ -285,7 +273,6 @@ function CardModal({ card, close }) {
     const text = String(stats);
 
     const emojiPattern = /<:[^:>]+:\d+>/gi;
-
     const matches = [...text.matchAll(emojiPattern)];
 
     if (matches.length === 0) {
@@ -434,7 +421,6 @@ function CardModal({ card, close }) {
     const value = String(text);
 
     const emojiPattern = /<:[^:>]+:\d+>/gi;
-
     const emojiMatches = [...value.matchAll(emojiPattern)];
 
     if (emojiMatches.length > 0) {
@@ -448,13 +434,11 @@ function CardModal({ card, close }) {
         if (matchIndex > lastIndex) {
           const normalText = value.slice(lastIndex, matchIndex);
 
-          const cleanedText = normalText
-            .replace(/\*\*/g, "")
-            .replace(/__/g, "");
-
-          if (cleanedText) {
-            parts.push(<span key={`trait-text-${index}`}>{cleanedText}</span>);
-          }
+          parts.push(
+            <span key={`trait-text-${index}`}>
+              {normalText.replace(/__/g, "").replace(/\*\*/g, "")}
+            </span>,
+          );
         }
 
         const icon = getEmojiIcon(fullMatch);
@@ -478,90 +462,18 @@ function CardModal({ card, close }) {
       });
 
       if (lastIndex < value.length) {
-        const remaining = value
-          .slice(lastIndex)
-          .replace(/\*\*/g, "")
-          .replace(/__/g, "");
+        const remaining = value.slice(lastIndex);
+        const cleaned = remaining.replace(/__/g, "").replace(/\*\*/g, "");
 
-        if (remaining) {
-          parts.push(<span key="trait-end">{remaining}</span>);
+        if (cleaned) {
+          parts.push(<span key="trait-end">{cleaned}</span>);
         }
       }
 
       return <span className="trait-rendered">{parts}</span>;
     }
 
-    const traitPattern =
-      /(anti[-\s]?hero|strikethrough|deadly|bullseye|frenzy|armored|overshoot|freeze|special|untrickable|double[-\s]?strike)/gi;
-
-    const matches = [...value.matchAll(traitPattern)];
-
-    if (matches.length === 0) {
-      return <span>{value}</span>;
-    }
-
-    const parts = [];
-    let lastIndex = 0;
-
-    matches.forEach((match, index) => {
-      const matchText = match[0];
-
-      const traitName = match[1].toLowerCase().replace(/[-\s]/g, "");
-
-      if (match.index > lastIndex) {
-        parts.push(
-          <span key={`trait-text-${index}`}>
-            {value.slice(lastIndex, match.index)}
-          </span>,
-        );
-      }
-
-      const iconMap = {
-        antihero: [MANUAL_STAT_IMAGE_LINKS.antihero, "Anti-Hero"],
-
-        strikethrough: [MANUAL_STAT_IMAGE_LINKS.strikethrough, "Strikethrough"],
-
-        deadly: [MANUAL_STAT_IMAGE_LINKS.deadly, "Deadly"],
-
-        bullseye: [MANUAL_STAT_IMAGE_LINKS.bullseye, "Bullseye"],
-
-        frenzy: [MANUAL_STAT_IMAGE_LINKS.frenzy, "Frenzy"],
-
-        armored: [MANUAL_STAT_IMAGE_LINKS.armored, "Armored"],
-
-        overshoot: [MANUAL_STAT_IMAGE_LINKS.overshoot, "Overshoot"],
-
-        freeze: [MANUAL_STAT_IMAGE_LINKS.freeze, "Freeze"],
-
-        special: [MANUAL_STAT_IMAGE_LINKS.special, "Special"],
-
-        untrickable: [MANUAL_STAT_IMAGE_LINKS.untrickable, "Untrickable"],
-
-        doublestrike: [MANUAL_STAT_IMAGE_LINKS.doublestrike, "Double Strike"],
-      };
-
-      const icon = iconMap[traitName];
-
-      if (icon) {
-        parts.push(
-          <span className="trait-with-icon" key={`trait-${index}`}>
-            <img className="trait-icon" src={icon[0]} alt={icon[1]} />
-
-            <span>{matchText}</span>
-          </span>,
-        );
-      } else {
-        parts.push(<span key={`trait-${index}`}>{matchText}</span>);
-      }
-
-      lastIndex = match.index + matchText.length;
-    });
-
-    if (lastIndex < value.length) {
-      parts.push(<span key="trait-text-end">{value.slice(lastIndex)}</span>);
-    }
-
-    return parts;
+    return <span>{value}</span>;
   };
 
   const renderDescriptionText = (text) => {
@@ -606,7 +518,11 @@ function CardModal({ card, close }) {
 
       <div className="modal-info">
         <div className="modal-header">
-          <h2 className="modal-title">{renderTitleText(card.title)}</h2>
+          <h2 className="modal-title">
+            {hasValue(card.title)
+              ? renderTitleText(card.title)
+              : card.card_name}
+          </h2>
 
           <span className="card-type">{card.card_type}</span>
         </div>
