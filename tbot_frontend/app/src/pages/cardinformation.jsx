@@ -193,11 +193,13 @@ const isSuperpower = (card) => {
 };
 
 const getCardGroup = (card) => {
-  if (isSuperhero(card)) {
+  const description = normalizeText(card.description);
+
+  if (!hasValue(card.description)) {
     return 0;
   }
 
-  if (isSuperpower(card)) {
+  if (description.includes("superpower")) {
     return 1;
   }
 
