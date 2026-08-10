@@ -10,85 +10,84 @@
   margin-bottom: 30px;
 }
 
-/* =========================
-   SEARCH / FILTERS
-   ========================= */
-
 .card-browser {
+  width: 100%;
   margin-bottom: 25px;
 }
 
-.search-container {
+.card-search-container {
   width: 100%;
   margin-bottom: 15px;
 }
 
-.search {
+.card-search {
   width: 100%;
   box-sizing: border-box;
   padding: 13px 16px;
   background: #202020;
   color: white;
   border: 1px solid #444;
-  border-radius: 6px;
+  border-radius: 7px;
   font-size: 1rem;
   outline: none;
 }
 
-.search::placeholder {
-  color: #888;
-}
-
-.search:focus {
+.card-search:focus {
   border-color: #8fe38b;
 }
 
-.filters {
+.card-search::placeholder {
+  color: #888;
+}
+
+.card-filters {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns:
+    repeat(7, minmax(120px, 1fr))
+    auto;
+  gap: 10px;
   align-items: center;
 }
 
-.select-wrapper {
-  min-width: 0;
+.card-filters select {
+  width: 100%;
+  min-height: 45px;
+  padding: 0 12px;
+  background: #202020;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 7px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  outline: none;
 }
 
-.clear-filter-btn {
+.card-filters select:hover,
+.card-filters select:focus {
+  border-color: #8fe38b;
+}
+
+.clear-card-filters {
   min-height: 45px;
-  padding: 0 20px;
+  padding: 0 18px;
   background: #222;
   color: white;
   border: 1px solid #444;
-  border-radius: 6px;
+  border-radius: 7px;
   cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.15s ease;
+  white-space: nowrap;
 }
 
-.clear-filter-btn:hover {
-  background: #444;
+.clear-card-filters:hover {
+  background: #333;
+  border-color: #8fe38b;
 }
 
 .results-count {
-  margin: 0 0 20px;
+  margin: 15px 0 20px;
   color: #aeb8bd;
   font-size: 0.95rem;
 }
-
-.error-message {
-  color: #ff7b7b;
-  margin-bottom: 20px;
-}
-
-.no-results {
-  color: #aeb8bd;
-  font-size: 1.1rem;
-}
-
-/* =========================
-   CARD GRID
-   ========================= */
 
 .card-grid {
   display: grid;
@@ -101,10 +100,8 @@
   border: 1px solid #2a2f34;
   border-radius: 12px;
   padding: 12px;
-
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
-
   gap: 14px;
   align-items: start;
 }
@@ -133,10 +130,6 @@
   line-height: 1.2;
 }
 
-/* =========================
-   TITLE
-   ========================= */
-
 .card-title-content {
   display: inline-flex;
   align-items: center;
@@ -162,57 +155,16 @@
   gap: 0;
 }
 
-/* =========================
-   GENERAL INFORMATION
-   ========================= */
-
 .card-item-info p {
   margin: 0;
   color: #dde5ea;
   font-size: 1rem;
 }
 
-.card-field-label {
+.card-item-info p > span:first-child {
   color: #8fe38b;
   font-weight: 700;
 }
-
-/* =========================
-   CLASSES
-   ========================= */
-
-.card-classes-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.card-classes-value {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.card-class-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.card-class-icon {
-  width: 18px;
-  height: 18px;
-  max-width: 18px;
-  max-height: 18px;
-  object-fit: contain;
-  display: inline-block;
-}
-
-/* =========================
-   TRAITS
-   ========================= */
 
 .card-traits-line {
   display: flex;
@@ -225,20 +177,7 @@
   color: #dde5ea;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
   flex-wrap: wrap;
-}
-
-.card-set {
-  color: #ffffff;
-}
-
-.card-rarity {
-  color: #ffffff;
-}
-
-.trait-separator {
-  color: #dde5ea;
 }
 
 .trait-rendered {
@@ -248,31 +187,11 @@
   flex-wrap: wrap;
 }
 
-/*
- * This is the important part:
- *
- * __Deadly__ becomes an actual underlined
- * "Deadly" instead of displaying __Deadly__.
- */
 .trait-name {
-  text-decoration-line: underline;
+  text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
-
-.trait-icon {
-  width: 18px;
-  height: 18px;
-  max-width: 18px;
-  max-height: 18px;
-  object-fit: contain;
-  vertical-align: middle;
-  flex: 0 0 18px;
-}
-
-/* =========================
-   STATS
-   ========================= */
 
 .card-stats-line {
   display: flex;
@@ -299,10 +218,6 @@
   font-weight: 600;
 }
 
-/* =========================
-   BUTTON
-   ========================= */
-
 .card-item button {
   margin-top: 10px;
   width: fit-content;
@@ -318,15 +233,59 @@
   background: #444;
 }
 
-/* =========================
-   RESPONSIVE
-   ========================= */
+.error-message {
+  color: #ff6b6b;
+}
 
-@media (max-width: 1100px) {
-  .filters {
-    grid-template-columns: repeat(3, minmax(150px, 1fr));
+.no-results {
+  color: #aeb8bd;
+}
+
+/* Navigation */
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.nav-brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+}
+
+.nav-links a:hover {
+  color: #8fe38b;
+}
+
+/* Tablet */
+
+@media (max-width: 1200px) {
+  .card-filters {
+    grid-template-columns: repeat(4, minmax(130px, 1fr));
+  }
+
+  .clear-card-filters {
+    width: 100%;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
   }
 }
+
+/* Mobile */
 
 @media (max-width: 900px) {
   .card-page {
@@ -337,12 +296,8 @@
     font-size: 36px;
   }
 
-  .filters {
-    grid-template-columns: repeat(2, minmax(150px, 1fr));
-  }
-
-  .card-grid {
-    grid-template-columns: 1fr;
+  .card-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .card-item {
@@ -376,14 +331,24 @@
     min-height: 18px;
     flex-basis: 18px;
   }
+
+  .navbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 540px) {
-  .filters {
+  .card-item {
     grid-template-columns: 1fr;
   }
 
-  .card-item {
+  .card-filters {
     grid-template-columns: 1fr;
   }
 
