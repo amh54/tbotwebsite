@@ -55,8 +55,6 @@ const TRAIT_ICON_LINKS = {
   overshoot: "https://i.ibb.co/prbYt2DX/overshoot.webp",
   untrickable: "https://i.ibb.co/235QDZsg/untrickable.webp",
   doublestrike: "https://i.ibb.co/9HcptVCN/doublestrike.webp",
-
-  // Add your Splash Damage icon URL here when available.
   splashdamage: "",
 };
 
@@ -80,7 +78,7 @@ const normalizeText = (value) =>
     .replace(/\s+/g, " ");
 
 const removeDiscordEmojis = (value) => {
-  return String(value ?? "").replace(/\<a?:[^:>]+:\d+>/gi, "");
+  return String(value ?? "").replace(/<a?:[^:>]+:\d+>/gi, "");
 };
 
 const normalizeClassName = (className) => {
@@ -126,48 +124,37 @@ const getClassNames = (classes) => {
 const normalizeTraitName = (trait) => {
   let value = removeDiscordEmojis(trait)
     .replace(/[\_\~\`]/g, "")
+    .replace(/\*\*/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
   value = value.replace(/\s+\d+\s$/g, "").trim();
 
   const normalized = normalizeText(value)
-    .replace(/\s*-\s*/g, "-")
+    .replace(/\s\*\-\s\*/g, "-")
     .replace(/\s+/g, " ");
 
   const canonicalTraits = {
     "anti hero": "Anti-Hero",
     "anti-hero": "Anti-Hero",
     antihero: "Anti-Hero",
-
     amphibious: "Amphibious",
-
     armored: "Armored",
     armour: "Armored",
-
     "splash damage": "Splash Damage",
     "splash-damage": "Splash Damage",
     splashdamage: "Splash Damage",
-
     bullseye: "Bullseye",
-
     deadly: "Deadly",
-
     freeze: "Freeze",
-
     frenzy: "Frenzy",
-
     "double strike": "Double Strike",
     "double-strike": "Double Strike",
     doublestrike: "Double Strike",
-
     overshoot: "Overshoot",
-
     special: "Special",
-
     strikethrough: "Strikethrough",
     "strike through": "Strikethrough",
-
     untrickable: "Untrickable",
   };
 
@@ -264,7 +251,7 @@ function CardInformation() {
   const [error, setError] = useState("");
 
   const getEmojiIcon = (emoji) => {
-    const match = String(emoji || "").match(/^<:([^:]+):\d+>$/);
+    const match = String(emoji || "").match(/^<a?:([^:>]+):\d+>$/);
 
     if (!match) {
       return null;
@@ -277,132 +264,106 @@ function CardInformation() {
         url: STAT_ICON_LINKS.cost,
         alt: "Brainz",
       },
-
       strength: {
         url: STAT_ICON_LINKS.strength,
         alt: "Strength",
       },
-
       health: {
         url: STAT_ICON_LINKS.health,
         alt: "Health",
       },
-
       sun: {
         url: STAT_ICON_LINKS.sun,
         alt: "Sun",
       },
-
       healthstrength: {
         url: STAT_ICON_LINKS.healthstrength,
         alt: "Health and Strength",
       },
-
       deadly: {
         url: TRAIT_ICON_LINKS.deadly,
         alt: "Deadly",
       },
-
       freeze: {
         url: TRAIT_ICON_LINKS.freeze,
         alt: "Freeze",
       },
-
       antihero: {
         url: TRAIT_ICON_LINKS.antihero,
         alt: "Anti-Hero",
       },
-
       strikethrough: {
         url: TRAIT_ICON_LINKS.strikethrough,
         alt: "Strikethrough",
       },
-
       special: {
         url: TRAIT_ICON_LINKS.special,
         alt: "Special",
       },
-
       bullseye: {
         url: TRAIT_ICON_LINKS.bullseye,
         alt: "Bullseye",
       },
-
       frenzy: {
         url: TRAIT_ICON_LINKS.frenzy,
         alt: "Frenzy",
       },
-
       armored: {
         url: TRAIT_ICON_LINKS.armored,
         alt: "Armored",
       },
-
       overshoot: {
         url: TRAIT_ICON_LINKS.overshoot,
         alt: "Overshoot",
       },
-
       untrickable: {
         url: TRAIT_ICON_LINKS.untrickable,
         alt: "Untrickable",
       },
-
       doublestrike: {
         url: TRAIT_ICON_LINKS.doublestrike,
         alt: "Double Strike",
       },
-
       splashdamage: {
         url: TRAIT_ICON_LINKS.splashdamage,
         alt: "Splash Damage",
       },
-
       guardian: {
         url: CLASS_ICON_LINKS.guardian,
         alt: "Guardian",
       },
-
       kabloom: {
         url: CLASS_ICON_LINKS.kabloom,
         alt: "Kabloom",
       },
-
       megagrow: {
         url: CLASS_ICON_LINKS.megagrow,
         alt: "Mega-Grow",
       },
-
       smarty: {
         url: CLASS_ICON_LINKS.smarty,
         alt: "Smarty",
       },
-
       solar: {
         url: CLASS_ICON_LINKS.solar,
         alt: "Solar",
       },
-
       beastly: {
         url: CLASS_ICON_LINKS.beastly,
         alt: "Beastly",
       },
-
       brainy: {
         url: CLASS_ICON_LINKS.brainy,
         alt: "Brainy",
       },
-
       crazy: {
         url: CLASS_ICON_LINKS.crazy,
         alt: "Crazy",
       },
-
       hearty: {
         url: CLASS_ICON_LINKS.hearty,
         alt: "Hearty",
       },
-
       sneaky: {
         url: CLASS_ICON_LINKS.sneaky,
         alt: "Sneaky",
@@ -418,57 +379,46 @@ function CardInformation() {
         url: TRAIT_ICON_LINKS.antihero,
         alt: "Anti-Hero",
       },
-
       Strikethrough: {
         url: TRAIT_ICON_LINKS.strikethrough,
         alt: "Strikethrough",
       },
-
       Deadly: {
         url: TRAIT_ICON_LINKS.deadly,
         alt: "Deadly",
       },
-
       Special: {
         url: TRAIT_ICON_LINKS.special,
         alt: "Special",
       },
-
       Freeze: {
         url: TRAIT_ICON_LINKS.freeze,
         alt: "Freeze",
       },
-
       Bullseye: {
         url: TRAIT_ICON_LINKS.bullseye,
         alt: "Bullseye",
       },
-
       Frenzy: {
         url: TRAIT_ICON_LINKS.frenzy,
         alt: "Frenzy",
       },
-
       Armored: {
         url: TRAIT_ICON_LINKS.armored,
         alt: "Armored",
       },
-
       Overshoot: {
         url: TRAIT_ICON_LINKS.overshoot,
         alt: "Overshoot",
       },
-
       Untrickable: {
         url: TRAIT_ICON_LINKS.untrickable,
         alt: "Untrickable",
       },
-
       "Double Strike": {
         url: TRAIT_ICON_LINKS.doublestrike,
         alt: "Double Strike",
       },
-
       "Splash Damage": {
         url: TRAIT_ICON_LINKS.splashdamage,
         alt: "Splash Damage",
@@ -484,7 +434,7 @@ function CardInformation() {
     }
 
     const text = String(title);
-    const emojiPattern = /<:[^:>]+:\d+>/gi;
+    const emojiPattern = /<a?:[^:>]+:\d+>/gi;
     const matches = [...text.matchAll(emojiPattern)];
 
     if (matches.length === 0) {
@@ -508,7 +458,7 @@ function CardInformation() {
 
       const icon = getEmojiIcon(fullMatch);
 
-      if (icon) {
+      if (icon?.url) {
         parts.push(
           <img
             key={`title-icon-${index}`}
@@ -535,7 +485,7 @@ function CardInformation() {
     }
 
     const text = String(stats);
-    const pattern = /(<:[^:>]+:\d+>)/gi;
+    const pattern = /(<a?:[^:>]+:\d+>)/gi;
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
@@ -559,7 +509,7 @@ function CardInformation() {
 
       const icon = getEmojiIcon(fullEmoji);
 
-      if (icon) {
+      if (icon?.url) {
         parts.push(
           <img
             key={`stats-icon-${index}`}
@@ -580,23 +530,58 @@ function CardInformation() {
     return parts;
   };
 
-  /*
-   * Render each trait with its corresponding icon.
-   */
   const renderTraitText = (text) => {
-    const traitNames = getTraitNames(text);
-
-    if (traitNames.length === 0) {
+    if (!text) {
       return null;
     }
 
-    return (
-      <span className="trait-rendered">
-        {traitNames.map((trait, index) => {
+    const rawText = String(text);
+    const pattern = /(<a?:[^:>]+:\d+>)/gi;
+    const matches = [...rawText.matchAll(pattern)];
+
+    if (matches.length === 0) {
+      return (
+        <span className="trait-rendered">
+          {getTraitNames(rawText).map((trait, index) => {
+            const icon = getTraitIcon(trait);
+
+            return (
+              <span key={`${trait}-${index}`} className="trait-rendered-item">
+                {icon?.url && (
+                  <img
+                    src={icon.url}
+                    alt={icon.alt}
+                    className="card-trait-icon"
+                  />
+                )}
+                <u>{trait}</u>
+                {index < getTraitNames(rawText).length - 1 && ", "}
+              </span>
+            );
+          })}
+        </span>
+      );
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullEmoji = match[1];
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        const textBeforeEmoji = rawText
+          .slice(lastIndex, matchIndex)
+          .replace(/\*\*/g, "")
+          .trim();
+
+        if (textBeforeEmoji) {
+          const trait = normalizeTraitName(textBeforeEmoji);
           const icon = getTraitIcon(trait);
 
-          return (
-            <span key={`${trait}-${index}`} className="trait-rendered-item">
+          parts.push(
+            <span key={`trait-text-${index}`} className="trait-rendered-item">
               {icon?.url && (
                 <img
                   src={icon.url}
@@ -604,24 +589,98 @@ function CardInformation() {
                   className="card-trait-icon"
                 />
               )}
-
               <u>{trait}</u>
-
-              {index < traitNames.length - 1 && ", "}
-            </span>
+            </span>,
           );
-        })}
+        }
+      }
+
+      const icon = getEmojiIcon(fullEmoji);
+      const emojiName = fullEmoji
+        .match(/^<a?:([^:>]+):\d+>$/i)?.[1]
+        ?.toLowerCase()
+        .replace(/[-_\s]/g, "");
+
+      const traitNameMap = {
+        antihero: "Anti-Hero",
+        strikethrough: "Strikethrough",
+        deadly: "Deadly",
+        special: "Special",
+        freeze: "Freeze",
+        bullseye: "Bullseye",
+        frenzy: "Frenzy",
+        armored: "Armored",
+        overshoot: "Overshoot",
+        untrickable: "Untrickable",
+        doublestrike: "Double Strike",
+        splashdamage: "Splash Damage",
+      };
+
+      const traitName = traitNameMap[emojiName];
+
+      if (traitName) {
+        const traitIcon = getTraitIcon(traitName) || icon;
+
+        parts.push(
+          <span key={`trait-icon-${index}`} className="trait-rendered-item">
+            {traitIcon?.url && (
+              <img
+                src={traitIcon.url}
+                alt={traitIcon.alt || traitName}
+                className="card-trait-icon"
+              />
+            )}
+            <u>{traitName}</u>
+          </span>,
+        );
+      }
+
+      lastIndex = matchIndex + fullEmoji.length;
+    });
+
+    if (lastIndex < rawText.length) {
+      const remainingText = rawText
+        .slice(lastIndex)
+        .replace(/\*\*/g, "")
+        .trim();
+
+      if (remainingText) {
+        const traitNames = getTraitNames(remainingText);
+
+        traitNames.forEach((trait, index) => {
+          const icon = getTraitIcon(trait);
+
+          parts.push(
+            <span
+              key={`trait-end-${trait}-${index}`}
+              className="trait-rendered-item"
+            >
+              {icon?.url && (
+                <img
+                  src={icon.url}
+                  alt={icon.alt}
+                  className="card-trait-icon"
+                />
+              )}
+              <u>{trait}</u>
+            </span>,
+          );
+        });
+      }
+    }
+
+    return (
+      <span className="trait-rendered">
+        {parts.map((part, index) => (
+          <span key={`trait-part-${index}`}>
+            {part}
+            {index < parts.length - 1 && ", "}
+          </span>
+        ))}
       </span>
     );
   };
 
-  /*
-   * Card grouping:
-   *
-   * 0 = Superheroes
-   * 1 = Superpower Tricks
-   * 2 = Normal cards
-   */
   const getCardGroup = (card) => {
     if (!hasValue(card.description)) {
       return 0;
@@ -715,16 +774,6 @@ function CardInformation() {
     cards
       .filter((card) => normalizeText(card.side) === normalizeText(side))
       .forEach((card) => {
-        /*
-         * Add each class individually.
-         *
-         * "Hearty, Crazy"
-         *
-         * becomes:
-         *
-         * "Hearty"
-         * "Crazy"
-         */
         getClassNames(card.card_type).forEach((className) => {
           classes.add(className);
         });
@@ -743,15 +792,11 @@ function CardInformation() {
           healths.add(stats.health);
         }
 
-        /*
-         * Normalize and deduplicate traits.
-         */
         getTraitNames(card.traits).forEach((trait) => {
           traits.add(trait);
         });
 
         const rarityName = getRarityName(card.set_rarity);
-
         const setName = getSetName(card.set_rarity);
 
         if (setName) {
@@ -765,17 +810,11 @@ function CardInformation() {
 
     return {
       classes: [...classes].sort((a, b) => a.localeCompare(b)),
-
       costs: [...costs].sort((a, b) => a - b),
-
       attacks: [...attacks].sort((a, b) => a - b),
-
       healths: [...healths].sort((a, b) => a - b),
-
       traits: [...traits].sort((a, b) => a.localeCompare(b)),
-
       sets: [...sets].sort((a, b) => a.localeCompare(b)),
-
       rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
     };
   }, [cards, side]);
@@ -822,7 +861,6 @@ function CardInformation() {
       borderColor: state.isFocused ? "#8fe38b" : "#444",
       minHeight: "45px",
       boxShadow: "none",
-
       "&:hover": {
         borderColor: "#8fe38b",
       },
@@ -873,27 +911,6 @@ function CardInformation() {
       const cardClasses = getClassNames(card.card_type);
       const cardTraits = getTraitNames(card.traits);
 
-      /*
-       * SEARCH FIELDS
-       *
-       * Included:
-       * - Card name
-       * - Title
-       * - Classes
-       * - Description
-       * - Ability
-       * - Traits
-       * - Set
-       * - Rarity
-       * - Aliases
-       *
-       * NOT INCLUDED:
-       * - Flavor text
-       *
-       * Flavor text is intentionally excluded so searching
-       * for words that only occur in a card's flavor text
-       * will not return that card.
-       */
       const searchableText = [
         card.card_name,
         card.title,
@@ -912,16 +929,6 @@ function CardInformation() {
 
       const searchMatch = !searchValue || searchableText.includes(searchValue);
 
-      /*
-       * A dual-class card matches either class.
-       *
-       * Example:
-       *
-       * "Hearty, Crazy"
-       *
-       * Selecting Hearty -> matches.
-       * Selecting Crazy  -> matches.
-       */
       const classMatch =
         !classFilter ||
         cardClasses.some(
@@ -966,25 +973,12 @@ function CardInformation() {
     });
 
     return result.sort((a, b) => {
-      /*
-       * ORDER:
-       *
-       * 1. Superheroes
-       * 2. Superpower Tricks
-       * 3. Normal cards
-       */
       const groupDifference = getCardGroup(a) - getCardGroup(b);
 
       if (groupDifference !== 0) {
         return groupDifference;
       }
 
-      /*
-       * Within each group:
-       *
-       * 1. Cost
-       * 2. Alphabetical card name
-       */
       const aStats = getCardStats(a.stats);
       const bStats = getCardStats(b.stats);
 
@@ -1036,7 +1030,7 @@ function CardInformation() {
     return (
       <div className="card-information-page">
         <nav className="navbar">
-          <div className="nav-brand">Tbot</div>
+          <div className="navbar-brand">Tbot</div>
 
           <div className="nav-links">
             <Link to="/">Home</Link>
@@ -1053,7 +1047,7 @@ function CardInformation() {
   return (
     <div className="card-information-page">
       <nav className="navbar">
-        <div className="nav-brand">Tbot</div>
+        <div className="navbar-brand">Tbot</div>
 
         <div className="nav-links">
           <Link to="/">Home</Link>
