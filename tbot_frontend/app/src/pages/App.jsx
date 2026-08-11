@@ -2,6 +2,7 @@ import "../css/App.css";
 import { Link, Route, Routes } from "react-router-dom";
 import DecklistsPage from "./decklists.jsx";
 import CardInformation from "./cardinformation.jsx";
+import KeepOrScrap from "./keeporscrap.jsx";
 
 function HomePage() {
   return (
@@ -18,6 +19,7 @@ function HomePage() {
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
           <Link to="/cardinformation">Card Information</Link>
+          <Link to="/keeporscrap">Keep or Scrap</Link>
         </div>
       </nav>
 
@@ -111,6 +113,7 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/decklists" element={<DecklistsPage />} />
       <Route path="/cardinformation" element={<CardInformation />} />
+      <Route path="/keeporscrap" element={<KeepOrScrap />} />
     </Routes>
   );
 }

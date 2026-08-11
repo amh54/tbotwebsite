@@ -44,3 +44,15 @@ class ZombieCards(models.Model):
     class Meta:
         db_table = "zombiecards"
         managed = False
+        
+class KeepOrScrap(models.Model):
+    tierid = models.IntegerField(primary_key=True)
+    side = models.CharField(max_length=40)
+    card_class = models.CharField(max_length=30, db_column="class")
+    image = models.CharField(max_length=400, blank=True)
+    reasoning = models.CharField(max_length=1500, blank=True)
+    creator = models.CharField(max_length=1000, blank=True)
+
+    class Meta:
+        db_table = "web_keep_or_scrap"
+        managed = False

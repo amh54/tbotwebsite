@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Decklist, ZombieCards
+from .models import Decklist, ZombieCards, KeepOrScrap
 
 
 class DeckSerializer(serializers.ModelSerializer):
@@ -29,4 +29,17 @@ class ZombieCardSerializer(serializers.ModelSerializer):
             "button_emoji",
             "button2",
             "button_emoji2",
+        ]
+
+
+class KeepOrScrapSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = KeepOrScrap
+        fields = [
+            "tierid",
+            "side",
+            "card_class",
+            "image",
+            "reasoning",
+            "creator",
         ]
