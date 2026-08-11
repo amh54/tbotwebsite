@@ -38,10 +38,10 @@ const normalizeText = (value) =>
     .replace(/\s+/g, " ");
 
 const removeDiscordEmojis = (value) =>
-  String(value ?? "").replace(/\<a?:[^:>]+:\d+>/gi, "");
+  String(value ?? "").replace(/<a?:[^:>]+:\d+>/gi, "");
 
 const normalizeTraitName = (trait) => {
-  let value = removeDiscordEmojis(trait)
+  const value = removeDiscordEmojis(trait)
     .replace(/[\_\~\`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -77,6 +77,7 @@ const normalizeTraitName = (trait) => {
 
     untrickable: "Untrickable",
   };
+
   const numberedMatch = normalized.match(/^(.+?)\s+(\d+)$/);
 
   if (numberedMatch) {
@@ -106,36 +107,24 @@ const getTraitNames = (traits) => {
 
 function CardModal({ card, close }) {
   const hasValue = (value) =>
-    value !== null &&
-    value !== undefined &&
-    String(value).trim() !== "";
+    value !== null && value !== undefined && String(value).trim() !== "";
 
-  const tribe = hasValue(card.description)
-    ? String(card.description)
-    : "";
+  const tribe = hasValue(card.description) ? String(card.description) : "";
 
-  const traitsText = hasValue(card.traits)
-    ? String(card.traits)
-    : "";
+  const traitsText = hasValue(card.traits) ? String(card.traits) : "";
 
-  const abilityText = hasValue(card.ability)
-    ? String(card.ability)
-    : "";
+  const abilityText = hasValue(card.ability) ? String(card.ability) : "";
 
-  const statsText = hasValue(card.stats)
-    ? String(card.stats)
-    : "";
+  const statsText = hasValue(card.stats) ? String(card.stats) : "";
 
   const getEmojiIcon = (emoji) => {
-    const match = String(emoji || "").match(/^<:([^:]+):\d+>$/);
+    const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
 
     if (!match) {
       return null;
     }
 
-    const emojiName = match[1]
-      .toLowerCase()
-      .replace(/[-_\s]/g, "");
+    const emojiName = match[1].toLowerCase().replace(/[-_\s]/g, "");
 
     const iconMap = {
       brainz: {
@@ -273,15 +262,6 @@ function CardModal({ card, close }) {
   };
 
   const getTraitIcon = (trait) => {
-    /*
-     * Trait text can contain a number.
-     *
-     * Example:
-     * "Anti-Hero 2"
-     *
-     * We remove the number ONLY for finding the icon.
-     * The displayed trait still contains the number.
-     */
     const baseTrait = String(trait)
       .replace(/\s+\d+$/, "")
       .trim();
@@ -353,9 +333,7 @@ function CardModal({ card, close }) {
       return null;
     }
 
-    const text = String(title)
-      .replace(/\*\*/g, "")
-      .replace(/__/g, "");
+    const text = String(title).replace(/\*\*/g, "").replace(/__/g, "");
 
     const emojiPattern = /<:[^:>]+:\d+>/gi;
     const matches = [...text.matchAll(emojiPattern)];
@@ -391,34 +369,19 @@ function CardModal({ card, close }) {
           />,
         );
       } else {
-        const emojiName = fullMatch.replace(
-          /^<:([^:>]+):\d+>$/,
-          "$1",
-        );
+        const emojiName = fullMatch.replace(/^<:([^:>]+):\d+>$/, "$1");
 
-        parts.push(
-          <span key={`title-unknown-${index}`}>
-            {emojiName}
-          </span>,
-        );
+        parts.push(<span key={`title-unknown-${index}`}>{emojiName}</span>);
       }
 
       lastIndex = matchIndex + fullMatch.length;
     });
 
     if (lastIndex < text.length) {
-      parts.push(
-        <span key="title-end">
-          {text.slice(lastIndex)}
-        </span>,
-      );
+      parts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
     }
 
-    return (
-      <span className="card-modal-title-content">
-        {parts}
-      </span>
-    );
+    return <span className="card-modal-title-content">{parts}</span>;
   };
 
   const renderStatsText = (stats) => {
@@ -461,27 +424,16 @@ function CardModal({ card, close }) {
           />,
         );
       } else {
-        const emojiName = fullEmoji.replace(
-          /^<:([^:>]+):\d+>$/,
-          "$1",
-        );
+        const emojiName = fullEmoji.replace(/^<:([^:>]+):\d+>$/, "$1");
 
-        parts.push(
-          <span key={`stats-unknown-${index}`}>
-            {emojiName}
-          </span>,
-        );
+        parts.push(<span key={`stats-unknown-${index}`}>{emojiName}</span>);
       }
 
       lastIndex = matchIndex + fullEmoji.length;
     });
 
     if (lastIndex < text.length) {
-      parts.push(
-        <span key="stats-end">
-          {text.slice(lastIndex)}
-        </span>,
-      );
+      parts.push(<span key="stats-end">{text.slice(lastIndex)}</span>);
     }
 
     return parts;
@@ -500,11 +452,7 @@ function CardModal({ card, close }) {
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
-      return (
-        <span>
-          {text.replace(/<:([^:>]+):\d+>/gi, "$1")}
-        </span>
-      );
+      return <span>{text.replace(/<:([^:>]+):\d+>/gi, "$1")}</span>;
     }
 
     const parts = [];
@@ -515,17 +463,11 @@ function CardModal({ card, close }) {
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
-        const normalText = text.slice(
-          lastIndex,
-          matchIndex,
-        );
+        const normalText = text.slice(lastIndex, matchIndex);
 
         parts.push(
           <span key={`ability-text-${index}`}>
-            {normalText.replace(
-              /<:([^:>]+):\d+>/gi,
-              "$1",
-            )}
+            {normalText.replace(/<:([^:>]+):\d+>/gi, "$1")}
           </span>,
         );
       }
@@ -543,16 +485,9 @@ function CardModal({ card, close }) {
             />,
           );
         } else {
-          const emojiName = match[1].replace(
-            /^<:([^:>]+):\d+>$/,
-            "$1",
-          );
+          const emojiName = match[1].replace(/^<:([^:>]+):\d+>$/, "$1");
 
-          parts.push(
-            <span key={`ability-unknown-${index}`}>
-              {emojiName}
-            </span>,
-          );
+          parts.push(<span key={`ability-unknown-${index}`}>{emojiName}</span>);
         }
       } else if (match[2]) {
         parts.push(
@@ -568,16 +503,10 @@ function CardModal({ card, close }) {
         );
       } else if (match[4]) {
         parts.push(
-          <strong key={`bold-${index}`}>
-            {match[4].slice(2, -2)}
-          </strong>,
+          <strong key={`bold-${index}`}>{match[4].slice(2, -2)}</strong>,
         );
       } else if (match[5]) {
-        parts.push(
-          <u key={`underline-${index}`}>
-            {match[5].slice(2, -2)}
-          </u>,
-        );
+        parts.push(<u key={`underline-${index}`}>{match[5].slice(2, -2)}</u>);
       }
 
       lastIndex = matchIndex + fullMatch.length;
@@ -586,9 +515,7 @@ function CardModal({ card, close }) {
     if (lastIndex < text.length) {
       parts.push(
         <span key="ability-text-end">
-          {text
-            .slice(lastIndex)
-            .replace(/<:([^:>]+):\d+>/gi, "$1")}
+          {text.slice(lastIndex).replace(/<:([^:>]+):\d+>/gi, "$1")}
         </span>,
       );
     }
@@ -609,16 +536,9 @@ function CardModal({ card, close }) {
           const icon = getTraitIcon(trait);
 
           return (
-            <span
-              key={`${trait}-${index}`}
-              className="trait-rendered-item"
-            >
+            <span key={`${trait}-${index}`} className="trait-rendered-item">
               {icon?.url && (
-                <img
-                  src={icon.url}
-                  alt={icon.alt}
-                  className="trait-icon"
-                />
+                <img src={icon.url} alt={icon.alt} className="trait-icon" />
               )}
 
               <u>{trait}</u>
@@ -647,120 +567,103 @@ function CardModal({ card, close }) {
           segment.trim(),
         )
       ) {
-        return (
-          <strong key={`tribe-${index}`}>
-            {segment}
-          </strong>
-        );
+        return <strong key={`tribe-${index}`}>{segment}</strong>;
       }
 
-      return (
-        <span key={`tribe-${index}`}>
-          {segment}
-        </span>
-      );
+      return <span key={`tribe-${index}`}>{segment}</span>;
     });
   };
 
   return (
-    <div
-      className="card-modal"
-      onClick={(event) => event.stopPropagation()}
-    >
-      <button
-        className="card-modal-close"
-        onClick={close}
-        aria-label="Close"
-      >
-        ×
-      </button>
+    <div className="card-modal-overlay" onClick={close}>
+      <div className="card-modal" onClick={(event) => event.stopPropagation()}>
+        <button
+          type="button"
+          className="card-modal-close"
+          onClick={close}
+          aria-label="Close card information"
+        >
+          ×
+        </button>
 
-      <img
-        className="modal-card-image"
-        src={card.thumbnail}
-        alt={card.card_name}
-      />
+        <img
+          className="modal-card-image"
+          src={card.thumbnail}
+          alt={card.card_name}
+        />
 
-      <div className="modal-info">
-        <div className="modal-header">
-          <h2 className="modal-title">
-            {hasValue(card.title)
-              ? renderTitleText(card.title)
-              : card.card_name}
-          </h2>
+        <div className="modal-info">
+          <div className="modal-header">
+            <h2 className="modal-title">
+              {hasValue(card.title)
+                ? renderTitleText(card.title)
+                : card.card_name}
+            </h2>
 
-          {hasValue(card.card_type) && (
-            <span className="card-type">
-              {card.card_type}
-            </span>
+            {hasValue(card.card_type) && (
+              <span className="card-type">{card.card_type}</span>
+            )}
+          </div>
+
+          {hasValue(card.description) && (
+            <section className="modal-section description-section">
+              <h3>Tribe</h3>
+
+              <p className="description-text">{renderTribeText(tribe)}</p>
+            </section>
           )}
-        </div>
 
-        {hasValue(card.description) && (
-          <section className="modal-section description-section">
-            <h3>Tribe</h3>
+          <section className="modal-metadata">
+            {hasValue(card.stats) && (
+              <div className="metadata-item stats-item">
+                <span className="label">Stats</span>
 
-            <p className="description-text">
-              {renderTribeText(tribe)}
-            </p>
+                <span className="value stats-value">
+                  {renderStatsText(statsText)}
+                </span>
+              </div>
+            )}
+
+            {hasValue(card.ability) && (
+              <div className="metadata-item">
+                <span className="label">Abilities</span>
+
+                <span className="value ability-value">
+                  {renderAbilityText(abilityText)}
+                </span>
+              </div>
+            )}
+
+            {hasValue(card.traits) && (
+              <div className="metadata-item trait-item">
+                <span className="label">Traits</span>
+
+                <span className="value trait-value">
+                  {renderTraitText(traitsText)}
+                </span>
+              </div>
+            )}
+
+            {hasValue(card.set_rarity) && (
+              <div className="metadata-item">
+                <span className="label">Rarity</span>
+
+                <span className="value">{card.set_rarity}</span>
+              </div>
+            )}
+
+            {hasValue(card.flavor_text) && (
+              <div className="metadata-item full-width-item">
+                <span className="label">Flavor Text</span>
+
+                <span className="value">{card.flavor_text}</span>
+              </div>
+            )}
           </section>
-        )}
-
-        <section className="modal-metadata">
-          {hasValue(card.stats) && (
-            <div className="metadata-item stats-item">
-              <span className="label">Stats</span>
-
-              <span className="value stats-value">
-                {renderStatsText(statsText)}
-              </span>
-            </div>
-          )}
-
-          {hasValue(card.ability) && (
-            <div className="metadata-item">
-              <span className="label">Abilities</span>
-
-              <span className="value ability-value">
-                {renderAbilityText(abilityText)}
-              </span>
-            </div>
-          )}
-
-          {hasValue(card.traits) && (
-            <div className="metadata-item trait-item">
-              <span className="label">Traits</span>
-
-              <span className="value trait-value">
-                {renderTraitText(traitsText)}
-              </span>
-            </div>
-          )}
-
-          {hasValue(card.set_rarity) && (
-            <div className="metadata-item">
-              <span className="label">Rarity</span>
-
-              <span className="value">
-                {card.set_rarity}
-              </span>
-            </div>
-          )}
-
-          {hasValue(card.flavor_text) && (
-            <div className="metadata-item full-width-item">
-              <span className="label">Flavor Text</span>
-
-              <span className="value">
-                {card.flavor_text}
-              </span>
-            </div>
-          )}
-        </section>
+        </div>
       </div>
     </div>
   );
 }
 
 export default CardModal;
-

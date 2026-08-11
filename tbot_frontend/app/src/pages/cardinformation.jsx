@@ -83,13 +83,13 @@ const removeDiscordEmojis = (value) =>
 const cleanTraitValue = (value) =>
   removeDiscordEmojis(value)
     .replace(/\*\*/g, "")
-    .replace(/__/g, "")
-    .replace(/~~/g, "")
-    .replace(/`/g, "")
+    .replace(/\_\_/g, "")
+    .replace(/\~\~/g, "")
+    .replace(/\`/g, "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/\s+\d+\s*$/g, "")
+    .replace(/\s+\d+\s\*$/g, "")
     .trim();
 
 const normalizeClassName = (className) => {
@@ -136,7 +136,7 @@ const normalizeTraitName = (trait) => {
   const value = cleanTraitValue(trait);
 
   const normalized = normalizeText(value)
-    .replace(/\s*-\s*/g, "-")
+    .replace(/\s\*-\s\*/g, "-")
     .replace(/\s+/g, "");
 
   const canonicalTraits = {
@@ -221,7 +221,7 @@ const getRarityName = (setRarity) => {
       "super-rare",
       "legendary",
       "event",
-      "token"
+      "token",
     ]);
 
     return knownRarities.has(normalized) ? value : "";
@@ -277,106 +277,132 @@ function CardInformation() {
         url: STAT_ICON_LINKS.cost,
         alt: "Brainz",
       },
+
       strength: {
         url: STAT_ICON_LINKS.strength,
         alt: "Strength",
       },
+
       health: {
         url: STAT_ICON_LINKS.health,
         alt: "Health",
       },
+
       sun: {
         url: STAT_ICON_LINKS.sun,
         alt: "Sun",
       },
+
       healthstrength: {
         url: STAT_ICON_LINKS.healthstrength,
         alt: "Health and Strength",
       },
+
       deadly: {
         url: TRAIT_ICON_LINKS.deadly,
         alt: "Deadly",
       },
+
       freeze: {
         url: TRAIT_ICON_LINKS.freeze,
         alt: "Freeze",
       },
+
       antihero: {
         url: TRAIT_ICON_LINKS.antihero,
         alt: "Anti-Hero",
       },
+
       strikethrough: {
         url: TRAIT_ICON_LINKS.strikethrough,
         alt: "Strikethrough",
       },
+
       special: {
         url: TRAIT_ICON_LINKS.special,
         alt: "Special",
       },
+
       bullseye: {
         url: TRAIT_ICON_LINKS.bullseye,
         alt: "Bullseye",
       },
+
       frenzy: {
         url: TRAIT_ICON_LINKS.frenzy,
         alt: "Frenzy",
       },
+
       armored: {
         url: TRAIT_ICON_LINKS.armored,
         alt: "Armored",
       },
+
       overshoot: {
         url: TRAIT_ICON_LINKS.overshoot,
         alt: "Overshoot",
       },
+
       untrickable: {
         url: TRAIT_ICON_LINKS.untrickable,
         alt: "Untrickable",
       },
+
       doublestrike: {
         url: TRAIT_ICON_LINKS.doublestrike,
         alt: "Double Strike",
       },
+
       splashdamage: {
         url: TRAIT_ICON_LINKS.splashdamage,
         alt: "Splash Damage",
       },
+
       guardian: {
         url: CLASS_ICON_LINKS.guardian,
         alt: "Guardian",
       },
+
       kabloom: {
         url: CLASS_ICON_LINKS.kabloom,
         alt: "Kabloom",
       },
+
       megagrow: {
         url: CLASS_ICON_LINKS.megagrow,
         alt: "Mega-Grow",
       },
+
       smarty: {
         url: CLASS_ICON_LINKS.smarty,
         alt: "Smarty",
       },
+
       solar: {
         url: CLASS_ICON_LINKS.solar,
         alt: "Solar",
       },
+
       beastly: {
         url: CLASS_ICON_LINKS.beastly,
         alt: "Beastly",
       },
+
       brainy: {
         url: CLASS_ICON_LINKS.brainy,
         alt: "Brainy",
       },
+
       crazy: {
         url: CLASS_ICON_LINKS.crazy,
         alt: "Crazy",
       },
+
       hearty: {
         url: CLASS_ICON_LINKS.hearty,
         alt: "Hearty",
       },
+
       sneaky: {
         url: CLASS_ICON_LINKS.sneaky,
         alt: "Sneaky",
@@ -498,12 +524,15 @@ function CardInformation() {
     const matches = [...rawText.matchAll(pattern)];
 
     if (matches.length === 0) {
+      const traitNames = getTraitNames(rawText);
+
       return (
         <span className="trait-rendered">
-          {getTraitNames(rawText).map((trait, index) => (
+          {traitNames.map((trait, index) => (
             <span key={`${trait}-${index}`} className="trait-rendered-item">
               <u>{trait}</u>
-              {index < getTraitNames(rawText).length - 1 && ", "}
+
+              {index < traitNames.length - 1 && ", "}
             </span>
           ))}
         </span>
@@ -686,6 +715,7 @@ function CardInformation() {
         });
 
         const rarityName = getRarityName(card.set_rarity);
+
         const setName = getSetName(card.set_rarity);
 
         if (setName) {
@@ -699,11 +729,17 @@ function CardInformation() {
 
     return {
       classes: [...classes].sort((a, b) => a.localeCompare(b)),
+
       costs: [...costs].sort((a, b) => a - b),
+
       attacks: [...attacks].sort((a, b) => a - b),
+
       healths: [...healths].sort((a, b) => a - b),
+
       traits: [...traits.values()].sort((a, b) => a.localeCompare(b)),
+
       sets: [...sets].sort((a, b) => a.localeCompare(b)),
+
       rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
     };
   }, [cards, side]);
@@ -797,7 +833,9 @@ function CardInformation() {
       }
 
       const stats = getCardStats(card.stats);
+
       const cardClasses = getClassNames(card.card_type);
+
       const cardTraits = getTraitNames(card.traits);
 
       const searchableText = [
@@ -869,9 +907,11 @@ function CardInformation() {
       }
 
       const aStats = getCardStats(a.stats);
+
       const bStats = getCardStats(b.stats);
 
       const aCost = aStats.cost ?? Infinity;
+
       const bCost = bStats.cost ?? Infinity;
 
       if (aCost !== bCost) {
@@ -919,7 +959,7 @@ function CardInformation() {
     return (
       <div className="card-information-page">
         <nav className="navbar">
-          <div className="navbar-brand">Tbot</div>
+          <div className="nav-logo">Tbot</div>
 
           <div className="nav-links">
             <Link to="/">Home</Link>
@@ -936,7 +976,7 @@ function CardInformation() {
   return (
     <div className="card-information-page">
       <nav className="navbar">
-        <div className="navbar-brand">Tbot</div>
+        <div className="nav-logo">Tbot</div>
 
         <div className="nav-links">
           <Link to="/">Home</Link>
