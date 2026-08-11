@@ -156,15 +156,22 @@
 .deck-card-info {
   flex: 1;
   text-align: left;
-  min-width: 0; /* Prevents text overflow breaking the flex layout */
+  min-width: 0;
 }
 
-.deck-card h2 {
-  margin-top: 0;
-  margin-bottom: 8px;
-  font-size: 20px;
+.deck-card-info h2 {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  margin-top: 0 !important;
+  margin-bottom: 12px !important;
 }
-
+.deck-card-info p,
+.deck-card-info div,
+.deck-card-info span {
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+}
 .deck-card button {
   width: 100%;
   padding: 10px;
