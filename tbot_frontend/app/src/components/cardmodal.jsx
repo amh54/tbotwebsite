@@ -102,9 +102,7 @@ function CardModal({ card, close }) {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
 
-  const tribe = hasValue(card.description)
-    ? String(card.description)
-    : "No tribe available.";
+  const tribe = hasValue(card.description) ? String(card.description) : "";
 
   const traitsText = hasValue(card.traits) ? String(card.traits) : "";
   const abilityText = hasValue(card.ability) ? String(card.ability) : "";
@@ -559,12 +557,12 @@ function CardModal({ card, close }) {
               <span className="card-type">{card.card_type}</span>
             )}
           </div>
-
-          <section className="modal-section description-section">
-            <h3>Tribe</h3>
-
-            <p className="description-text">{renderTribeText(tribe)}</p>
-          </section>
+          {hasValue(card.description) && (
+            <section className="modal-section description-section">
+              <h3>Tribe</h3>
+              <p className="description-text">{renderTribeText(tribe)}</p>
+            </section>
+          )}
 
           <section className="modal-metadata">
             {hasValue(card.stats) && (
@@ -579,7 +577,7 @@ function CardModal({ card, close }) {
 
             {hasValue(card.ability) && (
               <div className="metadata-item">
-                <span className="label">Ability</span>
+                <span className="label">Abilities</span>
 
                 <span className="value ability-value">
                   {renderAbilityText(abilityText)}
