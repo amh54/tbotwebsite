@@ -89,7 +89,7 @@ const cleanTraitValue = (value) =>
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/\s+\d+$/, "")   
+    .replace(/\s+\d+$/, "")
     .trim();
 const normalizeClassName = (className) => {
   const value = removeDiscordEmojis(className)
@@ -958,7 +958,9 @@ function CardInformation() {
     return (
       <div className="card-information-page">
         <nav className="navbar">
-          <div className="nav-logo">Tbot</div>
+          <div className="logo">
+            <Link to="/">Tbot</Link>
+          </div>
 
           <div className="nav-links">
             <Link to="/">Home</Link>
@@ -975,7 +977,9 @@ function CardInformation() {
   return (
     <div className="card-information-page">
       <nav className="navbar">
-        <div className="nav-logo">Tbot</div>
+        <div className="logo">
+          <Link to="/">Tbot</Link>
+        </div>
 
         <div className="nav-links">
           <Link to="/">Home</Link>
