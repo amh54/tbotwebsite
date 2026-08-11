@@ -55,6 +55,9 @@ const TRAIT_ICON_LINKS = {
   overshoot: "https://i.ibb.co/prbYt2DX/overshoot.webp",
   untrickable: "https://i.ibb.co/235QDZsg/untrickable.webp",
   doublestrike: "https://i.ibb.co/9HcptVCN/doublestrike.webp",
+
+  // Add your Splash Damage icon URL here when available.
+  splashdamage: "",
 };
 
 const CLASS_ICON_LINKS = {
@@ -77,33 +80,94 @@ const normalizeText = (value) =>
     .replace(/\s+/g, " ");
 
 const removeDiscordEmojis = (value) => {
-  return String(value ?? "").replace(/<a?:[^:>]+:\d+>/gi, "");
+  return String(value ?? "").replace(/\<a?:[^:>]+:\d+>/gi, "");
+};
+
+const normalizeClassName = (className) => {
+  const value = removeDiscordEmojis(className)
+    .replace(/[\_\~\`]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const normalized = normalizeText(value);
+
+  const canonicalClasses = {
+    guardian: "Guardian",
+    kabloom: "Kabloom",
+    megagrow: "Mega-Grow",
+    "mega-grow": "Mega-Grow",
+    smarty: "Smarty",
+    solar: "Solar",
+    beastly: "Beastly",
+    brainy: "Brainy",
+    crazy: "Crazy",
+    hearty: "Hearty",
+    sneaky: "Sneaky",
+  };
+
+  return canonicalClasses[normalized] || value;
+};
+
+const getClassNames = (classes) => {
+  if (!classes) {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      String(classes)
+        .split(/[,|;]/)
+        .map((className) => normalizeClassName(className))
+        .filter(Boolean),
+    ),
+  ];
 };
 
 const normalizeTraitName = (trait) => {
   let value = removeDiscordEmojis(trait)
-    .replace(/[_~`]/g, "")
+    .replace(/[\_\~\`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
   value = value.replace(/\s+\d+\s$/g, "").trim();
 
-  const normalized = normalizeText(value);
+  const normalized = normalizeText(value)
+    .replace(/\s*-\s*/g, "-")
+    .replace(/\s+/g, " ");
 
   const canonicalTraits = {
     "anti hero": "Anti-Hero",
     "anti-hero": "Anti-Hero",
+    antihero: "Anti-Hero",
+
     amphibious: "Amphibious",
+
     armored: "Armored",
+    armour: "Armored",
+
+    "splash damage": "Splash Damage",
+    "splash-damage": "Splash Damage",
+    splashdamage: "Splash Damage",
+
     bullseye: "Bullseye",
+
     deadly: "Deadly",
+
     freeze: "Freeze",
+
     frenzy: "Frenzy",
+
     "double strike": "Double Strike",
+    "double-strike": "Double Strike",
     doublestrike: "Double Strike",
+
     overshoot: "Overshoot",
+
     special: "Special",
+
     strikethrough: "Strikethrough",
+    "strike through": "Strikethrough",
+
     untrickable: "Untrickable",
   };
 
@@ -289,6 +353,11 @@ function CardInformation() {
         alt: "Double Strike",
       },
 
+      splashdamage: {
+        url: TRAIT_ICON_LINKS.splashdamage,
+        alt: "Splash Damage",
+      },
+
       guardian: {
         url: CLASS_ICON_LINKS.guardian,
         alt: "Guardian",
@@ -341,6 +410,72 @@ function CardInformation() {
     };
 
     return iconMap[emojiName] || null;
+  };
+
+  const getTraitIcon = (trait) => {
+    const traitIconMap = {
+      "Anti-Hero": {
+        url: TRAIT_ICON_LINKS.antihero,
+        alt: "Anti-Hero",
+      },
+
+      Strikethrough: {
+        url: TRAIT_ICON_LINKS.strikethrough,
+        alt: "Strikethrough",
+      },
+
+      Deadly: {
+        url: TRAIT_ICON_LINKS.deadly,
+        alt: "Deadly",
+      },
+
+      Special: {
+        url: TRAIT_ICON_LINKS.special,
+        alt: "Special",
+      },
+
+      Freeze: {
+        url: TRAIT_ICON_LINKS.freeze,
+        alt: "Freeze",
+      },
+
+      Bullseye: {
+        url: TRAIT_ICON_LINKS.bullseye,
+        alt: "Bullseye",
+      },
+
+      Frenzy: {
+        url: TRAIT_ICON_LINKS.frenzy,
+        alt: "Frenzy",
+      },
+
+      Armored: {
+        url: TRAIT_ICON_LINKS.armored,
+        alt: "Armored",
+      },
+
+      Overshoot: {
+        url: TRAIT_ICON_LINKS.overshoot,
+        alt: "Overshoot",
+      },
+
+      Untrickable: {
+        url: TRAIT_ICON_LINKS.untrickable,
+        alt: "Untrickable",
+      },
+
+      "Double Strike": {
+        url: TRAIT_ICON_LINKS.doublestrike,
+        alt: "Double Strike",
+      },
+
+      "Splash Damage": {
+        url: TRAIT_ICON_LINKS.splashdamage,
+        alt: "Splash Damage",
+      },
+    };
+
+    return traitIconMap[trait] || null;
   };
 
   const renderTitleText = (title) => {
@@ -445,6 +580,9 @@ function CardInformation() {
     return parts;
   };
 
+  /*
+   * Render each trait with its corresponding icon.
+   */
   const renderTraitText = (text) => {
     const traitNames = getTraitNames(text);
 
@@ -454,12 +592,25 @@ function CardInformation() {
 
     return (
       <span className="trait-rendered">
-        {traitNames.map((trait, index) => (
-          <span key={`${trait}-${index}`}>
-            <u>{trait}</u>
-            {index < traitNames.length - 1 && ", "}
-          </span>
-        ))}
+        {traitNames.map((trait, index) => {
+          const icon = getTraitIcon(trait);
+
+          return (
+            <span key={`${trait}-${index}`} className="trait-rendered-item">
+              {icon?.url && (
+                <img
+                  src={icon.url}
+                  alt={icon.alt}
+                  className="card-trait-icon"
+                />
+              )}
+
+              <u>{trait}</u>
+
+              {index < traitNames.length - 1 && ", "}
+            </span>
+          );
+        })}
       </span>
     );
   };
@@ -470,9 +621,6 @@ function CardInformation() {
    * 0 = Superheroes
    * 1 = Superpower Tricks
    * 2 = Normal cards
-   *
-   * Superheroes do NOT have descriptions.
-   * Superpower Tricks have "Superpower Trick" in description.
    */
   const getCardGroup = (card) => {
     if (!hasValue(card.description)) {
@@ -567,9 +715,19 @@ function CardInformation() {
     cards
       .filter((card) => normalizeText(card.side) === normalizeText(side))
       .forEach((card) => {
-        if (hasValue(card.card_type)) {
-          classes.add(String(card.card_type).trim());
-        }
+        /*
+         * Add each class individually.
+         *
+         * "Hearty, Crazy"
+         *
+         * becomes:
+         *
+         * "Hearty"
+         * "Crazy"
+         */
+        getClassNames(card.card_type).forEach((className) => {
+          classes.add(className);
+        });
 
         const stats = getCardStats(card.stats);
 
@@ -585,6 +743,9 @@ function CardInformation() {
           healths.add(stats.health);
         }
 
+        /*
+         * Normalize and deduplicate traits.
+         */
         getTraitNames(card.traits).forEach((trait) => {
           traits.add(trait);
         });
@@ -709,18 +870,40 @@ function CardInformation() {
       }
 
       const stats = getCardStats(card.stats);
+      const cardClasses = getClassNames(card.card_type);
       const cardTraits = getTraitNames(card.traits);
 
+      /*
+       * SEARCH FIELDS
+       *
+       * Included:
+       * - Card name
+       * - Title
+       * - Classes
+       * - Description
+       * - Ability
+       * - Traits
+       * - Set
+       * - Rarity
+       * - Aliases
+       *
+       * NOT INCLUDED:
+       * - Flavor text
+       *
+       * Flavor text is intentionally excluded so searching
+       * for words that only occur in a card's flavor text
+       * will not return that card.
+       */
       const searchableText = [
         card.card_name,
         card.title,
         card.card_type,
         card.description,
         card.ability,
+        ...cardClasses,
         ...cardTraits,
         getSetName(card.set_rarity),
         getRarityName(card.set_rarity),
-        card.flavor_text,
         card.aliases,
       ]
         .filter(hasValue)
@@ -729,9 +912,22 @@ function CardInformation() {
 
       const searchMatch = !searchValue || searchableText.includes(searchValue);
 
+      /*
+       * A dual-class card matches either class.
+       *
+       * Example:
+       *
+       * "Hearty, Crazy"
+       *
+       * Selecting Hearty -> matches.
+       * Selecting Crazy  -> matches.
+       */
       const classMatch =
         !classFilter ||
-        normalizeText(card.card_type) === normalizeText(classFilter.value);
+        cardClasses.some(
+          (className) =>
+            normalizeText(className) === normalizeText(classFilter.value),
+        );
 
       const costMatch = !costFilter || stats.cost === Number(costFilter.value);
 
@@ -777,7 +973,6 @@ function CardInformation() {
        * 2. Superpower Tricks
        * 3. Normal cards
        */
-
       const groupDifference = getCardGroup(a) - getCardGroup(b);
 
       if (groupDifference !== 0) {
@@ -790,7 +985,6 @@ function CardInformation() {
        * 1. Cost
        * 2. Alphabetical card name
        */
-
       const aStats = getCardStats(a.stats);
       const bStats = getCardStats(b.stats);
 
@@ -840,11 +1034,9 @@ function CardInformation() {
 
   if (loading) {
     return (
-      <div className="card-page">
+      <div className="card-information-page">
         <nav className="navbar">
-          <div className="logo">
-            <Link to="/">Tbot</Link>
-          </div>
+          <div className="nav-brand">Tbot</div>
 
           <div className="nav-links">
             <Link to="/">Home</Link>
@@ -859,11 +1051,9 @@ function CardInformation() {
   }
 
   return (
-    <div className="card-page">
+    <div className="card-information-page">
       <nav className="navbar">
-        <div className="logo">
-          <Link to="/">Tbot</Link>
-        </div>
+        <div className="nav-brand">Tbot</div>
 
         <div className="nav-links">
           <Link to="/">Home</Link>

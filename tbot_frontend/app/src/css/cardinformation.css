@@ -243,18 +243,24 @@ SIDE SELECTOR
   gap: 8px;
   flex-wrap: wrap;
 }
-
+.card-trait-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.trait-rendered-item {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
 .card-traits-value {
   color: #dde5ea;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
-
-  /*
-   * Do NOT underline the entire traits container.
-   * Individual trait names are underlined by <u>.
-   */
   text-decoration: none;
 }
 
