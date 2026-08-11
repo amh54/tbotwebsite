@@ -221,6 +221,7 @@ const getRarityName = (setRarity) => {
       "super-rare",
       "legendary",
       "event",
+      "token"
     ]);
 
     return knownRarities.has(normalized) ? value : "";
