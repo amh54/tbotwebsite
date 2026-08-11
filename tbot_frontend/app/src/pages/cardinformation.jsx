@@ -89,9 +89,8 @@ const cleanTraitValue = (value) =>
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/\s+\d+\s\*$/g, "")
+    .replace(/\s+\d+$/, "")   
     .trim();
-
 const normalizeClassName = (className) => {
   const value = removeDiscordEmojis(className)
     .replace(/[\_\~\`]/g, "")
