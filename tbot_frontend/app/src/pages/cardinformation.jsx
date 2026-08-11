@@ -1175,7 +1175,13 @@ function CardInformation() {
                       </p>
                     )}
 
-                  <button type="button" onClick={() => setSelectedCard(card)}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      console.log("OPENING CARD:", card);
+                      setSelectedCard(card);
+                    }}
+                  >
                     View Details
                   </button>
                 </div>
@@ -1184,8 +1190,7 @@ function CardInformation() {
           </div>
         )
       )}
-
-      {selectedCard !== null && (
+      {selectedCard && (
         <CardModal card={selectedCard} close={() => setSelectedCard(null)} />
       )}
     </div>

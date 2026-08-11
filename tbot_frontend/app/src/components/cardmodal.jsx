@@ -42,7 +42,7 @@ const removeDiscordEmojis = (value) =>
 
 const normalizeTraitName = (trait) => {
   const value = removeDiscordEmojis(trait)
-    .replace(/[\_\~\`]/g, "")
+    .replace(/[_~`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -104,18 +104,36 @@ const getTraitNames = (traits) => {
     ),
   ];
 };
+const classNamesMatchTitle = (cardType, title) => {
+  if (!cardType || !title) {
+    return false;
+  }
+
+  const classNames = {
+    guardian: "guardian",
+    kabloom: "kabloom",
+    megagrow: "mega-grow",
+    smarty: "smarty",
+    solar: "solar",
+    beastly: "beastly",
+    brainy: "brainy",
+    crazy: "crazy",
+    hearty: "hearty",
+    sneaky: "sneaky",
+  };
+
+  const titleText = String(title).toLowerCase();
+  const typeText = String(cardType).toLowerCase();
+
+  return Object.values(classNames).some(
+    (name) =>
+      typeText.includes(name) && titleText.includes(name.replace("-", "")),
+  );
+};
 
 function CardModal({ card, close }) {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
-
-  const tribe = hasValue(card.description) ? String(card.description) : "";
-
-  const traitsText = hasValue(card.traits) ? String(card.traits) : "";
-
-  const abilityText = hasValue(card.ability) ? String(card.ability) : "";
-
-  const statsText = hasValue(card.stats) ? String(card.stats) : "";
 
   const getEmojiIcon = (emoji) => {
     const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
@@ -333,24 +351,37 @@ function CardModal({ card, close }) {
       return null;
     }
 
-    const text = String(title).replace(/\*\*/g, "").replace(/__/g, "");
+    const text = String(title).replace(/\*\*/g, "").replace(/__/g, "").trim();
 
-    const emojiPattern = /<:[^:>]+:\d+>/gi;
+    const emojiPattern = /<:([^:>]+):\d+>/gi;
     const matches = [...text.matchAll(emojiPattern)];
 
-    if (matches.length === 0) {
-      return <span>{text}</span>;
-    }
+    const classNameMap = {
+      guardian: "Guardian",
+      kabloom: "Kabloom",
+      megagrow: "Mega-Grow",
+      smarty: "Smarty",
+      solar: "Solar",
+      beastly: "Beastly",
+      brainy: "Brainy",
+      crazy: "Crazy",
+      hearty: "Hearty",
+      sneaky: "Sneaky",
+    };
 
-    const parts = [];
+    const titleParts = [];
+    const classIcons = [];
+    const classNames = [];
+
     let lastIndex = 0;
 
     matches.forEach((match, index) => {
       const fullMatch = match[0];
+      const emojiName = match[1];
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
-        parts.push(
+        titleParts.push(
           <span key={`title-text-${index}`}>
             {text.slice(lastIndex, matchIndex)}
           </span>,
@@ -360,7 +391,7 @@ function CardModal({ card, close }) {
       const icon = getEmojiIcon(fullMatch);
 
       if (icon?.url) {
-        parts.push(
+        classIcons.push(
           <img
             key={`title-icon-${index}`}
             src={icon.url}
@@ -368,20 +399,36 @@ function CardModal({ card, close }) {
             className="card-modal-title-class-icon"
           />,
         );
-      } else {
-        const emojiName = fullMatch.replace(/^<:([^:>]+):\d+>$/, "$1");
+      }
 
-        parts.push(<span key={`title-unknown-${index}`}>{emojiName}</span>);
+      const normalizedName = emojiName.toLowerCase().replace(/[-_\s]/g, "");
+
+      if (classNameMap[normalizedName]) {
+        classNames.push(classNameMap[normalizedName]);
       }
 
       lastIndex = matchIndex + fullMatch.length;
     });
 
     if (lastIndex < text.length) {
-      parts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
+      titleParts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
     }
 
-    return <span className="card-modal-title-content">{parts}</span>;
+    return (
+      <div className="card-modal-title-content">
+        <div className="card-modal-title-name-row">
+          <span className="card-modal-title-name">{titleParts}</span>
+
+          <span className="card-modal-title-icons">{classIcons}</span>
+        </div>
+
+        {classNames.length > 0 && (
+          <span className="card-modal-title-class-circle">
+            {classNames.join(", ")}
+          </span>
+        )}
+      </div>
+    );
   };
 
   const renderStatsText = (stats) => {
@@ -574,9 +621,19 @@ function CardModal({ card, close }) {
     });
   };
 
+  if (!card) {
+    return null;
+  }
+
   return (
-    <div className="card-modal-overlay" onClick={close}>
-      <div className="card-modal" onClick={(event) => event.stopPropagation()}>
+    <div className="card-modal-overlay" onClick={close} role="presentation">
+      <div
+        className="card-modal"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={card.card_name || "Card information"}
+      >
         <button
           type="button"
           className="card-modal-close"
@@ -589,7 +646,7 @@ function CardModal({ card, close }) {
         <img
           className="modal-card-image"
           src={card.thumbnail}
-          alt={card.card_name}
+          alt={card.card_name || "Card"}
         />
 
         <div className="modal-info">
@@ -600,36 +657,43 @@ function CardModal({ card, close }) {
                 : card.card_name}
             </h2>
 
-            {hasValue(card.card_type) && (
-              <span className="card-type">{card.card_type}</span>
-            )}
+            {hasValue(card.card_type) &&
+              !classNamesMatchTitle(card.card_type, card.title) && (
+                <span className="card-type">{card.card_type}</span>
+              )}
           </div>
 
-          {hasValue(card.description) && (
-            <section className="modal-section description-section">
-              <h3>Tribe</h3>
+          {(hasValue(card.description) || hasValue(card.stats)) && (
+            <div className="modal-top-row">
+              {hasValue(card.description) && (
+                <section className="modal-section description-section">
+                  <h3 className="label">Tribe</h3>
 
-              <p className="description-text">{renderTribeText(tribe)}</p>
-            </section>
+                  <p className="description-text">
+                    {renderTribeText(card.description)}
+                  </p>
+                </section>
+              )}
+
+              {hasValue(card.stats) && (
+                <section className="modal-section stats-section">
+                  <h3 className="label">Stats</h3>
+
+                  <p className="value stats-value">
+                    {renderStatsText(card.stats)}
+                  </p>
+                </section>
+              )}
+            </div>
           )}
 
           <section className="modal-metadata">
-            {hasValue(card.stats) && (
-              <div className="metadata-item stats-item">
-                <span className="label">Stats</span>
-
-                <span className="value stats-value">
-                  {renderStatsText(statsText)}
-                </span>
-              </div>
-            )}
-
             {hasValue(card.ability) && (
               <div className="metadata-item">
                 <span className="label">Abilities</span>
 
                 <span className="value ability-value">
-                  {renderAbilityText(abilityText)}
+                  {renderAbilityText(card.ability)}
                 </span>
               </div>
             )}
@@ -639,7 +703,7 @@ function CardModal({ card, close }) {
                 <span className="label">Traits</span>
 
                 <span className="value trait-value">
-                  {renderTraitText(traitsText)}
+                  {renderTraitText(card.traits)}
                 </span>
               </div>
             )}
