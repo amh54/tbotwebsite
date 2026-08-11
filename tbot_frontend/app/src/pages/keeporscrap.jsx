@@ -405,7 +405,7 @@ function KeepOrScrap() {
                     )}
 
                     {hasValue(entry.creator) && (
-                      <p className="kos-creator">By {entry.creator}</p>
+                      <p className="kos-creator">{entry.creator}</p>
                     )}
                   </div>
                 </div>
