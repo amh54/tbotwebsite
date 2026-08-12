@@ -26,20 +26,6 @@
   min-width: 0;
 }
 
-.deck-listing-info h3 {
-  margin: 0 0 4px;
-  font-size: 1.1rem;
-  color: #ffffff;
-  line-height: 1.25;
-}
-
-.deck-listing-info p {
-  margin: 0;
-  color: #d5dde4;
-  line-height: 1.35;
-  font-size: 0.93rem;
-}
-
 .deck-listing-info span {
   color: #8fe38b;
   font-weight: 700;
