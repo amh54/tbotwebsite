@@ -57,7 +57,7 @@ function DecklistsPage() {
     im: "Immorticia",
     zm: "Z-Mech",
     nt: "Neptuna",
-    hg: "Huge-Giganticus"
+    hg: "Huge-Giganticus",
   };
 
   const [decks, setDecks] = useState([]);
@@ -134,7 +134,9 @@ function DecklistsPage() {
           throw new Error(message);
         }
 
-        const contentType = (response.headers.get("content-type") || "").toLowerCase();
+        const contentType = (
+          response.headers.get("content-type") || ""
+        ).toLowerCase();
         const responseText = await response.text();
         const hint = import.meta.env.VITE_API_BASE_URL
           ? "Check that VITE_API_BASE_URL points to your backend domain."
@@ -202,10 +204,11 @@ function DecklistsPage() {
 
   const archetypeOptions = [
     ...new Set(decks.map((deck) => deck.archetype).filter(Boolean)),
-  ].map((archetype) => ({
-    value: archetype,
-    label: archetype,
-  }))
+  ]
+    .map((archetype) => ({
+      value: archetype,
+      label: archetype,
+    }))
     .sort((a, b) =>
       (a.label || "").localeCompare(b.label || "", undefined, {
         sensitivity: "base",
@@ -264,7 +267,9 @@ function DecklistsPage() {
   });
 
   const filteredDecks = sortedDecks.filter((deck) => {
-    const searchValue = String(search || "").trim().toLowerCase();
+    const searchValue = String(search || "")
+      .trim()
+      .toLowerCase();
     const heroAliasMatch = (HERO_ALIAS[searchValue] || "").toLowerCase();
     const expandedSearchValue = heroAliasMatch || searchValue;
     const isHeroShortcutSearch = Boolean(heroAliasMatch);
@@ -287,7 +292,11 @@ function DecklistsPage() {
 
     const heroMatch = !hero || deck.hero === hero.value;
 
-    const archetypeMatch = !archetype || deck.archetype === archetype.value;
+    const archetypeMatch =
+      !archetype ||
+      (deck.archetype || "")
+        .toLowerCase()
+        .includes(archetype.value.toLowerCase());
     const categoryMatch =
       !category ||
       normalizeFilterKey(deck.category) === normalizeFilterKey(category.value);
@@ -316,7 +325,7 @@ function DecklistsPage() {
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
           <Link to="/cardinformation">Card Information</Link>
-          <Link to= "/keeporscrap"> Keep or Scrap</Link>
+          <Link to="/keeporscrap"> Keep or Scrap</Link>
         </div>
       </nav>
 
