@@ -71,6 +71,27 @@ const CLASS_ICON_LINKS = {
   sneaky: "https://i.ibb.co/nqFdR6HJ/Pv-ZH-Sneaky-Icon.png",
 };
 
+const ABILITY_KEYWORDS = [
+  "Bonus Attack",
+  "Bounce",
+  "Can't Be Hurt",
+  "Damage",
+  "Destroy",
+  "Conjure",
+  "Dino-Roar",
+  "Draw",
+  "Evolution",
+  "Freeze",
+  "Fusion",
+  "Gain",
+  "Heal",
+  "Make",
+  "Move",
+  "Random",
+  "Shuffle",
+  "Transform",
+];
+
 const normalizeText = (value) =>
   String(value ?? "")
     .trim()
@@ -91,6 +112,7 @@ const cleanTraitValue = (value) =>
     .trim()
     .replace(/\s+\d+$/, "")
     .trim();
+
 const normalizeClassName = (className) => {
   const value = removeDiscordEmojis(className)
     .replace(/[\_\~\`]/g, "")
@@ -131,36 +153,7 @@ const getClassNames = (classes) => {
   ];
 };
 
-const normalizeTraitName = (trait) => {
-  const value = cleanTraitValue(trait);
-
-  const normalized = normalizeText(value)
-    .replace(/\s\*-\s\*/g, "-")
-    .replace(/\s+/g, "");
-
-  const canonicalTraits = {
-    antihero: "Anti-Hero",
-    "anti-hero": "Anti-Hero",
-    amphibious: "Amphibious",
-    armored: "Armored",
-    armour: "Armored",
-    splashdamage: "Splash Damage",
-    "splash-damage": "Splash Damage",
-    bullseye: "Bullseye",
-    deadly: "Deadly",
-    freeze: "Freeze",
-    frenzy: "Frenzy",
-    doublestrike: "Double Strike",
-    "double-strike": "Double Strike",
-    overshoot: "Overshoot",
-    special: "Special",
-    strikethrough: "Strikethrough",
-    "strike-through": "Strikethrough",
-    untrickable: "Untrickable",
-  };
-
-  return canonicalTraits[normalized] || value;
-};
+const normalizeTraitName = (trait) => cleanTraitValue(trait);
 
 const getTraitNames = (traits) => {
   if (!traits) {
@@ -185,6 +178,94 @@ const getTraitNames = (traits) => {
   });
 
   return uniqueTraits;
+};
+
+const simplifyForMatch = (value) =>
+  normalizeText(value).replace(/['\u2019]/g, "");
+
+const getAbilityKeywords = (ability) => {
+  if (!ability) {
+    return [];
+  }
+
+  const abilityText = simplifyForMatch(removeDiscordEmojis(ability));
+
+  return ABILITY_KEYWORDS.filter((keyword) =>
+    abilityText.includes(simplifyForMatch(keyword)),
+  );
+};
+
+const getCardKeywords = (card) => {
+  const traitNames = getTraitNames(card.traits);
+  const abilityKeywords = getAbilityKeywords(card.ability);
+
+  const combined = [];
+  const seen = new Set();
+
+  [...traitNames, ...abilityKeywords].forEach((keyword) => {
+    const key = normalizeText(keyword);
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      combined.push(keyword);
+    }
+  });
+
+  return combined;
+};
+
+const TRIBE_LINE_PATTERN =
+  /([A-Za-z][A-Za-z'\-]*(?:\s*\/\s*[A-Za-z][A-Za-z'\-]*)*)\s+(Plants?|Zombies?)\b/;
+
+const toTitleCase = (value) =>
+  value.toLowerCase().replace(/(^|\s)\w/g, (letter) => letter.toUpperCase());
+
+const extractTribes = (description) => {
+  if (!description) {
+    return [];
+  }
+
+  const cleaned = removeDiscordEmojis(description)
+    .replace(/\*\*/g, "")
+    .replace(/__/g, "")
+    .trim();
+
+  const firstLine = cleaned.split(/\r?\n/)[0].trim();
+  const match = firstLine.match(TRIBE_LINE_PATTERN);
+
+  if (!match) {
+    return [];
+  }
+
+  return [
+    ...new Set(
+      match[1]
+        .split(/[/,]/)
+        .map((tribe) => tribe.trim())
+        .filter(Boolean)
+        .map(toTitleCase),
+    ),
+  ];
+};
+
+const truncateText = (text, maxLength = 160) => {
+  if (!text) {
+    return "";
+  }
+
+  const clean = String(text)
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  if (clean.length <= maxLength) {
+    return clean;
+  }
+
+  return `${clean.slice(0, maxLength).trimEnd()}…`;
 };
 
 const getSetName = (setRarity) => {
@@ -255,7 +336,8 @@ function CardInformation() {
   const [costFilter, setCostFilter] = useState(null);
   const [attackFilter, setAttackFilter] = useState(null);
   const [healthFilter, setHealthFilter] = useState(null);
-  const [traitFilter, setTraitFilter] = useState(null);
+  const [keywordFilter, setKeywordFilter] = useState(null);
+  const [tribeFilter, setTribeFilter] = useState(null);
   const [setFilter, setSetFilter] = useState(null);
   const [rarityFilter, setRarityFilter] = useState(null);
 
@@ -596,6 +678,113 @@ function CardInformation() {
     return <span className="trait-rendered">{parts}</span>;
   };
 
+  const renderAbilityText = (text, maxLength = 147) => {
+    if (!text) {
+      return null;
+    }
+
+    let value = String(text);
+
+    if (value.length > maxLength) {
+      let cut = value.slice(0, maxLength);
+
+      const lastEmojiStart = cut.lastIndexOf("<:");
+      const lastEmojiEnd = cut.lastIndexOf(">");
+
+      if (lastEmojiStart > lastEmojiEnd) {
+        cut = cut.slice(0, lastEmojiStart);
+      }
+
+      value = `${cut.trimEnd()}…`;
+    }
+
+    const pattern =
+      /(<:[^:>]+:\d+>)|(\*\*__[\s\S]*?__\*\*)|(__\*\*[\s\S]*?\*\*__)|(\*\*[\s\S]*?\*\*)|(__[\s\S]*?__)/gi;
+
+    const matches = [...value.matchAll(pattern)];
+
+    if (matches.length === 0) {
+      return (
+        <span>
+          {value.replace(/<:([^:>]+):\d+>/gi, (_, emojiName) => emojiName)}
+        </span>
+      );
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const matchIndex = match.index;
+      if (matchIndex > lastIndex) {
+        const normalText = value.slice(lastIndex, matchIndex);
+
+        parts.push(
+          <span key={`ability-text-${index}`}>
+            {normalText.replace(
+              /<:([^:>]+):\d+>/gi,
+              (_, emojiName) => emojiName,
+            )}
+          </span>,
+        );
+      }
+
+     
+      if (match[1]) {
+        const icon = getEmojiIcon(match[1]);
+
+        if (icon?.url) {
+          parts.push(
+            <img
+              key={`ability-icon-${index}`}
+              src={icon.url}
+              alt={icon.alt}
+              className="card-ability-icon"
+            />,
+          );
+        } else {
+          const emojiName = match[1].replace(/^<:([^:>]+):\d+>$/, "$1");
+
+          parts.push(<span key={`ability-unknown-${index}`}>{emojiName}</span>);
+        }
+      } else if (match[2]) {
+        parts.push(
+          <strong key={`bold-underline-${index}`}>
+            <u>{match[2].slice(4, -4)}</u>
+          </strong>,
+        );
+      } else if (match[3]) {
+        parts.push(
+          <strong key={`underline-bold-${index}`}>
+            <u>{match[3].slice(4, -4)}</u>
+          </strong>,
+        );
+      } else if (match[4]) {
+        parts.push(
+          <strong key={`bold-${index}`}>{match[4].slice(2, -2)}</strong>,
+        );
+      } else if (match[5]) {
+        parts.push(<u key={`underline-${index}`}>{match[5].slice(2, -2)}</u>);
+      }
+
+      lastIndex = matchIndex + fullMatch.length;
+    });
+
+    // Remaining text
+    if (lastIndex < value.length) {
+      parts.push(
+        <span key="ability-text-end">
+          {value
+            .slice(lastIndex)
+            .replace(/<:([^:>]+):\d+>/gi, (_, emojiName) => emojiName)}
+        </span>,
+      );
+    }
+
+    return <span>{parts}</span>;
+  };
+
   const getCardGroup = (card) => {
     if (!hasValue(card.description)) {
       return 0;
@@ -680,7 +869,8 @@ function CardInformation() {
     const costs = new Set();
     const attacks = new Set();
     const healths = new Set();
-    const traits = new Map();
+    const keywords = new Map();
+    const tribes = new Map();
     const sets = new Set();
     const rarities = new Set();
 
@@ -705,11 +895,19 @@ function CardInformation() {
           healths.add(stats.health);
         }
 
-        getTraitNames(card.traits).forEach((trait) => {
-          const key = normalizeText(trait);
+        getCardKeywords(card).forEach((keyword) => {
+          const key = normalizeText(keyword);
 
-          if (!traits.has(key)) {
-            traits.set(key, trait);
+          if (!keywords.has(key)) {
+            keywords.set(key, keyword);
+          }
+        });
+
+        extractTribes(card.description).forEach((tribe) => {
+          const key = normalizeText(tribe);
+
+          if (!tribes.has(key)) {
+            tribes.set(key, tribe);
           }
         });
 
@@ -735,7 +933,9 @@ function CardInformation() {
 
       healths: [...healths].sort((a, b) => a - b),
 
-      traits: [...traits.values()].sort((a, b) => a.localeCompare(b)),
+      keywords: [...keywords.values()].sort((a, b) => a.localeCompare(b)),
+
+      tribes: [...tribes.values()].sort((a, b) => a.localeCompare(b)),
 
       sets: [...sets].sort((a, b) => a.localeCompare(b)),
 
@@ -750,20 +950,25 @@ function CardInformation() {
 
   const costOptions = filterData.costs.map((value) => ({
     value,
-    label: String(value),
+    label: `Cost: ${value}`,
   }));
 
   const attackOptions = filterData.attacks.map((value) => ({
     value,
-    label: String(value),
+    label: `Attack: ${value}`,
   }));
 
   const healthOptions = filterData.healths.map((value) => ({
     value,
-    label: String(value),
+    label: `Health: ${value}`,
   }));
 
-  const traitOptions = filterData.traits.map((value) => ({
+  const keywordOptions = filterData.keywords.map((value) => ({
+    value,
+    label: value,
+  }));
+
+  const tribeOptions = filterData.tribes.map((value) => ({
     value,
     label: value,
   }));
@@ -835,7 +1040,9 @@ function CardInformation() {
 
       const cardClasses = getClassNames(card.card_type);
 
-      const cardTraits = getTraitNames(card.traits);
+      const cardKeywords = getCardKeywords(card);
+
+      const cardTribes = extractTribes(card.description);
 
       const searchableText = [
         card.card_name,
@@ -844,7 +1051,8 @@ function CardInformation() {
         card.description,
         card.ability,
         ...cardClasses,
-        ...cardTraits,
+        ...cardKeywords,
+        ...cardTribes,
         getSetName(card.set_rarity),
         getRarityName(card.set_rarity),
         card.aliases,
@@ -870,10 +1078,17 @@ function CardInformation() {
       const healthMatch =
         !healthFilter || stats.health === Number(healthFilter.value);
 
-      const traitMatch =
-        !traitFilter ||
-        cardTraits.some(
-          (trait) => normalizeText(trait) === normalizeText(traitFilter.value),
+      const keywordMatch =
+        !keywordFilter ||
+        cardKeywords.some(
+          (keyword) =>
+            normalizeText(keyword) === normalizeText(keywordFilter.value),
+        );
+
+      const tribeMatch =
+        !tribeFilter ||
+        cardTribes.some(
+          (tribe) => normalizeText(tribe) === normalizeText(tribeFilter.value),
         );
 
       const setMatch =
@@ -892,7 +1107,8 @@ function CardInformation() {
         costMatch &&
         attackMatch &&
         healthMatch &&
-        traitMatch &&
+        keywordMatch &&
+        tribeMatch &&
         setMatch &&
         rarityMatch
       );
@@ -933,7 +1149,8 @@ function CardInformation() {
     costFilter,
     attackFilter,
     healthFilter,
-    traitFilter,
+    keywordFilter,
+    tribeFilter,
     setFilter,
     rarityFilter,
   ]);
@@ -944,7 +1161,8 @@ function CardInformation() {
     setCostFilter(null);
     setAttackFilter(null);
     setHealthFilter(null);
-    setTraitFilter(null);
+    setKeywordFilter(null);
+    setTribeFilter(null);
     setSetFilter(null);
     setRarityFilter(null);
   };
@@ -966,7 +1184,7 @@ function CardInformation() {
             <Link to="/">Home</Link>
             <Link to="/decklists">Decklists</Link>
             <Link to="/cardinformation">Card Information</Link>
-            <Link to= "/keeporscrap"> Keep or Scrap</Link>
+            <Link to="/keeporscrap"> Keep or Scrap</Link>
           </div>
         </nav>
 
@@ -986,7 +1204,7 @@ function CardInformation() {
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
           <Link to="/cardinformation">Card Information</Link>
-          <Link to= "/keeporscrap"> Keep or Scrap</Link>
+          <Link to="/keeporscrap"> Keep or Scrap</Link>
         </div>
       </nav>
 
@@ -1073,10 +1291,22 @@ function CardInformation() {
             <Select
               styles={selectStyles}
               menuPortalTarget={document.body}
-              placeholder="Trait"
-              options={traitOptions}
-              value={traitFilter}
-              onChange={setTraitFilter}
+              placeholder="Keywords"
+              options={keywordOptions}
+              value={keywordFilter}
+              onChange={setKeywordFilter}
+              isClearable
+            />
+          </div>
+
+          <div className="card-select-wrapper">
+            <Select
+              styles={selectStyles}
+              menuPortalTarget={document.body}
+              placeholder="Tribe"
+              options={tribeOptions}
+              value={tribeFilter}
+              onChange={setTribeFilter}
               isClearable
             />
           </div>
@@ -1180,10 +1410,18 @@ function CardInformation() {
                       </p>
                     )}
 
+                  {hasValue(card.ability) && (
+                    <p className="card-description-line">
+                      <span className="card-field-label">Ability:</span>{" "}
+                      <span style={{ whiteSpace: "pre-line" }}>
+                        {renderAbilityText(card.ability)}
+                      </span>
+                    </p>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => {
-                      console.log("OPENING CARD:", card);
                       setSelectedCard(card);
                     }}
                   >

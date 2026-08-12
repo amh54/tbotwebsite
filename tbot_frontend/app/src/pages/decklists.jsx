@@ -258,11 +258,6 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
-
-  /*
-   * Only show decks belonging to the currently selected side
-   * when building filter options.
-   */
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
@@ -274,14 +269,6 @@ function DecklistsPage() {
       (deck) => String(deck.side || "").toLowerCase() === selectedSide,
     );
   }, [decks, side]);
-
-  /*
-   * Hero options now depend on the selected side.
-   *
-   * Plants -> only Plant heroes
-   * Zombies -> only Zombie heroes
-   * All -> both
-   */
   const heroOptions = useMemo(() => {
     return [
       ...new Set(
