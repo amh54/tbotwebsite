@@ -678,7 +678,7 @@ function CardInformation() {
     return <span className="trait-rendered">{parts}</span>;
   };
 
-  const renderAbilityText = (text, maxLength = 147) => {
+  const renderAbilityText = (text, maxLength = 150) => {
     if (!text) {
       return null;
     }
