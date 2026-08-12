@@ -126,6 +126,32 @@
   align-items: flex-start;
   flex-wrap: wrap;
 }
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.share-btn,
+.download-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 9px 12px;
+  background: #202020;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.share-btn:hover,
+.download-btn:hover {
+  border-color: #8fe38b;
+  color: #8fe38b;
+}
 .modal-image {
   flex: 0 0 min(420px, 42%);
   max-width: 420px;

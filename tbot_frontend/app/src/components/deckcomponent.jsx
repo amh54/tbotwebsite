@@ -1,12 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import "../css/deckmodal.css";
 
 function DeckCard({ decklist }) {
+  const deck = decklist ?? {};
+  const deckKey = String(deck.deckid || deck.id || deck.name || "");
+
+  const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const deck = decklist ?? {};
+  const [copied, setCopied] = useState(false);
+
+  // If the URL already contains ?deck=<this deck's key> on mount (or after
+  // navigation), open this card's modal automatically.
+  useEffect(() => {
+    if (deckKey && searchParams.get("deck") === deckKey) {
+      setOpen(true);
+    }
+  }, [searchParams, deckKey]);
 
   const description = deck.description || "No description available.";
+
   const hasValue = (value) => {
     if (value === null || value === undefined) {
       return false;
@@ -57,6 +71,77 @@ function DeckCard({ decklist }) {
 
   const deckDocUrl = toExternalUrl(deck.deck_doc);
 
+  const openModal = () => {
+    setOpen(true);
+
+    if (!deckKey) {
+      return;
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.set("deck", deckKey);
+    setSearchParams(next);
+  };
+
+  const closeModal = () => {
+    setOpen(false);
+
+    if (!deckKey) {
+      return;
+    }
+
+    const next = new URLSearchParams(searchParams);
+
+    if (next.get("deck") === deckKey) {
+      next.delete("deck");
+      setSearchParams(next);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!deckKey) {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("deck", deckKey);
+
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link", err);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!deck.image) {
+      return;
+    }
+
+    try {
+      const response = await fetch(deck.image, { mode: "cors" });
+
+      if (!response.ok) {
+        throw new Error("Image fetch failed");
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${deck.name || "decklist"}.png`.replace(/\s+/g, "_");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Direct download blocked, opening image instead", err);
+      window.open(deck.image, "_blank", "noopener,noreferrer");
+    }
+  };
+
   return (
     <>
       <div className="deck-listing-card">
@@ -74,7 +159,7 @@ function DeckCard({ decklist }) {
           <button
             type="button"
             className="view-details-btn"
-            onClick={() => setOpen(true)}
+            onClick={openModal}
             aria-label={`View details for ${deck.name || "deck"}`}
           >
             View Details
@@ -110,7 +195,6 @@ function DeckCard({ decklist }) {
               <span>Optimized by:</span> {deck.optimization}
             </p>
           )}
-
         </div>
       </div>
 
@@ -124,7 +208,7 @@ function DeckCard({ decklist }) {
             <button
               type="button"
               className="modal-close"
-              onClick={() => setOpen(false)}
+              onClick={closeModal}
               aria-label="Close details"
             >
               X
@@ -167,7 +251,8 @@ function DeckCard({ decklist }) {
 
                         {hasValue(deck.inspiration) && (
                           <>
-                            {hasValue(deck.creator) || hasValue(deck.optimization)
+                            {hasValue(deck.creator) ||
+                            hasValue(deck.optimization)
                               ? ", "
                               : ""}
                             Inspired by <span>{deck.inspiration}</span>
@@ -185,6 +270,26 @@ function DeckCard({ decklist }) {
                     )}
                   </div>
                 )}
+
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="share-btn"
+                    onClick={handleShare}
+                  >
+                    {copied ? "Link Copied!" : "Share Deck"}
+                  </button>
+
+                  {hasValue(deck.image) && (
+                    <button
+                      type="button"
+                      className="download-btn"
+                      onClick={handleDownload}
+                    >
+                      Download Decklist
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="modal-info">
