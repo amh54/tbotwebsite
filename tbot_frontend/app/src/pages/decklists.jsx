@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Select from "react-select";
 import DeckCard from "../components/deckcomponent";
@@ -7,13 +7,16 @@ import "../css/decklists.css";
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
     let normalized = value;
+
     while (normalized.endsWith("/")) {
       normalized = normalized.slice(0, -1);
     }
+
     return normalized;
   };
 
   const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
+
   if (envBaseUrl) {
     return stripTrailingSlashes(envBaseUrl);
   }
@@ -21,6 +24,7 @@ const getApiBaseUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
     const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+
     if (isLocalhost) {
       return "http://localhost:8000";
     }
@@ -32,10 +36,20 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+const ARCHETYPE_OPTIONS = [
+  { value: "aggro", label: "Aggro" },
+  { value: "combo", label: "Combo" },
+  { value: "midrange", label: "Midrange" },
+  { value: "control", label: "Control" },
+  { value: "tempo", label: "Tempo" },
+];
+
 function DecklistsPage() {
   const normalizeFilterText = (value) => String(value || "").trim();
+
   const normalizeFilterKey = (value) =>
     normalizeFilterText(value).toLowerCase();
+
   const HERO_ALIAS = {
     bc: "beta-carrotina",
     ct: "citron",
@@ -61,13 +75,17 @@ function DecklistsPage() {
   };
 
   const [decks, setDecks] = useState([]);
+
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
+
   const [hero, setHero] = useState(null);
-  const [archetype, setArchetype] = useState(null);
+  const [archetype, setArchetype] = useState([]);
   const [category, setCategory] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const selectStyles = {
     control: (base, state) => ({
       ...base,
@@ -75,18 +93,50 @@ function DecklistsPage() {
       borderColor: state.isFocused ? "#8fe38b" : "#444",
       minHeight: "45px",
       boxShadow: "none",
+      cursor: "pointer",
+
       "&:hover": {
         borderColor: "#8fe38b",
       },
     }),
+
+    valueContainer: (base) => ({
+      ...base,
+      padding: "2px 10px",
+    }),
+
+    multiValue: (base) => ({
+      ...base,
+      backgroundColor: "#333",
+      borderRadius: "5px",
+    }),
+
+    multiValueLabel: (base) => ({
+      ...base,
+      color: "white",
+    }),
+
+    multiValueRemove: (base) => ({
+      ...base,
+      color: "#aaa",
+
+      "&:hover": {
+        backgroundColor: "#8fe38b",
+        color: "#101416",
+      },
+    }),
+
     menuPortal: (base) => ({
       ...base,
       zIndex: 9999,
     }),
+
     menu: (base) => ({
       ...base,
       backgroundColor: "#202020",
+      zIndex: 9999,
     }),
+
     option: (base, state) => ({
       ...base,
       backgroundColor: state.isFocused ? "#333" : "#202020",
@@ -112,38 +162,46 @@ function DecklistsPage() {
 
   useEffect(() => {
     const controller = new AbortController();
+
     const fetchDecks = async () => {
       try {
         const decklistsEndpoint = `${API_BASE_URL}/tbotapp/decklists/`;
+
         const response = await fetch(decklistsEndpoint, {
           signal: controller.signal,
         });
 
         if (!response.ok) {
           let message = `Request failed with status ${response.status}`;
+
           try {
             const errorPayload = await response.json();
+
             if (errorPayload?.detail) {
               message = `${message}: ${errorPayload.detail}`;
             } else if (errorPayload?.error) {
               message = `${message}: ${errorPayload.error}`;
             }
           } catch (_error) {
-            // Ignore non-JSON error payloads and keep status-based message.
+            // Ignore non-JSON error payloads.
           }
+
           throw new Error(message);
         }
 
         const contentType = (
           response.headers.get("content-type") || ""
         ).toLowerCase();
+
         const responseText = await response.text();
+
         const hint = import.meta.env.VITE_API_BASE_URL
           ? "Check that VITE_API_BASE_URL points to your backend domain."
           : "VITE_API_BASE_URL is missing; set it in frontend deployment settings.";
 
         if (!contentType.includes("application/json")) {
           const startsLikeHtml = responseText.trim().startsWith("<");
+
           if (startsLikeHtml) {
             throw new Error(
               `Received HTML instead of JSON from ${decklistsEndpoint}. ${hint}`,
@@ -151,15 +209,19 @@ function DecklistsPage() {
           }
 
           throw new Error(
-            `Unexpected response type (${contentType || "unknown"}) from ${decklistsEndpoint}. ${hint}`,
+            `Unexpected response type (${
+              contentType || "unknown"
+            }) from ${decklistsEndpoint}. ${hint}`,
           );
         }
 
         let data;
+
         try {
           data = JSON.parse(responseText);
         } catch (_parseError) {
           const startsLikeHtml = responseText.trim().startsWith("<");
+
           if (startsLikeHtml) {
             throw new Error(
               `Received HTML instead of JSON from ${decklistsEndpoint}. ${hint}`,
@@ -172,7 +234,6 @@ function DecklistsPage() {
         }
 
         setDecks(data || []);
-
         setError("");
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -181,8 +242,11 @@ function DecklistsPage() {
           const hint = import.meta.env.VITE_API_BASE_URL
             ? ""
             : " Configure VITE_API_BASE_URL in your frontend deployment settings.";
+
           setError(
-            `Unable to load decklists right now.${hint} ${err.message || ""}`.trim(),
+            `Unable to load decklists right now.${hint} ${
+              err.message || ""
+            }`.trim(),
           );
         }
       } finally {
@@ -195,116 +259,180 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
-  const heroOptions = [
-    ...new Set(decks.map((deck) => deck.hero).filter(Boolean)),
-  ].map((hero) => ({
-    value: hero,
-    label: hero,
-  }));
+  /*
+   * Only show decks belonging to the currently selected side
+   * when building filter options.
+   */
+  const sideFilteredDecks = useMemo(() => {
+    if (side === "All") {
+      return decks;
+    }
 
-  const archetypeOptions = [
-    ...new Set(decks.map((deck) => deck.archetype).filter(Boolean)),
-  ]
-    .map((archetype) => ({
-      value: archetype,
-      label: archetype,
-    }))
-    .sort((a, b) =>
+    const selectedSide = side.toLowerCase();
+
+    return decks.filter(
+      (deck) => String(deck.side || "").toLowerCase() === selectedSide,
+    );
+  }, [decks, side]);
+
+  /*
+   * Hero options now depend on the selected side.
+   *
+   * Plants -> only Plant heroes
+   * Zombies -> only Zombie heroes
+   * All -> both
+   */
+  const heroOptions = useMemo(() => {
+    return [
+      ...new Set(
+        sideFilteredDecks
+          .map((deck) => normalizeFilterText(deck.hero))
+          .filter(Boolean),
+      ),
+    ]
+      .map((heroName) => ({
+        value: heroName,
+        label: heroName,
+      }))
+      .sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, {
+          sensitivity: "base",
+        }),
+      );
+  }, [sideFilteredDecks]);
+  const categoryOptions = useMemo(() => {
+    return Object.values(
+      sideFilteredDecks.reduce((acc, deck) => {
+        const normalizedCategory = normalizeFilterText(deck.category);
+
+        if (!normalizedCategory) {
+          return acc;
+        }
+
+        const categoryKey = normalizeFilterKey(normalizedCategory);
+
+        if (!acc[categoryKey]) {
+          acc[categoryKey] = {
+            value: normalizedCategory,
+            label: normalizedCategory,
+          };
+        }
+
+        return acc;
+      }, {}),
+    ).sort((a, b) =>
       (a.label || "").localeCompare(b.label || "", undefined, {
         sensitivity: "base",
       }),
     );
+  }, [sideFilteredDecks]);
 
-  const categoryOptions = Object.values(
-    decks.reduce((acc, deck) => {
-      const normalizedCategory = normalizeFilterText(deck.category);
-      if (!normalizedCategory) {
-        return acc;
+  const sortedDecks = useMemo(() => {
+    return [...decks].sort((a, b) => {
+      const normalizeSide = (value) => String(value || "").toLowerCase();
+
+      const sideOrder = {
+        plants: 0,
+        zombies: 1,
+      };
+
+      const sideCompare =
+        (sideOrder[normalizeSide(a.side)] ?? 99) -
+        (sideOrder[normalizeSide(b.side)] ?? 99);
+
+      if (sideCompare !== 0) {
+        return sideCompare;
       }
 
-      const categoryKey = normalizeFilterKey(normalizedCategory);
-      if (!acc[categoryKey]) {
-        acc[categoryKey] = {
-          value: normalizedCategory,
-          label: normalizedCategory,
-        };
+      const heroCompare = (a.hero || "").localeCompare(
+        b.hero || "",
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      );
+
+      if (heroCompare !== 0) {
+        return heroCompare;
       }
 
-      return acc;
-    }, {}),
-  ).sort((a, b) =>
-    (a.label || "").localeCompare(b.label || "", undefined, {
-      sensitivity: "base",
-    }),
-  );
-
-  const sortedDecks = [...decks].sort((a, b) => {
-    const normalizeSide = (value) => String(value || "").toLowerCase();
-    const sideOrder = {
-      plants: 0,
-      zombies: 1,
-    };
-
-    const sideCompare =
-      (sideOrder[normalizeSide(a.side)] ?? 99) -
-      (sideOrder[normalizeSide(b.side)] ?? 99);
-
-    if (sideCompare !== 0) {
-      return sideCompare;
-    }
-
-    const heroCompare = (a.hero || "").localeCompare(b.hero || "", undefined, {
-      sensitivity: "base",
+      return (a.name || "").localeCompare(b.name || "", undefined, {
+        sensitivity: "base",
+      });
     });
+  }, [decks]);
+  const clearFilters = () => {
+    setSearch("");
+    setHero(null);
+    setArchetype([]);
+    setCategory(null);
+  };
+  const handleSideChange = (newSide) => {
+    setSide(newSide);
+    clearFilters();
+  };
 
-    if (heroCompare !== 0) {
-      return heroCompare;
-    }
+  const filteredDecks = useMemo(() => {
+    return sortedDecks.filter((deck) => {
+      const searchValue = String(search || "")
+        .trim()
+        .toLowerCase();
 
-    return (a.name || "").localeCompare(b.name || "", undefined, {
-      sensitivity: "base",
+      const heroAliasMatch = (HERO_ALIAS[searchValue] || "").toLowerCase();
+
+      const expandedSearchValue = heroAliasMatch || searchValue;
+
+      const isHeroShortcutSearch = Boolean(heroAliasMatch);
+
+      const searchableValues = [
+        deck.name,
+        deck.creator,
+        deck.optimization,
+        deck.hero,
+        deck.archetype,
+        deck.cards,
+      ]
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase());
+
+      const searchMatch =
+        !searchValue ||
+        (isHeroShortcutSearch
+          ? String(deck.hero || "")
+              .toLowerCase()
+              .includes(expandedSearchValue)
+          : searchableValues.some((value) =>
+              value.includes(expandedSearchValue),
+            ));
+
+      const sideValue = String(deck.side || "").toLowerCase();
+
+      const sideMatch =
+        side === "All" ||
+        (side === "Plants" && sideValue === "plants") ||
+        (side === "Zombies" && sideValue === "zombies");
+
+      const heroMatch =
+        !hero ||
+        normalizeFilterKey(deck.hero) === normalizeFilterKey(hero.value);
+      const deckArchetype = normalizeFilterKey(deck.archetype);
+
+      const archetypeMatch =
+        archetype.length === 0 ||
+        archetype.every((selectedArchetype) =>
+          deckArchetype.includes(normalizeFilterKey(selectedArchetype.value)),
+        );
+
+      const categoryMatch =
+        !category ||
+        normalizeFilterKey(deck.category) ===
+          normalizeFilterKey(category.value);
+
+      return (
+        searchMatch && sideMatch && heroMatch && archetypeMatch && categoryMatch
+      );
     });
-  });
-
-  const filteredDecks = sortedDecks.filter((deck) => {
-    const searchValue = String(search || "")
-      .trim()
-      .toLowerCase();
-    const heroAliasMatch = (HERO_ALIAS[searchValue] || "").toLowerCase();
-    const expandedSearchValue = heroAliasMatch || searchValue;
-    const isHeroShortcutSearch = Boolean(heroAliasMatch);
-
-    const searchMatch = isHeroShortcutSearch
-      ? deck.hero?.toLowerCase().includes(expandedSearchValue)
-      : deck.name?.toLowerCase().includes(expandedSearchValue) ||
-        deck.creator?.toLowerCase().includes(expandedSearchValue) ||
-        deck.optimization?.toLowerCase().includes(expandedSearchValue) ||
-        deck.hero?.toLowerCase().includes(expandedSearchValue) ||
-        deck.archetype?.toLowerCase().includes(expandedSearchValue) ||
-        deck.cards?.toLowerCase().includes(expandedSearchValue);
-
-    const sideValue = (deck.side || "").toLowerCase();
-
-    const sideMatch =
-      side === "All" ||
-      (side === "Plants" && sideValue === "plants") ||
-      (side === "Zombies" && sideValue === "zombies");
-
-    const heroMatch = !hero || deck.hero === hero.value;
-
-    const archetypeMatch =
-      !archetype ||
-      (deck.archetype || "")
-        .toLowerCase()
-        .includes(archetype.value.toLowerCase());
-    const categoryMatch =
-      !category ||
-      normalizeFilterKey(deck.category) === normalizeFilterKey(category.value);
-
-    return (
-      searchMatch && sideMatch && heroMatch && archetypeMatch && categoryMatch
-    );
-  });
+  }, [sortedDecks, search, side, hero, archetype, category]);
 
   if (loading) {
     return (
@@ -325,7 +453,7 @@ function DecklistsPage() {
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
           <Link to="/cardinformation">Card Information</Link>
-          <Link to="/keeporscrap"> Keep or Scrap</Link>
+          <Link to="/keeporscrap">Keep or Scrap</Link>
         </div>
       </nav>
 
@@ -336,7 +464,7 @@ function DecklistsPage() {
           <button
             type="button"
             className={side === "All" ? "active" : ""}
-            onClick={() => setSide("All")}
+            onClick={() => handleSideChange("All")}
           >
             All
           </button>
@@ -344,26 +472,26 @@ function DecklistsPage() {
           <button
             type="button"
             className={side === "Plants" ? "active" : ""}
-            onClick={() => setSide("Plants")}
+            onClick={() => handleSideChange("Plants")}
           >
             <img
               src="https://i.ibb.co/fYHsRqP0/plants.png"
               alt="Plants"
               className="tab-icon"
-            />{" "}
+            />
             Plants
           </button>
 
           <button
             type="button"
             className={side === "Zombies" ? "active" : ""}
-            onClick={() => setSide("Zombies")}
+            onClick={() => handleSideChange("Zombies")}
           >
             <img
               src="https://i.ibb.co/pvT38Y1n/zombies.png"
               alt="Zombies"
               className="tab-icon"
-            />{" "}
+            />
             Zombies
           </button>
         </div>
@@ -387,6 +515,7 @@ function DecklistsPage() {
               value={hero}
               onChange={setHero}
               isClearable
+              isSearchable
             />
           </div>
 
@@ -399,32 +528,29 @@ function DecklistsPage() {
               value={category}
               onChange={setCategory}
               isClearable
+              isSearchable
             />
           </div>
-          <div className="select-wrapper">
+
+          <div className="select-wrapper archetype-select-wrapper">
             <Select
               styles={selectStyles}
               menuPortalTarget={document.body}
               placeholder="Archetype"
-              options={archetypeOptions}
+              options={ARCHETYPE_OPTIONS}
               value={archetype}
               onChange={setArchetype}
               isClearable
+              isMulti
+              closeMenuOnSelect={false}
+              hideSelectedOptions={false}
             />
           </div>
 
           <button
             type="button"
             className="clear-filter-btn"
-            onClick={() => {
-              setSearch("");
-
-              setHero(null);
-
-              setArchetype(null);
-
-              setCategory(null);
-            }}
+            onClick={clearFilters}
           >
             Clear
           </button>

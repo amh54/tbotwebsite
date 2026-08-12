@@ -10,6 +10,8 @@
   margin-bottom: 30px;
 }
 
+
+
 .deck-browser {
   background: #15181b;
   border: 1px solid #23272b;
@@ -17,6 +19,7 @@
   overflow: visible;
   margin-bottom: 30px;
 }
+
 
 .tabs {
   display: flex;
@@ -35,6 +38,9 @@
   padding: 16px;
   font-size: 16px;
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .tabs button:hover {
@@ -53,6 +59,7 @@
   object-fit: contain;
 }
 
+
 .search-container {
   padding: 20px;
   border-bottom: 1px solid #333;
@@ -62,6 +69,7 @@
   width: 100%;
   height: 45px;
   padding: 0 15px;
+  box-sizing: border-box;
   background: #202020;
   color: white;
   border: 1px solid #444;
@@ -78,15 +86,21 @@
   color: #888;
 }
 
+
 .filters {
   display: flex;
+  width: 100%;
+  align-items: stretch;
 }
 
 .select-wrapper {
   flex: 1;
+  min-width: 0;
 }
 
 .clear-filter-btn {
+  flex: 0 0 auto;
+  min-width: 110px;
   background: #202020;
   color: white;
   border: none;
@@ -94,23 +108,36 @@
   padding: 0 30px;
   font-size: 15px;
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .clear-filter-btn:hover {
   background: #333;
+  color: #8fe38b;
 }
 
-.react-select__control {
-  background-color: #202020;
+.select-wrapper .react-select__control {
+  border-radius: 0;
+  border-width: 0;
+  border-right: 1px solid #333;
+}
+
+.select-wrapper:first-child .react-select__control {
+  border-radius: 0;
 }
 
 .react-select__menu {
   z-index: 9999;
 }
 
+.react-select__menu-portal {
+  z-index: 9999;
+}
+
 .results-count {
   margin: 25px 0;
-
   color: #aaa;
 }
 
@@ -122,9 +149,10 @@
   color: #aaa;
 }
 
+
 .deck-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Force max 2 columns */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
 
@@ -136,12 +164,14 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 0;
 }
 
 .deck-card-content {
   display: flex;
   gap: 16px;
   align-items: flex-start;
+  min-width: 0;
 }
 
 .deck-card img {
@@ -157,6 +187,7 @@
   text-align: left;
   min-width: 0;
 }
+
 .deck-card-info h2 {
   font-size: 24px !important;
   font-weight: 700 !important;
@@ -174,6 +205,7 @@
   font-size: 15px !important;
   line-height: 1.6 !important;
 }
+
 .deck-card button {
   width: 100%;
   padding: 10px;
@@ -191,8 +223,54 @@
   color: #8fe38b;
 }
 
-/* Responsive fallback for mobile screens */
+
+@media (max-width: 1100px) {
+  .deck-page {
+    padding: 30px;
+  }
+
+  .deck-card img {
+    width: 160px;
+  }
+
+  .deck-card-content {
+    gap: 14px;
+  }
+}
+
 @media (max-width: 900px) {
+  .deck-page {
+    padding: 20px;
+  }
+
+  .deck-page h1 {
+    font-size: 38px;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .select-wrapper {
+    width: 100%;
+    flex: none;
+  }
+
+  .select-wrapper .react-select__control {
+    min-height: 50px;
+    border-right: none;
+    border-bottom: 1px solid #333;
+    border-radius: 0;
+  }
+
+  .clear-filter-btn {
+    width: 100%;
+    min-height: 50px;
+    border-left: none;
+    border-top: 1px solid #333;
+    padding: 12px 20px;
+  }
+
   .deck-grid {
     grid-template-columns: 1fr;
   }
@@ -209,6 +287,44 @@
   }
 
   .deck-card-info {
+    width: 100%;
     text-align: center;
+  }
+}
+
+/* =========================
+   SMALL MOBILE
+   ========================= */
+
+@media (max-width: 600px) {
+  .deck-page {
+    padding: 15px;
+  }
+
+  .deck-page h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+
+  .tabs button {
+    padding: 13px 8px;
+    font-size: 14px;
+  }
+
+  .tab-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .search-container {
+    padding: 15px;
+  }
+
+  .deck-card {
+    padding: 15px;
+  }
+
+  .deck-card-info h2 {
+    font-size: 21px !important;
   }
 }
