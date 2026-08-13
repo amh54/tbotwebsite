@@ -310,6 +310,7 @@ const extractTribes = (description, side = "", cardType = "") => {
     "Trick",
     "Zombie",
     "Environment",
+    "Superpower"
   ];
 
   /*
