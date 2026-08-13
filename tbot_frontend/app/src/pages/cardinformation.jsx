@@ -269,12 +269,6 @@ const extractTribes = (description, side = "", cardType = "") => {
     }
   };
 
-  let match;
-
-  while ((match = TRIBE_LINE_PATTERN.exec(cleaned)) !== null) {
-    addTribe(match[1]);
-  }
-
   const knownTribes = [
     "Animal",
     "Fruit",
@@ -310,20 +304,42 @@ const extractTribes = (description, side = "", cardType = "") => {
     "Professional",
     "Science",
     "Sports",
-    "Plant",
-    "Hero",
-    "Trick",
-    "Zombie",
-    "Environment"
   ];
 
-  const words = cleaned.toLowerCase().split(/\s+/);
+  let match;
 
-  knownTribes.forEach((tribe) => {
-    if (words.includes(tribe.toLowerCase())) {
-      addTribe(tribe);
+  while ((match = TRIBE_LINE_PATTERN.exec(cleaned)) !== null) {
+    const tribe = match[1];
+    const suffix = normalizeText(match[2]);
+
+    const knownTribe = knownTribes.find(
+      (known) => normalizeText(known) === normalizeText(tribe),
+    );
+
+    if (!knownTribe) {
+      continue;
     }
-  });
+
+    if (suffix === "plant" || suffix === "plants") {
+      addTribe(knownTribe);
+      addTribe("Plant");
+    }
+
+    if (suffix === "zombie" || suffix === "zombies") {
+      addTribe(knownTribe);
+      addTribe("Zombie");
+    }
+
+    if (suffix === "trick" || suffix === "tricks") {
+      addTribe(knownTribe);
+      addTribe("Trick");
+    }
+
+    if (suffix === "environment" || suffix === "environments") {
+      addTribe(knownTribe);
+      addTribe("Environment");
+    }
+  }
 
   const normalizedSide = normalizeText(side);
 
@@ -337,16 +353,12 @@ const extractTribes = (description, side = "", cardType = "") => {
 
   const normalizedType = normalizeText(cardType);
 
-  if (/\btrick\b/.test(normalizedType)) {
+  if (normalizedType === "trick") {
     addTribe("Trick");
   }
 
-  if (/\benvironment\b/.test(normalizedType)) {
+  if (normalizedType === "environment") {
     addTribe("Environment");
-  }
-
-  if (/\bhero\b/.test(normalizedType)) {
-    addTribe("Hero");
   }
 
   return tribes;
@@ -934,7 +946,6 @@ function CardInformation() {
     fetchCards();
   }, []);
 
-  
   const normalCards = useMemo(() => {
     return cards.filter((card) => {
       if (normalizeText(card.side) !== normalizeText(side)) {
@@ -1215,7 +1226,7 @@ function CardInformation() {
 
       const tribeMatch =
         selectedTribes.length === 0 ||
-        selectedTribes.some((selectedTribe) =>
+        selectedTribes.every((selectedTribe) =>
           cardTribes.some(
             (tribe) =>
               normalizeText(tribe) === normalizeText(selectedTribe.value),
