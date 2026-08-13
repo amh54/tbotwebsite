@@ -208,40 +208,66 @@ function KeepOrScrap() {
   };
 
   const introEntries = useMemo(() => {
-    return entries
-      .filter(isIntroEntry)
-      .sort((a, b) => Number(a.tierid) - Number(b.tierid));
-  }, [entries]);
+    return entries.filter(isIntroEntry).sort((a, b) => {
+      const aName = normalizeText(a.name);
+      const bName = normalizeText(b.name);
 
-  const groupedClasses = useMemo(() => {
-    const filtered = entries.filter(
-      (entry) => !isIntroEntry(entry) && hasValue(entry.card_class),
-    );
+      const aIsPlant = aName.includes("plant");
+      const bIsPlant = bName.includes("plant");
+      const aIsZombie = aName.includes("zombie");
+      const bIsZombie = bName.includes("zombie");
 
-    const groups = new Map();
+      if (aIsPlant && !bIsPlant) return -1;
+      if (!aIsPlant && bIsPlant) return 1;
 
-    filtered.forEach((entry) => {
-      const key = normalizeText(entry.card_class);
+      if (aIsZombie && !bIsZombie) return -1;
+      if (!aIsZombie && bIsZombie) return 1;
 
-      if (!groups.has(key)) {
-        groups.set(key, {
-          name: entry.card_class,
-          entries: [],
-        });
-      }
-
-      groups.get(key).entries.push(entry);
+      return a.name.localeCompare(b.name);
     });
-
-    return [...groups.values()]
-      .map((group) => ({
-        ...group,
-        entries: group.entries.sort(
-          (a, b) => Number(a.tierid) - Number(b.tierid),
-        ),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
   }, [entries]);
+
+ const groupedClasses = useMemo(() => {
+  const filtered = entries.filter(
+    (entry) => !isIntroEntry(entry) && hasValue(entry.card_class),
+  );
+
+  const groups = new Map();
+
+  filtered.forEach((entry) => {
+    const key = normalizeText(entry.card_class);
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        name: entry.card_class,
+        side: entry.side,
+        entries: [],
+      });
+    }
+
+    groups.get(key).entries.push(entry);
+  });
+
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      entries: group.entries.sort(
+        (a, b) => Number(a.tierid) - Number(b.tierid),
+      ),
+    }))
+    .sort((a, b) => {
+      const aSide = normalizeText(a.side);
+      const bSide = normalizeText(b.side);
+
+      const aIsPlant = aSide === "plants" || aSide === "plant";
+      const bIsPlant = bSide === "plants" || bSide === "plant";
+
+      if (aIsPlant && !bIsPlant) return -1;
+      if (!aIsPlant && bIsPlant) return 1;
+
+      return a.name.localeCompare(b.name);
+    });
+}, [entries]);
 
   const Navbar = () => (
     <nav className="navbar">
