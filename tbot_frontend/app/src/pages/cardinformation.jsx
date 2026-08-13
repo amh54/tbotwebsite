@@ -313,16 +313,6 @@ const extractTribes = (description, side = "", cardType = "") => {
     "Superpower"
   ];
 
-  /*
-   * Find normal tribe + type combinations such as:
-   *   Tree Trick
-   *   Berry Plant
-   *   Gourmet Zombie
-   *
-   * The important part is that ONLY the tribe is added.
-   * "Trick", "Plant", and "Zombie" are added independently
-   * from the card type / side below.
-   */
   let match;
 
   while ((match = TRIBE_LINE_PATTERN.exec(cleaned)) !== null) {
@@ -337,12 +327,6 @@ const extractTribes = (description, side = "", cardType = "") => {
     }
   }
 
-  /*
-   * Also find standalone tribe names.
-   *
-   * This means Gourmet will always be detected regardless of
-   * whether the card says Gourmet Zombie, Gourmet Plant, etc.
-   */
   const words = cleaned.toLowerCase().split(/\s+/);
 
   knownTribes.forEach((tribe) => {
@@ -350,10 +334,6 @@ const extractTribes = (description, side = "", cardType = "") => {
       addTribe(tribe);
     }
   });
-
-  /*
-   * Side is independent from the tribe.
-   */
   const normalizedSide = normalizeText(side);
 
   if (normalizedSide === "plants" || normalizedSide === "plant") {
@@ -364,13 +344,6 @@ const extractTribes = (description, side = "", cardType = "") => {
     addTribe("Zombie");
   }
 
-  /*
-   * Card type is independent from the tribe.
-   *
-   * Tree Trick = Tree + Trick
-   * Gourmet Trick = Gourmet + Trick
-   * etc.
-   */
   const normalizedType = normalizeText(cardType);
 
   if (/\btrick\b/.test(normalizedType)) {
