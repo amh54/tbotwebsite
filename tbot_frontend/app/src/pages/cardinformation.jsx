@@ -310,7 +310,7 @@ const extractTribes = (description, side = "", cardType = "") => {
     "Trick",
     "Zombie",
     "Environment",
-    "Superpower"
+    "Superpower",
   ];
 
   let match;
@@ -353,9 +353,8 @@ const extractTribes = (description, side = "", cardType = "") => {
   if (/\benvironment\b/.test(normalizedType)) {
     addTribe("Environment");
   }
-
-  if (/\bhero\b/.test(normalizedType)) {
-    addTribe("Hero");
+  if (/\bsuperpower\b/.test(normalizedType)) {
+    addTribe("Superpower");
   }
 
   return tribes;
