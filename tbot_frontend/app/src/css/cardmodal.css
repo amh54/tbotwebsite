@@ -41,40 +41,29 @@
   pointer-events: none;
 }
 
-.card-modal > * {
+.card-modal > *:not(.card-modal-close) {
   position: relative;
   z-index: 1;
 }
-
 .card-modal-close {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   z-index: 10;
-  width: 46px;
-  height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #555;
-  border-radius: 50%;
-  background: #202020;
-  color: #ffffff;
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: white;
+  font-size: 32px;
+  line-height: 44px;
+  text-align: center;
   cursor: pointer;
   padding: 0;
   box-sizing: border-box;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
 }
 
 .card-modal-close:hover {
-  background: #333;
-  border-color: #8fe38b;
   color: #8fe38b;
 }
 
@@ -289,14 +278,28 @@ h3.label {
  */
 @media (max-width: 700px) {
   .card-modal-overlay {
+    position: fixed;
+    inset: 0;
+    overflow-y: auto;
+    align-items: flex-start;
     padding: 10px;
   }
+
+  .card-modal {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    margin: auto 0;
+    display: block;
+  }
+
   .card-modal-close {
-    top: 8px;
-    right: 8px;
-    width: 50px;
-    height: 50px;
-    font-size: 30px;
+    top: 6px;
+    right: 6px;
+    width: 48px;
+    height: 48px;
+    font-size: 32px;
+    line-height: 48px;
   }
 
   .modal-card-image {
@@ -318,19 +321,5 @@ h3.label {
 
   .full-width-item {
     grid-column: 1 / -1;
-  }
-
-  .metadata-item {
-    padding: 12px 14px;
-  }
-
-  .metadata-item .label {
-    display: block;
-    margin-bottom: 4px;
-  }
-
-  .metadata-item .value {
-    display: block;
-    width: 100%;
   }
 }
