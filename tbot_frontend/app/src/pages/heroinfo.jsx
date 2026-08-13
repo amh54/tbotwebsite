@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import CardModal from "../components/cardmodal";
-import "../css/cardinformation.css";
+import "../css/cardinfo.css";
 import "../css/navbar.css";
 
 const getApiBaseUrl = () => {
@@ -90,7 +90,7 @@ const isHeroCard = (card) => {
   return rarity === "hero";
 };
 
-function HeroInformation() {
+function HeroInfo() {
   const [cards, setCards] = useState([]);
   const [side, setSide] = useState("Plants");
   const [selectedCard, setSelectedCard] = useState(null);
@@ -575,7 +575,7 @@ function HeroInformation() {
     const fetchCards = async () => {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/tbotapp/cardinformation/`,
+          `${API_BASE_URL}/tbotapp/cardinfo/`,
         );
 
         if (!response.ok) {
@@ -596,6 +596,56 @@ function HeroInformation() {
 
     fetchCards();
   }, []);
+    useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/cardinfo/`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        setCards(Array.isArray(data) ? data : []);
+        setError("");
+      } catch (err) {
+        console.error(err);
+        setError(`Unable to load heroes. ${err.message || ""}`.trim());
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCards();
+  }, []);
+
+  // ADD THIS HERE
+  useEffect(() => {
+    if (!cards.length) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const cardName = params.get("card");
+
+    if (!cardName) {
+      return;
+    }
+
+    const foundCard = cards.find(
+      (card) =>
+        normalizeText(card.card_name) === normalizeText(cardName) &&
+        isHeroCard(card),
+    );
+
+    if (foundCard) {
+      setSide(foundCard.side);
+      setSelectedCard(foundCard);
+    }
+  }, [cards]);
 
   const heroes = useMemo(() => {
     return cards.filter(
@@ -676,8 +726,8 @@ function HeroInformation() {
           <div className="nav-links">
             <Link to="/">Home</Link>
             <Link to="/decklists">Decklists</Link>
-            <Link to="/cardinformation">Card Information</Link>
-            <Link to="/heroinformation">Hero Information</Link>
+            <Link to="/cardinfo">Card Info</Link>
+            <Link to="/heroinfo">Hero Info</Link>
             <Link to="/keeporscrap">Keep or Scrap</Link>
           </div>
         </nav>
@@ -697,8 +747,8 @@ function HeroInformation() {
         <div className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
-          <Link to="/cardinformation">Card Information</Link>
-          <Link to="/heroinformation">Hero Information</Link>
+          <Link to="/cardinfo">Card Info</Link>
+          <Link to="/heroinfo">Hero Info</Link>
           <Link to="/keeporscrap">Keep or Scrap</Link>
         </div>
       </nav>
@@ -748,4 +798,4 @@ function HeroInformation() {
   );
 }
 
-export default HeroInformation;
+export default HeroInfo;

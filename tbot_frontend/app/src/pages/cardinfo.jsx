@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Select from "react-select";
 import CardModal from "../components/cardmodal";
-import "../css/cardinformation.css";
+import "../css/cardinfo.css";
 import "../css/navbar.css";
 
 const getApiBaseUrl = () => {
@@ -428,7 +428,7 @@ const isSuperpowerCard = (card) => {
   return text.includes("superpower trick") || text.includes("superpower");
 };
 
-function CardInformation() {
+function CardInfo() {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
 
@@ -880,7 +880,7 @@ function CardInformation() {
   useEffect(() => {
     const fetchCards = async () => {
       try {
-        const endpoint = `${API_BASE_URL}/tbotapp/cardinformation/`;
+        const endpoint = `${API_BASE_URL}/tbotapp/cardinfo/`;
 
         const response = await fetch(endpoint);
 
@@ -1363,8 +1363,8 @@ function CardInformation() {
           <div className="nav-links">
             <Link to="/">Home</Link>
             <Link to="/decklists">Decklists</Link>
-            <Link to="/cardinformation">Card Information</Link>
-            <Link to="/heroinformation">Hero Information</Link>
+            <Link to="/cardinfo">Card Info</Link>
+            <Link to="/heroinfo">Hero Info</Link>
             <Link to="/keeporscrap">Keep or Scrap</Link>
           </div>
         </nav>
@@ -1384,8 +1384,8 @@ function CardInformation() {
         <div className="nav-links">
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
-          <Link to="/cardinformation">Card Information</Link>
-          <Link to="/heroinformation">Hero information</Link>
+          <Link to="/cardinfo">Card Info</Link>
+          <Link to="/heroinfo">Hero Info</Link>
           <Link to="/keeporscrap">Keep or Scrap</Link>
         </div>
       </nav>
@@ -1633,4 +1633,4 @@ function CardInformation() {
 );
 }
 
-export default CardInformation;
+export default CardInfo;

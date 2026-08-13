@@ -8,14 +8,14 @@ urlpatterns = [
         name="decklists",
     ),
     path(
-        "cardinformation/",
-        views.card_information,
-        name="card_information",
+        "cardinfo/",
+        views.card_info,
+        name="card_info",
     ),
     path(
-        "heroinformation/",
-        views.heroinformation,
-        name="heroinformation",
+        "heroinfo/",
+        views.heroinfo,
+        name="heroinfo",
     ),
     path(
         "keeporscrap/",

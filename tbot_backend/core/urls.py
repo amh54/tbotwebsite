@@ -29,7 +29,7 @@ class ApiRootView(View):
                 "status": "ok",
                 "endpoints": [
                     "/tbotapp/decklists/",
-                    "/tbotapp/cardinformation/",
+                    "/tbotapp/cardinfo/",
                 ],
             }
         )

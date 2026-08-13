@@ -20,7 +20,6 @@
   padding: 24px;
   box-sizing: border-box;
 
-  /* Desktop: card on the left, information on the right */
   display: grid;
   grid-template-columns: 300px 1fr;
   gap: 24px;

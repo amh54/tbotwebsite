@@ -58,7 +58,7 @@ def decklists(request):
 
 
 @api_view(["GET"])
-def card_information(request):
+def card_info(request):
     try:
         cards = ZombieCards.objects.all()
 
@@ -87,7 +87,7 @@ def card_information(request):
 
 
 @api_view(["GET"])
-def heroinformation(request):
+def heroinfo(request):
     try:
         cards = ZombieCards.objects.all()
 

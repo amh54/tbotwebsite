@@ -2,9 +2,9 @@ import "../css/App.css";
 import "../css/navbar.css";
 import { Link, Route, Routes } from "react-router-dom";
 import DecklistsPage from "./decklists.jsx";
-import CardInformation from "./cardinformation.jsx";
+import CardInfo from "./cardinfo.jsx";
 import KeepOrScrap from "./keeporscrap.jsx";
-import HeroInformation from "./heroinformation.jsx";
+import HeroInfo from "./heroinfo.jsx";
 
 function HomePage() {
   return (
@@ -23,8 +23,8 @@ function HomePage() {
   <div className="nav-links">
     <Link to="/">Home</Link>
     <Link to="/decklists">Decklists</Link>
-    <Link to="/cardinformation">Card Information</Link>
-    <Link to="/heroinformation">Hero Information</Link>
+    <Link to="/cardinfo">Card Info</Link>
+    <Link to="/heroinfo">Hero Info</Link>
     <Link to="/keeporscrap">Keep or Scrap</Link>
   </div>
 </nav>
@@ -116,9 +116,9 @@ function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/decklists" element={<DecklistsPage />} />
-      <Route path="/cardinformation" element={<CardInformation />} />
+      <Route path="/cardinfo" element={<CardInfo />} />
       <Route path="/keeporscrap" element={<KeepOrScrap />} />
-      <Route path="/heroinformation" element={<HeroInformation />} />
+      <Route path="/heroinfo" element={<HeroInfo />} />
     </Routes>
   );
 }
