@@ -941,6 +941,39 @@ function CardInformation() {
 
     fetchCards();
   }, []);
+  useEffect(() => {
+    if (!cards.length) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const cardQuery = params.get("card");
+
+    if (!cardQuery) {
+      return;
+    }
+
+    const normalizedQuery = normalizeText(cardQuery);
+
+    const matchedCard = cards.find((card) => {
+      const cardName = normalizeText(card.card_name);
+      const title = normalizeText(card.title);
+      const aliases = normalizeText(card.aliases);
+
+      return (
+        cardName === normalizedQuery ||
+        title === normalizedQuery ||
+        aliases
+          .split(/[,|;]/)
+          .map((alias) => normalizeText(alias))
+          .includes(normalizedQuery)
+      );
+    });
+
+    if (matchedCard) {
+      setSelectedCard(matchedCard);
+    }
+  }, [cards]);
 
   const normalCards = useMemo(() => {
     return cards.filter((card) => {
@@ -1252,57 +1285,55 @@ function CardInformation() {
       );
     });
 
-  return result.sort((a, b) => {
-  const groupDifference = getCardGroup(a) - getCardGroup(b);
+    return result.sort((a, b) => {
+      const groupDifference = getCardGroup(a) - getCardGroup(b);
 
-  if (groupDifference !== 0) {
-    return groupDifference;
-  }
+      if (groupDifference !== 0) {
+        return groupDifference;
+      }
 
-  const aClasses = getClassNames(a.card_type);
-  const bClasses = getClassNames(b.card_type);
+      const aClasses = getClassNames(a.card_type);
+      const bClasses = getClassNames(b.card_type);
 
-  const aClass = aClasses[0] || "";
-  const bClass = bClasses[0] || "";
+      const aClass = aClasses[0] || "";
+      const bClass = bClasses[0] || "";
 
-  const classDifference = aClass.localeCompare(
-    bClass,
-    undefined,
-    { sensitivity: "base" },
-  );
+      const classDifference = aClass.localeCompare(bClass, undefined, {
+        sensitivity: "base",
+      });
 
-  if (classDifference !== 0) {
-    return classDifference;
-  }
+      if (classDifference !== 0) {
+        return classDifference;
+      }
 
-  const aStats = getCardStats(a.stats);
-  const bStats = getCardStats(b.stats);
+      const aStats = getCardStats(a.stats);
+      const bStats = getCardStats(b.stats);
 
-  const aCost = aStats.cost ?? Infinity;
-  const bCost = bStats.cost ?? Infinity;
+      const aCost = aStats.cost ?? Infinity;
+      const bCost = bStats.cost ?? Infinity;
 
-  if (aCost !== bCost) {
-    return aCost - bCost;
-  }
+      if (aCost !== bCost) {
+        return aCost - bCost;
+      }
 
-  return String(a.card_name || "").localeCompare(
-    String(b.card_name || ""),
-    undefined,
-    { sensitivity: "base" },
-  );
-});
-}, [
-  normalCards,
-  search,
-  classFilter,
-  costFilter,
-  attackFilter,
-  healthFilter,
-  keywordFilter,
-  tribeFilter,
-  setFilter,
-  rarityFilter,
-]);
+      return String(a.card_name || "").localeCompare(
+        String(b.card_name || ""),
+        undefined,
+        { sensitivity: "base" },
+      );
+    });
+  }, [
+    normalCards,
+    search,
+    classFilter,
+    costFilter,
+    attackFilter,
+    healthFilter,
+    keywordFilter,
+    tribeFilter,
+    setFilter,
+    rarityFilter,
+  ]);
 
   const clearFilters = () => {
     setSearch("");
@@ -1586,11 +1617,20 @@ function CardInformation() {
         )
       )}
 
-      {selectedCard && (
-        <CardModal card={selectedCard} close={() => setSelectedCard(null)} />
-      )}
-    </div>
-  );
+     {selectedCard && (
+  <CardModal
+    card={selectedCard}
+    close={() => {
+      setSelectedCard(null);
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete("card");
+      window.history.replaceState({}, "", url);
+    }}
+  />
+)}
+</div>
+);
 }
 
 export default CardInformation;

@@ -26,7 +26,32 @@
   gap: 24px;
   align-items: start;
 }
+.share-card-btn {
+  margin-top: 12px;
+  padding: 10px 18px;
+  border: 1px solid #8fe38b;
+  border-radius: 6px;
+  background: #202020;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.1s ease;
+}
 
+.share-card-btn:hover {
+  background: #8fe38b;
+  color: #101416;
+  border-color: #8fe38b;
+}
+
+.share-card-btn:active {
+  transform: translateY(1px);
+}
 .card-modal::before {
   content: "";
   position: absolute;
@@ -160,10 +185,11 @@ h3.label {
   padding: 12px 16px;
 }
 
-.modal-section h3 {
+.card-modal .modal-section h3 {
   margin: 0 0 8px;
+  text-transform: none !important;
+  letter-spacing: normal;
 }
-
 .description-text {
   margin: 0;
   line-height: 1.5;
