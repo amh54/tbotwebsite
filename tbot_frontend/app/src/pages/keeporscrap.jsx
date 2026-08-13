@@ -326,6 +326,7 @@ function KeepOrScrap() {
         <Link to="/">Home</Link>
         <Link to="/decklists">Decklists</Link>
         <Link to="/cardinformation">Card Information</Link>
+        <Link to="/heroinformation">Hero Information</Link>
         <Link to="/keeporscrap">Keep or Scrap</Link>
       </div>
     </nav>

@@ -3,12 +3,16 @@ import { Link, Route, Routes } from "react-router-dom";
 import DecklistsPage from "./decklists.jsx";
 import CardInformation from "./cardinformation.jsx";
 import KeepOrScrap from "./keeporscrap.jsx";
+import HeroInformation from "./heroinformation.jsx";
 
 function HomePage() {
   return (
     <div className="home">
       <head>
-        <link rel="icon" href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp" />
+        <link
+          rel="icon"
+          href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
+        />
       </head>
       <nav className="navbar">
         <div className="logo">
@@ -19,6 +23,7 @@ function HomePage() {
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
           <Link to="/cardinformation">Card Information</Link>
+          <Link to="/heroinformation">Hero Information</Link>
           <Link to="/keeporscrap">Keep or Scrap</Link>
         </div>
       </nav>
@@ -89,9 +94,7 @@ function HomePage() {
         </p>
 
         <h3>Can I contribute?</h3>
-        <p>
-          Yes. Deck submissions, ideas, and feedback are all welcome.
-        </p>
+        <p>Yes. Deck submissions, ideas, and feedback are all welcome.</p>
 
         <p>
           <a
@@ -114,6 +117,7 @@ function App() {
       <Route path="/decklists" element={<DecklistsPage />} />
       <Route path="/cardinformation" element={<CardInformation />} />
       <Route path="/keeporscrap" element={<KeepOrScrap />} />
+      <Route path="/heroinformation" element={<HeroInformation />} />
     </Routes>
   );
 }

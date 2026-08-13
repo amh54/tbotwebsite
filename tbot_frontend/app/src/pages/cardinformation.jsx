@@ -90,6 +90,8 @@ const ABILITY_KEYWORDS = [
   "Random",
   "Shuffle",
   "Transform",
+  "Strikethrough",
+  "Deadly",
 ];
 
 const normalizeText = (value) =>
@@ -100,6 +102,12 @@ const normalizeText = (value) =>
 
 const removeDiscordEmojis = (value) =>
   String(value ?? "").replace(/<a?:[^:>]+:\d+>/gi, "");
+
+const replaceDiscordEmojisWithNames = (value) =>
+  String(value ?? "").replace(
+    /<a?:([^:>]+):\d+>/gi,
+    (_, emojiName) => ` ${emojiName} `,
+  );
 
 const cleanTraitValue = (value) =>
   removeDiscordEmojis(value)
@@ -183,21 +191,34 @@ const getTraitNames = (traits) => {
 const simplifyForMatch = (value) =>
   normalizeText(value).replace(/['\u2019]/g, "");
 
-const getAbilityKeywords = (ability) => {
-  if (!ability) {
-    return [];
+const keywordMatchesText = (keyword, text) => {
+  const normalized = simplifyForMatch(text);
+
+  if (keyword === "Freeze") {
+    return /\bfrozen?\b|\bfreezes\b|\bfreezing\b|\bfreeze\b/.test(normalized);
   }
 
-  const abilityText = simplifyForMatch(removeDiscordEmojis(ability));
+  const escaped = simplifyForMatch(keyword).replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&",
+  );
+
+  return new RegExp(`\\b${escaped}\\b`, "i").test(normalized);
+};
+
+const getAbilityKeywords = (ability, description = "") => {
+  const abilityText = replaceDiscordEmojisWithNames(
+    `${ability || ""} ${description || ""}`,
+  );
 
   return ABILITY_KEYWORDS.filter((keyword) =>
-    abilityText.includes(simplifyForMatch(keyword)),
+    keywordMatchesText(keyword, abilityText),
   );
 };
 
 const getCardKeywords = (card) => {
   const traitNames = getTraitNames(card.traits);
-  const abilityKeywords = getAbilityKeywords(card.ability);
+  const abilityKeywords = getAbilityKeywords(card.ability, card.description);
 
   const combined = [];
   const seen = new Set();
@@ -215,13 +236,13 @@ const getCardKeywords = (card) => {
 };
 
 const TRIBE_LINE_PATTERN =
-  /([A-Za-z][A-Za-z'\-]*(?:\s*\/\s*[A-Za-z][A-Za-z'\-]*)*)\s+(Plants?|Zombies?)\b/;
+  /\b([A-Za-z][A-Za-z'\-]*)\s+(Plants?|Zombies?|Tricks?|Environments?|Heroes?)\b/gi;
 
 const toTitleCase = (value) =>
   value.toLowerCase().replace(/(^|\s)\w/g, (letter) => letter.toUpperCase());
 
-const extractTribes = (description) => {
-  if (!description) {
+const extractTribes = (description, side = "", cardType = "") => {
+  if (!description && !side && !cardType) {
     return [];
   }
 
@@ -230,42 +251,105 @@ const extractTribes = (description) => {
     .replace(/__/g, "")
     .trim();
 
-  const firstLine = cleaned.split(/\r?\n/)[0].trim();
-  const match = firstLine.match(TRIBE_LINE_PATTERN);
+  const tribes = [];
+  const seen = new Set();
 
-  if (!match) {
-    return [];
+  const addTribe = (value) => {
+    const clean = toTitleCase(String(value).trim());
+
+    if (!clean) {
+      return;
+    }
+
+    const key = normalizeText(clean);
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      tribes.push(clean);
+    }
+  };
+
+  let match;
+
+  while ((match = TRIBE_LINE_PATTERN.exec(cleaned)) !== null) {
+    addTribe(match[1]);
   }
 
-  return [
-    ...new Set(
-      match[1]
-        .split(/[/,]/)
-        .map((tribe) => tribe.trim())
-        .filter(Boolean)
-        .map(toTitleCase),
-    ),
+  const knownTribes = [
+    "Animal",
+    "Fruit",
+    "Bean",
+    "Berry",
+    "Cactus",
+    "Corn",
+    "Dragon",
+    "Flower",
+    "Flytrap",
+    "Leafy",
+    "Mime",
+    "Moss",
+    "Mushroom",
+    "Nut",
+    "Pea",
+    "Pinecone",
+    "Root",
+    "Seed",
+    "Squash",
+    "Tree",
+    "Barrel",
+    "Dancing",
+    "Gargantuar",
+    "Gourmet",
+    "History",
+    "Imp",
+    "Monster",
+    "Mustache",
+    "Party",
+    "Pet",
+    "Pirate",
+    "Professional",
+    "Science",
+    "Sports",
+    "Plant",
+    "Hero",
+    "Trick",
+    "Zombie",
+    "Environment"
   ];
-};
 
-const truncateText = (text, maxLength = 160) => {
-  if (!text) {
-    return "";
+  const words = cleaned.toLowerCase().split(/\s+/);
+
+  knownTribes.forEach((tribe) => {
+    if (words.includes(tribe.toLowerCase())) {
+      addTribe(tribe);
+    }
+  });
+
+  const normalizedSide = normalizeText(side);
+
+  if (normalizedSide === "plants" || normalizedSide === "plant") {
+    addTribe("Plant");
   }
 
-  const clean = String(text)
-    .replace(/\r\n/g, "\n")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n[ \t]+/g, "\n")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-
-  if (clean.length <= maxLength) {
-    return clean;
+  if (normalizedSide === "zombies" || normalizedSide === "zombie") {
+    addTribe("Zombie");
   }
 
-  return `${clean.slice(0, maxLength).trimEnd()}…`;
+  const normalizedType = normalizeText(cardType);
+
+  if (/\btrick\b/.test(normalizedType)) {
+    addTribe("Trick");
+  }
+
+  if (/\benvironment\b/.test(normalizedType)) {
+    addTribe("Environment");
+  }
+
+  if (/\bhero\b/.test(normalizedType)) {
+    addTribe("Hero");
+  }
+
+  return tribes;
 };
 
 const getSetName = (setRarity) => {
@@ -302,6 +386,7 @@ const getRarityName = (setRarity) => {
       "legendary",
       "event",
       "token",
+      "hero",
     ]);
 
     return knownRarities.has(normalized) ? value : "";
@@ -322,6 +407,19 @@ const getCardStats = (stats) => {
   };
 };
 
+const isHeroCard = (card) => {
+  const rarity = normalizeText(getRarityName(card?.set_rarity));
+
+  return rarity === "hero";
+};
+const isSuperpowerCard = (card) => {
+  const text = normalizeText(
+    `${card?.description || ""} ${card?.ability || ""} ${card?.card_type || ""}`,
+  );
+
+  return text.includes("superpower trick") || text.includes("superpower");
+};
+
 function CardInformation() {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
@@ -336,8 +434,8 @@ function CardInformation() {
   const [costFilter, setCostFilter] = useState(null);
   const [attackFilter, setAttackFilter] = useState(null);
   const [healthFilter, setHealthFilter] = useState(null);
-  const [keywordFilter, setKeywordFilter] = useState(null);
-  const [tribeFilter, setTribeFilter] = useState(null);
+  const [keywordFilter, setKeywordFilter] = useState([]);
+  const [tribeFilter, setTribeFilter] = useState([]);
   const [setFilter, setSetFilter] = useState(null);
   const [rarityFilter, setRarityFilter] = useState(null);
 
@@ -358,132 +456,106 @@ function CardInformation() {
         url: STAT_ICON_LINKS.cost,
         alt: "Brainz",
       },
-
       strength: {
         url: STAT_ICON_LINKS.strength,
         alt: "Strength",
       },
-
       health: {
         url: STAT_ICON_LINKS.health,
         alt: "Health",
       },
-
       sun: {
         url: STAT_ICON_LINKS.sun,
         alt: "Sun",
       },
-
       healthstrength: {
         url: STAT_ICON_LINKS.healthstrength,
         alt: "Health and Strength",
       },
-
       deadly: {
         url: TRAIT_ICON_LINKS.deadly,
         alt: "Deadly",
       },
-
       freeze: {
         url: TRAIT_ICON_LINKS.freeze,
         alt: "Freeze",
       },
-
       antihero: {
         url: TRAIT_ICON_LINKS.antihero,
         alt: "Anti-Hero",
       },
-
       strikethrough: {
         url: TRAIT_ICON_LINKS.strikethrough,
         alt: "Strikethrough",
       },
-
       special: {
         url: TRAIT_ICON_LINKS.special,
         alt: "Special",
       },
-
       bullseye: {
         url: TRAIT_ICON_LINKS.bullseye,
         alt: "Bullseye",
       },
-
       frenzy: {
         url: TRAIT_ICON_LINKS.frenzy,
         alt: "Frenzy",
       },
-
       armored: {
         url: TRAIT_ICON_LINKS.armored,
         alt: "Armored",
       },
-
       overshoot: {
         url: TRAIT_ICON_LINKS.overshoot,
         alt: "Overshoot",
       },
-
       untrickable: {
         url: TRAIT_ICON_LINKS.untrickable,
         alt: "Untrickable",
       },
-
       doublestrike: {
         url: TRAIT_ICON_LINKS.doublestrike,
         alt: "Double Strike",
       },
-
       splashdamage: {
         url: TRAIT_ICON_LINKS.splashdamage,
         alt: "Splash Damage",
       },
-
       guardian: {
         url: CLASS_ICON_LINKS.guardian,
         alt: "Guardian",
       },
-
       kabloom: {
         url: CLASS_ICON_LINKS.kabloom,
         alt: "Kabloom",
       },
-
       megagrow: {
         url: CLASS_ICON_LINKS.megagrow,
         alt: "Mega-Grow",
       },
-
       smarty: {
         url: CLASS_ICON_LINKS.smarty,
         alt: "Smarty",
       },
-
       solar: {
         url: CLASS_ICON_LINKS.solar,
         alt: "Solar",
       },
-
       beastly: {
         url: CLASS_ICON_LINKS.beastly,
         alt: "Beastly",
       },
-
       brainy: {
         url: CLASS_ICON_LINKS.brainy,
         alt: "Brainy",
       },
-
       crazy: {
         url: CLASS_ICON_LINKS.crazy,
         alt: "Crazy",
       },
-
       hearty: {
         url: CLASS_ICON_LINKS.hearty,
         alt: "Hearty",
       },
-
       sneaky: {
         url: CLASS_ICON_LINKS.sneaky,
         alt: "Sneaky",
@@ -612,7 +684,6 @@ function CardInformation() {
           {traitNames.map((trait, index) => (
             <span key={`${trait}-${index}`} className="trait-rendered-item">
               <u>{trait}</u>
-
               {index < traitNames.length - 1 && ", "}
             </span>
           ))}
@@ -717,6 +788,7 @@ function CardInformation() {
     matches.forEach((match, index) => {
       const fullMatch = match[0];
       const matchIndex = match.index;
+
       if (matchIndex > lastIndex) {
         const normalText = value.slice(lastIndex, matchIndex);
 
@@ -730,7 +802,6 @@ function CardInformation() {
         );
       }
 
-     
       if (match[1]) {
         const icon = getEmojiIcon(match[1]);
 
@@ -771,7 +842,6 @@ function CardInformation() {
       lastIndex = matchIndex + fullMatch.length;
     });
 
-    // Remaining text
     if (lastIndex < value.length) {
       parts.push(
         <span key="ability-text-end">
@@ -864,6 +934,17 @@ function CardInformation() {
     fetchCards();
   }, []);
 
+  
+  const normalCards = useMemo(() => {
+    return cards.filter((card) => {
+      if (normalizeText(card.side) !== normalizeText(side)) {
+        return false;
+      }
+
+      return !isHeroCard(card);
+    });
+  }, [cards, side]);
+
   const filterData = useMemo(() => {
     const classes = new Set();
     const costs = new Set();
@@ -874,55 +955,76 @@ function CardInformation() {
     const sets = new Set();
     const rarities = new Set();
 
-    cards
-      .filter((card) => normalizeText(card.side) === normalizeText(side))
-      .forEach((card) => {
-        getClassNames(card.card_type).forEach((className) => {
-          classes.add(className);
-        });
+    normalCards.forEach((card) => {
+      getClassNames(card.card_type).forEach((className) => {
+        classes.add(className);
+      });
 
-        const stats = getCardStats(card.stats);
+      const stats = getCardStats(card.stats);
 
-        if (stats.cost !== null) {
-          costs.add(stats.cost);
+      if (stats.cost !== null) {
+        costs.add(stats.cost);
+      }
+
+      if (stats.attack !== null) {
+        attacks.add(stats.attack);
+      }
+
+      if (stats.health !== null) {
+        healths.add(stats.health);
+      }
+
+      getCardKeywords(card).forEach((keyword) => {
+        const key = normalizeText(keyword);
+
+        if (!keywords.has(key)) {
+          keywords.set(key, keyword);
         }
+      });
 
-        if (stats.attack !== null) {
-          attacks.add(stats.attack);
-        }
-
-        if (stats.health !== null) {
-          healths.add(stats.health);
-        }
-
-        getCardKeywords(card).forEach((keyword) => {
-          const key = normalizeText(keyword);
-
-          if (!keywords.has(key)) {
-            keywords.set(key, keyword);
-          }
-        });
-
-        extractTribes(card.description).forEach((tribe) => {
+      extractTribes(card.description, card.side, card.card_type).forEach(
+        (tribe) => {
           const key = normalizeText(tribe);
 
           if (!tribes.has(key)) {
             tribes.set(key, tribe);
           }
-        });
+        },
+      );
 
-        const rarityName = getRarityName(card.set_rarity);
+      const rarityName = getRarityName(card.set_rarity);
+      const setName = getSetName(card.set_rarity);
 
-        const setName = getSetName(card.set_rarity);
+      if (setName) {
+        sets.add(setName);
+      }
 
-        if (setName) {
-          sets.add(setName);
-        }
+      if (rarityName && normalizeText(rarityName) !== "hero") {
+        rarities.add(rarityName);
+      }
+    });
 
-        if (rarityName) {
-          rarities.add(rarityName);
-        }
-      });
+    const sortedTribes = [...tribes.values()].sort((a, b) => {
+      const categoryOrder = {
+        plant: 1000,
+        zombie: 1001,
+        trick: 1002,
+        environment: 1003,
+        hero: 1004,
+      };
+
+      const aOrder = categoryOrder[normalizeText(a)] ?? 0;
+      const bOrder = categoryOrder[normalizeText(b)] ?? 0;
+
+      if (aOrder !== bOrder) {
+        if (aOrder === 0) return -1;
+        if (bOrder === 0) return 1;
+
+        return aOrder - bOrder;
+      }
+
+      return a.localeCompare(b);
+    });
 
     return {
       classes: [...classes].sort((a, b) => a.localeCompare(b)),
@@ -935,13 +1037,13 @@ function CardInformation() {
 
       keywords: [...keywords.values()].sort((a, b) => a.localeCompare(b)),
 
-      tribes: [...tribes.values()].sort((a, b) => a.localeCompare(b)),
+      tribes: sortedTribes,
 
       sets: [...sets].sort((a, b) => a.localeCompare(b)),
 
       rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
     };
-  }, [cards, side]);
+  }, [normalCards]);
 
   const classOptions = filterData.classes.map((value) => ({
     value,
@@ -1012,6 +1114,25 @@ function CardInformation() {
       cursor: "pointer",
     }),
 
+    multiValue: (base) => ({
+      ...base,
+      backgroundColor: "#333",
+    }),
+
+    multiValueLabel: (base) => ({
+      ...base,
+      color: "white",
+    }),
+
+    multiValueRemove: (base) => ({
+      ...base,
+      color: "#aaa",
+      ":hover": {
+        backgroundColor: "#555",
+        color: "white",
+      },
+    }),
+
     singleValue: (base) => ({
       ...base,
       color: "white",
@@ -1031,18 +1152,22 @@ function CardInformation() {
   const filteredCards = useMemo(() => {
     const searchValue = normalizeText(search);
 
-    const result = cards.filter((card) => {
-      if (normalizeText(card.side) !== normalizeText(side)) {
-        return false;
-      }
+    const selectedKeywords = Array.isArray(keywordFilter) ? keywordFilter : [];
 
+    const selectedTribes = Array.isArray(tribeFilter) ? tribeFilter : [];
+
+    const result = normalCards.filter((card) => {
       const stats = getCardStats(card.stats);
 
       const cardClasses = getClassNames(card.card_type);
 
       const cardKeywords = getCardKeywords(card);
 
-      const cardTribes = extractTribes(card.description);
+      const cardTribes = extractTribes(
+        card.description,
+        card.side,
+        card.card_type,
+      );
 
       const searchableText = [
         card.card_name,
@@ -1050,6 +1175,7 @@ function CardInformation() {
         card.card_type,
         card.description,
         card.ability,
+        card.traits,
         ...cardClasses,
         ...cardKeywords,
         ...cardTribes,
@@ -1079,16 +1205,21 @@ function CardInformation() {
         !healthFilter || stats.health === Number(healthFilter.value);
 
       const keywordMatch =
-        !keywordFilter ||
-        cardKeywords.some(
-          (keyword) =>
-            normalizeText(keyword) === normalizeText(keywordFilter.value),
+        selectedKeywords.length === 0 ||
+        selectedKeywords.some((selectedKeyword) =>
+          cardKeywords.some(
+            (keyword) =>
+              normalizeText(keyword) === normalizeText(selectedKeyword.value),
+          ),
         );
 
       const tribeMatch =
-        !tribeFilter ||
-        cardTribes.some(
-          (tribe) => normalizeText(tribe) === normalizeText(tribeFilter.value),
+        selectedTribes.length === 0 ||
+        selectedTribes.some((selectedTribe) =>
+          cardTribes.some(
+            (tribe) =>
+              normalizeText(tribe) === normalizeText(selectedTribe.value),
+          ),
         );
 
       const setMatch =
@@ -1122,11 +1253,9 @@ function CardInformation() {
       }
 
       const aStats = getCardStats(a.stats);
-
       const bStats = getCardStats(b.stats);
 
       const aCost = aStats.cost ?? Infinity;
-
       const bCost = bStats.cost ?? Infinity;
 
       if (aCost !== bCost) {
@@ -1142,8 +1271,7 @@ function CardInformation() {
       );
     });
   }, [
-    cards,
-    side,
+    normalCards,
     search,
     classFilter,
     costFilter,
@@ -1161,8 +1289,8 @@ function CardInformation() {
     setCostFilter(null);
     setAttackFilter(null);
     setHealthFilter(null);
-    setKeywordFilter(null);
-    setTribeFilter(null);
+    setKeywordFilter([]);
+    setTribeFilter([]);
     setSetFilter(null);
     setRarityFilter(null);
   };
@@ -1184,7 +1312,8 @@ function CardInformation() {
             <Link to="/">Home</Link>
             <Link to="/decklists">Decklists</Link>
             <Link to="/cardinformation">Card Information</Link>
-            <Link to="/keeporscrap"> Keep or Scrap</Link>
+            <Link to="/heroinformation">Hero Information</Link>
+            <Link to="/keeporscrap">Keep or Scrap</Link>
           </div>
         </nav>
 
@@ -1204,7 +1333,8 @@ function CardInformation() {
           <Link to="/">Home</Link>
           <Link to="/decklists">Decklists</Link>
           <Link to="/cardinformation">Card Information</Link>
-          <Link to="/keeporscrap"> Keep or Scrap</Link>
+          <Link to="/heroinformation">Hero information</Link>
+          <Link to="/keeporscrap">Keep or Scrap</Link>
         </div>
       </nav>
 
@@ -1295,7 +1425,8 @@ function CardInformation() {
               options={keywordOptions}
               value={keywordFilter}
               onChange={setKeywordFilter}
-              isClearable
+              isMulti
+              closeMenuOnSelect={false}
             />
           </div>
 
@@ -1307,7 +1438,8 @@ function CardInformation() {
               options={tribeOptions}
               value={tribeFilter}
               onChange={setTribeFilter}
-              isClearable
+              isMulti
+              closeMenuOnSelect={false}
             />
           </div>
 
@@ -1413,18 +1545,17 @@ function CardInformation() {
                   {hasValue(card.ability) && (
                     <p className="card-description-line">
                       <span className="card-field-label">Ability:</span>{" "}
-                      <span style={{ whiteSpace: "pre-line" }}>
+                      <span
+                        style={{
+                          whiteSpace: "pre-line",
+                        }}
+                      >
                         {renderAbilityText(card.ability)}
                       </span>
                     </p>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedCard(card);
-                    }}
-                  >
+                  <button type="button" onClick={() => setSelectedCard(card)}>
                     View Details
                   </button>
                 </div>
@@ -1433,6 +1564,7 @@ function CardInformation() {
           </div>
         )
       )}
+
       {selectedCard && (
         <CardModal card={selectedCard} close={() => setSelectedCard(null)} />
       )}

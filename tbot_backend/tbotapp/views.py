@@ -14,12 +14,13 @@ from .serializers import (
     KeepOrScrapSerializer,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
 def include_error_detail():
-    return settings.DEBUG or str(os.getenv("API_ERROR_DETAILS", "")).strip().lower() in {
+    return settings.DEBUG or str(
+        os.getenv("API_ERROR_DETAILS", "")
+    ).strip().lower() in {
         "1",
         "true",
         "yes",
@@ -34,19 +35,26 @@ def decklists(request):
 
         serializer = DeckSerializer(
             decks,
-            many=True
+            many=True,
         )
 
         return Response(serializer.data)
+
     except DatabaseError as exc:
         logger.exception("Decklist query failed")
+
         payload = {
             "error": "Database query failed for decklists.",
             "error_type": exc.__class__.__name__,
         }
+
         if include_error_detail():
             payload["detail"] = str(exc)
-        return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @api_view(["GET"])
@@ -56,19 +64,55 @@ def card_information(request):
 
         serializer = ZombieCardSerializer(
             cards,
-            many=True
+            many=True,
         )
 
         return Response(serializer.data)
+
     except DatabaseError as exc:
-        logger.exception("Card query failed")
+        logger.exception("Card information query failed")
+
         payload = {
             "error": "Database query failed for card information.",
             "error_type": exc.__class__.__name__,
         }
+
         if include_error_detail():
             payload["detail"] = str(exc)
-        return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["GET"])
+def heroinformation(request):
+    try:
+        cards = ZombieCards.objects.all()
+
+        serializer = ZombieCardSerializer(
+            cards,
+            many=True,
+        )
+
+        return Response(serializer.data)
+
+    except DatabaseError as exc:
+        logger.exception("Hero information query failed")
+
+        payload = {
+            "error": "Database query failed for hero information.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @api_view(["GET"])
@@ -78,16 +122,23 @@ def keep_or_scrap(request):
 
         serializer = KeepOrScrapSerializer(
             rows,
-            many=True
+            many=True,
         )
 
         return Response(serializer.data)
+
     except DatabaseError as exc:
         logger.exception("Keep or Scrap query failed")
+
         payload = {
             "error": "Database query failed for keep or scrap.",
             "error_type": exc.__class__.__name__,
         }
+
         if include_error_detail():
             payload["detail"] = str(exc)
-        return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

@@ -1,0 +1,750 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import CardModal from "../components/cardmodal";
+import "../css/cardinformation.css";
+
+const getApiBaseUrl = () => {
+  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
+
+  if (envBaseUrl) {
+    return envBaseUrl.replace(/\/+$/, "");
+  }
+
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:8000";
+    }
+  }
+
+  return "";
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+const STAT_ICON_LINKS = {
+  cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
+  strength: "https://i.ibb.co/GQt785K6/strength.webp",
+  health: "https://i.ibb.co/bMj86Wvg/health.webp",
+  sun: "https://i.ibb.co/3mwp3d6s/sun.webp",
+  healthstrength: "https://i.ibb.co/9344x8fP/healthstrength.webp",
+};
+
+const TRAIT_ICON_LINKS = {
+  antihero: "https://i.ibb.co/zHmWTFLQ/anti-hero.webp",
+  strikethrough: "https://i.ibb.co/99KG7vjj/strikethrough.webp",
+  deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
+  special: "https://i.ibb.co/Sw0yS0Mg/special.webp",
+  freeze: "https://i.ibb.co/hFPRcrp6/freeze.webp",
+  bullseye: "https://i.ibb.co/tTp9zzdh/Bullseye.webp",
+  frenzy: "https://i.ibb.co/0RC4sW0b/frenzy.webp",
+  armored: "https://i.ibb.co/SXTYdVry/armored.webp",
+  overshoot: "https://i.ibb.co/prbYt2DX/overshoot.webp",
+  untrickable: "https://i.ibb.co/235QDZsg/untrickable.webp",
+  doublestrike: "https://i.ibb.co/9HcptVCN/doublestrike.webp",
+  splashdamage: "",
+};
+
+const CLASS_ICON_LINKS = {
+  guardian: "https://i.ibb.co/q339dYKK/guardian.webp",
+  kabloom: "https://i.ibb.co/4gWkPT7f/kabloom.webp",
+  megagrow: "https://i.ibb.co/svc6sx30/megagrow.webp",
+  smarty: "https://i.ibb.co/V0bL3RYk/smarty.webp",
+  solar: "https://i.ibb.co/YFMMD4DZ/sun.webp",
+  beastly: "https://i.ibb.co/xS6b10P5/beastly.webp",
+  brainy: "https://i.ibb.co/d40zFh8r/Brainy.webp",
+  crazy: "https://i.ibb.co/HTvzSsXX/crazy.webp",
+  hearty: "https://i.ibb.co/ynKbzV8v/hearty.webp",
+  sneaky: "https://i.ibb.co/nqFdR6HJ/Pv-ZH-Sneaky-Icon.png",
+};
+
+const normalizeText = (value) =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+const removeDiscordEmojis = (value) =>
+  String(value ?? "").replace(/<a?:[^:>]+:\d+>/gi, "");
+
+const getRarityName = (setRarity) => {
+  if (!setRarity) {
+    return "";
+  }
+
+  const value = String(setRarity).trim();
+  const separatorIndex = value.lastIndexOf(" - ");
+
+  if (separatorIndex === -1) {
+    return value;
+  }
+
+  return value.slice(separatorIndex + 3).trim();
+};
+
+const isHeroCard = (card) => {
+  const rarity = normalizeText(getRarityName(card?.set_rarity));
+
+  return rarity === "hero";
+};
+
+function HeroInformation() {
+  const [cards, setCards] = useState([]);
+  const [side, setSide] = useState("Plants");
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const getEmojiIcon = (emoji) => {
+    const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
+
+    if (!match) {
+      return null;
+    }
+
+    const emojiName = match[1].toLowerCase().replace(/[-_\s]/g, "");
+
+    const iconMap = {
+      brainz: {
+        url: STAT_ICON_LINKS.cost,
+        alt: "Brainz",
+      },
+      strength: {
+        url: STAT_ICON_LINKS.strength,
+        alt: "Strength",
+      },
+      health: {
+        url: STAT_ICON_LINKS.health,
+        alt: "Health",
+      },
+      sun: {
+        url: STAT_ICON_LINKS.sun,
+        alt: "Sun",
+      },
+      healthstrength: {
+        url: STAT_ICON_LINKS.healthstrength,
+        alt: "Health and Strength",
+      },
+
+      deadly: {
+        url: TRAIT_ICON_LINKS.deadly,
+        alt: "Deadly",
+      },
+      freeze: {
+        url: TRAIT_ICON_LINKS.freeze,
+        alt: "Freeze",
+      },
+      antihero: {
+        url: TRAIT_ICON_LINKS.antihero,
+        alt: "Anti-Hero",
+      },
+      strikethrough: {
+        url: TRAIT_ICON_LINKS.strikethrough,
+        alt: "Strikethrough",
+      },
+      special: {
+        url: TRAIT_ICON_LINKS.special,
+        alt: "Special",
+      },
+      bullseye: {
+        url: TRAIT_ICON_LINKS.bullseye,
+        alt: "Bullseye",
+      },
+      frenzy: {
+        url: TRAIT_ICON_LINKS.frenzy,
+        alt: "Frenzy",
+      },
+      armored: {
+        url: TRAIT_ICON_LINKS.armored,
+        alt: "Armored",
+      },
+      overshoot: {
+        url: TRAIT_ICON_LINKS.overshoot,
+        alt: "Overshoot",
+      },
+      untrickable: {
+        url: TRAIT_ICON_LINKS.untrickable,
+        alt: "Untrickable",
+      },
+      doublestrike: {
+        url: TRAIT_ICON_LINKS.doublestrike,
+        alt: "Double Strike",
+      },
+      splashdamage: {
+        url: TRAIT_ICON_LINKS.splashdamage,
+        alt: "Splash Damage",
+      },
+
+      guardian: {
+        url: CLASS_ICON_LINKS.guardian,
+        alt: "Guardian",
+      },
+      kabloom: {
+        url: CLASS_ICON_LINKS.kabloom,
+        alt: "Kabloom",
+      },
+      megagrow: {
+        url: CLASS_ICON_LINKS.megagrow,
+        alt: "Mega-Grow",
+      },
+      smarty: {
+        url: CLASS_ICON_LINKS.smarty,
+        alt: "Smarty",
+      },
+      solar: {
+        url: CLASS_ICON_LINKS.solar,
+        alt: "Solar",
+      },
+      beastly: {
+        url: CLASS_ICON_LINKS.beastly,
+        alt: "Beastly",
+      },
+      brainy: {
+        url: CLASS_ICON_LINKS.brainy,
+        alt: "Brainy",
+      },
+      crazy: {
+        url: CLASS_ICON_LINKS.crazy,
+        alt: "Crazy",
+      },
+      hearty: {
+        url: CLASS_ICON_LINKS.hearty,
+        alt: "Hearty",
+      },
+      sneaky: {
+        url: CLASS_ICON_LINKS.sneaky,
+        alt: "Sneaky",
+      },
+    };
+
+    return iconMap[emojiName] || null;
+  };
+
+  const renderTitleText = (title) => {
+    if (!title) {
+      return null;
+    }
+
+    const text = String(title);
+
+    const pattern =
+      /(<:[^:>]+:\d+>)|(\*\*__[\s\S]*?__\*\*)|(__\*\*[\s\S]*?\*\*__)|(\*\*[\s\S]*?\*\*)|(__[\s\S]*?__)/gi;
+
+    const matches = [...text.matchAll(pattern)];
+
+    if (matches.length === 0) {
+      return <span>{text}</span>;
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        parts.push(
+          <span key={`title-text-${index}`}>
+            {text.slice(lastIndex, matchIndex)}
+          </span>,
+        );
+      }
+
+      if (match[1]) {
+        const icon = getEmojiIcon(match[1]);
+
+        if (icon?.url) {
+          parts.push(
+            <img
+              key={`title-icon-${index}`}
+              src={icon.url}
+              alt={icon.alt}
+              className="card-title-class-icon"
+            />,
+          );
+        } else {
+          parts.push(
+            <span key={`title-emoji-${index}`}>
+              {match[1].replace(/^<:([^:>]+):\d+>$/, "$1")}
+            </span>,
+          );
+        }
+      } else if (match[2]) {
+        parts.push(
+          <strong key={`title-bold-underline-${index}`}>
+            <u>{match[2].slice(4, -4)}</u>
+          </strong>,
+        );
+      } else if (match[3]) {
+        parts.push(
+          <strong key={`title-underline-bold-${index}`}>
+            <u>{match[3].slice(4, -4)}</u>
+          </strong>,
+        );
+      } else if (match[4]) {
+        parts.push(
+          <strong key={`title-bold-${index}`}>{match[4].slice(2, -2)}</strong>,
+        );
+      } else if (match[5]) {
+        parts.push(
+          <u key={`title-underline-${index}`}>{match[5].slice(2, -2)}</u>,
+        );
+      }
+
+      lastIndex = matchIndex + fullMatch.length;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
+    }
+
+    return <span className="card-title-content">{parts}</span>;
+  };
+
+  const renderStatsText = (stats) => {
+    if (!stats) {
+      return null;
+    }
+
+    const text = String(stats);
+    const pattern = /(<:[^:>]+:\d+>)/gi;
+    const matches = [...text.matchAll(pattern)];
+
+    if (matches.length === 0) {
+      return <span>{text}</span>;
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullEmoji = match[1];
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        parts.push(
+          <span key={`stats-text-${index}`}>
+            {text.slice(lastIndex, matchIndex)}
+          </span>,
+        );
+      }
+
+      const icon = getEmojiIcon(fullEmoji);
+
+      if (icon?.url) {
+        parts.push(
+          <img
+            key={`stats-icon-${index}`}
+            src={icon.url}
+            alt={icon.alt}
+            className="card-stat-icon"
+          />,
+        );
+      } else {
+        parts.push(
+          <span key={`stats-emoji-${index}`}>
+            {fullEmoji.replace(/^<:([^:>]+):\d+>$/, "$1")}
+          </span>,
+        );
+      }
+
+      lastIndex = matchIndex + fullEmoji.length;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(<span key="stats-end">{text.slice(lastIndex)}</span>);
+    }
+
+    return parts;
+  };
+
+  const renderTraitText = (text) => {
+    if (!text) {
+      return null;
+    }
+
+    const rawText = String(text);
+
+    const pattern =
+      /(<:[^:>]+:\d+>)|(\*\*__[\s\S]*?__\*\*)|(__\*\*[\s\S]*?\*\*__)|(\*\*[\s\S]*?\*\*)|(__[\s\S]*?__)/gi;
+
+    const matches = [...rawText.matchAll(pattern)];
+
+    if (matches.length === 0) {
+      return (
+        <span className="trait-rendered">
+          {rawText
+            .replace(/\*\*/g, "")
+            .replace(/__/g, "")
+            .replace(/<:([^:>]+):\d+>/gi, (_, emojiName) => emojiName)}
+        </span>
+      );
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        const normalText = rawText.slice(lastIndex, matchIndex);
+
+        parts.push(
+          <span key={`trait-normal-${index}`}>
+            {normalText
+              .replace(/\*\*/g, "")
+              .replace(/__/g, "")
+              .replace(/<:([^:>]+):\d+>/gi, (_, emojiName) => emojiName)}
+          </span>,
+        );
+      }
+
+      if (match[1]) {
+        const icon = getEmojiIcon(match[1]);
+
+        if (icon?.url) {
+          parts.push(
+            <img
+              key={`trait-icon-${index}`}
+              src={icon.url}
+              alt={icon.alt}
+              className="card-trait-icon"
+            />,
+          );
+        } else {
+          parts.push(
+            <span key={`trait-emoji-${index}`}>
+              {match[1].replace(/^<:([^:>]+):\d+>$/, "$1")}
+            </span>,
+          );
+        }
+      } else if (match[2]) {
+        parts.push(
+          <strong key={`trait-bold-underline-${index}`}>
+            <u>{match[2].slice(4, -4)}</u>
+          </strong>,
+        );
+      } else if (match[3]) {
+        parts.push(
+          <strong key={`trait-underline-bold-${index}`}>
+            <u>{match[3].slice(4, -4)}</u>
+          </strong>,
+        );
+      } else if (match[4]) {
+        parts.push(
+          <strong key={`trait-bold-${index}`}>{match[4].slice(2, -2)}</strong>,
+        );
+      } else if (match[5]) {
+        parts.push(
+          <u key={`trait-underline-${index}`}>{match[5].slice(2, -2)}</u>,
+        );
+      }
+
+      lastIndex = matchIndex + fullMatch.length;
+    });
+
+    if (lastIndex < rawText.length) {
+      parts.push(
+        <span key="trait-end">
+          {rawText
+            .slice(lastIndex)
+            .replace(/\*\*/g, "")
+            .replace(/__/g, "")
+            .replace(/<:([^:>]+):\d+>/gi, (_, emojiName) => emojiName)}
+        </span>,
+      );
+    }
+
+    return <span className="trait-rendered">{parts}</span>;
+  };
+
+  const renderAbilityText = (text, maxLength = 177) => {
+    if (!text) {
+      return null;
+    }
+
+    let value = String(text);
+
+    if (value.length > maxLength) {
+      let cut = value.slice(0, maxLength);
+
+      const lastEmojiStart = cut.lastIndexOf("<:");
+      const lastEmojiEnd = cut.lastIndexOf(">");
+
+      if (lastEmojiStart > lastEmojiEnd) {
+        cut = cut.slice(0, lastEmojiStart);
+      }
+
+      value = `${cut.trimEnd()}…`;
+    }
+
+    const pattern =
+      /(<:[^:>]+:\d+>)|(\*\*__[\s\S]*?__\*\*)|(__\*\*[\s\S]*?\*\*__)|(\*\*[\s\S]*?\*\*)|(__[\s\S]*?__)/gi;
+
+    const matches = [...value.matchAll(pattern)];
+
+    if (matches.length === 0) {
+      return (
+        <span>
+          {value.replace(/<:([^:>]+):\d+>/gi, (_, emojiName) => emojiName)}
+        </span>
+      );
+    }
+
+    const parts = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const fullMatch = match[0];
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        const normalText = value.slice(lastIndex, matchIndex);
+
+        parts.push(
+          <span key={`ability-text-${index}`}>
+            {normalText.replace(
+              /<:([^:>]+):\d+>/gi,
+              (_, emojiName) => emojiName,
+            )}
+          </span>,
+        );
+      }
+
+      if (match[1]) {
+        const icon = getEmojiIcon(match[1]);
+
+        if (icon?.url) {
+          parts.push(
+            <img
+              key={`ability-icon-${index}`}
+              src={icon.url}
+              alt={icon.alt}
+              className="card-ability-icon"
+            />,
+          );
+        } else {
+          parts.push(
+            <span key={`ability-emoji-${index}`}>
+              {match[1].replace(/^<:([^:>]+):\d+>$/, "$1")}
+            </span>,
+          );
+        }
+      } else if (match[2]) {
+        parts.push(
+          <strong key={`bold-underline-${index}`}>
+            <u>{match[2].slice(4, -4)}</u>
+          </strong>,
+        );
+      } else if (match[3]) {
+        parts.push(
+          <strong key={`underline-bold-${index}`}>
+            <u>{match[3].slice(4, -4)}</u>
+          </strong>,
+        );
+      } else if (match[4]) {
+        parts.push(
+          <strong key={`bold-${index}`}>{match[4].slice(2, -2)}</strong>,
+        );
+      } else if (match[5]) {
+        parts.push(<u key={`underline-${index}`}>{match[5].slice(2, -2)}</u>);
+      }
+
+      lastIndex = matchIndex + fullMatch.length;
+    });
+
+    if (lastIndex < value.length) {
+      parts.push(
+        <span key="ability-text-end">
+          {value
+            .slice(lastIndex)
+            .replace(/<:([^:>]+):\d+>/gi, (_, emojiName) => emojiName)}
+        </span>,
+      );
+    }
+
+    return <span>{parts}</span>;
+  };
+
+  useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/cardinformation/`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        setCards(Array.isArray(data) ? data : []);
+        setError("");
+      } catch (err) {
+        console.error(err);
+        setError(`Unable to load heroes. ${err.message || ""}`.trim());
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCards();
+  }, []);
+
+  const heroes = useMemo(() => {
+    return cards.filter(
+      (card) =>
+        normalizeText(card.side) === normalizeText(side) && isHeroCard(card),
+    );
+  }, [cards, side]);
+
+  const renderCard = (card) => (
+    <div className="card-item" key={card.cardid}>
+      <div className="card-item-media">
+        <img src={card.thumbnail} alt={card.card_name || "Hero"} />
+      </div>
+
+      <div className="card-item-info">
+        <h2 className="card-item-title">
+          {card.title
+            ? renderTitleText(card.title)
+            : card.card_name || "Unknown Hero"}
+        </h2>
+
+        {card.card_type && (
+          <p>
+            <span>Class:</span> {renderTitleText(card.card_type)}
+          </p>
+        )}
+
+        {card.traits && (
+          <p className="card-traits-line">
+            <span className="card-field-label">Traits:</span>{" "}
+            {renderTraitText(card.traits)}
+          </p>
+        )}
+
+        {card.stats && (
+          <p className="card-stats-line">
+            <span className="card-field-label">Stats:</span>{" "}
+            {renderStatsText(card.stats)}
+          </p>
+        )}
+
+        {card.set_rarity && (
+          <p>
+            <span>Rarity:</span> {getRarityName(card.set_rarity)}
+          </p>
+        )}
+
+        {card.ability && (
+          <p className="card-description-line">
+            <span className="card-field-label">Ability:</span>{" "}
+            <span style={{ whiteSpace: "pre-line" }}>
+              {renderAbilityText(card.ability)}
+            </span>
+          </p>
+        )}
+
+        {card.description && (
+          <p className="card-description-line">
+            {renderAbilityText(card.description)}
+          </p>
+        )}
+
+        <button type="button" onClick={() => setSelectedCard(card)}>
+          View Details
+        </button>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="card-information-page">
+        <nav className="navbar">
+          <div className="logo">
+            <Link to="/">Tbot</Link>
+          </div>
+
+          <div className="nav-links">
+            <Link to="/">Home</Link>
+            <Link to="/decklists">Decklists</Link>
+            <Link to="/cardinformation">Card Information</Link>
+            <Link to="/heroinformation">Hero Information</Link>
+            <Link to="/keeporscrap">Keep or Scrap</Link>
+          </div>
+        </nav>
+
+        <p>Loading Heroes...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card-information-page">
+      <nav className="navbar">
+        <div className="logo">
+          <Link to="/">Tbot</Link>
+        </div>
+
+        <div className="nav-links">
+          <Link to="/">Home</Link>
+          <Link to="/decklists">Decklists</Link>
+          <Link to="/cardinformation">Card Information</Link>
+          <Link to="/heroinformation">Hero Information</Link>
+          <Link to="/keeporscrap">Keep or Scrap</Link>
+        </div>
+      </nav>
+
+      <h1>Hero Information</h1>
+
+      <div className="card-side-tabs">
+        <button
+          type="button"
+          className={side === "Plants" ? "active" : ""}
+          onClick={() => setSide("Plants")}
+        >
+          Plants
+        </button>
+
+        <button
+          type="button"
+          className={side === "Zombie" ? "active" : ""}
+          onClick={() => setSide("Zombie")}
+        >
+          Zombies
+        </button>
+      </div>
+
+      {error && <p className="error-message">{error}</p>}
+
+      {!error && (
+        <>
+          <h2>Heroes</h2>
+
+          <p className="card-results-count">
+            Showing {heroes.length} {side} heroes
+          </p>
+
+          {heroes.length === 0 ? (
+            <p className="no-card-results">No {side} heroes found.</p>
+          ) : (
+            <div className="card-grid">{heroes.map(renderCard)}</div>
+          )}
+        </>
+      )}
+
+      {selectedCard && (
+        <CardModal card={selectedCard} close={() => setSelectedCard(null)} />
+      )}
+    </div>
+  );
+}
+
+export default HeroInformation;
