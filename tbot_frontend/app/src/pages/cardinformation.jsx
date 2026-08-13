@@ -1239,7 +1239,7 @@ function CardInformation() {
 
       const keywordMatch =
         selectedKeywords.length === 0 ||
-        selectedKeywords.some((selectedKeyword) =>
+        selectedKeywords.every((selectedKeyword) =>
           cardKeywords.some(
             (keyword) =>
               normalizeText(keyword) === normalizeText(selectedKeyword.value),
