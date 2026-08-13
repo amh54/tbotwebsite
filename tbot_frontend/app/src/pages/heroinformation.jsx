@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import CardModal from "../components/cardmodal";
 import "../css/cardinformation.css";
+import "../css/navbar.css";
 
 const getApiBaseUrl = () => {
   const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();

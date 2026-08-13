@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Select from "react-select";
 import CardModal from "../components/cardmodal";
 import "../css/cardinformation.css";
+import "../css/navbar.css";
 
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {

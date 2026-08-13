@@ -17,18 +17,6 @@ body {
   padding: 20px 20px 56px;
 }
 
-.navbar {
-  width: 100%;
-  background-color: #15181b;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  border-bottom: 1px solid #23272b;
-}
 
 .logo a {
   color: #8fe38b;
@@ -132,11 +120,6 @@ a:hover {
 }
 
 @media (max-width: 900px) {
-  .navbar {
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px 16px;
-  }
 
   .nav-links {
     justify-content: center;

@@ -1,4 +1,5 @@
 import "../css/App.css";
+import "../css/navbar.css";
 import { Link, Route, Routes } from "react-router-dom";
 import DecklistsPage from "./decklists.jsx";
 import CardInformation from "./cardinformation.jsx";
@@ -15,18 +16,18 @@ function HomePage() {
         />
       </head>
       <nav className="navbar">
-        <div className="logo">
-          <Link to="/">Tbot</Link>
-        </div>
+  <div className="logo">
+    <Link to="/">Tbot</Link>
+  </div>
 
-        <div className="nav-links">
-          <Link to="/">Home</Link>
-          <Link to="/decklists">Decklists</Link>
-          <Link to="/cardinformation">Card Information</Link>
-          <Link to="/heroinformation">Hero Information</Link>
-          <Link to="/keeporscrap">Keep or Scrap</Link>
-        </div>
-      </nav>
+  <div className="nav-links">
+    <Link to="/">Home</Link>
+    <Link to="/decklists">Decklists</Link>
+    <Link to="/cardinformation">Card Information</Link>
+    <Link to="/heroinformation">Hero Information</Link>
+    <Link to="/keeporscrap">Keep or Scrap</Link>
+  </div>
+</nav>
 
       <section className="hero">
         <p className="eyebrow">Plants vs. Zombies Heroes</p>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Select from "react-select";
 import DeckCard from "../components/deckcomponent";
 import "../css/decklists.css";
+import "../css/navbar.css";
 
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
@@ -430,21 +431,22 @@ function DecklistsPage() {
   }
 
   return (
-    <div className="deck-page">
-      <nav className="navbar">
-        <div className="logo">
-          <Link to="/">Tbot</Link>
-        </div>
+      <div className="deck-page">
+  <nav className="navbar">
+    <div className="logo">
+      <Link to="/">Tbot</Link>
+    </div>
 
-        <div className="nav-links">
-          <Link to="/">Home</Link>
-          <Link to="/decklists">Decklists</Link>
-          <Link to="/cardinformation">Card Information</Link>
-          <Link to="/heroinformation">Hero Information</Link>
-          <Link to="/keeporscrap">Keep or Scrap</Link>
-        </div>
-      </nav>
+    <div className="nav-links">
+      <Link to="/">Home</Link>
+      <Link to="/decklists">Decklists</Link>
+      <Link to="/cardinformation">Card Information</Link>
+      <Link to="/heroinformation">Hero Information</Link>
+      <Link to="/keeporscrap">Keep or Scrap</Link>
+    </div>
+  </nav>
 
+  <main className="deck-content">
       <h1>Decklists</h1>
 
       <div className="deck-browser">
@@ -551,7 +553,7 @@ function DecklistsPage() {
         <p className="results-count">Showing {filteredDecks.length} decks</p>
       )}
 
-      {!error && filteredDecks.length === 0 ? (
+            {!error && filteredDecks.length === 0 ? (
         <p className="no-results">No decklists found.</p>
       ) : (
         !error && (
@@ -565,8 +567,9 @@ function DecklistsPage() {
           </div>
         )
       )}
-    </div>
-  );
+    </main>
+  </div>
+);
 }
 
 export default DecklistsPage;
