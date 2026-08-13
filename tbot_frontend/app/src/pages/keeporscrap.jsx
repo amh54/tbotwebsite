@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import Select from "react-select";
 import "../css/keeporscrap.css";
 
 const getApiBaseUrl = () => {
@@ -35,8 +34,7 @@ const API_BASE_URL = getApiBaseUrl();
 
 const SIDES = [
   { key: "Intro", label: "Intro" },
-  { key: "Plants", label: "Plants" },
-  { key: "Zombies", label: "Zombies" },
+  { key: "All", label: "Keep or Scrap" },
 ];
 
 const normalizeText = (value) =>
@@ -82,7 +80,6 @@ const renderBoldText = (text) => {
 
     if (matchIndex > lastIndex) {
       const textBefore = rawText.slice(lastIndex, matchIndex);
-
       const lines = textBefore.split(/\r?\n/);
 
       lines.forEach((line, lineIndex) => {
@@ -118,7 +115,7 @@ const renderBoldText = (text) => {
 function KeepOrScrap() {
   const [entries, setEntries] = useState([]);
   const [side, setSide] = useState("Intro");
-  const [classFilter, setClassFilter] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -176,7 +173,6 @@ function KeepOrScrap() {
         const data = JSON.parse(responseText);
 
         setEntries(Array.isArray(data) ? data : []);
-
         setError("");
       } catch (fetchError) {
         if (fetchError.name !== "AbortError") {
@@ -198,35 +194,18 @@ function KeepOrScrap() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    document.body.style.overflow = selectedGroup ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedGroup]);
+
   const changeSide = (newSide) => {
     setSide(newSide);
-    setClassFilter(null);
+    setSelectedGroup(null);
   };
-
-  const classOptions = useMemo(() => {
-    const classes = new Map();
-
-    entries
-      .filter((entry) => normalizeText(entry.side) === normalizeText(side))
-      .forEach((entry) => {
-        if (!hasValue(entry.card_class)) {
-          return;
-        }
-
-        const key = normalizeText(entry.card_class);
-
-        if (!classes.has(key)) {
-          classes.set(key, entry.card_class);
-        }
-      });
-
-    return [...classes.values()]
-      .sort((a, b) => a.localeCompare(b))
-      .map((value) => ({
-        value,
-        label: value,
-      }));
-  }, [entries, side]);
 
   const introEntries = useMemo(() => {
     return entries
@@ -236,19 +215,13 @@ function KeepOrScrap() {
 
   const groupedClasses = useMemo(() => {
     const filtered = entries.filter(
-      (entry) =>
-        normalizeText(entry.side) === normalizeText(side) &&
-        hasValue(entry.card_class),
+      (entry) => !isIntroEntry(entry) && hasValue(entry.card_class),
     );
 
     const groups = new Map();
 
     filtered.forEach((entry) => {
       const key = normalizeText(entry.card_class);
-
-      if (classFilter && key !== normalizeText(classFilter.value)) {
-        return;
-      }
 
       if (!groups.has(key)) {
         groups.set(key, {
@@ -268,53 +241,7 @@ function KeepOrScrap() {
         ),
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [entries, side, classFilter]);
-
-  const selectStyles = {
-    control: (base, state) => ({
-      ...base,
-      backgroundColor: "#202020",
-      borderColor: state.isFocused ? "#8fe38b" : "#444",
-      minHeight: "45px",
-      boxShadow: "none",
-
-      "&:hover": {
-        borderColor: "#8fe38b",
-      },
-    }),
-
-    menuPortal: (base) => ({
-      ...base,
-      zIndex: 9999,
-    }),
-
-    menu: (base) => ({
-      ...base,
-      backgroundColor: "#202020",
-    }),
-
-    option: (base, state) => ({
-      ...base,
-      backgroundColor: state.isFocused ? "#333" : "#202020",
-      color: "white",
-      cursor: "pointer",
-    }),
-
-    singleValue: (base) => ({
-      ...base,
-      color: "white",
-    }),
-
-    placeholder: (base) => ({
-      ...base,
-      color: "#888",
-    }),
-
-    input: (base) => ({
-      ...base,
-      color: "white",
-    }),
-  };
+  }, [entries]);
 
   const Navbar = () => (
     <nav className="navbar">
@@ -365,22 +292,6 @@ function KeepOrScrap() {
               </button>
             ))}
           </div>
-
-          {side !== "Intro" && (
-            <div className="kos-filters">
-              <div className="kos-select-wrapper">
-                <Select
-                  styles={selectStyles}
-                  menuPortalTarget={document.body}
-                  placeholder="All classes"
-                  options={classOptions}
-                  value={classFilter}
-                  onChange={setClassFilter}
-                  isClearable
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         {error && <p className="error-message">{error}</p>}
@@ -415,7 +326,7 @@ function KeepOrScrap() {
           </div>
         )}
 
-        {!error && side !== "Intro" && (
+        {!error && side === "All" && (
           <div className="kos-class-grid">
             {groupedClasses.length === 0 ? (
               <p className="no-kos-results">No Keep or Scrap entries found.</p>
@@ -429,7 +340,7 @@ function KeepOrScrap() {
                       <h2>{group.name}</h2>
                     </div>
 
-                    <div className="kos-class-content-grid">
+                    <div className="kos-class-preview">
                       <div className="kos-class-media">
                         {hasValue(firstEntry?.image) && (
                           <img src={firstEntry.image} alt={group.name} />
@@ -444,6 +355,14 @@ function KeepOrScrap() {
                             </li>
                           ))}
                         </ul>
+
+                        <button
+                          type="button"
+                          className="kos-view-details"
+                          onClick={() => setSelectedGroup(group)}
+                        >
+                          View Details
+                        </button>
                       </div>
                     </div>
                   </section>
@@ -453,6 +372,51 @@ function KeepOrScrap() {
           </div>
         )}
       </main>
+
+      {selectedGroup && (
+        <div
+          className="kos-modal-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setSelectedGroup(null);
+            }
+          }}
+        >
+          <div className="kos-modal">
+            <button
+              type="button"
+              className="kos-modal-close"
+              onClick={() => setSelectedGroup(null)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+
+            <div className="kos-modal-header">
+              <h2>{selectedGroup.name}</h2>
+            </div>
+
+            <div className="kos-modal-body">
+              {hasValue(selectedGroup.entries[0]?.image) && (
+                <div className="kos-modal-image">
+                  <img
+                    src={selectedGroup.entries[0].image}
+                    alt={selectedGroup.name}
+                  />
+                </div>
+              )}
+
+              <div className="kos-modal-description">
+                {selectedGroup.entries.map((entry) => (
+                  <div className="kos-modal-entry" key={entry.tierid}>
+                    {renderBoldText(entry.reasoning)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
