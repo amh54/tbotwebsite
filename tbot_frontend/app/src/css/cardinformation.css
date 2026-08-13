@@ -213,19 +213,20 @@
   gap: 8px;
   min-width: 0;
 }
-
 .card-item-info h2 {
   margin: 0 0 4px;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   line-height: 1.2;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .card-title-content {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 2px;
+  display: inline;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
+
 
 .card-title-class-icon {
   width: 18px;
