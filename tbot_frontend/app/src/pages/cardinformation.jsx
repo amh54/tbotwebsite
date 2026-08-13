@@ -1252,43 +1252,57 @@ function CardInformation() {
       );
     });
 
-    return result.sort((a, b) => {
-      const groupDifference = getCardGroup(a) - getCardGroup(b);
+  return result.sort((a, b) => {
+  const groupDifference = getCardGroup(a) - getCardGroup(b);
 
-      if (groupDifference !== 0) {
-        return groupDifference;
-      }
+  if (groupDifference !== 0) {
+    return groupDifference;
+  }
 
-      const aStats = getCardStats(a.stats);
-      const bStats = getCardStats(b.stats);
+  const aClasses = getClassNames(a.card_type);
+  const bClasses = getClassNames(b.card_type);
 
-      const aCost = aStats.cost ?? Infinity;
-      const bCost = bStats.cost ?? Infinity;
+  const aClass = aClasses[0] || "";
+  const bClass = bClasses[0] || "";
 
-      if (aCost !== bCost) {
-        return aCost - bCost;
-      }
+  const classDifference = aClass.localeCompare(
+    bClass,
+    undefined,
+    { sensitivity: "base" },
+  );
 
-      return String(a.card_name || "").localeCompare(
-        String(b.card_name || ""),
-        undefined,
-        {
-          sensitivity: "base",
-        },
-      );
-    });
-  }, [
-    normalCards,
-    search,
-    classFilter,
-    costFilter,
-    attackFilter,
-    healthFilter,
-    keywordFilter,
-    tribeFilter,
-    setFilter,
-    rarityFilter,
-  ]);
+  if (classDifference !== 0) {
+    return classDifference;
+  }
+
+  const aStats = getCardStats(a.stats);
+  const bStats = getCardStats(b.stats);
+
+  const aCost = aStats.cost ?? Infinity;
+  const bCost = bStats.cost ?? Infinity;
+
+  if (aCost !== bCost) {
+    return aCost - bCost;
+  }
+
+  return String(a.card_name || "").localeCompare(
+    String(b.card_name || ""),
+    undefined,
+    { sensitivity: "base" },
+  );
+});
+}, [
+  normalCards,
+  search,
+  classFilter,
+  costFilter,
+  attackFilter,
+  healthFilter,
+  keywordFilter,
+  tribeFilter,
+  setFilter,
+  rarityFilter,
+]);
 
   const clearFilters = () => {
     setSearch("");
