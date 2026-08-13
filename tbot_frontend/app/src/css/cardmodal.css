@@ -299,10 +299,6 @@ h3.label {
     font-size: 30px;
   }
 
-  .card-modal {
-    padding-top: 68px;
-  }
-
   .modal-card-image {
     width: min(250px, 100%);
     margin: 0 auto 24px;
