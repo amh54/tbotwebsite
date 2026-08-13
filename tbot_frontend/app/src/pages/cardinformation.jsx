@@ -304,43 +304,54 @@ const extractTribes = (description, side = "", cardType = "") => {
     "Professional",
     "Science",
     "Sports",
+    "Plant",
+    "Hero",
+    "Trick",
+    "Zombie",
+    "Environment",
   ];
 
+  /*
+   * Find normal tribe + type combinations such as:
+   *   Tree Trick
+   *   Berry Plant
+   *   Gourmet Zombie
+   *
+   * The important part is that ONLY the tribe is added.
+   * "Trick", "Plant", and "Zombie" are added independently
+   * from the card type / side below.
+   */
   let match;
 
   while ((match = TRIBE_LINE_PATTERN.exec(cleaned)) !== null) {
     const tribe = match[1];
-    const suffix = normalizeText(match[2]);
 
     const knownTribe = knownTribes.find(
       (known) => normalizeText(known) === normalizeText(tribe),
     );
 
-    if (!knownTribe) {
-      continue;
-    }
-
-    if (suffix === "plant" || suffix === "plants") {
+    if (knownTribe) {
       addTribe(knownTribe);
-      addTribe("Plant");
-    }
-
-    if (suffix === "zombie" || suffix === "zombies") {
-      addTribe(knownTribe);
-      addTribe("Zombie");
-    }
-
-    if (suffix === "trick" || suffix === "tricks") {
-      addTribe(knownTribe);
-      addTribe("Trick");
-    }
-
-    if (suffix === "environment" || suffix === "environments") {
-      addTribe(knownTribe);
-      addTribe("Environment");
     }
   }
 
+  /*
+   * Also find standalone tribe names.
+   *
+   * This means Gourmet will always be detected regardless of
+   * whether the card says Gourmet Zombie, Gourmet Plant, etc.
+   */
+  const words = cleaned.toLowerCase().split(/\s+/);
+
+  knownTribes.forEach((tribe) => {
+    if (words.includes(tribe.toLowerCase())) {
+      addTribe(tribe);
+    }
+  });
+
+  /*
+   * Side is independent from the tribe.
+   */
   const normalizedSide = normalizeText(side);
 
   if (normalizedSide === "plants" || normalizedSide === "plant") {
@@ -351,14 +362,25 @@ const extractTribes = (description, side = "", cardType = "") => {
     addTribe("Zombie");
   }
 
+  /*
+   * Card type is independent from the tribe.
+   *
+   * Tree Trick = Tree + Trick
+   * Gourmet Trick = Gourmet + Trick
+   * etc.
+   */
   const normalizedType = normalizeText(cardType);
 
-  if (normalizedType === "trick") {
+  if (/\btrick\b/.test(normalizedType)) {
     addTribe("Trick");
   }
 
-  if (normalizedType === "environment") {
+  if (/\benvironment\b/.test(normalizedType)) {
     addTribe("Environment");
+  }
+
+  if (/\bhero\b/.test(normalizedType)) {
+    addTribe("Hero");
   }
 
   return tribes;
