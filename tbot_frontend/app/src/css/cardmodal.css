@@ -31,7 +31,8 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center/cover no-repeat;
+  background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center/cover
+    no-repeat;
   filter: blur(12px);
   opacity: 0.15;
   transform: scale(1.1);
@@ -48,18 +49,32 @@
 .card-modal-close {
   position: absolute;
   top: 10px;
-  right: 14px;
+  right: 10px;
   z-index: 10;
-  border: none;
-  background: transparent;
-  color: white;
-  font-size: 32px;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #555;
+  border-radius: 50%;
+  background: #202020;
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 700;
   line-height: 1;
   cursor: pointer;
   padding: 0;
+  box-sizing: border-box;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .card-modal-close:hover {
+  background: #333;
+  border-color: #8fe38b;
   color: #8fe38b;
 }
 
@@ -227,7 +242,6 @@ h3.label {
   margin: 0 3px;
 }
 
-
 .trait-value {
   display: inline-flex;
   align-items: center;
@@ -254,7 +268,6 @@ h3.label {
   vertical-align: middle;
 }
 
-
 .ability-value {
   display: block;
   width: 100%;
@@ -278,14 +291,16 @@ h3.label {
   .card-modal-overlay {
     padding: 10px;
   }
+  .card-modal-close {
+    top: 8px;
+    right: 8px;
+    width: 50px;
+    height: 50px;
+    font-size: 30px;
+  }
 
   .card-modal {
-    width: 100%;
-    max-height: 95vh;
-    padding: 20px;
-
-    /* Stack card above information */
-    display: block;
+    padding-top: 68px;
   }
 
   .modal-card-image {
