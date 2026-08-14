@@ -196,7 +196,7 @@
   align-items: start;
 }
 .card-item[data-rarity="Legendary"] {
-  background: linear-gradient(135deg, #AB59DF 0%, #F3EA94 50%, #6BB0DE 100%);
+  background: linear-gradient(135deg, #C47AEB 0%, #F7F0A8 50%, #8AC5E8 100%);
 }
 .card-item[data-rarity="Rare"] {
   background-color: #EA9C45;
@@ -244,12 +244,12 @@
 .card-item[data-rarity="Legendary"] .trait-rendered u, 
  .card-item[data-rarity="Legendary"] .card-stats-value{
   color: #1a1a1a;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 .card-item[data-rarity="Legendary"] .card-item-info p > span:first-child {
   color: #2f7d32;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 .card-item-media {
   width: 100%;
