@@ -17,7 +17,7 @@
     background: linear-gradient(
     90deg,
     var(--hero-color-1) 0%,
-    var(--hero-color-1) 45%,
+    var(--hero-color-1) 40%,
     var(--hero-color-2) 55%,
     var(--hero-color-2) 100%
   );
