@@ -278,7 +278,7 @@ function KeepOrScrap() {
       <div className="nav-links">
         <Link to="/">Home</Link>
         <Link to="/decklists">Decklists</Link>
-        <Link to="/cardinfo">Card Infoc</Link>
+        <Link to="/cardinfo">Card Info</Link>
         <Link to="/heroinfo">Hero Info</Link>
         <Link to="/keeporscrap">Keep or Scrap</Link>
       </div>

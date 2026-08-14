@@ -15,97 +15,167 @@ function HomePage() {
           href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
         />
       </head>
-      <nav className="navbar">
-  <div className="logo">
-    <Link to="/">Tbot</Link>
-  </div>
 
-  <div className="nav-links">
-    <Link to="/">Home</Link>
-    <Link to="/decklists">Decklists</Link>
-    <Link to="/cardinfo">Card Info</Link>
-    <Link to="/heroinfo">Hero Info</Link>
-    <Link to="/keeporscrap">Keep or Scrap</Link>
-  </div>
-</nav>
+      <nav className="navbar">
+        <div className="logo">
+          <Link to="/">Tbot</Link>
+        </div>
+
+        <div className="nav-links">
+          <Link to="/">Home</Link>
+          <Link to="/decklists">Decklists</Link>
+          <Link to="/cardinfo">Card Info</Link>
+          <Link to="/heroinfo">Hero Info</Link>
+          <Link to="/keeporscrap">Keep or Scrap</Link>
+        </div>
+      </nav>
 
       <section className="hero">
         <p className="eyebrow">Plants vs. Zombies Heroes</p>
-        <h1>Welcome to Tbot</h1>
-        <h2>A small companion for decks, cards, and strategy.</h2>
+
+        <h1>Tbot</h1>
+
+        <h2>A community database for cards, heroes, decks, and strategy.</h2>
 
         <p>
-          Tbot helps you find deck ideas, check card details, and keep track of
-          the things you actually want to remember while you play.
+          Tbot brings together the information you need to build decks, research
+          cards, learn about heroes, and make better decisions while playing
+          Plants vs. Zombies Heroes.
         </p>
       </section>
 
       <section className="features">
-        <h2>What Tbot is for</h2>
-
         <div className="feature-grid">
           <div className="feature-command">
-            <h3>Decks that are easy to browse</h3>
+            <h3>Decklists</h3>
+
             <p>
-              Look through community decklists by hero, style, or name without
-              digging through a lot of clutter.
+              Browse community decklists and find decks by hero, class,
+              archetype, type, name, and other information.
             </p>
+
+            <Link to="/decklists">Explore Decklists →</Link>
           </div>
 
           <div className="feature-command">
-            <h3>Card details when you need them</h3>
+            <h3>Card Information</h3>
+
             <p>
-              Check stats, abilities, and matchups in a simpler way than trying
-              to remember everything from memory.
+              Search through Plant and Zombie cards using detailed filters for
+              class, cost, attack, health, keywords, tribes, set, and rarity.
             </p>
+
+            <Link to="/cardinfo">Explore Cards →</Link>
+          </div>
+
+          <div className="feature-command">
+            <h3>Hero Information</h3>
+
+            <p>
+              Browse the Plant and Zombie heroes and view their classes,
+              abilities, traits, stats, and complete card details.
+            </p>
+
+            <Link to="/heroinfo">Explore Heroes →</Link>
+          </div>
+
+          <div className="feature-command">
+            <h3>Keep or Scrap</h3>
+
+            <p>
+              Use class-by-class recommendations to help decide which cards are
+              worth keeping and which cards may be worth scrapping.
+            </p>
+
+            <Link to="/keeporscrap">View Keep or Scrap →</Link>
           </div>
         </div>
       </section>
 
-      <section className="discord">
-        <h2>Join the Discord</h2>
+      <section className="about">
+        <h2>Built for PvZ Heroes players</h2>
+
         <p>
-          If you use Tbot regularly, the Discord server is the easiest place to
-          share ideas, ask questions, and talk decks with other players.
+          Tbot is designed as a central place for Plants vs. Zombies Heroes
+          information. Instead of keeping card details, deck ideas, hero
+          information, and recommendations in separate places, the website puts
+          them together in one searchable database.
         </p>
+
+        <p>
+          Whether you're looking for a new deck, checking what a card does,
+          comparing heroes, or deciding whether a card is worth keeping, Tbot
+          gives you a quick way to find what you're looking for.
+        </p>
+      </section>
+
+      <section className="discord">
+        <h2>Join the Tbot Discord</h2>
+
+        <p>
+          Tbot is also connected to a Discord community for Plants vs. Zombies
+          Heroes players. Share decks, discuss cards, ask questions, and use the
+          Tbot bot directly from Discord.
+        </p>
+
         <p>
           <a
             href="https://discord.gg/E5XzKf2PjN"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Open the Tbot Discord
+            Join the Tbot Discord
           </a>
         </p>
       </section>
 
-      <section className="faq">
+      <section className="quick-answers">
         <h2>Quick answers</h2>
 
-        <h3>What is Tbot?</h3>
-        <p>
-          It is a simple companion for Plants vs. Zombies Heroes that helps you
-          browse decks and card information from one place.
-        </p>
+        <div className="quick-answer-grid">
+          <div className="quick-answer-card">
+            <h3>What is Tbot?</h3>
+            <p>
+              Tbot is a Plants vs. Zombies Heroes community website and Discord
+              bot that brings together decklists, card information, hero
+              information, and card recommendations.
+            </p>
+          </div>
 
-        <h3>How do I use it?</h3>
-        <p>
-          Use the website for a fuller look at decks and cards, or use the
-          Discord bot when you want something quick while playing.
-        </p>
+          <div className="quick-answer-card">
+            <h3>What can I find on the website?</h3>
+            <p>
+              You can browse community decklists, search and filter cards, look
+              up heroes, and use the Keep or Scrap section to review card
+              recommendations.
+            </p>
+          </div>
 
-        <h3>Can I contribute?</h3>
-        <p>Yes. Deck submissions, ideas, and feedback are all welcome.</p>
+          <div className="quick-answer-card">
+            <h3>Can I contribute?</h3>
+            <p>
+              Yes. Deck submissions, ideas, corrections, and feedback are
+              welcome through the Tbot community.
+            </p>
+          </div>
 
-        <p>
-          <a
-            href="https://buymeacoffee.com/pvzhtbot"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Support Tbot
-          </a>
-        </p>
+          <div className="quick-answer-card">
+            <h3>How can I support Tbot?</h3>
+            <p>
+              If you find the website or Discord bot useful, you can help
+              support continued development and maintenance through Buy Me a
+              Coffee.
+            </p>
+
+            <a
+              href="https://buymeacoffee.com/pvzhtbot"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Support Tbot
+            </a>
+          </div>
+        </div>
       </section>
     </div>
   );
