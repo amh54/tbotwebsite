@@ -1,9 +1,50 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import "../css/deckmodal.css";
+const HERO_COLORS = {
+  "Beta-Carrotina": ["brown", "gray"],
+  Citron: ["brown", "gray"],
+  "Captain Combustible": ["red", "green"],
+  Chompzilla: ["green", "yellow"],
+  "Grass Knuckles": ["green", "brown"],
+  "Green Shadow": ["green", "gray"],
+  "Night Cap": ["red", "gray"],
+  Rose: ["gray", "yellow"],
+  "Solar Flare": ["red", "yellow"],
+  Spudow: ["red", "brown"],
+  WallKnight: ["brown", "yellow"],
 
+  Brainfreeze: ["black", "blue"],
+  "Electric Boogaloo": ["blue", "purple"],
+  HugeGigantacus: ["pink", "black"],
+  SuperBrainz: ["pink", "black"],
+  Immorticia: ["pink", "blue"],
+  Impfinity: ["black", "purple"],
+  Neptuna: ["orange", "black"],
+  "Professor Brainstorm": ["pink", "purple"],
+  Rustbolt: ["pink", "orange"],
+  "The Smash": ["orange", "blue"],
+  Zmech: ["orange", "purple"],
+};
+
+const normalizeHeroName = (hero) =>
+  String(hero || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
+const getHeroColors = (hero) => {
+  const normalizedHero = normalizeHeroName(hero);
+
+  const entry = Object.entries(HERO_COLORS).find(
+    ([name]) => normalizeHeroName(name) === normalizedHero,
+  );
+
+  return entry?.[1] || ["default", "default"];
+};
 function DeckCard({ decklist }) {
   const deck = decklist ?? {};
+  const [heroColor1, heroColor2] = getHeroColors(deck.hero);
   const deckKey = String(deck.deckid || deck.id || deck.name || "");
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -144,7 +185,7 @@ function DeckCard({ decklist }) {
 
   return (
     <>
-      <div className="deck-listing-card">
+      <div className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}>
         <div className="deck-card-image-only">
           {deck.image && !imgError ? (
             <img

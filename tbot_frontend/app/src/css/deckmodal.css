@@ -9,11 +9,21 @@
 }
 
 .deck-listing-card {
+  --hero-color-1: #15181b;
+  --hero-color-2: #15181b;
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 14px;
-  background: #15181b;
+    background: linear-gradient(
+    90deg,
+    var(--hero-color-1) 0%,
+    var(--hero-color-1) 50%,
+    var(--hero-color-2) 50%,
+    var(--hero-color-2) 100%
+  );
   border: 1px solid #23272b;
+  position: relative;
+  overflow: hidden;
   border-radius: 12px;
   padding: 10px;
 }
@@ -24,6 +34,105 @@
   gap: 8px;
   padding: 8px 10px 8px 0;
   min-width: 0;
+}
+.hero-red-green {
+  --hero-color-1: #d94b4b;
+  --hero-color-2: #4caf50;
+}
+
+.hero-green-yellow {
+  --hero-color-1: #4caf50;
+  --hero-color-2: #e0c341;
+}
+
+.hero-green-brown {
+  --hero-color-1: #4caf50;
+  --hero-color-2: #8b6b45;
+}
+
+.hero-green-gray {
+  --hero-color-1: #4caf50;
+  --hero-color-2: #8b949e;
+}
+
+.hero-red-gray {
+  --hero-color-1: #d94b4b;
+  --hero-color-2: #8b949e;
+}
+
+.hero-gray-yellow {
+  --hero-color-1: #8b949e;
+  --hero-color-2: #e0c341;
+}
+
+.hero-red-yellow {
+  --hero-color-1: #d94b4b;
+  --hero-color-2: #e0c341;
+}
+
+.hero-red-brown {
+  --hero-color-1: #d94b4b;
+  --hero-color-2: #8b6b45;
+}
+
+.hero-brown-yellow {
+  --hero-color-1: #8b6b45;
+  --hero-color-2: #e0c341;
+}
+
+.hero-brown-gray {
+  --hero-color-1: #8b6b45;
+  --hero-color-2: #8b949e;
+}
+
+.hero-black-blue {
+  --hero-color-1: #292929;
+  --hero-color-2: #3f73b9;
+}
+
+.hero-blue-purple {
+  --hero-color-1: #3f73b9;
+  --hero-color-2: #8b5fc7;
+}
+
+.hero-pink-black {
+  --hero-color-1: #d96fae;
+  --hero-color-2: #292929;
+}
+
+.hero-pink-blue {
+  --hero-color-1: #d96fae;
+  --hero-color-2: #3f73b9;
+}
+
+.hero-black-purple {
+  --hero-color-1: #292929;
+  --hero-color-2: #8b5fc7;
+}
+
+.hero-orange-black {
+  --hero-color-1: #d8873c;
+  --hero-color-2: #292929;
+}
+
+.hero-pink-purple {
+  --hero-color-1: #d96fae;
+  --hero-color-2: #8b5fc7;
+}
+
+.hero-pink-orange {
+  --hero-color-1: #d96fae;
+  --hero-color-2: #d8873c;
+}
+
+.hero-orange-blue {
+  --hero-color-1: #d8873c;
+  --hero-color-2: #3f73b9;
+}
+
+.hero-orange-purple {
+  --hero-color-1: #d8873c;
+  --hero-color-2: #8b5fc7;
 }
 
 .deck-listing-info h3 {
@@ -81,7 +190,7 @@
   overflow-y: auto;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 8px 40px rgba(0,0,0,.6);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
 }
 .modal::backdrop {
   background: rgba(0, 0, 0, 0.65);
@@ -90,9 +199,10 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center/cover no-repeat;
+  background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center/cover
+    no-repeat;
   filter: blur(12px);
-  opacity: .15;
+  opacity: 0.15;
   transform: scale(1.1);
   z-index: 0;
   pointer-events: none;
@@ -106,7 +216,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   border-radius: 50%;
   font-size: 22px;
@@ -116,7 +226,7 @@
 }
 
 .modal-close:hover {
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.25);
 }
 .modal-content {
   position: relative;
@@ -144,7 +254,9 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .share-btn:hover,
@@ -235,7 +347,9 @@
   border-radius: 10px;
   padding: 14px;
   min-height: 80px;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .metadata-item:hover {
@@ -272,7 +386,7 @@
   color: #ffffff;
 }
 .description-section {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid #333;
   border-radius: 10px;
   padding: 14px;
@@ -322,19 +436,19 @@
     padding: 2px 4px 2px 0;
   }
 
- .deck-listing-info h3 {
-  margin: 0 0 4px;
-  font-size: 1.35rem;
-  color: #ffffff;
-  line-height: 1.25;
-}
+  .deck-listing-info h3 {
+    margin: 0 0 4px;
+    font-size: 1.35rem;
+    color: #ffffff;
+    line-height: 1.25;
+  }
 
-.deck-listing-info p {
-  margin: 0;
-  color: #d5dde4;
-  line-height: 1.4;
-  font-size: 1.05rem; 
-}
+  .deck-listing-info p {
+    margin: 0;
+    color: #d5dde4;
+    line-height: 1.4;
+    font-size: 1.05rem;
+  }
 
   .view-details-btn {
     margin-top: 6px;
