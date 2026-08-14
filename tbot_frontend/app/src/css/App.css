@@ -289,8 +289,10 @@ body {
 ========================= */
 
 .discord {
-  padding-top: 26px;
-  padding-bottom: 26px;
+  width: calc(100% - 80px);
+  max-width: 1200px;
+  margin: 0 auto 50px;
+  padding: 26px 40px;
   background: #15181b;
   border: 1px solid #23272b;
 }
@@ -300,14 +302,10 @@ body {
 }
 
 .discord p {
-  max-width: 850px;
+  max-width: 900px;
   margin-bottom: 12px;
   color: #c4c9cc;
 }
-
-/* =========================
-   FAQ
-========================= */
 
 .faq {
   padding-bottom: 20px;
@@ -345,7 +343,7 @@ a:hover {
 ========================= */
 
 @media (max-width: 900px) {
-    .quick-answers {
+  .quick-answers {
     padding-left: 24px;
     padding-right: 24px;
   }
@@ -439,7 +437,10 @@ a:hover {
   .feature-grid {
     grid-template-columns: 1fr;
   }
-
+  .discord {
+    width: calc(100% - 32px);
+    padding: 20px;
+  }
   .feature-command,
   .discord {
     padding: 20px;
