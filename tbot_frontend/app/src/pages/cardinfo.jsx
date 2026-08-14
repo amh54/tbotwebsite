@@ -606,10 +606,11 @@ function CardInfo() {
       if (icon?.url) {
         parts.push(
           <img
-            key={`title-icon-${index}`}
             src={icon.url}
             alt={icon.alt}
-            className="card-title-class-icon"
+            className="card-stat-icon"
+            loading="lazy"
+            decoding="async"
           />,
         );
       }
@@ -1543,9 +1544,18 @@ function CardInfo() {
         !error && (
           <div className="card-grid">
             {filteredCards.map((card) => (
-              <div className="card-item" data-rarity={getRarityName(card.set_rarity)} key={card.cardid}>
+              <div
+                className="card-item"
+                data-rarity={getRarityName(card.set_rarity)}
+                key={card.cardid}
+              >
                 <div className="card-item-media">
-                  <img src={card.thumbnail} alt={card.card_name} />
+                  <img
+                    src={card.thumbnail}
+                    alt={card.card_name}
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
 
                 <div className="card-item-info">
@@ -1617,20 +1627,20 @@ function CardInfo() {
         )
       )}
 
-     {selectedCard && (
-  <CardModal
-    card={selectedCard}
-    close={() => {
-      setSelectedCard(null);
+      {selectedCard && (
+        <CardModal
+          card={selectedCard}
+          close={() => {
+            setSelectedCard(null);
 
-      const url = new URL(window.location.href);
-      url.searchParams.delete("card");
-      window.history.replaceState({}, "", url);
-    }}
-  />
-)}
-</div>
-);
+            const url = new URL(window.location.href);
+            url.searchParams.delete("card");
+            window.history.replaceState({}, "", url);
+          }}
+        />
+      )}
+    </div>
+  );
 }
 
 export default CardInfo;
