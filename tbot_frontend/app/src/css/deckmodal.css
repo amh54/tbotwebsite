@@ -19,21 +19,20 @@
   grid-template-columns: 280px 1fr;
   gap: 14px;
 
-  background: linear-gradient(
-    90deg,
-    var(--hero-color-1) 0,
-    var(--hero-color-1) 280px,
-    var(--hero-color-2) 280px,
-    var(--hero-color-2) 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--hero-color-1) 35%, #15181b) 0%,
+      color-mix(in srgb, var(--hero-color-1) 20%, #15181b) 45%,
+      color-mix(in srgb, var(--hero-color-2) 20%, #15181b) 55%,
+      color-mix(in srgb, var(--hero-color-2) 35%, #15181b) 100%
+    );
 
   border: 1px solid #23272b;
   border-radius: 12px;
   padding: 10px;
   overflow: hidden;
-  position: relative;
 }
-
 
 .deck-listing-info {
   display: flex;
