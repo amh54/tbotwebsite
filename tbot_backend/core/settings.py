@@ -207,7 +207,7 @@ if DB_ENGINE == 'django.db.backends.mysql':
             'PASSWORD': os.getenv('DB_PASSWORD'),
             'HOST': os.getenv('DB_HOST'),
             'PORT': int(os.getenv('DB_PORT', '3306')),
-            'CONN_MAX_AGE': 0,
+            'CONN_MAX_AGE': 60,
             'OPTIONS': db_options,
         }
     }
