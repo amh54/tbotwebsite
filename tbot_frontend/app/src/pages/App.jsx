@@ -155,7 +155,14 @@ function HomePage() {
             <h3>Can I contribute?</h3>
             <p>
               Yes. Deck submissions, ideas, corrections, and feedback are
-              welcome through the Tbot community.
+              welcome through the Tbot community discord.
+              <a
+                href="https://discord.gg/E5XzKf2PjN"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Join the Tbot Discord
+              </a>
             </p>
           </div>
 
