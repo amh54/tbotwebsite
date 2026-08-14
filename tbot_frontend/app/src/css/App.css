@@ -284,13 +284,10 @@ body {
   padding-top: 8px;
 }
 
-/* =========================
-   DISCORD
-========================= */
 
 .discord {
   width: calc(100% - 80px);
-  max-width: 1200px;
+  max-width: 1120px;
   margin: 0 auto 50px;
   padding: 26px 40px;
   background: #15181b;
@@ -298,6 +295,7 @@ body {
 }
 
 .discord h2 {
+  margin-bottom: 16px;
   color: #8fe38b;
 }
 
@@ -436,10 +434,6 @@ a:hover {
 
   .feature-grid {
     grid-template-columns: 1fr;
-  }
-  .discord {
-    width: calc(100% - 32px);
-    padding: 20px;
   }
   .feature-command,
   .discord {
