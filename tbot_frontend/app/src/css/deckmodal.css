@@ -18,7 +18,7 @@
     90deg,
     var(--hero-color-1) 0%,
     var(--hero-color-1) 45%,
-    var(--hero-color-2) 50%,
+    var(--hero-color-2) 55%,
     var(--hero-color-2) 100%
   );
   border: 1px solid #23272b;
