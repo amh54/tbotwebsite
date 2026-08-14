@@ -12,19 +12,19 @@ const HERO_COLORS = {
   Rose: ["gray", "yellow"],
   "Solar Flare": ["red", "yellow"],
   Spudow: ["red", "brown"],
-  WallKnight: ["brown", "yellow"],
+  "Wall-Knight": ["brown", "yellow"],
 
-  Brainfreeze: ["black", "blue"],
+  "Brain Freeze": ["black", "blue"],
   "Electric Boogaloo": ["blue", "purple"],
-  HugeGigantacus: ["pink", "black"],
-  SuperBrainz: ["pink", "black"],
+  "Huge-Gigantacus": ["pink", "black"],
+  "Super Brainz": ["pink", "black"],
   Immorticia: ["pink", "blue"],
   Impfinity: ["black", "purple"],
   Neptuna: ["orange", "black"],
   "Professor Brainstorm": ["pink", "purple"],
   Rustbolt: ["pink", "orange"],
   "The Smash": ["orange", "blue"],
-  Zmech: ["orange", "purple"],
+  "Z-mech": ["orange", "purple"],
 };
 
 const normalizeHeroName = (hero) =>
