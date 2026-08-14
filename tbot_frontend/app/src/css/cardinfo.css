@@ -195,7 +195,62 @@
   gap: 14px;
   align-items: start;
 }
+.card-item[data-rarity="Legendary"] {
+  background: linear-gradient(135deg, #AB59DF 0%, #F3EA94 50%, #6BB0DE 100%);
+}
+.card-item[data-rarity="Rare"] {
+  background-color: #EA9C45;
+}
+.card-item[data-rarity="Super-Rare"] {
+  background-color: #885CD5;
+}
+.card-item[data-rarity="Uncommon"] {
+  background-color: #959A9D;
+}
+.card-item[data-rarity="Common"] {
+  background-color: #F5F5DC;
+}
+.card-item[data-rarity="Event"] {
+  background-color: #C1503D;
+}
+.card-item[data-rarity="Token"] {
+  background-color: #27272A;
+}
+.card-item[data-rarity="Common"],
+.card-item[data-rarity="Uncommon"] {
+  color: #1a1a1a;
+}
 
+.card-item[data-rarity="Common"] .card-item-info p,
+.card-item[data-rarity="Uncommon"] .card-item-info p,
+.card-item[data-rarity="Common"] .card-stats-value,
+.card-item[data-rarity="Uncommon"] .card-stats-value,
+.card-item[data-rarity="Common"] .card-item-title,
+.card-item[data-rarity="Uncommon"] .card-item-title {
+  color: #1a1a1a;
+}
+
+.card-item[data-rarity="Common"] .card-item-info p > span:first-child,
+.card-item[data-rarity="Uncommon"] .card-item-info p > span:first-child {
+  color: #2f7d32;
+}
+
+.card-item[data-rarity="Common"] .trait-rendered u,
+.card-item[data-rarity="Uncommon"] .trait-rendered u {
+  color: #1a1a1a;
+}
+.card-item[data-rarity="Legendary"] .card-item-info,
+.card-item[data-rarity="Legendary"] .card-item-info p,
+.card-item[data-rarity="Legendary"] .trait-rendered u, 
+ .card-item[data-rarity="Legendary"] .card-stats-value{
+  color: #1a1a1a;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.card-item[data-rarity="Legendary"] .card-item-info p > span:first-child {
+  color: #2f7d32;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
 .card-item-media {
   width: 100%;
 }

@@ -1543,7 +1543,7 @@ function CardInfo() {
         !error && (
           <div className="card-grid">
             {filteredCards.map((card) => (
-              <div className="card-item" key={card.cardid}>
+              <div className="card-item" data-rarity={getRarityName(card.set_rarity)} key={card.cardid}>
                 <div className="card-item-media">
                   <img src={card.thumbnail} alt={card.card_name} />
                 </div>
