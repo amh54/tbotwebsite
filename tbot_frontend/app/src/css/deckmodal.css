@@ -1,3 +1,4 @@
+
 .deck-card-image-only {
   position: relative;
   width: 100%;
@@ -6,27 +7,33 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: transparent;
 }
+
 
 .deck-listing-card {
   --hero-color-1: #15181b;
   --hero-color-2: #15181b;
+
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 14px;
-    background: linear-gradient(
+
+  background: linear-gradient(
     90deg,
-    var(--hero-color-1) 0%,
-    var(--hero-color-1) 40%,
-    var(--hero-color-2) 60%,
+    var(--hero-color-1) 0,
+    var(--hero-color-1) 280px,
+    var(--hero-color-2) 280px,
     var(--hero-color-2) 100%
   );
+
   border: 1px solid #23272b;
-  position: relative;
-  overflow: hidden;
   border-radius: 12px;
   padding: 10px;
+  overflow: hidden;
+  position: relative;
 }
+
 
 .deck-listing-info {
   display: flex;
@@ -34,6 +41,7 @@
   gap: 8px;
   padding: 8px 10px 8px 0;
   min-width: 0;
+  background: transparent;
 }
 .hero-red-green {
   --hero-color-1: #d94b4b;
