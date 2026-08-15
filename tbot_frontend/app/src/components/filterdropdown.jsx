@@ -14,23 +14,27 @@ function FilterDropdown({ label, options, value, onChange, multi = false }) {
   }, []);
 
   const isSelected = (opt) =>
-    multi ? value.some((v) => v.value === opt.value) : value?.value === opt.value;
+    multi
+      ? value.some((v) => v.value === opt.value)
+      : value?.value === opt.value;
 
-const handleSelect = (opt) => {
-  if (multi) {
-    const exists = value.some((v) => v.value === opt.value);
-    onChange(exists ? value.filter((v) => v.value !== opt.value) : [...value, opt]);
-    setOpen(false);
-  } else {
-    onChange(isSelected(opt) ? null : opt);
-    setOpen(false);
-  }
-};
+  const handleSelect = (opt) => {
+    if (multi) {
+      const exists = value.some((v) => v.value === opt.value);
+      onChange(
+        exists ? value.filter((v) => v.value !== opt.value) : [...value, opt],
+      );
+      setOpen(false);
+    } else {
+      onChange(isSelected(opt) ? null : opt);
+      setOpen(false);
+    }
+  };
   const triggerLabel = multi
-  ? value.length > 0
-    ? value.map((v) => v.label).join(", ")
-    : label
-  : value?.label || label;
+    ? value.length > 0
+      ? value.map((v) => v.label).join(", ")
+      : label
+    : value?.label || label;
 
   return (
     <div className="filter-dropdown" ref={ref}>
@@ -52,13 +56,22 @@ const handleSelect = (opt) => {
               onClick={() => handleSelect(opt)}
             >
               {opt.icon && <span className="filter-item-icon">{opt.icon}</span>}
+              {opt.image && (
+                <img
+                  src={opt.image}
+                  alt={opt.label}
+                  className="filter-item-image"
+                />
+              )}
               <div className="filter-item-text">
                 <div className="filter-item-title">
                   {opt.label}
                   {typeof opt.count === "number" && ` (${opt.count})`}
                 </div>
                 {opt.description && (
-                  <div className="filter-item-description">{opt.description}</div>
+                  <div className="filter-item-description">
+                    {opt.description}
+                  </div>
                 )}
               </div>
             </div>

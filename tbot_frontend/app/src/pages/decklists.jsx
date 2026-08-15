@@ -193,7 +193,35 @@ function DecklistsPage() {
       color: "white",
     }),
   };
+  const [allCards, setAllCards] = useState([]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchCards = async () => {
+      try {
+        const endpoint = `${API_BASE_URL}/tbotapp/cardinfo/`;
+
+        const response = await fetch(endpoint, { signal: controller.signal });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        setAllCards(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error(err);
+        }
+      }
+    };
+
+    fetchCards();
+
+    return () => controller.abort();
+  }, []);
   useEffect(() => {
     const controller = new AbortController();
 
@@ -311,16 +339,25 @@ function DecklistsPage() {
           .filter(Boolean),
       ),
     ]
-      .map((heroName) => ({
-        value: heroName,
-        label: heroName,
-      }))
+      .map((heroName) => {
+        const matchedCard = allCards.find(
+          (card) =>
+            normalizeFilterKey(card.card_name) === normalizeFilterKey(heroName),
+        );
+
+        return {
+          value: heroName,
+          label: heroName,
+          description: matchedCard?.flavor_text || "",
+          image: matchedCard?.thumbnail || "",
+        };
+      })
       .sort((a, b) =>
         a.label.localeCompare(b.label, undefined, {
           sensitivity: "base",
         }),
       );
-  }, [sideFilteredDecks]);
+  }, [sideFilteredDecks, allCards]);
   const categoryOptions = useMemo(() => {
     const grouped = sideFilteredDecks.reduce((acc, deck) => {
       const normalized = normalizeFilterText(deck.category);
@@ -541,15 +578,11 @@ function DecklistsPage() {
 
           <div className="filters">
             <div className="select-wrapper">
-              <Select
-                styles={selectStyles}
-                menuPortalTarget={document.body}
-                placeholder="Hero"
+              <FilterDropdown
+                label="Hero"
                 options={heroOptions}
                 value={hero}
                 onChange={setHero}
-                isClearable
-                isSearchable
               />
             </div>
 
