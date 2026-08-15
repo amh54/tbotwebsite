@@ -75,7 +75,25 @@
   width: 100%;
   margin-top: 40px;
 }
+.kos-creator-heading {
+  display: block;
+  margin-bottom: 6px;
+  color: #d8dddf;
+  font-size: 14px;
+  font-weight: 700;
+}
 
+.kos-creator-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #d8dddf;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.kos-creator-list li {
+  margin-bottom: 4px;
+}
 .kos-intro-item {
   width: 100%;
   display: grid;

@@ -119,9 +119,9 @@ const renderIntroText = (text) => {
   }
 
   const rawText = String(text);
-  const labelPattern = new RegExp(
+const labelPattern = new RegExp(
     `(^|\\n)(${INTRO_SECTION_LABELS.join("|")}):\\s*`,
-    "g",
+    "gi",
   );
 
   const parts = [];
@@ -136,9 +136,9 @@ const renderIntroText = (text) => {
       parts.push(<span key={`text-${key++}`}>{renderBoldText(before)}</span>);
     }
 
-    parts.push(
+   parts.push(
       <strong className="kos-intro-label" key={`label-${key++}`}>
-        {match[2]}:
+        {match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase()}:
       </strong>,
     );
 
@@ -153,7 +153,37 @@ const renderIntroText = (text) => {
 
   return parts;
 };
+const renderCreatorText = (text) => {
+  if (!hasValue(text)) {
+    return null;
+  }
 
+  const rawText = String(text).trim();
+  const headingMatch = rawText.match(/^([^:]+:)\s*/);
+  const heading = headingMatch ? headingMatch[1] : null;
+  const rest = headingMatch ? rawText.slice(headingMatch[0].length) : rawText;
+
+  const items = rest
+    .replace(/^-\s*/, "")
+    .split(/\s+-\s+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (items.length <= 1) {
+    return <span>{rawText}</span>;
+  }
+
+  return (
+    <>
+      {heading && <span className="kos-creator-heading">{heading}</span>}
+      <ul className="kos-creator-list">
+        {items.map((item, index) => (
+          <li key={index}>{item}</li>
+        ))}
+      </ul>
+    </>
+  );
+};
 function KeepOrScrap() {
   const [entries, setEntries] = useState([]);
   const [side, setSide] = useState("Intro");
@@ -384,13 +414,13 @@ function KeepOrScrap() {
                       </p>
                     )}
 
-                    {hasValue(entry.creator) && (
-                      <p className="kos-creator">
+               {hasValue(entry.creator) && (
+                      <div className="kos-creator">
                         <strong className="kos-intro-label kos-creator-label">
-                          Creator:
+                          Credits:
                         </strong>
-                        {entry.creator}
-                      </p>
+                        {renderCreatorText(entry.creator)}
+                      </div>
                     )}
                   </div>
                 </div>
