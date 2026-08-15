@@ -947,33 +947,49 @@ function CardInfo() {
       return;
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const cardQuery = params.get("card");
+    const findCardByQuery = (cardQuery) => {
+      if (!cardQuery) {
+        return null;
+      }
 
-    if (!cardQuery) {
-      return;
-    }
-
-    const normalizedQuery = normalizeText(cardQuery);
-
-    const matchedCard = cards.find((card) => {
-      const cardName = normalizeText(card.card_name);
-      const title = normalizeText(card.title);
-      const aliases = normalizeText(card.aliases);
+      const normalizedQuery = normalizeText(cardQuery);
 
       return (
-        cardName === normalizedQuery ||
-        title === normalizedQuery ||
-        aliases
-          .split(/[,|;]/)
-          .map((alias) => normalizeText(alias))
-          .includes(normalizedQuery)
-      );
-    });
+        cards.find((card) => {
+          const cardName = normalizeText(card.card_name);
+          const title = normalizeText(card.title);
+          const aliases = normalizeText(card.aliases);
 
-    if (matchedCard) {
-      setSelectedCard(matchedCard);
+          return (
+            cardName === normalizedQuery ||
+            title === normalizedQuery ||
+            aliases
+              .split(/[,|;]/)
+              .map((alias) => normalizeText(alias))
+              .includes(normalizedQuery)
+          );
+        }) || null
+      );
+    };
+
+    // Open on initial load if the URL already has ?card=
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialMatch = findCardByQuery(initialParams.get("card"));
+
+    if (initialMatch) {
+      setSelectedCard(initialMatch);
     }
+
+    // Keep the modal in sync with Back/Forward navigation
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const match = findCardByQuery(params.get("card"));
+
+      setSelectedCard(match);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, [cards]);
 
   const normalCards = useMemo(() => {
@@ -1617,7 +1633,20 @@ function CardInfo() {
                     </p>
                   )}
 
-                  <button type="button" onClick={() => setSelectedCard(card)}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCard(card);
+
+                      const url = new URL(window.location.href);
+                      url.searchParams.set("card", card.card_name);
+                      window.history.pushState(
+                        { card: card.card_name },
+                        "",
+                        url,
+                      );
+                    }}
+                  >
                     View Details
                   </button>
                 </div>
@@ -1631,11 +1660,15 @@ function CardInfo() {
         <CardModal
           card={selectedCard}
           close={() => {
-            setSelectedCard(null);
+            if (window.history.state?.card) {
+              window.history.back();
+            } else {
+              setSelectedCard(null);
 
-            const url = new URL(window.location.href);
-            url.searchParams.delete("card");
-            window.history.replaceState({}, "", url);
+              const url = new URL(window.location.href);
+              url.searchParams.delete("card");
+              window.history.replaceState({}, "", url);
+            }
           }}
         />
       )}

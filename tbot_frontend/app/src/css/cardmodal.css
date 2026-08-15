@@ -15,10 +15,17 @@
   color: white;
   width: min(1000px, 92vw);
   max-height: 90vh;
-  overflow-y: auto;
+  overflow: hidden;
   border-radius: 12px;
   padding: 24px;
   box-sizing: border-box;
+}
+
+.card-modal-scroll-content {
+  position: relative;
+  z-index: 1;
+  max-height: calc(90vh - 48px);
+  overflow-y: auto;
 
   display: grid;
   grid-template-columns: 300px 1fr;
@@ -65,10 +72,6 @@
   pointer-events: none;
 }
 
-.card-modal > *:not(.card-modal-close) {
-  position: relative;
-  z-index: 1;
-}
 .card-modal-close {
   position: absolute;
   top: 8px;
@@ -315,6 +318,11 @@ h3.label {
     max-height: none;
     overflow: visible;
     margin: auto 0;
+  }
+
+  .card-modal-scroll-content {
+    max-height: none;
+    overflow: visible;
     display: block;
   }
 

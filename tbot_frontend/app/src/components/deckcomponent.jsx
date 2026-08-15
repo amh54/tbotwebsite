@@ -47,21 +47,6 @@ function DeckCard({ decklist }) {
   const [heroColor1, heroColor2] = getHeroColors(deck.hero);
   const deckKey = String(deck.deckid || deck.id || deck.name || "");
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [open, setOpen] = useState(false);
-  const [imgError, setImgError] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  // If the URL already contains ?deck=<this deck's key> on mount (or after
-  // navigation), open this card's modal automatically.
-  useEffect(() => {
-    if (deckKey && searchParams.get("deck") === deckKey) {
-      setOpen(true);
-    }
-  }, [searchParams, deckKey]);
-
-  const description = deck.description || "No description available.";
-
   const hasValue = (value) => {
     if (value === null || value === undefined) {
       return false;
@@ -69,6 +54,41 @@ function DeckCard({ decklist }) {
 
     return String(value).trim() !== "";
   };
+
+  const description = deck.description || "No description available.";
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [open, setOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Keep this card's modal in sync with the URL: opens it when ?deck=<key>
+  // matches (including on mount / navigation), and closes it when the
+  // param is removed (e.g. via the Back button).
+  useEffect(() => {
+    if (!deckKey) return;
+
+    if (searchParams.get("deck") === deckKey) {
+      setOpen(true);
+    } else if (open) {
+      setOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, deckKey]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        closeModal();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const toExternalUrl = (value) => {
     const raw = String(value || "").trim();
@@ -186,7 +206,11 @@ function DeckCard({ decklist }) {
   return (
     <>
       <div className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}>
-        <div className="deck-card-image-only">
+        <div
+          className="deck-card-image-only"
+          onClick={openModal}
+          style={{ cursor: "pointer" }}
+        >
           {deck.image && !imgError ? (
             <img
               src={deck.image}
@@ -200,7 +224,10 @@ function DeckCard({ decklist }) {
           <button
             type="button"
             className="view-details-btn"
-            onClick={openModal}
+            onClick={(e) => {
+              e.stopPropagation();
+              openModal();
+            }}
             aria-label={`View details for ${deck.name || "deck"}`}
           >
             View Details
@@ -255,136 +282,140 @@ function DeckCard({ decklist }) {
               X
             </button>
 
-            <div className="modal-content">
-              <div className="modal-image">
-                {deck.image && !imgError ? (
-                  <img
-                    src={deck.image}
-                    alt={deck.name || "Deck image"}
-                    onError={() => setImgError(true)}
-                  />
-                ) : (
-                  <div className="deck-image-placeholder">No image</div>
-                )}
-
-                {(hasValue(deck.creator) ||
-                  hasValue(deck.optimization) ||
-                  hasValue(deck.inspiration) ||
-                  hasValue(deck.suggested_date) ||
-                  hasValue(deck.updated_date)) && (
-                  <div className="image-meta">
-                    {(hasValue(deck.creator) ||
-                      hasValue(deck.optimization) ||
-                      hasValue(deck.inspiration)) && (
-                      <p>
-                        {hasValue(deck.creator) && (
-                          <>
-                            Created by <span>{deck.creator}</span>
-                          </>
-                        )}
-
-                        {hasValue(deck.optimization) && (
-                          <>
-                            {hasValue(deck.creator) ? ", " : ""}
-                            Optimized by <span>{deck.optimization}</span>
-                          </>
-                        )}
-
-                        {hasValue(deck.inspiration) && (
-                          <>
-                            {hasValue(deck.creator) ||
-                            hasValue(deck.optimization)
-                              ? ", "
-                              : ""}
-                            Inspired by <span>{deck.inspiration}</span>
-                          </>
-                        )}
-                      </p>
-                    )}
-
-                    {hasValue(deck.suggested_date) && (
-                      <p>Suggested on {deck.suggested_date}</p>
-                    )}
-
-                    {hasValue(deck.updated_date) && (
-                      <p>Updated on {deck.updated_date}</p>
-                    )}
-                  </div>
-                )}
-
-                <div className="modal-actions">
-                  <button
-                    type="button"
-                    className="share-btn"
-                    onClick={handleShare}
-                  >
-                    {copied ? "Link Copied!" : "Share Deck"}
-                  </button>
-
-                  {hasValue(deck.image) && (
-                    <button
-                      type="button"
-                      className="download-btn"
-                      onClick={handleDownload}
-                    >
-                      Download Decklist
-                    </button>
+            <div className="modal-scroll-content">
+              <div className="modal-content">
+                <div className="modal-image">
+                  {deck.image && !imgError ? (
+                    <img
+                      src={deck.image}
+                      alt={deck.name || "Deck image"}
+                      onError={() => setImgError(true)}
+                    />
+                  ) : (
+                    <div className="deck-image-placeholder">No image</div>
                   )}
-                </div>
-              </div>
 
-              <div className="modal-info">
-                <div className="modal-header">
-                  <h2 className="modal-title">
-                    {deck.name || "Untitled Deck"}
-                  </h2>
-                  <span className="deck-hero">
-                    {deck.hero || "Unknown Hero"}
-                  </span>
-                </div>
+                  {(hasValue(deck.creator) ||
+                    hasValue(deck.optimization) ||
+                    hasValue(deck.inspiration) ||
+                    hasValue(deck.suggested_date) ||
+                    hasValue(deck.updated_date)) && (
+                    <div className="image-meta">
+                      {(hasValue(deck.creator) ||
+                        hasValue(deck.optimization) ||
+                        hasValue(deck.inspiration)) && (
+                        <p>
+                          {hasValue(deck.creator) && (
+                            <>
+                              Created by <span>{deck.creator}</span>
+                            </>
+                          )}
 
-                <section className="modal-section description-section">
-                  <h3>Description</h3>
-                  <p className="description">{description}</p>
-                </section>
+                          {hasValue(deck.optimization) && (
+                            <>
+                              {hasValue(deck.creator) ? ", " : ""}
+                              Optimized by <span>{deck.optimization}</span>
+                            </>
+                          )}
 
-                <section className="modal-metadata">
-                  {hasValue(deckDocUrl) && (
-                    <div className="metadata-item">
-                      <span className="label">Deck Tutorial</span>
-                      <a
-                        href={deckDocUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="deck-doc-link"
-                      >
-                        Open tutorial
-                      </a>
+                          {hasValue(deck.inspiration) && (
+                            <>
+                              {hasValue(deck.creator) ||
+                              hasValue(deck.optimization)
+                                ? ", "
+                                : ""}
+                              Inspired by <span>{deck.inspiration}</span>
+                            </>
+                          )}
+                        </p>
+                      )}
+
+                      {hasValue(deck.suggested_date) && (
+                        <p>Suggested on {deck.suggested_date}</p>
+                      )}
+
+                      {hasValue(deck.updated_date) && (
+                        <p>Updated on {deck.updated_date}</p>
+                      )}
                     </div>
                   )}
 
-                  <div className="metadata-item">
-                    <span className="label">Category</span>
-                    <span className="value">{deck.category || "-"}</span>
+                  <div className="modal-actions">
+                    <button
+                      type="button"
+                      className="share-btn"
+                      onClick={handleShare}
+                    >
+                      {copied ? "Link Copied!" : "Share Deck"}
+                    </button>
+
+                    {hasValue(deck.image) && (
+                      <button
+                        type="button"
+                        className="download-btn"
+                        onClick={handleDownload}
+                      >
+                        Download Decklist
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="modal-info">
+                  <div className="modal-header">
+                    <div className="modal-title-content">
+                      <h2 className="modal-title">
+                        {deck.name || "Untitled Deck"}
+                      </h2>
+                      <span className="deck-hero">
+                        {deck.hero || "Unknown Hero"}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="metadata-item">
-                    <span className="label">Archetype</span>
-                    <span className="value">{deck.archetype || "-"}</span>
-                  </div>
+                  <section className="modal-section description-section">
+                    <h3>Description</h3>
+                    <p className="description">{description}</p>
+                  </section>
 
-                  <div className="metadata-item cost-item">
-                    <span className="label">Cost</span>
-                    <span className="cost-value">
-                      {deck.cost || "-"}
-                      <img
-                        src="https://i.ibb.co/jZkdqf6y/spark.webp"
-                        alt="Spark icon"
-                        className="spark-icon"
-                      />
-                    </span>
-                  </div>
-                </section>
+                  <section className="modal-metadata">
+                    {hasValue(deckDocUrl) && (
+                      <div className="metadata-item">
+                        <span className="label">Deck Tutorial</span>
+                        <a
+                          href={deckDocUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="deck-doc-link"
+                        >
+                          Open tutorial
+                        </a>
+                      </div>
+                    )}
+
+                    <div className="metadata-item">
+                      <span className="label">Category</span>
+                      <span className="value">{deck.category || "-"}</span>
+                    </div>
+
+                    <div className="metadata-item">
+                      <span className="label">Archetype</span>
+                      <span className="value">{deck.archetype || "-"}</span>
+                    </div>
+
+                    <div className="metadata-item cost-item">
+                      <span className="label">Cost</span>
+                      <span className="cost-value">
+                        {deck.cost || "-"}
+                        <img
+                          src="https://i.ibb.co/jZkdqf6y/spark.webp"
+                          alt="Spark icon"
+                          className="spark-icon"
+                        />
+                      </span>
+                    </div>
+                  </section>
+                </div>
               </div>
             </div>
           </dialog>
