@@ -34,7 +34,34 @@
 .filter-dropdown-trigger.open {
   color: #8fe38b;
 }
+.filter-dropdown-trigger-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+}
 
+.filter-dropdown-clear {
+  flex-shrink: 0;
+  margin-left: 8px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #aaa;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.filter-dropdown-clear:hover {
+  background: #333;
+  color: #8fe38b;
+}
 .filter-dropdown-arrow {
   font-size: 12px;
   margin-left: 8px;

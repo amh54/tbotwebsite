@@ -12,7 +12,13 @@ function FilterDropdown({ label, options, value, onChange, multi = false }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  const hasSelection = multi ? value.length > 0 : Boolean(value);
 
+  const handleClear = (e) => {
+    e.stopPropagation();
+    onChange(multi ? [] : null);
+    setOpen(false);
+  };
   const isSelected = (opt) =>
     multi
       ? value.some((v) => v.value === opt.value)
@@ -43,8 +49,26 @@ function FilterDropdown({ label, options, value, onChange, multi = false }) {
         className={`filter-dropdown-trigger ${open ? "open" : ""}`}
         onClick={() => setOpen((o) => !o)}
       >
-        {triggerLabel}
-        <span className="filter-dropdown-arrow">▾</span>
+        <span className="filter-dropdown-trigger-label">{triggerLabel}</span>
+
+        {hasSelection ? (
+          <span
+            className="filter-dropdown-clear"
+            role="button"
+            tabIndex={0}
+            aria-label={`Clear ${label} filter`}
+            onClick={handleClear}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                handleClear(e);
+              }
+            }}
+          >
+            ×
+          </span>
+        ) : (
+          <span className="filter-dropdown-arrow">▾</span>
+        )}
       </button>
 
       {open && (
