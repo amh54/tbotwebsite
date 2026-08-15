@@ -219,25 +219,24 @@
 }
 .modal-close {
   position: absolute;
-  right: 18px;
-  top: 12px;
-  width: 35px;
-  height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 50%;
-  font-size: 22px;
-  font-weight: bold;
+  top: 8px;
+  right: 36px;
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: white;
+  font-size: 32px;
+  line-height: 44px;
+  text-align: center;
   cursor: pointer;
-  z-index: 5;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .modal-close:hover {
-  background: #2a2a2a;
-  border-color: #8fe38b;
+  color: #8fe38b;
 }
 .modal-content {
   position: relative;
@@ -319,7 +318,7 @@
 .modal-header {
   display: flex;
   align-items: flex-start;
-  padding-right: 48px;
+  padding-right: 84px;
 }
 
 .modal-title-content {
