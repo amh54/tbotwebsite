@@ -22,4 +22,5 @@ urlpatterns = [
         views.keep_or_scrap,
         name="keep_or_scrap",
     ),
+    path("decklist-count/", views.decklist_count, name="decklist-count"),
 ]

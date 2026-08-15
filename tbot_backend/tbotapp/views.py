@@ -142,3 +142,27 @@ def keep_or_scrap(request):
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+@api_view(["GET"])
+def decklist_count(request):
+    try:
+        total = Decklist.objects.count()
+
+        return Response({
+            "count": total,
+        })
+
+    except DatabaseError as exc:
+        logger.exception("Decklist count query failed")
+
+        payload = {
+            "error": "Database query failed for decklist count.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

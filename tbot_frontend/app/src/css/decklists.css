@@ -320,3 +320,224 @@
     font-size: 21px !important;
   }
 }
+/* =========================
+   DECKLIST LOADING SCREEN
+   ========================= */
+
+.deck-loading {
+  min-height: calc(100vh - 72px);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      rgba(143, 227, 139, 0.08) 0%,
+      rgba(143, 227, 139, 0.035) 22%,
+      transparent 55%
+    ),
+    #101416;
+}
+
+.deck-loading::before {
+  content: "";
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: rgba(143, 227, 139, 0.035);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.deck-loading-card {
+  position: relative;
+  z-index: 1;
+  width: min(460px, 100%);
+  padding: 42px 40px;
+  text-align: center;
+  background: rgba(21, 24, 27, 0.94);
+  border: 1px solid #2a3034;
+  border-radius: 18px;
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.45),
+    0 0 45px rgba(143, 227, 139, 0.035);
+  animation: deckLoadingAppear 0.45s ease-out;
+}
+
+.deck-loading-icon {
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 25px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #202529;
+  border: 1px solid #343b40;
+  box-shadow:
+    inset 0 0 25px rgba(143, 227, 139, 0.025),
+    0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.deck-loading-icon-inner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #343b40;
+  border-top-color: #8fe38b;
+  border-right-color: rgba(143, 227, 139, 0.45);
+  border-radius: 50%;
+  animation: deckLoadingSpin 1s linear infinite;
+}
+
+.deck-loading h2 {
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.deck-loading p {
+  margin: 0;
+  color: #969da1;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.deck-loading-status {
+  margin-top: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  color: #8f969a;
+  font-size: 13px;
+}
+
+.deck-loading-status strong {
+  color: #8fe38b;
+  font-weight: 600;
+}
+
+.deck-loading-progress {
+  width: 100%;
+  height: 5px;
+  margin-top: 10px;
+  overflow: hidden;
+  background: #292e32;
+  border-radius: 999px;
+}
+
+.deck-loading-progress-bar {
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    rgba(143, 227, 139, 0.2),
+    #8fe38b,
+    rgba(143, 227, 139, 0.2)
+  );
+  box-shadow: 0 0 12px rgba(143, 227, 139, 0.35);
+  animation: deckLoadingProgress 1.6s ease-in-out infinite;
+}
+
+.deck-loading-dots {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 3px;
+}
+
+.deck-loading-dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #8fe38b;
+  opacity: 0.25;
+  animation: deckLoadingDot 1.2s infinite ease-in-out;
+}
+
+.deck-loading-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.deck-loading-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes deckLoadingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes deckLoadingProgress {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  50% {
+    transform: translateX(80%);
+  }
+
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes deckLoadingDot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes deckLoadingAppear {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 600px) {
+  .deck-loading {
+    min-height: calc(100vh - 60px);
+    padding: 25px 15px;
+  }
+
+  .deck-loading-card {
+    padding: 34px 25px;
+    border-radius: 15px;
+  }
+
+  .deck-loading-icon {
+    width: 78px;
+    height: 78px;
+  }
+
+  .deck-loading-icon-inner {
+    width: 42px;
+    height: 42px;
+  }
+
+  .deck-loading h2 {
+    font-size: 21px;
+  }
+}

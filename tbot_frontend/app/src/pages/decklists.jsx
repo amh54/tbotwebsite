@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import Select from "react-select";
 import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
 import "../css/decklists.css";
@@ -32,11 +31,11 @@ const getApiBaseUrl = () => {
     }
   }
 
-  // On deployed frontends, fallback to same-origin route when API base URL is not set.
   return "";
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
 const ARCHETYPE_META = {
   aggro: {
     icon: "⚡",
@@ -66,7 +65,10 @@ const ARCHETYPE_META = {
 };
 
 const CATEGORY_META = {
-  budget: { icon: "💵", description: "Decks that are cheap for new players" },
+  budget: {
+    icon: "💵",
+    description: "Decks that are cheap for new players",
+  },
   competitive: {
     icon: "🏆",
     description: "Some of the best decks in the game",
@@ -75,7 +77,10 @@ const CATEGORY_META = {
     icon: "🪜",
     description: "Decks that are mostly only good for ranked games",
   },
-  meme: { icon: "😂", description: "Decks built for fun/weird combos" },
+  meme: {
+    icon: "😂",
+    description: "Decks built for fun/weird combos",
+  },
 };
 
 function DecklistsPage() {
@@ -109,6 +114,7 @@ function DecklistsPage() {
   };
 
   const [decks, setDecks] = useState([]);
+  const [totalDecks, setTotalDecks] = useState(0);
 
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
@@ -120,81 +126,50 @@ function DecklistsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const selectStyles = {
-    control: (base, state) => ({
-      ...base,
-      backgroundColor: "#202020",
-      borderColor: state.isFocused ? "#8fe38b" : "#444",
-      minHeight: "45px",
-      boxShadow: "none",
-      cursor: "pointer",
-
-      "&:hover": {
-        borderColor: "#8fe38b",
-      },
-    }),
-
-    valueContainer: (base) => ({
-      ...base,
-      padding: "2px 10px",
-    }),
-
-    multiValue: (base) => ({
-      ...base,
-      backgroundColor: "#333",
-      borderRadius: "5px",
-    }),
-
-    multiValueLabel: (base) => ({
-      ...base,
-      color: "white",
-    }),
-
-    multiValueRemove: (base) => ({
-      ...base,
-      color: "#aaa",
-
-      "&:hover": {
-        backgroundColor: "#8fe38b",
-        color: "#101416",
-      },
-    }),
-
-    menuPortal: (base) => ({
-      ...base,
-      zIndex: 9999,
-    }),
-
-    menu: (base) => ({
-      ...base,
-      backgroundColor: "#202020",
-      zIndex: 9999,
-    }),
-
-    option: (base, state) => ({
-      ...base,
-      backgroundColor: state.isFocused ? "#333" : "#202020",
-      color: "white",
-      cursor: "pointer",
-    }),
-
-    singleValue: (base) => ({
-      ...base,
-      color: "white",
-    }),
-
-    placeholder: (base) => ({
-      ...base,
-      color: "#888",
-    }),
-
-    input: (base) => ({
-      ...base,
-      color: "white",
-    }),
-  };
   const [allCards, setAllCards] = useState([]);
 
+  /*
+   * Fetch the actual database deck count.
+   *
+   * This is separate from the full decklist request so the loading
+   * screen can display the real database total before all deck data
+   * has finished loading.
+   */
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchDeckCount = async () => {
+      try {
+        const endpoint = `${API_BASE_URL}/tbotapp/decklist-count/`;
+
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Deck count request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+
+        setTotalDecks(Number(data?.count) || 0);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load deck count:", err);
+        }
+      }
+    };
+
+    fetchDeckCount();
+
+    return () => controller.abort();
+  }, []);
+
+  /*
+   * Fetch card information for hero filter descriptions/images.
+   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -202,7 +177,9 @@ function DecklistsPage() {
       try {
         const endpoint = `${API_BASE_URL}/tbotapp/cardinfo/`;
 
-        const response = await fetch(endpoint, { signal: controller.signal });
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           return;
@@ -222,6 +199,10 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
+
+  /*
+   * Fetch the full decklist.
+   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -271,9 +252,9 @@ function DecklistsPage() {
           }
 
           throw new Error(
-            `Unexpected response type (${
+            `Unexpected response type ${
               contentType || "unknown"
-            }) from ${decklistsEndpoint}. ${hint}`,
+            } from ${decklistsEndpoint}. ${hint}`,
           );
         }
 
@@ -295,7 +276,20 @@ function DecklistsPage() {
           );
         }
 
-        setDecks(data || []);
+        /*
+         * Only update the actual deck data here.
+         *
+         * totalDecks is intentionally NOT updated here because it
+         * comes from the dedicated database count endpoint above.
+         */
+        if (Array.isArray(data)) {
+          setDecks(data);
+        } else {
+          const results = Array.isArray(data?.results) ? data.results : [];
+
+          setDecks(results);
+        }
+
         setError("");
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -320,6 +314,7 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
+
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
@@ -331,55 +326,65 @@ function DecklistsPage() {
       (deck) => String(deck.side || "").toLowerCase() === selectedSide,
     );
   }, [decks, side]);
-const heroOptions = useMemo(() => {
-  const heroSideMap = new Map();
 
-  sideFilteredDecks.forEach((deck) => {
-    const heroName = normalizeFilterText(deck.hero);
+  const heroOptions = useMemo(() => {
+    const heroSideMap = new Map();
 
-    if (heroName && !heroSideMap.has(normalizeFilterKey(heroName))) {
-      heroSideMap.set(normalizeFilterKey(heroName), {
-        heroName,
-        side: normalizeFilterKey(deck.side),
-      });
-    }
-  });
+    sideFilteredDecks.forEach((deck) => {
+      const heroName = normalizeFilterText(deck.hero);
 
-  return [...heroSideMap.values()]
-    .map(({ heroName, side }) => {
-      const matchedCard = allCards.find(
-        (card) =>
-          normalizeFilterKey(card.card_name) === normalizeFilterKey(heroName),
-      );
-
-      return {
-        value: heroName,
-        label: heroName,
-        description: matchedCard?.flavor_text || "",
-        image: matchedCard?.thumbnail || "",
-        side,
-      };
-    })
-    .sort((a, b) => {
-      const sideOrder = { plants: 0, zombies: 1 };
-
-      const sideCompare =
-        (sideOrder[a.side] ?? 99) - (sideOrder[b.side] ?? 99);
-
-      if (sideCompare !== 0) {
-        return sideCompare;
+      if (heroName && !heroSideMap.has(normalizeFilterKey(heroName))) {
+        heroSideMap.set(normalizeFilterKey(heroName), {
+          heroName,
+          side: normalizeFilterKey(deck.side),
+        });
       }
-
-      return a.label.localeCompare(b.label, undefined, {
-        sensitivity: "base",
-      });
     });
-}, [sideFilteredDecks, allCards]);
+
+    return [...heroSideMap.values()]
+      .map(({ heroName, side }) => {
+        const matchedCard = allCards.find(
+          (card) =>
+            normalizeFilterKey(card.card_name) === normalizeFilterKey(heroName),
+        );
+
+        return {
+          value: heroName,
+          label: heroName,
+          description: matchedCard?.flavor_text || "",
+          image: matchedCard?.thumbnail || "",
+          side,
+        };
+      })
+      .sort((a, b) => {
+        const sideOrder = {
+          plants: 0,
+          zombies: 1,
+        };
+
+        const sideCompare =
+          (sideOrder[a.side] ?? 99) - (sideOrder[b.side] ?? 99);
+
+        if (sideCompare !== 0) {
+          return sideCompare;
+        }
+
+        return a.label.localeCompare(b.label, undefined, {
+          sensitivity: "base",
+        });
+      });
+  }, [sideFilteredDecks, allCards]);
+
   const categoryOptions = useMemo(() => {
     const grouped = sideFilteredDecks.reduce((acc, deck) => {
       const normalized = normalizeFilterText(deck.category);
-      if (!normalized) return acc;
+
+      if (!normalized) {
+        return acc;
+      }
+
       const key = normalizeFilterKey(normalized);
+
       if (!acc[key]) {
         acc[key] = {
           value: normalized,
@@ -388,12 +393,16 @@ const heroOptions = useMemo(() => {
           ...CATEGORY_META[key],
         };
       }
+
       acc[key].count += 1;
+
       return acc;
     }, {});
 
     return Object.values(grouped).sort((a, b) =>
-      a.label.localeCompare(b.label, undefined, { sensitivity: "base" }),
+      a.label.localeCompare(b.label, undefined, {
+        sensitivity: "base",
+      }),
     );
   }, [sideFilteredDecks]);
 
@@ -403,6 +412,7 @@ const heroOptions = useMemo(() => {
         const count = sideFilteredDecks.filter((deck) =>
           normalizeFilterKey(deck.archetype).includes(value),
         ).length;
+
         return {
           value,
           label: value.charAt(0).toUpperCase() + value.slice(1),
@@ -447,12 +457,14 @@ const heroOptions = useMemo(() => {
       });
     });
   }, [decks]);
+
   const clearFilters = () => {
     setSearch("");
     setHero(null);
     setArchetype([]);
     setCategory(null);
   };
+
   const handleSideChange = (newSide) => {
     setSide(newSide);
     clearFilters();
@@ -501,6 +513,7 @@ const heroOptions = useMemo(() => {
       const heroMatch =
         !hero ||
         normalizeFilterKey(deck.hero) === normalizeFilterKey(hero.value);
+
       const deckArchetype = normalizeFilterKey(deck.archetype);
 
       const archetypeMatch =
@@ -523,7 +536,36 @@ const heroOptions = useMemo(() => {
   if (loading) {
     return (
       <div className="deck-page">
-        <h1>Loading Decklists...</h1>
+        <div className="deck-loading">
+          <div className="deck-loading-card">
+            <div className="deck-loading-icon">
+              <div className="deck-loading-icon-inner" />
+            </div>
+
+            <h2>
+              Loading decklists
+              <span className="deck-loading-dots">
+                <span />
+                <span />
+                <span />
+              </span>
+            </h2>
+
+            <p>Preparing the deck browser and loading available decks.</p>
+
+            <div className="deck-loading-status">
+              <span>Loading deck data</span>
+
+              <strong>
+                {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
+              </strong>
+            </div>
+
+            <div className="deck-loading-progress">
+              <div className="deck-loading-progress-bar" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -635,7 +677,9 @@ const heroOptions = useMemo(() => {
         {error ? (
           <p className="error-message">{error}</p>
         ) : (
-          <p className="results-count">Showing {filteredDecks.length} decks</p>
+          <p className="results-count">
+            Showing {filteredDecks.length} of {totalDecks} decks
+          </p>
         )}
 
         {!error && filteredDecks.length === 0 ? (
