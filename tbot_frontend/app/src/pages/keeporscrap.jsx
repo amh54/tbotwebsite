@@ -51,7 +51,66 @@ const isIntroEntry = (entry) => {
 
   return sideValue === "intro" || sideValue === "intro/explanation";
 };
+const INTRO_SECTION_LABELS = ["Craft", "Keep", "Scrappable", "Scrap", "Note"];
 
+const parseIntroSections = (text) => {
+  if (!hasValue(text)) {
+    return [];
+  }
+
+  const rawText = String(text);
+  const labelPattern = new RegExp(
+    `(?:^|\\n)(${INTRO_SECTION_LABELS.join("|")}):\\s*`,
+    "g",
+  );
+
+  const matches = [...rawText.matchAll(labelPattern)];
+
+  if (matches.length === 0) {
+    return [{ title: "Explanation", body: rawText.trim() }];
+  }
+
+  const sections = [];
+
+  const introText = rawText.slice(0, matches[0].index).trim();
+
+  if (introText) {
+    sections.push({ title: "Explanation", body: introText });
+  }
+
+  matches.forEach((match, index) => {
+    const label = match[1];
+    const start = match.index + match[0].length;
+    const end =
+      index + 1 < matches.length ? matches[index + 1].index : rawText.length;
+
+    const body = rawText.slice(start, end).trim();
+
+    if (body) {
+      sections.push({ title: label, body });
+    }
+  });
+
+  return sections;
+};
+const INTRO_DISPLAY_ORDER = [
+  "Explanation",
+  "Keep",
+  "Craft",
+  "Scrappable",
+  "Scrap",
+  "Note",
+  "Creator",
+];
+
+const sortIntroSections = (sections) => {
+  return [...sections].sort((a, b) => {
+    const aIndex = INTRO_DISPLAY_ORDER.indexOf(a.title);
+    const bIndex = INTRO_DISPLAY_ORDER.indexOf(b.title);
+
+    return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+  });
+};
 const renderBoldText = (text) => {
   if (!hasValue(text)) {
     return null;
@@ -227,47 +286,47 @@ function KeepOrScrap() {
     });
   }, [entries]);
 
- const groupedClasses = useMemo(() => {
-  const filtered = entries.filter(
-    (entry) => !isIntroEntry(entry) && hasValue(entry.card_class),
-  );
+  const groupedClasses = useMemo(() => {
+    const filtered = entries.filter(
+      (entry) => !isIntroEntry(entry) && hasValue(entry.card_class),
+    );
 
-  const groups = new Map();
+    const groups = new Map();
 
-  filtered.forEach((entry) => {
-    const key = normalizeText(entry.card_class);
+    filtered.forEach((entry) => {
+      const key = normalizeText(entry.card_class);
 
-    if (!groups.has(key)) {
-      groups.set(key, {
-        name: entry.card_class,
-        side: entry.side,
-        entries: [],
-      });
-    }
+      if (!groups.has(key)) {
+        groups.set(key, {
+          name: entry.card_class,
+          side: entry.side,
+          entries: [],
+        });
+      }
 
-    groups.get(key).entries.push(entry);
-  });
-
-  return [...groups.values()]
-    .map((group) => ({
-      ...group,
-      entries: group.entries.sort(
-        (a, b) => Number(a.tierid) - Number(b.tierid),
-      ),
-    }))
-    .sort((a, b) => {
-      const aSide = normalizeText(a.side);
-      const bSide = normalizeText(b.side);
-
-      const aIsPlant = aSide === "plants" || aSide === "plant";
-      const bIsPlant = bSide === "plants" || bSide === "plant";
-
-      if (aIsPlant && !bIsPlant) return -1;
-      if (!aIsPlant && bIsPlant) return 1;
-
-      return a.name.localeCompare(b.name);
+      groups.get(key).entries.push(entry);
     });
-}, [entries]);
+
+    return [...groups.values()]
+      .map((group) => ({
+        ...group,
+        entries: group.entries.sort(
+          (a, b) => Number(a.tierid) - Number(b.tierid),
+        ),
+      }))
+      .sort((a, b) => {
+        const aSide = normalizeText(a.side);
+        const bSide = normalizeText(b.side);
+
+        const aIsPlant = aSide === "plants" || aSide === "plant";
+        const bIsPlant = bSide === "plants" || bSide === "plant";
+
+        if (aIsPlant && !bIsPlant) return -1;
+        if (!aIsPlant && bIsPlant) return 1;
+
+        return a.name.localeCompare(b.name);
+      });
+  }, [entries]);
 
   const Navbar = () => (
     <nav className="navbar">
@@ -327,27 +386,68 @@ function KeepOrScrap() {
             {introEntries.length === 0 ? (
               <p className="no-kos-results">No introduction available.</p>
             ) : (
-              introEntries.map((entry) => (
-                <div className="kos-intro-item" key={entry.tierid}>
-                  <div className="kos-intro-media">
-                    {hasValue(entry.image) && (
-                      <img src={entry.image} alt="Keep or Scrap" />
-                    )}
-                  </div>
+              introEntries.map((entry) => {
+                const sections = parseIntroSections(entry.reasoning);
 
-                  <div className="kos-intro-body">
-                    {hasValue(entry.reasoning) && (
-                      <p className="kos-intro-text">
-                        {renderBoldText(entry.reasoning)}
-                      </p>
+                if (hasValue(entry.creator)) {
+                  sections.push({
+                    title: "Creator",
+                    body: entry.creator,
+                    isCreator: true,
+                  });
+                }
+
+                const orderedSections = sortIntroSections(sections);
+                const featuredSections = orderedSections.slice(0, 2);
+                const restSections = orderedSections.slice(2);
+
+                const renderSection = (section, index) => (
+                  <div
+                    className="kos-intro-column"
+                    key={`${entry.tierid}-${index}`}
+                  >
+                    <h3 className="kos-intro-column-title">{section.title}</h3>
+                    <p
+                      className={
+                        section.isCreator ? "kos-creator" : "kos-intro-text"
+                      }
+                    >
+                      {section.isCreator
+                        ? section.body
+                        : renderBoldText(section.body)}
+                    </p>
+                  </div>
+                );
+
+                return (
+                  <div className="kos-intro-item" key={entry.tierid}>
+                    {hasValue(entry.name) && (
+                      <h2 className="kos-intro-title">{entry.name}</h2>
                     )}
 
-                    {hasValue(entry.creator) && (
-                      <p className="kos-creator">{entry.creator}</p>
-                    )}
+                    <div className="kos-intro-top-row">
+                      <div className="kos-intro-media">
+                        {hasValue(entry.image) && (
+                          <img
+                            src={entry.image}
+                            alt={entry.name || "Keep or Scrap"}
+                          />
+                        )}
+                      </div>
+
+                      <div className="kos-intro-columns kos-intro-columns-featured">
+                        {featuredSections.map(renderSection)}
+                      </div>
+                    </div>
+
+                    <div className="kos-intro-columns kos-intro-columns-rest">
+                      {restSections.map((section, index) =>
+                        renderSection(section, index + 2),
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}

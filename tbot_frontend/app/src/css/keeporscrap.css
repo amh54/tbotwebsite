@@ -71,33 +71,17 @@
   max-width: 100%;
 }
 
-.kos-intro {
-  width: 100%;
-  margin-top: 40px;
-}
-
-.kos-intro-item {
+.kos-intro-row {
   width: 100%;
   display: grid;
-  grid-template-columns: 420px minmax(0, 1fr);
-  gap: 50px;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 35px;
   align-items: start;
-  padding: 35px 0;
-  border-bottom: 1px solid #292e31;
-  box-sizing: border-box;
-}
-
-.kos-intro-item:first-child {
-  padding-top: 0;
-}
-
-.kos-intro-item:last-child {
-  border-bottom: none;
 }
 
 .kos-intro-media {
-  width: 420px;
-  height: 260px;
+  width: 320px;
+  height: 200px;
   display: block;
   overflow: hidden;
   background: #15191c;
@@ -114,31 +98,53 @@
   object-position: center top;
 }
 
-.kos-intro-body {
+.kos-intro-top-row {
   width: 100%;
+  display: flex;
+  gap: 35px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.kos-intro-columns-featured {
+  flex: 1;
   min-width: 0;
-  padding: 30px 35px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.kos-intro-columns-rest {
+  width: 100%;
+  column-count: 3;
+  column-gap: 20px;
+}
+
+.kos-intro-column {
+  padding: 20px;
   background: #15191c;
   border: 1px solid #292e31;
   border-radius: 8px;
   box-sizing: border-box;
 }
 
+.kos-intro-columns-rest .kos-intro-column {
+  break-inside: avoid;
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
 .kos-intro-text {
   margin: 0;
   color: #d8dddf;
-  font-size: 18px;
-  line-height: 1.75;
+  font-size: 15px;
+  line-height: 1.65;
   white-space: normal;
 }
 
-.kos-intro-text strong {
-  color: #ffffff;
-  font-weight: 800;
-}
-
 .kos-creator {
-  margin: 18px 0 0;
+  margin: 0;
   color: #777f82;
   font-size: 14px;
 }
@@ -464,6 +470,9 @@
 }
 
 @media (max-width: 1050px) {
+    .kos-intro-columns-rest {
+    column-count: 2;
+  }
   .kos-class-grid {
     grid-template-columns: 1fr;
   }
@@ -539,6 +548,23 @@
 /* ----------------------------- */
 
 @media (max-width: 700px) {
+  .kos-intro-top-row {
+    flex-direction: column;
+  }
+
+  .kos-intro-media {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  .kos-intro-columns-featured {
+    grid-template-columns: 1fr;
+  }
+
+  .kos-intro-columns-rest {
+    column-count: 1;
+  }
   .kos-class-preview {
     grid-template-columns: 1fr;
     gap: 20px;
