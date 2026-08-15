@@ -51,66 +51,7 @@ const isIntroEntry = (entry) => {
 
   return sideValue === "intro" || sideValue === "intro/explanation";
 };
-const INTRO_SECTION_LABELS = ["Craft", "Keep", "Scrappable", "Scrap", "Note"];
 
-const parseIntroSections = (text) => {
-  if (!hasValue(text)) {
-    return [];
-  }
-
-  const rawText = String(text);
-  const labelPattern = new RegExp(
-    `(?:^|\\n)(${INTRO_SECTION_LABELS.join("|")}):\\s*`,
-    "g",
-  );
-
-  const matches = [...rawText.matchAll(labelPattern)];
-
-  if (matches.length === 0) {
-    return [{ title: "Explanation", body: rawText.trim() }];
-  }
-
-  const sections = [];
-
-  const introText = rawText.slice(0, matches[0].index).trim();
-
-  if (introText) {
-    sections.push({ title: "Explanation", body: introText });
-  }
-
-  matches.forEach((match, index) => {
-    const label = match[1];
-    const start = match.index + match[0].length;
-    const end =
-      index + 1 < matches.length ? matches[index + 1].index : rawText.length;
-
-    const body = rawText.slice(start, end).trim();
-
-    if (body) {
-      sections.push({ title: label, body });
-    }
-  });
-
-  return sections;
-};
-const INTRO_DISPLAY_ORDER = [
-  "Explanation",
-  "Keep",
-  "Craft",
-  "Scrappable",
-  "Scrap",
-  "Note",
-  "Creator",
-];
-
-const sortIntroSections = (sections) => {
-  return [...sections].sort((a, b) => {
-    const aIndex = INTRO_DISPLAY_ORDER.indexOf(a.title);
-    const bIndex = INTRO_DISPLAY_ORDER.indexOf(b.title);
-
-    return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
-  });
-};
 const renderBoldText = (text) => {
   if (!hasValue(text)) {
     return null;
@@ -166,6 +107,48 @@ const renderBoldText = (text) => {
         parts.push(<br key={`end-br-${lineIndex}`} />);
       }
     });
+  }
+
+  return parts;
+};
+const INTRO_SECTION_LABELS = ["Craft", "Keep", "Scrappable", "Scrap", "Note"];
+
+const renderIntroText = (text) => {
+  if (!hasValue(text)) {
+    return null;
+  }
+
+  const rawText = String(text);
+  const labelPattern = new RegExp(
+    `(^|\\n)(${INTRO_SECTION_LABELS.join("|")}):\\s*`,
+    "g",
+  );
+
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+
+  while ((match = labelPattern.exec(rawText)) !== null) {
+    const before = rawText.slice(lastIndex, match.index + match[1].length);
+
+    if (before.trim()) {
+      parts.push(<span key={`text-${key++}`}>{renderBoldText(before)}</span>);
+    }
+
+    parts.push(
+      <strong className="kos-intro-label" key={`label-${key++}`}>
+        {match[2]}:
+      </strong>,
+    );
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  const remaining = rawText.slice(lastIndex);
+
+  if (remaining) {
+    parts.push(<span key={`text-${key++}`}>{renderBoldText(remaining)}</span>);
   }
 
   return parts;
@@ -386,68 +369,32 @@ function KeepOrScrap() {
             {introEntries.length === 0 ? (
               <p className="no-kos-results">No introduction available.</p>
             ) : (
-              introEntries.map((entry) => {
-                const sections = parseIntroSections(entry.reasoning);
-
-                if (hasValue(entry.creator)) {
-                  sections.push({
-                    title: "Creator",
-                    body: entry.creator,
-                    isCreator: true,
-                  });
-                }
-
-                const orderedSections = sortIntroSections(sections);
-                const featuredSections = orderedSections.slice(0, 2);
-                const restSections = orderedSections.slice(2);
-
-                const renderSection = (section, index) => (
-                  <div
-                    className="kos-intro-column"
-                    key={`${entry.tierid}-${index}`}
-                  >
-                    <h3 className="kos-intro-column-title">{section.title}</h3>
-                    <p
-                      className={
-                        section.isCreator ? "kos-creator" : "kos-intro-text"
-                      }
-                    >
-                      {section.isCreator
-                        ? section.body
-                        : renderBoldText(section.body)}
-                    </p>
+              introEntries.map((entry) => (
+                <div className="kos-intro-item" key={entry.tierid}>
+                  <div className="kos-intro-media">
+                    {hasValue(entry.image) && (
+                      <img src={entry.image} alt="Keep or Scrap" />
+                    )}
                   </div>
-                );
 
-                return (
-                  <div className="kos-intro-item" key={entry.tierid}>
-                    {hasValue(entry.name) && (
-                      <h2 className="kos-intro-title">{entry.name}</h2>
+                  <div className="kos-intro-body">
+                    {hasValue(entry.reasoning) && (
+                      <p className="kos-intro-text">
+                        {renderIntroText(entry.reasoning)}
+                      </p>
                     )}
 
-                    <div className="kos-intro-top-row">
-                      <div className="kos-intro-media">
-                        {hasValue(entry.image) && (
-                          <img
-                            src={entry.image}
-                            alt={entry.name || "Keep or Scrap"}
-                          />
-                        )}
-                      </div>
-
-                      <div className="kos-intro-columns kos-intro-columns-featured">
-                        {featuredSections.map(renderSection)}
-                      </div>
-                    </div>
-
-                    <div className="kos-intro-columns kos-intro-columns-rest">
-                      {restSections.map((section, index) =>
-                        renderSection(section, index + 2),
-                      )}
-                    </div>
+                    {hasValue(entry.creator) && (
+                      <p className="kos-creator">
+                        <strong className="kos-intro-label kos-creator-label">
+                          Creator:
+                        </strong>
+                        {entry.creator}
+                      </p>
+                    )}
                   </div>
-                );
-              })
+                </div>
+              ))
             )}
           </div>
         )}
