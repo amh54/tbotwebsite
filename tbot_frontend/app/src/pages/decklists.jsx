@@ -331,33 +331,50 @@ function DecklistsPage() {
       (deck) => String(deck.side || "").toLowerCase() === selectedSide,
     );
   }, [decks, side]);
-  const heroOptions = useMemo(() => {
-    return [
-      ...new Set(
-        sideFilteredDecks
-          .map((deck) => normalizeFilterText(deck.hero))
-          .filter(Boolean),
-      ),
-    ]
-      .map((heroName) => {
-        const matchedCard = allCards.find(
-          (card) =>
-            normalizeFilterKey(card.card_name) === normalizeFilterKey(heroName),
-        );
+const heroOptions = useMemo(() => {
+  const heroSideMap = new Map();
 
-        return {
-          value: heroName,
-          label: heroName,
-          description: matchedCard?.flavor_text || "",
-          image: matchedCard?.thumbnail || "",
-        };
-      })
-      .sort((a, b) =>
-        a.label.localeCompare(b.label, undefined, {
-          sensitivity: "base",
-        }),
+  sideFilteredDecks.forEach((deck) => {
+    const heroName = normalizeFilterText(deck.hero);
+
+    if (heroName && !heroSideMap.has(normalizeFilterKey(heroName))) {
+      heroSideMap.set(normalizeFilterKey(heroName), {
+        heroName,
+        side: normalizeFilterKey(deck.side),
+      });
+    }
+  });
+
+  return [...heroSideMap.values()]
+    .map(({ heroName, side }) => {
+      const matchedCard = allCards.find(
+        (card) =>
+          normalizeFilterKey(card.card_name) === normalizeFilterKey(heroName),
       );
-  }, [sideFilteredDecks, allCards]);
+
+      return {
+        value: heroName,
+        label: heroName,
+        description: matchedCard?.flavor_text || "",
+        image: matchedCard?.thumbnail || "",
+        side,
+      };
+    })
+    .sort((a, b) => {
+      const sideOrder = { plants: 0, zombies: 1 };
+
+      const sideCompare =
+        (sideOrder[a.side] ?? 99) - (sideOrder[b.side] ?? 99);
+
+      if (sideCompare !== 0) {
+        return sideCompare;
+      }
+
+      return a.label.localeCompare(b.label, undefined, {
+        sensitivity: "base",
+      });
+    });
+}, [sideFilteredDecks, allCards]);
   const categoryOptions = useMemo(() => {
     const grouped = sideFilteredDecks.reduce((acc, deck) => {
       const normalized = normalizeFilterText(deck.category);
