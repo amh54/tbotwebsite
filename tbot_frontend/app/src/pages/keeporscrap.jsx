@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import "../css/keeporscrap.css";
 import "../css/loading.css";
+import Navbar from "../components/navbar";
 
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
@@ -390,23 +390,6 @@ function KeepOrScrap() {
         return a.name.localeCompare(b.name);
       });
   }, [entries]);
-
-  const Navbar = () => (
-    <nav className="navbar">
-      <div className="logo">
-        <Link to="/">Tbot</Link>
-      </div>
-
-      <div className="nav-links">
-        <Link to="/">Home</Link>
-        <Link to="/decklists">Decklists</Link>
-        <Link to="/cardinfo">Card Info</Link>
-        <Link to="/heroinfo">Hero Info</Link>
-        <Link to="/keeporscrap">Keep or Scrap</Link>
-      </div>
-    </nav>
-  );
-
   if (loading) {
     return (
       <div className="loading-page">

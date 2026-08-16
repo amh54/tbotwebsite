@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
+import Navbar from "../components/navbar";
 import "../css/decklists.css";
 import "../css/navbar.css";
 import "../css/loading.css";
@@ -607,25 +608,14 @@ function DecklistsPage() {
 
   return (
     <div className="deck-page">
-        <head>
+      <head>
         <link
           rel="icon"
           href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
-        />  <title>Decklists</title>
+        />{" "}
+        <title>Decklists</title>
       </head>
-      <nav className="navbar">
-        <div className="logo">
-          <Link to="/">Tbot</Link>
-        </div>
-
-        <div className="nav-links">
-          <Link to="/">Home</Link>
-          <Link to="/decklists">Decklists</Link>
-          <Link to="/cardinfo">Card Info</Link>
-          <Link to="/heroinfo">Hero Info</Link>
-          <Link to="/keeporscrap">Keep or Scrap</Link>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="deck-content">
         <h1>Decklists</h1>

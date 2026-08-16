@@ -5,6 +5,7 @@ import CardModal from "../components/cardmodal";
 import "../css/cardinfo.css";
 import "../css/navbar.css";
 import "../css/loading.css";
+import Navbar from "../components/navbar.jsx";
 
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
@@ -1444,19 +1445,7 @@ function CardInfo() {
           href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
         />  <title>Card Info</title>
       </head>
-      <nav className="navbar">
-        <div className="logo">
-          <Link to="/">Tbot</Link>
-        </div>
-
-        <div className="nav-links">
-          <Link to="/">Home</Link>
-          <Link to="/decklists">Decklists</Link>
-          <Link to="/cardinfo">Card Info</Link>
-          <Link to="/heroinfo">Hero Info</Link>
-          <Link to="/keeporscrap">Keep or Scrap</Link>
-        </div>
-      </nav>
+       <Navbar />
 
       <h1>Card Information</h1>
 

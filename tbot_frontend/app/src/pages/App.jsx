@@ -5,6 +5,9 @@ import DecklistsPage from "./decklists.jsx";
 import CardInfo from "./cardinfo.jsx";
 import KeepOrScrap from "./keeporscrap.jsx";
 import HeroInfo from "./heroinfo.jsx";
+import Navbar from "../components/navbar.jsx";
+import TermsOfService from "./termsofservice";
+import Privacy from "./privacy.jsx";
 
 function HomePage() {
   return (
@@ -13,23 +16,11 @@ function HomePage() {
         <link
           rel="icon"
           href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
-        /> 
+        />
         <title>Homepage</title>
       </head>
 
-      <nav className="navbar">
-        <div className="logo">
-          <Link to="/">Tbot</Link>
-        </div>
-
-        <div className="nav-links">
-          <Link to="/">Home</Link>
-          <Link to="/decklists">Decklists</Link>
-          <Link to="/cardinfo">Card Info</Link>
-          <Link to="/heroinfo">Hero Info</Link>
-          <Link to="/keeporscrap">Keep or Scrap</Link>
-        </div>
-      </nav>
+      <Navbar />
 
       <section className="hero">
         <p className="eyebrow">Plants vs. Zombies Heroes</p>
@@ -156,7 +147,7 @@ function HomePage() {
             <h3>Can I contribute?</h3>
             <p>
               Yes. Deck submissions, ideas, corrections, and feedback are
-              welcome through the Tbot community discord. <br/>
+              welcome through the Tbot community discord. <br />
               <a
                 href="https://discord.gg/E5XzKf2PjN"
                 target="_blank"
@@ -197,6 +188,8 @@ function App() {
       <Route path="/cardinfo" element={<CardInfo />} />
       <Route path="/keeporscrap" element={<KeepOrScrap />} />
       <Route path="/heroinfo" element={<HeroInfo />} />
+      <Route path="/termsofservice" element={<TermsOfService />} />
+      <Route path="/privacypolicy" element={<Privacy />} />
     </Routes>
   );
 }
