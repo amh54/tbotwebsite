@@ -34,14 +34,29 @@ const NAVIGATION = [
 function Navbar() {
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpenSection, setMobileOpenSection] = useState(null);
 
   const toggleMenu = (label) => {
     setOpenMenu((current) => (current === label ? null : label));
   };
 
+  const toggleMobileSection = (label) => {
+    setMobileOpenSection((current) => (current === label ? null : label));
+  };
+
   const closeMenus = () => {
     setOpenMenu(null);
     setMobileOpen(false);
+    setMobileOpenSection(null);
+  };
+
+  const openMobileMenu = () => {
+    setMobileOpen(true);
+  };
+
+  const closeMobileMenu = () => {
+    setMobileOpen(false);
+    setMobileOpenSection(null);
   };
 
   return (
@@ -60,8 +75,8 @@ function Navbar() {
         <button
           type="button"
           className="navbar-mobile-toggle"
-          onClick={() => setMobileOpen((current) => !current)}
-          aria-label="Toggle navigation"
+          onClick={openMobileMenu}
+          aria-label="Open navigation"
           aria-expanded={mobileOpen}
         >
           <span />
@@ -69,7 +84,11 @@ function Navbar() {
           <span />
         </button>
 
-        <nav className={`navbar-links ${mobileOpen ? "mobile-open" : ""}`}>
+        {/* =========================
+             DESKTOP NAVIGATION
+        ========================= */}
+
+        <nav className="navbar-links">
           {NAVIGATION.map((menu) => (
             <div
               key={menu.label}
@@ -80,11 +99,7 @@ function Navbar() {
               <button
                 type="button"
                 className="navbar-dropdown-button"
-                onClick={() => {
-                  if (window.innerWidth <= 800) {
-                    toggleMenu(menu.label);
-                  }
-                }}
+                onClick={() => toggleMenu(menu.label)}
               >
                 <span>{menu.label}</span>
 
@@ -92,6 +107,62 @@ function Navbar() {
               </button>
 
               <div className="navbar-dropdown-menu">
+                {menu.links.map((link) => (
+                  <Link key={link.path} to={link.path} onClick={closeMenus}>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
+      </div>
+
+      {/* =========================
+           MOBILE FULL-SCREEN MENU
+      ========================= */}
+
+      <div className={`navbar-mobile-overlay ${mobileOpen ? "open" : ""}`}>
+        <div className="navbar-mobile-header">
+          <Link to="/" className="navbar-logo" onClick={closeMenus}>
+            <img
+              src="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
+              alt="Tbot"
+              className="navbar-logo-image"
+            />
+
+            <span className="navbar-logo-main">TBOT</span>
+          </Link>
+
+          <button
+            type="button"
+            className="navbar-mobile-close"
+            onClick={closeMobileMenu}
+            aria-label="Close navigation"
+          >
+            &times;
+          </button>
+        </div>
+
+        <nav className="navbar-mobile-links">
+          {NAVIGATION.map((menu) => (
+            <div
+              key={menu.label}
+              className={`navbar-mobile-section ${
+                mobileOpenSection === menu.label ? "open" : ""
+              }`}
+            >
+              <button
+                type="button"
+                className="navbar-mobile-section-button"
+                onClick={() => toggleMobileSection(menu.label)}
+              >
+                <span>{menu.label}</span>
+
+                <span className="navbar-arrow" />
+              </button>
+
+              <div className="navbar-mobile-section-menu">
                 {menu.links.map((link) => (
                   <Link key={link.path} to={link.path} onClick={closeMenus}>
                     {link.label}
