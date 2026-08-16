@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "../css/keeporscrap.css";
+import "../css/loading.css";
 
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
@@ -111,6 +112,7 @@ const renderBoldText = (text) => {
 
   return parts;
 };
+
 const INTRO_SECTION_LABELS = ["Craft", "Keep", "Scrappable", "Scrap", "Note"];
 
 const renderIntroText = (text) => {
@@ -119,7 +121,8 @@ const renderIntroText = (text) => {
   }
 
   const rawText = String(text);
-const labelPattern = new RegExp(
+
+  const labelPattern = new RegExp(
     `(^|\\n)(${INTRO_SECTION_LABELS.join("|")}):\\s*`,
     "gi",
   );
@@ -136,7 +139,7 @@ const labelPattern = new RegExp(
       parts.push(<span key={`text-${key++}`}>{renderBoldText(before)}</span>);
     }
 
-   parts.push(
+    parts.push(
       <strong className="kos-intro-label" key={`label-${key++}`}>
         {match[2].charAt(0).toUpperCase() + match[2].slice(1).toLowerCase()}:
       </strong>,
@@ -153,14 +156,18 @@ const labelPattern = new RegExp(
 
   return parts;
 };
+
 const renderCreatorText = (text) => {
   if (!hasValue(text)) {
     return null;
   }
 
   const rawText = String(text).trim();
+
   const headingMatch = rawText.match(/^([^:]+:)\s*/);
+
   const heading = headingMatch ? headingMatch[1] : null;
+
   const rest = headingMatch ? rawText.slice(headingMatch[0].length) : rawText;
 
   const items = rest
@@ -176,6 +183,7 @@ const renderCreatorText = (text) => {
   return (
     <>
       {heading && <span className="kos-creator-heading">{heading}</span>}
+
       <ul className="kos-creator-list">
         {items.map((item, index) => (
           <li key={index}>{item}</li>
@@ -184,18 +192,58 @@ const renderCreatorText = (text) => {
     </>
   );
 };
+
 function KeepOrScrap() {
   const [entries, setEntries] = useState([]);
   const [side, setSide] = useState("Intro");
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [totalEntries, setTotalEntries] = useState(null);
+  useEffect(() => {
+    const controller = new AbortController();
 
+    const fetchCount = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/keeporscrap/count/`,
+          {
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Count request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+        const count = Number(data?.count);
+
+        if (Number.isFinite(count)) {
+          setTotalEntries(Math.max(0, count - 1));
+        }
+      } catch (fetchError) {
+        if (fetchError.name !== "AbortError") {
+          console.error("Keep or Scrap count loading failed:", fetchError);
+
+          setTotalEntries(null);
+        }
+      }
+    };
+
+    fetchCount();
+
+    return () => controller.abort();
+  }, []);
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchEntries = async () => {
       try {
+        setLoading(true);
+
         const endpoint = `${API_BASE_URL}/tbotapp/keeporscrap/`;
 
         const response = await fetch(endpoint, {
@@ -286,6 +334,7 @@ function KeepOrScrap() {
 
       const aIsPlant = aName.includes("plant");
       const bIsPlant = bName.includes("plant");
+
       const aIsZombie = aName.includes("zombie");
       const bIsZombie = bName.includes("zombie");
 
@@ -332,6 +381,7 @@ function KeepOrScrap() {
         const bSide = normalizeText(b.side);
 
         const aIsPlant = aSide === "plants" || aSide === "plant";
+
         const bIsPlant = bSide === "plants" || bSide === "plant";
 
         if (aIsPlant && !bIsPlant) return -1;
@@ -359,13 +409,39 @@ function KeepOrScrap() {
 
   if (loading) {
     return (
-      <div className="keep-or-scrap-page">
-        <Navbar />
+      <div className="loading-page">
+        <div className="loading-card">
+          <div className="loading-icon">
+            <div className="loading-icon-inner" />
+          </div>
 
-        <main className="kos-content">
-          <h1>Keep or Scrap</h1>
-          <p className="kos-loading">Loading Keep or Scrap...</p>
-        </main>
+          <h2>
+            Loading Keep or Scrap
+            <span className="loading-dots">
+              <span />
+              <span />
+              <span />
+            </span>
+          </h2>
+
+          <p>
+            Preparing the Keep or Scrap browser and loading available entries.
+          </p>
+
+          <div className="loading-status">
+            <span>Loading Keep or Scrap data</span>
+
+            <strong>
+              {totalEntries !== null
+                ? `${totalEntries} entries`
+                : "Loading count..."}
+            </strong>
+          </div>
+
+          <div className="loading-progress">
+            <div className="loading-progress-bar" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -414,11 +490,12 @@ function KeepOrScrap() {
                       </p>
                     )}
 
-               {hasValue(entry.creator) && (
+                    {hasValue(entry.creator) && (
                       <div className="kos-creator">
                         <strong className="kos-intro-label kos-creator-label">
                           Credits:
                         </strong>
+
                         {renderCreatorText(entry.creator)}
                       </div>
                     )}

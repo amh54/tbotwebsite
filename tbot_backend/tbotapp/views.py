@@ -89,14 +89,19 @@ def card_info(request):
 @api_view(["GET"])
 def heroinfo(request):
     try:
-        cards = ZombieCards.objects.all()
+        heroes = ZombieCards.objects.filter(
+            set_rarity__icontains="Hero"
+        )
 
         serializer = ZombieCardSerializer(
-            cards,
+            heroes,
             many=True,
         )
 
-        return Response(serializer.data)
+        return Response({
+            "count": heroes.count(),
+            "results": serializer.data,
+        })
 
     except DatabaseError as exc:
         logger.exception("Hero information query failed")
@@ -165,4 +170,67 @@ def decklist_count(request):
         return Response(
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+@api_view(["GET"])
+def card_count(request):
+    try:
+        total = ZombieCards.objects.count()
+
+        return Response({
+            "count": total,
+        })
+
+    except DatabaseError as exc:
+        logger.exception("Card count query failed")
+
+        payload = {
+            "error": "Database query failed for card count.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+@api_view(["GET"])
+def keeporscrap_count(request):
+    try:
+        count = KeepOrScrap.objects.count()
+
+        return Response({
+            "count": count,
+        })
+
+    except DatabaseError as exc:
+        logger.exception("Keep or Scrap count query failed")
+
+        return Response(
+            {
+                "error": "Database error while counting Keep or Scrap entries.",
+                "details": str(exc),
+            },
+            status=500,
+        )
+@api_view(["GET"])
+def hero_count(request):
+    try:
+        count = ZombieCards.objects.filter(
+            set_rarity__icontains="Hero"
+        ).count()
+
+        return Response({
+            "count": count,
+        })
+
+    except DatabaseError as exc:
+        logger.exception("Hero count query failed")
+
+        return Response(
+            {
+                "error": "Database error while retrieving hero count.",
+            },
+            status=500,
         )

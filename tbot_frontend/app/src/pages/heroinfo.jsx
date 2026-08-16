@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import CardModal from "../components/cardmodal";
 import "../css/cardinfo.css";
 import "../css/navbar.css";
+import "../css/loading.css";
 
 const getApiBaseUrl = () => {
   const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
@@ -66,9 +67,6 @@ const normalizeText = (value) =>
     .toLowerCase()
     .replace(/\s+/g, " ");
 
-const removeDiscordEmojis = (value) =>
-  String(value ?? "").replace(/<a?:[^:>]+:\d+>/gi, "");
-
 const getRarityName = (setRarity) => {
   if (!setRarity) {
     return "";
@@ -84,18 +82,15 @@ const getRarityName = (setRarity) => {
   return value.slice(separatorIndex + 3).trim();
 };
 
-const isHeroCard = (card) => {
-  const rarity = normalizeText(getRarityName(card?.set_rarity));
-
-  return rarity === "hero";
-};
-
 function HeroInfo() {
   const [cards, setCards] = useState([]);
   const [side, setSide] = useState("Plants");
   const [selectedCard, setSelectedCard] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [totalHeroes, setTotalHeroes] = useState(0);
 
   const getEmojiIcon = (emoji) => {
     const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
@@ -571,58 +566,120 @@ function HeroInfo() {
     return <span>{parts}</span>;
   };
 
+  /*
+   * Get the hero count from the SAME endpoint used to load heroes.
+   *
+   * Your Django URL is:
+   * /tbotapp/hero-count/
+   *
+   * NOT:
+   * /tbotapp/heroinfo/count/
+   */
   useEffect(() => {
-    const fetchCards = async () => {
+    const controller = new AbortController();
+
+    const fetchHeroCount = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/cardinfo/`,
-        );
+        const endpoint = `${API_BASE_URL}/tbotapp/hero-count/`;
+
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
+          throw new Error(
+            `Hero count request failed with status ${response.status}`,
+          );
         }
 
         const data = await response.json();
 
-        setCards(Array.isArray(data) ? data : []);
+        setTotalHeroes(Number(data?.count) || 0);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load hero count:", err);
+        }
+      }
+    };
+
+    fetchHeroCount();
+
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchHeroes = async () => {
+      try {
+        setLoading(true);
+
+        const endpoint = `${API_BASE_URL}/tbotapp/heroinfo/`;
+
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          let message = `Request failed with status ${response.status}`;
+
+          try {
+            const errorPayload = await response.json();
+
+            if (errorPayload?.detail) {
+              message = `${message}: ${errorPayload.detail}`;
+            } else if (errorPayload?.error) {
+              message = `${message}: ${errorPayload.error}`;
+            }
+          } catch (_error) {}
+
+          throw new Error(message);
+        }
+
+        const data = await response.json();
+
+        /*
+         * heroinfo already returns:
+         *
+         * {
+         *   count: ...,
+         *   results: [...]
+         * }
+         *
+         * So also use that count when available.
+         */
+        if (typeof data?.count !== "undefined") {
+          setTotalHeroes(Number(data.count) || 0);
+        }
+
+        const results = Array.isArray(data?.results)
+          ? data.results
+          : Array.isArray(data)
+            ? data
+            : [];
+
+        setCards(results);
         setError("");
       } catch (err) {
-        console.error(err);
-        setError(`Unable to load heroes. ${err.message || ""}`.trim());
+        if (err.name !== "AbortError") {
+          console.error("Hero loading failed:", err);
+
+          setCards([]);
+
+          setError(
+            `Unable to load heroes right now. ${err.message || ""}`.trim(),
+          );
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCards();
-  }, []);
-    useEffect(() => {
-    const fetchCards = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/cardinfo/`,
-        );
+    fetchHeroes();
 
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        setCards(Array.isArray(data) ? data : []);
-        setError("");
-      } catch (err) {
-        console.error(err);
-        setError(`Unable to load heroes. ${err.message || ""}`.trim());
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCards();
+    return () => controller.abort();
   }, []);
 
-  // ADD THIS HERE
   useEffect(() => {
     if (!cards.length) {
       return;
@@ -636,22 +693,38 @@ function HeroInfo() {
     }
 
     const foundCard = cards.find(
-      (card) =>
-        normalizeText(card.card_name) === normalizeText(cardName) &&
-        isHeroCard(card),
+      (card) => normalizeText(card.card_name) === normalizeText(cardName),
     );
 
     if (foundCard) {
-      setSide(foundCard.side);
+      const normalizedSide = normalizeText(foundCard.side);
+
+      if (normalizedSide === "zombie" || normalizedSide === "zombies") {
+        setSide("Zombies");
+      } else {
+        setSide("Plants");
+      }
+
       setSelectedCard(foundCard);
     }
   }, [cards]);
 
   const heroes = useMemo(() => {
-    return cards.filter(
-      (card) =>
-        normalizeText(card.side) === normalizeText(side) && isHeroCard(card),
-    );
+    const selectedSide = normalizeText(side);
+
+    return cards.filter((card) => {
+      const cardSide = normalizeText(card.side);
+
+      if (selectedSide === "plants") {
+        return cardSide === "plant" || cardSide === "plants";
+      }
+
+      if (selectedSide === "zombies") {
+        return cardSide === "zombie" || cardSide === "zombies";
+      }
+
+      return false;
+    });
   }, [cards, side]);
 
   const renderCard = (card) => (
@@ -717,22 +790,35 @@ function HeroInfo() {
 
   if (loading) {
     return (
-      <div className="card-information-page">
-        <nav className="navbar">
-          <div className="logo">
-            <Link to="/">Tbot</Link>
+      <div className="loading-page">
+        <div className="loading-card">
+          <div className="loading-icon">
+            <div className="loading-icon-inner" />
           </div>
 
-          <div className="nav-links">
-            <Link to="/">Home</Link>
-            <Link to="/decklists">Decklists</Link>
-            <Link to="/cardinfo">Card Info</Link>
-            <Link to="/heroinfo">Hero Info</Link>
-            <Link to="/keeporscrap">Keep or Scrap</Link>
-          </div>
-        </nav>
+          <h2>
+            Loading heroes
+            <span className="loading-dots">
+              <span />
+              <span />
+              <span />
+            </span>
+          </h2>
 
-        <p>Loading Heroes...</p>
+          <p>Preparing the hero browser and loading available heroes.</p>
+
+          <div className="loading-status">
+            <span>Loading hero data</span>
+
+            <strong>
+              {totalHeroes > 0 ? `${totalHeroes} heroes` : "Loading..."}
+            </strong>
+          </div>
+
+          <div className="loading-progress">
+            <div className="loading-progress-bar" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -766,8 +852,8 @@ function HeroInfo() {
 
         <button
           type="button"
-          className={side === "Zombie" ? "active" : ""}
-          onClick={() => setSide("Zombie")}
+          className={side === "Zombies" ? "active" : ""}
+          onClick={() => setSide("Zombies")}
         >
           Zombies
         </button>
@@ -780,7 +866,9 @@ function HeroInfo() {
           <h2>Heroes</h2>
 
           <p className="card-results-count">
-            Showing {heroes.length} {side} heroes
+            <p className="card-results-count">
+              Showing {heroes.length} {side} heroes
+            </p>
           </p>
 
           {heroes.length === 0 ? (

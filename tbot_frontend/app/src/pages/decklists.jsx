@@ -4,6 +4,7 @@ import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
 import "../css/decklists.css";
 import "../css/navbar.css";
+import "../css/loading.css";
 
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
@@ -127,14 +128,6 @@ function DecklistsPage() {
   const [error, setError] = useState("");
 
   const [allCards, setAllCards] = useState([]);
-
-  /*
-   * Fetch the actual database deck count.
-   *
-   * This is separate from the full decklist request so the loading
-   * screen can display the real database total before all deck data
-   * has finished loading.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -167,9 +160,6 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
-  /*
-   * Fetch card information for hero filter descriptions/images.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -200,9 +190,6 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
-  /*
-   * Fetch the full decklist.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -533,42 +520,44 @@ function DecklistsPage() {
     });
   }, [sortedDecks, search, side, hero, archetype, category]);
 
-  if (loading) {
-    return (
-      <div className="deck-page">
-        <div className="deck-loading">
-          <div className="deck-loading-card">
-            <div className="deck-loading-icon">
-              <div className="deck-loading-icon-inner" />
-            </div>
+ if (loading) {
+  return (
+    <div className="loading-page">
+      <div className="loading-card">
+        <div className="loading-icon">
+          <div className="loading-icon-inner" />
+        </div>
 
-            <h2>
-              Loading decklists
-              <span className="deck-loading-dots">
-                <span />
-                <span />
-                <span />
-              </span>
-            </h2>
+        <h2>
+          Loading decklists
+          <span className="loading-dots">
+            <span />
+            <span />
+            <span />
+          </span>
+        </h2>
 
-            <p>Preparing the deck browser and loading available decks.</p>
+        <p>
+          Preparing the deck browser and loading available decks.
+        </p>
 
-            <div className="deck-loading-status">
-              <span>Loading deck data</span>
+        <div className="loading-status">
+          <span>Loading deck data</span>
 
-              <strong>
-                {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
-              </strong>
-            </div>
+          <strong>
+            {totalDecks > 0
+              ? `${totalDecks} decks`
+              : "Loading..."}
+          </strong>
+        </div>
 
-            <div className="deck-loading-progress">
-              <div className="deck-loading-progress-bar" />
-            </div>
-          </div>
+        <div className="loading-progress">
+          <div className="loading-progress-bar" />
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="deck-page">

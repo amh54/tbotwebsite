@@ -4,6 +4,7 @@ import Select from "react-select";
 import CardModal from "../components/cardmodal";
 import "../css/cardinfo.css";
 import "../css/navbar.css";
+import "../css/loading.css";
 
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
@@ -433,6 +434,7 @@ function CardInfo() {
     value !== null && value !== undefined && String(value).trim() !== "";
 
   const [cards, setCards] = useState([]);
+  const [totalCards, setTotalCards] = useState(0);
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [side, setSide] = useState("Plants");
@@ -877,7 +879,37 @@ function CardInfo() {
 
     return 2;
   };
+  useEffect(() => {
+    const controller = new AbortController();
 
+    const fetchCardCount = async () => {
+      try {
+        const endpoint = `${API_BASE_URL}/tbotapp/card-count/`;
+
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Card count request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+
+        setTotalCards(Number(data?.count) || 0);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load card count:", err);
+        }
+      }
+    };
+
+    fetchCardCount();
+
+    return () => controller.abort();
+  }, []);
   useEffect(() => {
     const fetchCards = async () => {
       try {
@@ -1371,22 +1403,35 @@ function CardInfo() {
 
   if (loading) {
     return (
-      <div className="card-information-page">
-        <nav className="navbar">
-          <div className="logo">
-            <Link to="/">Tbot</Link>
+      <div className="loading-page">
+        <div className="loading-card">
+          <div className="loading-icon">
+            <div className="loading-icon-inner" />
           </div>
 
-          <div className="nav-links">
-            <Link to="/">Home</Link>
-            <Link to="/decklists">Decklists</Link>
-            <Link to="/cardinfo">Card Info</Link>
-            <Link to="/heroinfo">Hero Info</Link>
-            <Link to="/keeporscrap">Keep or Scrap</Link>
-          </div>
-        </nav>
+          <h2>
+            Loading cards
+            <span className="loading-dots">
+              <span />
+              <span />
+              <span />
+            </span>
+          </h2>
 
-        <p>Loading Cards...</p>
+          <p>Preparing the card browser and loading available cards.</p>
+
+          <div className="loading-status">
+            <span>Loading card data</span>
+
+            <strong>
+              {totalCards > 0 ? `${totalCards} cards` : "Loading..."}
+            </strong>
+          </div>
+
+          <div className="loading-progress">
+            <div className="loading-progress-bar" />
+          </div>
+        </div>
       </div>
     );
   }

@@ -23,4 +23,7 @@ urlpatterns = [
         name="keep_or_scrap",
     ),
     path("decklist-count/", views.decklist_count, name="decklist-count"),
+    path("card-count/", views.card_count, name="card-count"),
+    path("hero-count/", views.hero_count, name="hero-count"),
+    path("keeporscrap/count/", views.keeporscrap_count, name="keeporscrap_count"),
 ]
