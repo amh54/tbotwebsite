@@ -10,9 +10,10 @@
 
 .deck-content h1 {
   font-size: 48px;
+  line-height: 1.2;
+  margin-top: 0;
   margin-bottom: 30px;
 }
-
 .deck-browser {
   background: #15181b;
   border: 1px solid #23272b;

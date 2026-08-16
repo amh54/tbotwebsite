@@ -4,11 +4,15 @@
   box-sizing: border-box;
 }
 
-html,
-body {
+html {
   width: 100%;
   min-height: 100%;
   overflow-x: hidden;
+}
+
+body {
+  width: 100%;
+  min-height: 100%;
 }
 
 body {
@@ -24,45 +28,6 @@ body {
   background: #101416;
   color: #ffffff;
   padding-bottom: 60px;
-}
-
-/* =========================
-   NAVBAR
-========================= */
-
-.home .navbar {
-  width: 100%;
-  min-height: 72px;
-  padding: 0 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #101416;
-  border-bottom: 1px solid #23272b;
-}
-
-.logo a {
-  color: #8fe38b;
-  font-size: 1.5rem;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-}
-
-.nav-links a {
-  color: #e7e7e7;
-  text-decoration: none;
-  font-size: 0.95rem;
-  transition: color 0.2s ease;
-}
-
-.nav-links a:hover {
-  color: #8fe38b;
 }
 
 /* =========================
@@ -345,14 +310,6 @@ a:hover {
     padding-left: 24px;
     padding-right: 24px;
   }
-  .home .navbar {
-    padding: 0 24px;
-  }
-
-  .nav-links {
-    gap: 14px;
-  }
-
   .hero {
     padding: 55px 24px 45px;
   }
@@ -380,19 +337,6 @@ a:hover {
   .quick-answer-card {
     padding: 20px;
   }
-  .home .navbar {
-    min-height: auto;
-    padding: 18px 16px;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .nav-links {
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px 14px;
-  }
-
   .hero {
     padding: 45px 16px 40px;
   }
