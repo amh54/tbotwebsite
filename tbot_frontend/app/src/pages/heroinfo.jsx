@@ -825,6 +825,12 @@ function HeroInfo() {
 
   return (
     <div className="card-information-page">
+      <head>
+        <link
+          rel="icon"
+          href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
+        />  <title>Hero Info</title>
+      </head>
       <nav className="navbar">
         <div className="logo">
           <Link to="/">Tbot</Link>

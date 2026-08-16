@@ -13,7 +13,8 @@ function HomePage() {
         <link
           rel="icon"
           href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
-        />
+        /> 
+        <title>Homepage</title>
       </head>
 
       <nav className="navbar">

@@ -448,6 +448,12 @@ function KeepOrScrap() {
 
   return (
     <div className="keep-or-scrap-page">
+       <head>
+        <link
+          rel="icon"
+          href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
+        />  <title>Keep or Scrap</title>
+      </head>
       <Navbar />
 
       <main className="kos-content">

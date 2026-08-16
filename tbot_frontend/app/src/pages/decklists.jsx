@@ -301,10 +301,6 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
-
-  /*
-   * Filter decks by the currently selected side.
-   */
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
@@ -316,20 +312,6 @@ function DecklistsPage() {
       (deck) => String(deck.side || "").toLowerCase() === selectedSide,
     );
   }, [decks, side]);
-
-  /*
-   * These datasets are used specifically for calculating the dynamic
-   * counts shown inside the filter dropdowns.
-   *
-   * Each filter ignores itself when calculating its own options,
-   * but respects the other selected filters.
-   */
-
-  /*
-   * Hero options:
-   * Respect Category + Archetype.
-   * Ignore the currently selected Hero.
-   */
   const heroOptionDecks = useMemo(() => {
     return sideFilteredDecks.filter((deck) => {
       const categoryMatch =
@@ -348,12 +330,6 @@ function DecklistsPage() {
       return categoryMatch && archetypeMatch;
     });
   }, [sideFilteredDecks, category, archetype]);
-
-  /*
-   * Category options:
-   * Respect Hero + Archetype.
-   * Ignore the currently selected Category.
-   */
   const categoryOptionDecks = useMemo(() => {
     return sideFilteredDecks.filter((deck) => {
       const heroMatch =
@@ -371,12 +347,6 @@ function DecklistsPage() {
       return heroMatch && archetypeMatch;
     });
   }, [sideFilteredDecks, hero, archetype]);
-
-  /*
-   * Archetype options:
-   * Respect Hero + Category.
-   * Ignore the currently selected Archetype.
-   */
   const archetypeOptionDecks = useMemo(() => {
     return sideFilteredDecks.filter((deck) => {
       const heroMatch =
@@ -391,10 +361,6 @@ function DecklistsPage() {
       return heroMatch && categoryMatch;
     });
   }, [sideFilteredDecks, hero, category]);
-
-  /*
-   * Dynamic Hero options and counts.
-   */
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
 
@@ -452,10 +418,6 @@ function DecklistsPage() {
         });
       });
   }, [heroOptionDecks, allCards]);
-
-  /*
-   * Dynamic Category options and counts.
-   */
   const categoryOptions = useMemo(() => {
     const grouped = categoryOptionDecks.reduce((acc, deck) => {
       const normalized = normalizeFilterText(deck.category);
@@ -486,10 +448,6 @@ function DecklistsPage() {
       }),
     );
   }, [categoryOptionDecks]);
-
-  /*
-   * Dynamic Archetype options and counts.
-   */
   const archetypeOptions = useMemo(() => {
     return Object.entries(ARCHETYPE_META)
       .map(([value, meta]) => {
@@ -506,11 +464,6 @@ function DecklistsPage() {
       })
       .filter((option) => option.count > 0);
   }, [archetypeOptionDecks]);
-
-  /*
-   * Sort decks:
-   * Plants -> Zombies -> Hero -> Deck Name
-   */
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
       const normalizeSide = (value) => String(value || "").toLowerCase();
@@ -545,28 +498,16 @@ function DecklistsPage() {
       });
     });
   }, [decks]);
-
-  /*
-   * Clear all filters.
-   */
   const clearFilters = () => {
     setSearch("");
     setHero(null);
     setArchetype([]);
     setCategory(null);
   };
-
-  /*
-   * Changing Plants/Zombies/All also clears the filters.
-   */
   const handleSideChange = (newSide) => {
     setSide(newSide);
     clearFilters();
   };
-
-  /*
-   * Final deck filtering.
-   */
   const filteredDecks = useMemo(() => {
     return sortedDecks.filter((deck) => {
       const searchValue = String(search || "")
@@ -629,10 +570,6 @@ function DecklistsPage() {
       );
     });
   }, [sortedDecks, search, side, hero, archetype, category]);
-
-  /*
-   * Loading screen.
-   */
   if (loading) {
     return (
       <div className="loading-page">
@@ -670,6 +607,12 @@ function DecklistsPage() {
 
   return (
     <div className="deck-page">
+        <head>
+        <link
+          rel="icon"
+          href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
+        />  <title>Decklists</title>
+      </head>
       <nav className="navbar">
         <div className="logo">
           <Link to="/">Tbot</Link>
