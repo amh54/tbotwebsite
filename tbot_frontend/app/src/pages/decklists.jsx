@@ -94,24 +94,24 @@ function DecklistsPage() {
     bc: "beta-carrotina",
     ct: "citron",
     sf: "solar flare",
-    cz: "Chompzilla",
-    gs: "Green Shadow",
-    gk: "Grass Knuckles",
+    cz: "chompzilla",
+    gs: "green shadow",
+    gk: "grass knuckles",
     sp: "spudow",
-    nc: "Night Cap",
-    ro: "Rose",
-    cc: "Captain Combustible",
+    nc: "night cap",
+    ro: "rose",
+    cc: "captain combustible",
     sb: "super brainz",
-    sm: "The Smash",
-    if: "Impfinity",
-    rb: "Rustbolt",
-    eb: "Electric Boogaloo",
-    bf: "Brain Freeze",
-    pb: "Professor Brainstorm",
-    im: "Immorticia",
-    zm: "Z-Mech",
-    nt: "Neptuna",
-    hg: "Huge-Giganticus",
+    sm: "the smash",
+    if: "impfinity",
+    rb: "rustbolt",
+    eb: "electric boogaloo",
+    bf: "brain freeze",
+    pb: "professor brainstorm",
+    im: "immorticia",
+    zm: "z-mech",
+    nt: "neptuna",
+    hg: "huge-giganticus",
   };
 
   const [decks, setDecks] = useState([]);
@@ -128,6 +128,10 @@ function DecklistsPage() {
   const [error, setError] = useState("");
 
   const [allCards, setAllCards] = useState([]);
+
+  /*
+   * Load the total number of decks from the dedicated count endpoint.
+   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -160,6 +164,9 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
+  /*
+   * Load cards so hero dropdowns can display their images/descriptions.
+   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -180,7 +187,7 @@ function DecklistsPage() {
         setAllCards(Array.isArray(data) ? data : []);
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error(err);
+          console.error("Unable to load card information:", err);
         }
       }
     };
@@ -190,6 +197,9 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
+  /*
+   * Load all decklists.
+   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -230,9 +240,7 @@ function DecklistsPage() {
           : "VITE_API_BASE_URL is missing; set it in frontend deployment settings.";
 
         if (!contentType.includes("application/json")) {
-          const startsLikeHtml = responseText.trim().startsWith("<");
-
-          if (startsLikeHtml) {
+          if (responseText.trim().startsWith("<")) {
             throw new Error(
               `Received HTML instead of JSON from ${decklistsEndpoint}. ${hint}`,
             );
@@ -250,9 +258,7 @@ function DecklistsPage() {
         try {
           data = JSON.parse(responseText);
         } catch (_parseError) {
-          const startsLikeHtml = responseText.trim().startsWith("<");
-
-          if (startsLikeHtml) {
+          if (responseText.trim().startsWith("<")) {
             throw new Error(
               `Received HTML instead of JSON from ${decklistsEndpoint}. ${hint}`,
             );
@@ -263,12 +269,6 @@ function DecklistsPage() {
           );
         }
 
-        /*
-         * Only update the actual deck data here.
-         *
-         * totalDecks is intentionally NOT updated here because it
-         * comes from the dedicated database count endpoint above.
-         */
         if (Array.isArray(data)) {
           setDecks(data);
         } else {
@@ -302,6 +302,9 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
+  /*
+   * Filter decks by the currently selected side.
+   */
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
@@ -314,22 +317,109 @@ function DecklistsPage() {
     );
   }, [decks, side]);
 
-  const heroOptions = useMemo(() => {
-    const heroSideMap = new Map();
+  /*
+   * These datasets are used specifically for calculating the dynamic
+   * counts shown inside the filter dropdowns.
+   *
+   * Each filter ignores itself when calculating its own options,
+   * but respects the other selected filters.
+   */
 
-    sideFilteredDecks.forEach((deck) => {
+  /*
+   * Hero options:
+   * Respect Category + Archetype.
+   * Ignore the currently selected Hero.
+   */
+  const heroOptionDecks = useMemo(() => {
+    return sideFilteredDecks.filter((deck) => {
+      const categoryMatch =
+        !category ||
+        normalizeFilterKey(deck.category) ===
+          normalizeFilterKey(category.value);
+
+      const archetypeMatch =
+        archetype.length === 0 ||
+        archetype.every((selectedArchetype) =>
+          normalizeFilterKey(deck.archetype).includes(
+            normalizeFilterKey(selectedArchetype.value),
+          ),
+        );
+
+      return categoryMatch && archetypeMatch;
+    });
+  }, [sideFilteredDecks, category, archetype]);
+
+  /*
+   * Category options:
+   * Respect Hero + Archetype.
+   * Ignore the currently selected Category.
+   */
+  const categoryOptionDecks = useMemo(() => {
+    return sideFilteredDecks.filter((deck) => {
+      const heroMatch =
+        !hero ||
+        normalizeFilterKey(deck.hero) === normalizeFilterKey(hero.value);
+
+      const archetypeMatch =
+        archetype.length === 0 ||
+        archetype.every((selectedArchetype) =>
+          normalizeFilterKey(deck.archetype).includes(
+            normalizeFilterKey(selectedArchetype.value),
+          ),
+        );
+
+      return heroMatch && archetypeMatch;
+    });
+  }, [sideFilteredDecks, hero, archetype]);
+
+  /*
+   * Archetype options:
+   * Respect Hero + Category.
+   * Ignore the currently selected Archetype.
+   */
+  const archetypeOptionDecks = useMemo(() => {
+    return sideFilteredDecks.filter((deck) => {
+      const heroMatch =
+        !hero ||
+        normalizeFilterKey(deck.hero) === normalizeFilterKey(hero.value);
+
+      const categoryMatch =
+        !category ||
+        normalizeFilterKey(deck.category) ===
+          normalizeFilterKey(category.value);
+
+      return heroMatch && categoryMatch;
+    });
+  }, [sideFilteredDecks, hero, category]);
+
+  /*
+   * Dynamic Hero options and counts.
+   */
+  const heroOptions = useMemo(() => {
+    const heroMap = new Map();
+
+    heroOptionDecks.forEach((deck) => {
       const heroName = normalizeFilterText(deck.hero);
 
-      if (heroName && !heroSideMap.has(normalizeFilterKey(heroName))) {
-        heroSideMap.set(normalizeFilterKey(heroName), {
+      if (!heroName) {
+        return;
+      }
+
+      const key = normalizeFilterKey(heroName);
+
+      if (!heroMap.has(key)) {
+        heroMap.set(key, {
           heroName,
           side: normalizeFilterKey(deck.side),
+          count: 0,
         });
       }
+
+      heroMap.get(key).count += 1;
     });
 
-    return [...heroSideMap.values()]
-      .map(({ heroName, side }) => {
+    return [...heroMap.values()]
+      .map(({ heroName, side, count }) => {
         const matchedCard = allCards.find(
           (card) =>
             normalizeFilterKey(card.card_name) === normalizeFilterKey(heroName),
@@ -338,6 +428,7 @@ function DecklistsPage() {
         return {
           value: heroName,
           label: heroName,
+          count,
           description: matchedCard?.flavor_text || "",
           image: matchedCard?.thumbnail || "",
           side,
@@ -360,10 +451,13 @@ function DecklistsPage() {
           sensitivity: "base",
         });
       });
-  }, [sideFilteredDecks, allCards]);
+  }, [heroOptionDecks, allCards]);
 
+  /*
+   * Dynamic Category options and counts.
+   */
   const categoryOptions = useMemo(() => {
-    const grouped = sideFilteredDecks.reduce((acc, deck) => {
+    const grouped = categoryOptionDecks.reduce((acc, deck) => {
       const normalized = normalizeFilterText(deck.category);
 
       if (!normalized) {
@@ -377,7 +471,7 @@ function DecklistsPage() {
           value: normalized,
           label: normalized,
           count: 0,
-          ...CATEGORY_META[key],
+          ...(CATEGORY_META[key] || {}),
         };
       }
 
@@ -391,12 +485,15 @@ function DecklistsPage() {
         sensitivity: "base",
       }),
     );
-  }, [sideFilteredDecks]);
+  }, [categoryOptionDecks]);
 
+  /*
+   * Dynamic Archetype options and counts.
+   */
   const archetypeOptions = useMemo(() => {
     return Object.entries(ARCHETYPE_META)
       .map(([value, meta]) => {
-        const count = sideFilteredDecks.filter((deck) =>
+        const count = archetypeOptionDecks.filter((deck) =>
           normalizeFilterKey(deck.archetype).includes(value),
         ).length;
 
@@ -407,9 +504,13 @@ function DecklistsPage() {
           count,
         };
       })
-      .filter((opt) => opt.count > 0);
-  }, [sideFilteredDecks]);
+      .filter((option) => option.count > 0);
+  }, [archetypeOptionDecks]);
 
+  /*
+   * Sort decks:
+   * Plants -> Zombies -> Hero -> Deck Name
+   */
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
       const normalizeSide = (value) => String(value || "").toLowerCase();
@@ -445,6 +546,9 @@ function DecklistsPage() {
     });
   }, [decks]);
 
+  /*
+   * Clear all filters.
+   */
   const clearFilters = () => {
     setSearch("");
     setHero(null);
@@ -452,11 +556,17 @@ function DecklistsPage() {
     setCategory(null);
   };
 
+  /*
+   * Changing Plants/Zombies/All also clears the filters.
+   */
   const handleSideChange = (newSide) => {
     setSide(newSide);
     clearFilters();
   };
 
+  /*
+   * Final deck filtering.
+   */
   const filteredDecks = useMemo(() => {
     return sortedDecks.filter((deck) => {
       const searchValue = String(search || "")
@@ -520,44 +630,43 @@ function DecklistsPage() {
     });
   }, [sortedDecks, search, side, hero, archetype, category]);
 
- if (loading) {
-  return (
-    <div className="loading-page">
-      <div className="loading-card">
-        <div className="loading-icon">
-          <div className="loading-icon-inner" />
-        </div>
+  /*
+   * Loading screen.
+   */
+  if (loading) {
+    return (
+      <div className="loading-page">
+        <div className="loading-card">
+          <div className="loading-icon">
+            <div className="loading-icon-inner" />
+          </div>
 
-        <h2>
-          Loading decklists
-          <span className="loading-dots">
-            <span />
-            <span />
-            <span />
-          </span>
-        </h2>
+          <h2>
+            Loading decklists
+            <span className="loading-dots">
+              <span />
+              <span />
+              <span />
+            </span>
+          </h2>
 
-        <p>
-          Preparing the deck browser and loading available decks.
-        </p>
+          <p>Preparing the deck browser and loading available decks.</p>
 
-        <div className="loading-status">
-          <span>Loading deck data</span>
+          <div className="loading-status">
+            <span>Loading deck data</span>
 
-          <strong>
-            {totalDecks > 0
-              ? `${totalDecks} decks`
-              : "Loading..."}
-          </strong>
-        </div>
+            <strong>
+              {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
+            </strong>
+          </div>
 
-        <div className="loading-progress">
-          <div className="loading-progress-bar" />
+          <div className="loading-progress">
+            <div className="loading-progress-bar" />
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <div className="deck-page">
