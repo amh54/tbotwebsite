@@ -42,12 +42,17 @@
 }
 
 .deck-listing-info h3 {
-  margin: 0 0 4px;
-  font-size: 1.15rem;
-  color: #8fe38b;
-  line-height: 1.25;
-}
+  margin: 0 0 8px;
 
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.2;
+
+  color: #ffffff;
+
+  overflow-wrap: break-word;
+  word-break: normal;
+}
 .deck-listing-info p {
   margin: 0;
   color: #d5dde4;
@@ -598,12 +603,17 @@
     gap: 6px;
     padding: 2px 4px 2px 0;
   }
-
   .deck-listing-info h3 {
-    margin: 0 0 4px;
-    font-size: 1.35rem;
-    color: #8fe38b;
-    line-height: 1.25;
+    margin: 0 0 8px;
+
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1.2;
+
+    color: #ffffff;
+
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   .deck-listing-info p {
