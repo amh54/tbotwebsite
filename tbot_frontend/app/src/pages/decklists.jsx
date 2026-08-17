@@ -615,18 +615,9 @@ function DecklistsPage() {
     return (
       <div className="loading-page">
         <div className="loading-card">
-          <div className="loading-icon">
-            <div className="loading-icon-inner" />
-          </div>
+          <div className="loading-spinner" />
 
-          <h2>
-            Loading decklists
-            <span className="loading-dots">
-              <span />
-              <span />
-              <span />
-            </span>
-          </h2>
+          <h2>Loading decklists</h2>
 
           <p>Preparing the deck browser and loading available decks.</p>
 
@@ -636,10 +627,6 @@ function DecklistsPage() {
             <strong>
               {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
             </strong>
-          </div>
-
-          <div className="loading-progress">
-            <div className="loading-progress-bar" />
           </div>
         </div>
       </div>

@@ -793,10 +793,6 @@ function HeroInfo() {
     return (
       <div className="loading-page">
         <div className="loading-card">
-          <div className="loading-icon">
-            <div className="loading-icon-inner" />
-          </div>
-
           <h2>
             Loading heroes
             <span className="loading-dots">
@@ -815,15 +811,10 @@ function HeroInfo() {
               {totalHeroes > 0 ? `${totalHeroes} heroes` : "Loading..."}
             </strong>
           </div>
-
-          <div className="loading-progress">
-            <div className="loading-progress-bar" />
-          </div>
         </div>
       </div>
     );
   }
-
   return (
     <div className="card-information-page">
       <head>

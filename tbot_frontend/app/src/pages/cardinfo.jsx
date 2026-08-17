@@ -1617,10 +1617,6 @@ function CardInfo() {
     return (
       <div className="loading-page">
         <div className="loading-card">
-          <div className="loading-icon">
-            <div className="loading-icon-inner" />
-          </div>
-
           <h2>
             Loading cards
             <span className="loading-dots">
@@ -1638,10 +1634,6 @@ function CardInfo() {
             <strong>
               {totalCards > 0 ? `${totalCards} cards` : "Loading..."}
             </strong>
-          </div>
-
-          <div className="loading-progress">
-            <div className="loading-progress-bar" />
           </div>
         </div>
       </div>

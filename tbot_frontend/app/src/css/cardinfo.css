@@ -236,7 +236,7 @@
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -258,12 +258,7 @@
 ========================= */
 
 .card-item[data-rarity="Legendary"] {
-  background: linear-gradient(
-    135deg,
-    #c47aeb 0%,
-    #f7f0a8 50%,
-    #8ac5e8 100%
-  );
+  background: linear-gradient(135deg, #c47aeb 0%, #f7f0a8 50%, #8ac5e8 100%);
 }
 
 .card-item[data-rarity="Rare"] {

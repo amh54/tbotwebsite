@@ -394,10 +394,6 @@ function KeepOrScrap() {
     return (
       <div className="loading-page">
         <div className="loading-card">
-          <div className="loading-icon">
-            <div className="loading-icon-inner" />
-          </div>
-
           <h2>
             Loading Keep or Scrap
             <span className="loading-dots">
@@ -420,10 +416,6 @@ function KeepOrScrap() {
                 : "Loading count..."}
             </strong>
           </div>
-
-          <div className="loading-progress">
-            <div className="loading-progress-bar" />
-          </div>
         </div>
       </div>
     );
@@ -431,11 +423,12 @@ function KeepOrScrap() {
 
   return (
     <div className="keep-or-scrap-page">
-       <head>
+      <head>
         <link
           rel="icon"
           href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
-        />  <title>Keep or Scrap</title>
+        />{" "}
+        <title>Keep or Scrap</title>
       </head>
       <Navbar />
 
