@@ -51,8 +51,8 @@
 .deck-listing-info p {
   margin: 0;
   color: #d5dde4;
-  line-height: 1.35;
-  font-size: 0.95rem;
+  line-height: 1.4;
+  font-size: 1rem;
   white-space: normal;
   min-width: 0;
 }
@@ -78,6 +78,7 @@
 .creator-field .creator-value {
   color: #d5dde4;
   font-weight: 400;
+  font-size: 1rem;
 
   white-space: normal;
   overflow-wrap: break-word;
