@@ -1,14 +1,18 @@
-.card-page {
+.card-information-page {
   padding: 40px;
   min-height: 100vh;
   background: #101416;
   color: white;
 }
 
-.card-page h1 {
+.card-information-page h1 {
   font-size: 48px;
   margin-bottom: 30px;
 }
+
+/* =========================
+   TABS
+========================= */
 
 .card-tabs {
   display: flex;
@@ -72,8 +76,12 @@
   color: #8fe38b;
 }
 
+/* =========================
+   ICONS
+========================= */
+
 .card-ability-icon {
-   width: 18px !important;
+  width: 18px !important;
   height: 18px !important;
 }
 
@@ -94,8 +102,9 @@
   vertical-align: middle;
 }
 
-
-
+/* =========================
+   CARD BROWSER
+========================= */
 
 .card-browser {
   width: 100%;
@@ -105,6 +114,10 @@
   border-radius: 14px;
   overflow: visible;
 }
+
+/* =========================
+   SEARCH
+========================= */
 
 .card-search-container {
   width: 100%;
@@ -135,33 +148,73 @@
   color: #888;
 }
 
+/* =========================
+   FILTER ACTIONS (Clear button row)
+========================= */
+
+.card-filters-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 20px 0;
+}
+
+/* =========================
+   FILTERS
+========================= */
+
 .card-filters {
   display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
   gap: 12px;
   align-items: center;
   padding: 20px;
 }
 
 .card-select-wrapper {
+  width: 100%;
   min-width: 0;
 }
 
 .clear-card-filter-btn {
-  min-height: 45px;
-  padding: 10px 20px;
+  width: auto;
+  min-height: 36px;
+  padding: 6px 16px;
   background: #222;
   color: white;
   border: 1px solid #444;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .clear-card-filter-btn:hover {
-  background: #444;
+  background: #333;
+  color: #8fe38b;
   border-color: #8fe38b;
 }
+.card-filter-option-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-filter-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* =========================
+   RESULTS
+========================= */
 
 .card-results-count {
   margin: 0 0 20px;
@@ -177,9 +230,13 @@
   color: #ff7777;
 }
 
+/* =========================
+   CARD GRID
+========================= */
+
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
   gap: 20px;
 }
 
@@ -195,27 +252,48 @@
   gap: 14px;
   align-items: start;
 }
+
+/* =========================
+   RARITY COLORS
+========================= */
+
 .card-item[data-rarity="Legendary"] {
-  background: linear-gradient(135deg, #C47AEB 0%, #F7F0A8 50%, #8AC5E8 100%);
+  background: linear-gradient(
+    135deg,
+    #c47aeb 0%,
+    #f7f0a8 50%,
+    #8ac5e8 100%
+  );
 }
+
 .card-item[data-rarity="Rare"] {
-  background-color: #EA9C45;
+  background-color: #ea9c45;
 }
+
 .card-item[data-rarity="Super-Rare"] {
-  background-color: #885CD5;
+  background-color: #885cd5;
 }
+
 .card-item[data-rarity="Uncommon"] {
-  background-color: #959A9D;
+  background-color: #959a9d;
 }
+
 .card-item[data-rarity="Common"] {
-  background-color: #F5F5DC;
+  background-color: #f5f5dc;
 }
+
 .card-item[data-rarity="Event"] {
-  background-color: #C1503D;
+  background-color: #c1503d;
 }
+
 .card-item[data-rarity="Token"] {
-  background-color: #27272A;
+  background-color: #27272a;
 }
+
+/* =========================
+   LIGHT RARITY TEXT
+========================= */
+
 .card-item[data-rarity="Common"],
 .card-item[data-rarity="Uncommon"] {
   color: #1a1a1a;
@@ -239,10 +317,15 @@
 .card-item[data-rarity="Uncommon"] .trait-rendered u {
   color: #1a1a1a;
 }
+
+/* =========================
+   LEGENDARY TEXT
+========================= */
+
 .card-item[data-rarity="Legendary"] .card-item-info,
 .card-item[data-rarity="Legendary"] .card-item-info p,
-.card-item[data-rarity="Legendary"] .trait-rendered u, 
- .card-item[data-rarity="Legendary"] .card-stats-value{
+.card-item[data-rarity="Legendary"] .trait-rendered u,
+.card-item[data-rarity="Legendary"] .card-stats-value {
   color: #1a1a1a;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
@@ -251,6 +334,11 @@
   color: #2f7d32;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
+
+/* =========================
+   CARD IMAGE
+========================= */
+
 .card-item-media {
   width: 100%;
 }
@@ -262,12 +350,17 @@
   object-fit: contain;
 }
 
+/* =========================
+   CARD INFORMATION
+========================= */
+
 .card-item-info {
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-width: 0;
 }
+
 .card-item-info h2 {
   margin: 0 0 4px;
   font-size: 1.3rem;
@@ -281,7 +374,6 @@
   overflow-wrap: break-word;
   word-break: normal;
 }
-
 
 .card-title-class-icon {
   width: 18px;
@@ -312,11 +404,19 @@
   font-weight: 700;
 }
 
+/* =========================
+   TRIBES
+========================= */
+
 .card-tribe-line {
   display: flex;
   align-items: center;
   gap: 5px;
 }
+
+/* =========================
+   TRAITS
+========================= */
 
 .card-traits-line {
   display: flex;
@@ -324,8 +424,6 @@
   gap: 8px;
   flex-wrap: wrap;
 }
-
-
 
 .trait-rendered-item {
   display: inline-flex;
@@ -365,13 +463,16 @@
   flex: 0 0 18px;
 }
 
+/* =========================
+   STATS
+========================= */
+
 .card-stats-line {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
-
 
 .card-stats-value {
   display: inline-flex;
@@ -381,6 +482,10 @@
   color: #ffffff;
   font-weight: 600;
 }
+
+/* =========================
+   DESCRIPTION
+========================= */
 
 .card-description-box {
   width: 100%;
@@ -407,22 +512,31 @@
   color: #dde5ea;
   font-size: 0.92rem;
   line-height: 1.4;
+
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+
   overflow: hidden;
 
   max-height: calc(1.4em * 3);
 }
 
+/* =========================
+   CARD BUTTON
+========================= */
+
 .card-item button {
   margin-top: 10px;
   width: fit-content;
   padding: 10px 20px;
+
   background: #222;
   color: white;
+
   border: none;
   border-radius: 6px;
+
   cursor: pointer;
 }
 
@@ -434,18 +548,12 @@
    RESPONSIVE
 ========================= */
 
-@media (max-width: 1100px) {
-  .card-filters {
-    grid-template-columns: repeat(3, minmax(160px, 1fr));
-  }
-}
-
 @media (max-width: 900px) {
-  .card-page {
+  .card-information-page {
     padding: 20px;
   }
 
-  .card-page h1 {
+  .card-information-page h1 {
     font-size: 36px;
   }
 
@@ -491,12 +599,20 @@
 }
 
 @media (max-width: 540px) {
-  .card-page {
+  .card-information-page {
     padding: 15px;
   }
 
   .card-filters {
     grid-template-columns: 1fr;
+  }
+
+  .card-filters-actions {
+    justify-content: stretch;
+  }
+
+  .clear-card-filter-btn {
+    width: 100%;
   }
 
   .card-item {

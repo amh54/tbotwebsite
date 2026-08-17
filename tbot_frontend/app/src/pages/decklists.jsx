@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar";
@@ -129,10 +128,6 @@ function DecklistsPage() {
   const [error, setError] = useState("");
 
   const [allCards, setAllCards] = useState([]);
-
-  /*
-   * Load the total number of decks from the dedicated count endpoint.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -164,10 +159,6 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
-
-  /*
-   * Load cards so hero dropdowns can display their images/descriptions.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -197,10 +188,6 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
-
-  /*
-   * Load all decklists.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
