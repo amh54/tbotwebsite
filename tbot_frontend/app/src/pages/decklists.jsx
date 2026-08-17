@@ -120,14 +120,16 @@ function DecklistsPage() {
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
 
-  const [hero, setHero] = useState(null);
+  // All three filters are multi-select.
+  const [hero, setHero] = useState([]);
   const [archetype, setArchetype] = useState([]);
-  const [category, setCategory] = useState(null);
+  const [category, setCategory] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [allCards, setAllCards] = useState([]);
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -159,6 +161,7 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -188,6 +191,7 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -289,6 +293,7 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
+
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
@@ -300,12 +305,32 @@ function DecklistsPage() {
       (deck) => String(deck.side || "").toLowerCase() === selectedSide,
     );
   }, [decks, side]);
+
+  /*
+   * These three datasets determine which options are available.
+   *
+   * Hero:
+   * - Category uses OR
+   * - Archetype uses AND
+   *
+   * Category:
+   * - Hero uses OR
+   * - Archetype uses AND
+   *
+   * Archetype:
+   * - Hero uses OR
+   * - Category uses OR
+   */
+
   const heroOptionDecks = useMemo(() => {
     return sideFilteredDecks.filter((deck) => {
       const categoryMatch =
-        !category ||
-        normalizeFilterKey(deck.category) ===
-          normalizeFilterKey(category.value);
+        category.length === 0 ||
+        category.some(
+          (selectedCategory) =>
+            normalizeFilterKey(deck.category) ===
+            normalizeFilterKey(selectedCategory.value),
+        );
 
       const archetypeMatch =
         archetype.length === 0 ||
@@ -318,11 +343,16 @@ function DecklistsPage() {
       return categoryMatch && archetypeMatch;
     });
   }, [sideFilteredDecks, category, archetype]);
+
   const categoryOptionDecks = useMemo(() => {
     return sideFilteredDecks.filter((deck) => {
       const heroMatch =
-        !hero ||
-        normalizeFilterKey(deck.hero) === normalizeFilterKey(hero.value);
+        hero.length === 0 ||
+        hero.some(
+          (selectedHero) =>
+            normalizeFilterKey(deck.hero) ===
+            normalizeFilterKey(selectedHero.value),
+        );
 
       const archetypeMatch =
         archetype.length === 0 ||
@@ -335,20 +365,29 @@ function DecklistsPage() {
       return heroMatch && archetypeMatch;
     });
   }, [sideFilteredDecks, hero, archetype]);
+
   const archetypeOptionDecks = useMemo(() => {
     return sideFilteredDecks.filter((deck) => {
       const heroMatch =
-        !hero ||
-        normalizeFilterKey(deck.hero) === normalizeFilterKey(hero.value);
+        hero.length === 0 ||
+        hero.some(
+          (selectedHero) =>
+            normalizeFilterKey(deck.hero) ===
+            normalizeFilterKey(selectedHero.value),
+        );
 
       const categoryMatch =
-        !category ||
-        normalizeFilterKey(deck.category) ===
-          normalizeFilterKey(category.value);
+        category.length === 0 ||
+        category.some(
+          (selectedCategory) =>
+            normalizeFilterKey(deck.category) ===
+            normalizeFilterKey(selectedCategory.value),
+        );
 
       return heroMatch && categoryMatch;
     });
   }, [sideFilteredDecks, hero, category]);
+
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
 
@@ -406,6 +445,7 @@ function DecklistsPage() {
         });
       });
   }, [heroOptionDecks, allCards]);
+
   const categoryOptions = useMemo(() => {
     const grouped = categoryOptionDecks.reduce((acc, deck) => {
       const normalized = normalizeFilterText(deck.category);
@@ -436,6 +476,7 @@ function DecklistsPage() {
       }),
     );
   }, [categoryOptionDecks]);
+
   const archetypeOptions = useMemo(() => {
     return Object.entries(ARCHETYPE_META)
       .map(([value, meta]) => {
@@ -452,6 +493,7 @@ function DecklistsPage() {
       })
       .filter((option) => option.count > 0);
   }, [archetypeOptionDecks]);
+
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
       const normalizeSide = (value) => String(value || "").toLowerCase();
@@ -486,16 +528,19 @@ function DecklistsPage() {
       });
     });
   }, [decks]);
+
   const clearFilters = () => {
     setSearch("");
-    setHero(null);
+    setHero([]);
     setArchetype([]);
-    setCategory(null);
+    setCategory([]);
   };
+
   const handleSideChange = (newSide) => {
     setSide(newSide);
     clearFilters();
   };
+
   const filteredDecks = useMemo(() => {
     return sortedDecks.filter((deck) => {
       const searchValue = String(search || "")
@@ -537,8 +582,12 @@ function DecklistsPage() {
         (side === "Zombies" && sideValue === "zombies");
 
       const heroMatch =
-        !hero ||
-        normalizeFilterKey(deck.hero) === normalizeFilterKey(hero.value);
+        hero.length === 0 ||
+        hero.some(
+          (selectedHero) =>
+            normalizeFilterKey(deck.hero) ===
+            normalizeFilterKey(selectedHero.value),
+        );
 
       const deckArchetype = normalizeFilterKey(deck.archetype);
 
@@ -549,15 +598,19 @@ function DecklistsPage() {
         );
 
       const categoryMatch =
-        !category ||
-        normalizeFilterKey(deck.category) ===
-          normalizeFilterKey(category.value);
+        category.length === 0 ||
+        category.some(
+          (selectedCategory) =>
+            normalizeFilterKey(deck.category) ===
+            normalizeFilterKey(selectedCategory.value),
+        );
 
       return (
         searchMatch && sideMatch && heroMatch && archetypeMatch && categoryMatch
       );
     });
   }, [sortedDecks, search, side, hero, archetype, category]);
+
   if (loading) {
     return (
       <div className="loading-page">
@@ -599,9 +652,10 @@ function DecklistsPage() {
         <link
           rel="icon"
           href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
-        />{" "}
+        />
         <title>Decklists</title>
       </head>
+
       <Navbar />
 
       <main className="deck-content">
@@ -660,6 +714,7 @@ function DecklistsPage() {
                 options={heroOptions}
                 value={hero}
                 onChange={setHero}
+                multi
               />
             </div>
 
@@ -669,6 +724,7 @@ function DecklistsPage() {
                 options={categoryOptions}
                 value={category}
                 onChange={setCategory}
+                multi
               />
             </div>
 
