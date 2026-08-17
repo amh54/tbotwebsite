@@ -120,7 +120,6 @@ function DecklistsPage() {
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
 
-  // All three filters are multi-select.
   const [hero, setHero] = useState([]);
   const [archetype, setArchetype] = useState([]);
   const [category, setCategory] = useState([]);
@@ -214,9 +213,7 @@ function DecklistsPage() {
             } else if (errorPayload?.error) {
               message = `${message}: ${errorPayload.error}`;
             }
-          } catch (_error) {
-            // Ignore non-JSON error payloads.
-          }
+          } catch (_error) {}
 
           throw new Error(message);
         }
@@ -265,7 +262,6 @@ function DecklistsPage() {
           setDecks(data);
         } else {
           const results = Array.isArray(data?.results) ? data.results : [];
-
           setDecks(results);
         }
 
@@ -305,22 +301,6 @@ function DecklistsPage() {
       (deck) => String(deck.side || "").toLowerCase() === selectedSide,
     );
   }, [decks, side]);
-
-  /*
-   * These three datasets determine which options are available.
-   *
-   * Hero:
-   * - Category uses OR
-   * - Archetype uses AND
-   *
-   * Category:
-   * - Hero uses OR
-   * - Archetype uses AND
-   *
-   * Archetype:
-   * - Hero uses OR
-   * - Category uses OR
-   */
 
   const heroOptionDecks = useMemo(() => {
     return sideFilteredDecks.filter((deck) => {

@@ -394,6 +394,8 @@ function KeepOrScrap() {
     return (
       <div className="loading-page">
         <div className="loading-card">
+          <div className="loading-spinner" />
+
           <h2>
             Loading Keep or Scrap
             <span className="loading-dots">

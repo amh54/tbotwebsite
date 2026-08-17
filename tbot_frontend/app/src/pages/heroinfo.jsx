@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import CardModal from "../components/cardmodal";
 import "../css/cardinfo.css";
 import "../css/navbar.css";
@@ -107,18 +106,22 @@ function HeroInfo() {
         url: STAT_ICON_LINKS.cost,
         alt: "Brainz",
       },
+
       strength: {
         url: STAT_ICON_LINKS.strength,
         alt: "Strength",
       },
+
       health: {
         url: STAT_ICON_LINKS.health,
         alt: "Health",
       },
+
       sun: {
         url: STAT_ICON_LINKS.sun,
         alt: "Sun",
       },
+
       healthstrength: {
         url: STAT_ICON_LINKS.healthstrength,
         alt: "Health and Strength",
@@ -128,46 +131,57 @@ function HeroInfo() {
         url: TRAIT_ICON_LINKS.deadly,
         alt: "Deadly",
       },
+
       freeze: {
         url: TRAIT_ICON_LINKS.freeze,
         alt: "Freeze",
       },
+
       antihero: {
         url: TRAIT_ICON_LINKS.antihero,
         alt: "Anti-Hero",
       },
+
       strikethrough: {
         url: TRAIT_ICON_LINKS.strikethrough,
         alt: "Strikethrough",
       },
+
       special: {
         url: TRAIT_ICON_LINKS.special,
         alt: "Special",
       },
+
       bullseye: {
         url: TRAIT_ICON_LINKS.bullseye,
         alt: "Bullseye",
       },
+
       frenzy: {
         url: TRAIT_ICON_LINKS.frenzy,
         alt: "Frenzy",
       },
+
       armored: {
         url: TRAIT_ICON_LINKS.armored,
         alt: "Armored",
       },
+
       overshoot: {
         url: TRAIT_ICON_LINKS.overshoot,
         alt: "Overshoot",
       },
+
       untrickable: {
         url: TRAIT_ICON_LINKS.untrickable,
         alt: "Untrickable",
       },
+
       doublestrike: {
         url: TRAIT_ICON_LINKS.doublestrike,
         alt: "Double Strike",
       },
+
       splashdamage: {
         url: TRAIT_ICON_LINKS.splashdamage,
         alt: "Splash Damage",
@@ -177,38 +191,47 @@ function HeroInfo() {
         url: CLASS_ICON_LINKS.guardian,
         alt: "Guardian",
       },
+
       kabloom: {
         url: CLASS_ICON_LINKS.kabloom,
         alt: "Kabloom",
       },
+
       megagrow: {
         url: CLASS_ICON_LINKS.megagrow,
         alt: "Mega-Grow",
       },
+
       smarty: {
         url: CLASS_ICON_LINKS.smarty,
         alt: "Smarty",
       },
+
       solar: {
         url: CLASS_ICON_LINKS.solar,
         alt: "Solar",
       },
+
       beastly: {
         url: CLASS_ICON_LINKS.beastly,
         alt: "Beastly",
       },
+
       brainy: {
         url: CLASS_ICON_LINKS.brainy,
         alt: "Brainy",
       },
+
       crazy: {
         url: CLASS_ICON_LINKS.crazy,
         alt: "Crazy",
       },
+
       hearty: {
         url: CLASS_ICON_LINKS.hearty,
         alt: "Hearty",
       },
+
       sneaky: {
         url: CLASS_ICON_LINKS.sneaky,
         alt: "Sneaky",
@@ -567,15 +590,6 @@ function HeroInfo() {
     return <span>{parts}</span>;
   };
 
-  /*
-   * Get the hero count from the SAME endpoint used to load heroes.
-   *
-   * Your Django URL is:
-   * /tbotapp/hero-count/
-   *
-   * NOT:
-   * /tbotapp/heroinfo/count/
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -639,16 +653,6 @@ function HeroInfo() {
 
         const data = await response.json();
 
-        /*
-         * heroinfo already returns:
-         *
-         * {
-         *   count: ...,
-         *   results: [...]
-         * }
-         *
-         * So also use that count when available.
-         */
         if (typeof data?.count !== "undefined") {
           setTotalHeroes(Number(data.count) || 0);
         }
@@ -731,7 +735,12 @@ function HeroInfo() {
   const renderCard = (card) => (
     <div className="card-item" key={card.cardid}>
       <div className="card-item-media">
-        <img src={card.thumbnail} alt={card.card_name || "Hero"} />
+        <img
+          src={card.thumbnail}
+          alt={card.card_name || "Hero"}
+          loading="lazy"
+          decoding="async"
+        />
       </div>
 
       <div className="card-item-info">
@@ -782,94 +791,134 @@ function HeroInfo() {
           </p>
         )}
 
-        <button type="button" onClick={() => setSelectedCard(card)}>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedCard(card);
+
+            const url = new URL(window.location.href);
+
+            url.searchParams.set("card", card.card_name);
+
+            window.history.pushState(
+              {
+                card: card.card_name,
+              },
+              "",
+              url,
+            );
+          }}
+        >
           View Details
         </button>
       </div>
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="loading-page">
-        <div className="loading-card">
-          <h2>
-            Loading heroes
-            <span className="loading-dots">
-              <span />
-              <span />
-              <span />
-            </span>
-          </h2>
-
-          <p>Preparing the hero browser and loading available heroes.</p>
-
-          <div className="loading-status">
-            <span>Loading hero data</span>
-
-            <strong>
-              {totalHeroes > 0 ? `${totalHeroes} heroes` : "Loading..."}
-            </strong>
-          </div>
-        </div>
-      </div>
-    );
-  }
+if (loading) {
   return (
-    <div className="card-information-page">
+    <div className="loading-page">
+      <div className="loading-card">
+
+        <div className="loading-spinner" />
+
+        <h2>
+          Loading heroes
+          <span className="loading-dots">
+            <span />
+            <span />
+            <span />
+          </span>
+        </h2>
+
+        <p>
+          Preparing the hero browser and loading available heroes.
+        </p>
+
+        <div className="loading-status">
+          <span>Loading hero data</span>
+
+          <strong>
+            {totalHeroes > 0 ? `${totalHeroes} heroes` : "Loading..."}
+          </strong>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+  return (
+    <>
       <head>
         <link
           rel="icon"
           href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
-        />{" "}
+        />
         <title>Hero Info</title>
       </head>
+
       <Navbar />
 
-      <h1>Hero Information</h1>
+      <div className="card-information-page">
+        <h1>Hero Information</h1>
 
-      <div className="card-side-tabs">
-        <button
-          type="button"
-          className={side === "Plants" ? "active" : ""}
-          onClick={() => setSide("Plants")}
-        >
-          Plants
-        </button>
+        <div className="card-side-tabs">
+          <button
+            type="button"
+            className={side === "Plants" ? "active" : ""}
+            onClick={() => setSide("Plants")}
+          >
+            Plants
+          </button>
 
-        <button
-          type="button"
-          className={side === "Zombies" ? "active" : ""}
-          onClick={() => setSide("Zombies")}
-        >
-          Zombies
-        </button>
-      </div>
+          <button
+            type="button"
+            className={side === "Zombies" ? "active" : ""}
+            onClick={() => setSide("Zombies")}
+          >
+            Zombies
+          </button>
+        </div>
 
-      {error && <p className="error-message">{error}</p>}
+        {error && <p className="error-message">{error}</p>}
 
-      {!error && (
-        <>
-          <h2>Heroes</h2>
+        {!error && (
+          <>
+            <h2>Heroes</h2>
 
-          <p className="card-results-count">
             <p className="card-results-count">
               Showing {heroes.length} {side} heroes
             </p>
-          </p>
 
-          {heroes.length === 0 ? (
-            <p className="no-card-results">No {side} heroes found.</p>
-          ) : (
-            <div className="card-grid">{heroes.map(renderCard)}</div>
-          )}
-        </>
-      )}
+            {heroes.length === 0 ? (
+              <p className="no-card-results">No {side} heroes found.</p>
+            ) : (
+              <div className="card-grid">{heroes.map(renderCard)}</div>
+            )}
+          </>
+        )}
 
-      {selectedCard && (
-        <CardModal card={selectedCard} close={() => setSelectedCard(null)} />
-      )}
-    </div>
+        {selectedCard && (
+          <CardModal
+            card={selectedCard}
+            close={() => {
+              if (window.history.state?.card) {
+                window.history.back();
+              } else {
+                setSelectedCard(null);
+
+                const url = new URL(window.location.href);
+
+                url.searchParams.delete("card");
+
+                window.history.replaceState({}, "", url);
+              }
+            }}
+          />
+        )}
+      </div>
+    </>
   );
 }
 

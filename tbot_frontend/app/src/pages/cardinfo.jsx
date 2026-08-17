@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import CardModal from "../components/cardmodal";
+import Navbar from "../components/navbar.jsx";
 import "../css/cardinfo.css";
 import "../css/navbar.css";
 import "../css/loading.css";
-import Navbar from "../components/navbar.jsx";
 
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
@@ -481,132 +481,106 @@ function CardInfo() {
         url: STAT_ICON_LINKS.cost,
         alt: "Brainz",
       },
-
       strength: {
         url: STAT_ICON_LINKS.strength,
         alt: "Strength",
       },
-
       health: {
         url: STAT_ICON_LINKS.health,
         alt: "Health",
       },
-
       sun: {
         url: STAT_ICON_LINKS.sun,
         alt: "Sun",
       },
-
       healthstrength: {
         url: STAT_ICON_LINKS.healthstrength,
         alt: "Health and Strength",
       },
-
       deadly: {
         url: TRAIT_ICON_LINKS.deadly,
         alt: "Deadly",
       },
-
       freeze: {
         url: TRAIT_ICON_LINKS.freeze,
         alt: "Freeze",
       },
-
       antihero: {
         url: TRAIT_ICON_LINKS.antihero,
         alt: "Anti-Hero",
       },
-
       strikethrough: {
         url: TRAIT_ICON_LINKS.strikethrough,
         alt: "Strikethrough",
       },
-
       special: {
         url: TRAIT_ICON_LINKS.special,
         alt: "Special",
       },
-
       bullseye: {
         url: TRAIT_ICON_LINKS.bullseye,
         alt: "Bullseye",
       },
-
       frenzy: {
         url: TRAIT_ICON_LINKS.frenzy,
         alt: "Frenzy",
       },
-
       armored: {
         url: TRAIT_ICON_LINKS.armored,
         alt: "Armored",
       },
-
       overshoot: {
         url: TRAIT_ICON_LINKS.overshoot,
         alt: "Overshoot",
       },
-
       untrickable: {
         url: TRAIT_ICON_LINKS.untrickable,
         alt: "Untrickable",
       },
-
       doublestrike: {
         url: TRAIT_ICON_LINKS.doublestrike,
         alt: "Double Strike",
       },
-
       splashdamage: {
         url: TRAIT_ICON_LINKS.splashdamage,
         alt: "Splash Damage",
       },
-
       guardian: {
         url: CLASS_ICON_LINKS.guardian,
         alt: "Guardian",
       },
-
       kabloom: {
         url: CLASS_ICON_LINKS.kabloom,
         alt: "Kabloom",
       },
-
       megagrow: {
         url: CLASS_ICON_LINKS.megagrow,
         alt: "Mega-Grow",
       },
-
       smarty: {
         url: CLASS_ICON_LINKS.smarty,
         alt: "Smarty",
       },
-
       solar: {
         url: CLASS_ICON_LINKS.solar,
         alt: "Solar",
       },
-
       beastly: {
         url: CLASS_ICON_LINKS.beastly,
         alt: "Beastly",
       },
-
       brainy: {
         url: CLASS_ICON_LINKS.brainy,
         alt: "Brainy",
       },
-
       crazy: {
         url: CLASS_ICON_LINKS.crazy,
         alt: "Crazy",
       },
-
       hearty: {
         url: CLASS_ICON_LINKS.hearty,
         alt: "Hearty",
       },
-
       sneaky: {
         url: CLASS_ICON_LINKS.sneaky,
         alt: "Sneaky",
@@ -615,6 +589,7 @@ function CardInfo() {
 
     return iconMap[emojiName] || null;
   };
+
   const getFilterIcon = (type) => {
     let icon = null;
 
@@ -664,7 +639,6 @@ function CardInfo() {
     return (
       <span className="card-filter-option-label">
         <span>{text}</span>
-
         {iconType && getFilterIcon(iconType)}
       </span>
     );
@@ -1255,19 +1229,6 @@ function CardInfo() {
     };
   }, [normalCards]);
 
-  /*
-   * ALL FILTERS ARE MULTI-SELECT.
-   *
-   * The stat icons are intentionally part of the option label,
-   * so they appear both:
-   *
-   * Cost   ☀ / Brainz
-   * Attack Strength
-   * Health Health
-   *
-   * and the icon is AFTER the text.
-   */
-
   const typeOptions = filterData.types.map((value) => ({
     value,
     label: value,
@@ -1411,9 +1372,7 @@ function CardInfo() {
       const stats = getCardStats(card.stats);
 
       const cardClasses = getClassNames(card.card_type);
-
       const cardTypes = getCardTypes(card);
-
       const cardKeywords = getCardKeywords(card);
 
       const cardTribes = extractTribes(
@@ -1442,14 +1401,6 @@ function CardInfo() {
         .toLowerCase();
 
       const searchMatch = !searchValue || searchableText.includes(searchValue);
-
-      /*
-       * Multiple selections inside the same filter use OR.
-       *
-       * Example:
-       * Cost 1 + Cost 2
-       * = cards costing 1 OR 2.
-       */
 
       const classMatch =
         selectedClasses.length === 0 ||
@@ -1486,14 +1437,6 @@ function CardInfo() {
           (selectedHealth) => stats.health === Number(selectedHealth.value),
         );
 
-      /*
-       * Keywords remain AND-based.
-       *
-       * Selecting:
-       * Deadly + Freeze
-       *
-       * means the card must contain BOTH.
-       */
       const keywordMatch =
         selectedKeywords.length === 0 ||
         selectedKeywords.every((selectedKeyword) =>
@@ -1617,6 +1560,8 @@ function CardInfo() {
     return (
       <div className="loading-page">
         <div className="loading-card">
+          <div className="loading-spinner" />
+
           <h2>
             Loading cards
             <span className="loading-dots">
@@ -1641,7 +1586,7 @@ function CardInfo() {
   }
 
   return (
-    <div className="card-information-page">
+    <>
       <head>
         <link
           rel="icon"
@@ -1651,310 +1596,305 @@ function CardInfo() {
         <title>Card Info</title>
       </head>
 
+      {/* Navbar is now outside the padded page container */}
       <Navbar />
 
-      <h1>Card Information</h1>
+      <div className="card-information-page">
+        <h1>Card Information</h1>
 
-      <div className="card-browser">
-        <div className="card-side-tabs">
-          <button
-            type="button"
-            className={side === "Plants" ? "active" : ""}
-            onClick={() => changeSide("Plants")}
-          >
-            Plants
-          </button>
+        <div className="card-browser">
+          <div className="card-side-tabs">
+            <button
+              type="button"
+              className={side === "Plants" ? "active" : ""}
+              onClick={() => changeSide("Plants")}
+            >
+              Plants
+            </button>
 
-          <button
-            type="button"
-            className={side === "Zombies" ? "active" : ""}
-            onClick={() => changeSide("Zombies")}
-          >
-            Zombies
-          </button>
-        </div>
+            <button
+              type="button"
+              className={side === "Zombies" ? "active" : ""}
+              onClick={() => changeSide("Zombies")}
+            >
+              Zombies
+            </button>
+          </div>
 
-        <div className="card-search-container">
-          <input
-            className="card-search"
-            placeholder="Search cards, abilities, traits, aliases..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
-
-        <div className="card-filters-actions">
-          <button
-            type="button"
-            className="clear-card-filter-btn"
-            onClick={clearFilters}
-          >
-            Clear
-          </button>
-        </div>
-
-        <div className="card-filters">
-          {/* COST */}
-          <div className="card-select-wrapper">
-            <Select
-              styles={selectStyles}
-              menuPortalTarget={document.body}
-              placeholder="Cost"
-              options={costOptions}
-              value={costFilter}
-              onChange={setCostFilter}
-              isMulti
-              closeMenuOnSelect={false}
+          <div className="card-search-container">
+            <input
+              className="card-search"
+              placeholder="Search cards, abilities, traits, aliases..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
-          {/* ATTACK */}
-          <div className="card-select-wrapper">
-            <Select
-              styles={selectStyles}
-              menuPortalTarget={document.body}
-              placeholder="Attack"
-              options={attackOptions}
-              value={attackFilter}
-              onChange={setAttackFilter}
-              isMulti
-              closeMenuOnSelect={false}
-            />
+          <div className="card-filters-actions">
+            <button
+              type="button"
+              className="clear-card-filter-btn"
+              onClick={clearFilters}
+            >
+              Clear
+            </button>
           </div>
 
-          {/* HEALTH */}
-          <div className="card-select-wrapper">
-            <Select
-              styles={selectStyles}
-              menuPortalTarget={document.body}
-              placeholder="Health"
-              options={healthOptions}
-              value={healthFilter}
-              onChange={setHealthFilter}
-              isMulti
-              closeMenuOnSelect={false}
-            />
-          </div>
+          <div className="card-filters">
+            <div className="card-select-wrapper">
+              <Select
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                placeholder="Cost"
+                options={costOptions}
+                value={costFilter}
+                onChange={setCostFilter}
+                isMulti
+                closeMenuOnSelect={false}
+              />
+            </div>
 
-          {/* CLASS */}
-          <div className="card-select-wrapper">
-            <Select
-              styles={selectStyles}
-              menuPortalTarget={document.body}
-              placeholder="Class"
-              options={classOptions}
-              value={classFilter}
-              onChange={setClassFilter}
-              isMulti
-              closeMenuOnSelect={false}
-            />
-          </div>
+            <div className="card-select-wrapper">
+              <Select
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                placeholder="Attack"
+                options={attackOptions}
+                value={attackFilter}
+                onChange={setAttackFilter}
+                isMulti
+                closeMenuOnSelect={false}
+              />
+            </div>
 
-          {/* TRIBE */}
-          <div className="card-select-wrapper">
-            <Select
-              styles={selectStyles}
-              menuPortalTarget={document.body}
-              placeholder="Tribe"
-              options={tribeOptions}
-              value={tribeFilter}
-              onChange={setTribeFilter}
-              isMulti
-              closeMenuOnSelect={false}
-            />
-          </div>
+            <div className="card-select-wrapper">
+              <Select
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                placeholder="Health"
+                options={healthOptions}
+                value={healthFilter}
+                onChange={setHealthFilter}
+                isMulti
+                closeMenuOnSelect={false}
+              />
+            </div>
 
-          {/* RARITY */}
-          <div className="card-select-wrapper">
-            <Select
-              styles={selectStyles}
-              menuPortalTarget={document.body}
-              placeholder="Rarity"
-              options={rarityOptions}
-              value={rarityFilter}
-              onChange={setRarityFilter}
-              isMulti
-              closeMenuOnSelect={false}
-            />
-          </div>
+            <div className="card-select-wrapper">
+              <Select
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                placeholder="Class"
+                options={classOptions}
+                value={classFilter}
+                onChange={setClassFilter}
+                isMulti
+                closeMenuOnSelect={false}
+              />
+            </div>
 
-          {/* SET */}
-          <div className="card-select-wrapper">
-            <Select
-              styles={selectStyles}
-              menuPortalTarget={document.body}
-              placeholder="Set"
-              options={setOptions}
-              value={setFilter}
-              onChange={setSetFilter}
-              isMulti
-              closeMenuOnSelect={false}
-            />
-          </div>
+            <div className="card-select-wrapper">
+              <Select
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                placeholder="Tribe"
+                options={tribeOptions}
+                value={tribeFilter}
+                onChange={setTribeFilter}
+                isMulti
+                closeMenuOnSelect={false}
+              />
+            </div>
 
-          {/* TYPES */}
-          <div className="card-select-wrapper">
-            <Select
-              styles={selectStyles}
-              menuPortalTarget={document.body}
-              placeholder="Types"
-              options={typeOptions}
-              value={typeFilter}
-              onChange={setTypeFilter}
-              isMulti
-              closeMenuOnSelect={false}
-            />
-          </div>
+            <div className="card-select-wrapper">
+              <Select
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                placeholder="Rarity"
+                options={rarityOptions}
+                value={rarityFilter}
+                onChange={setRarityFilter}
+                isMulti
+                closeMenuOnSelect={false}
+              />
+            </div>
 
-          {/* KEYWORDS */}
-          <div className="card-select-wrapper">
-            <Select
-              styles={selectStyles}
-              menuPortalTarget={document.body}
-              placeholder="Keywords"
-              options={keywordOptions}
-              value={keywordFilter}
-              onChange={setKeywordFilter}
-              isMulti
-              closeMenuOnSelect={false}
-            />
+            <div className="card-select-wrapper">
+              <Select
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                placeholder="Set"
+                options={setOptions}
+                value={setFilter}
+                onChange={setSetFilter}
+                isMulti
+                closeMenuOnSelect={false}
+              />
+            </div>
+
+            <div className="card-select-wrapper">
+              <Select
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                placeholder="Types"
+                options={typeOptions}
+                value={typeFilter}
+                onChange={setTypeFilter}
+                isMulti
+                closeMenuOnSelect={false}
+              />
+            </div>
+
+            <div className="card-select-wrapper">
+              <Select
+                styles={selectStyles}
+                menuPortalTarget={document.body}
+                placeholder="Keywords"
+                options={keywordOptions}
+                value={keywordFilter}
+                onChange={setKeywordFilter}
+                isMulti
+                closeMenuOnSelect={false}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {error && <p className="error-message">{error}</p>}
+        {error && <p className="error-message">{error}</p>}
 
-      {!error && (
-        <p className="card-results-count">
-          Showing {filteredCards.length} {side} cards
-        </p>
-      )}
+        {!error && (
+          <p className="card-results-count">
+            Showing {filteredCards.length} {side} cards
+          </p>
+        )}
 
-      {!error && filteredCards.length === 0 ? (
-        <p className="no-card-results">No {side} cards found.</p>
-      ) : (
-        !error && (
-          <div className="card-grid">
-            {filteredCards.map((card) => (
-              <div
-                className="card-item"
-                data-rarity={getRarityName(card.set_rarity)}
-                key={card.cardid}
-              >
-                <div className="card-item-media">
-                  <img
-                    src={card.thumbnail}
-                    alt={card.card_name}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
+        {!error && filteredCards.length === 0 ? (
+          <p className="no-card-results">No {side} cards found.</p>
+        ) : (
+          !error && (
+            <div className="card-grid">
+              {filteredCards.map((card) => (
+                <div
+                  className="card-item"
+                  data-rarity={getRarityName(card.set_rarity)}
+                  key={card.cardid}
+                >
+                  <div className="card-item-media">
+                    <img
+                      src={card.thumbnail}
+                      alt={card.card_name}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
 
-                <div className="card-item-info">
-                  <h2 className="card-item-title">
-                    {hasValue(card.title)
-                      ? renderTitleText(card.title)
-                      : card.card_name || "Unknown Card"}
-                  </h2>
+                  <div className="card-item-info">
+                    <h2 className="card-item-title">
+                      {hasValue(card.title)
+                        ? renderTitleText(card.title)
+                        : card.card_name || "Unknown Card"}
+                    </h2>
 
-                  {hasValue(card.card_type) && (
-                    <p>
-                      <span>Class:</span> {card.card_type}
-                    </p>
-                  )}
-
-                  {hasValue(card.traits) && (
-                    <p className="card-traits-line">
-                      <span className="card-field-label">Traits:</span>
-
-                      <span className="card-traits-value">
-                        {renderTraitText(String(card.traits))}
-                      </span>
-                    </p>
-                  )}
-
-                  {hasValue(card.stats) && (
-                    <p className="card-stats-line">
-                      <span className="card-field-label">Stats:</span>
-
-                      <span className="card-stats-value">
-                        {renderStatsText(String(card.stats))}
-                      </span>
-                    </p>
-                  )}
-
-                  {hasValue(card.set_rarity) && getSetName(card.set_rarity) && (
-                    <p>
-                      <span>Set:</span> {getSetName(card.set_rarity)}
-                    </p>
-                  )}
-
-                  {hasValue(card.set_rarity) &&
-                    getRarityName(card.set_rarity) && (
+                    {hasValue(card.card_type) && (
                       <p>
-                        <span>Rarity:</span> {getRarityName(card.set_rarity)}
+                        <span>Class:</span> {card.card_type}
                       </p>
                     )}
 
-                  {hasValue(card.ability) && (
-                    <p className="card-description-line">
-                      <span className="card-field-label">Ability:</span>{" "}
-                      <span
-                        style={{
-                          whiteSpace: "pre-line",
-                        }}
-                      >
-                        {renderAbilityText(card.ability)}
-                      </span>
-                    </p>
-                  )}
+                    {hasValue(card.traits) && (
+                      <p className="card-traits-line">
+                        <span className="card-field-label">Traits:</span>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedCard(card);
+                        <span className="card-traits-value">
+                          {renderTraitText(String(card.traits))}
+                        </span>
+                      </p>
+                    )}
 
-                      const url = new URL(window.location.href);
+                    {hasValue(card.stats) && (
+                      <p className="card-stats-line">
+                        <span className="card-field-label">Stats:</span>
 
-                      url.searchParams.set("card", card.card_name);
+                        <span className="card-stats-value">
+                          {renderStatsText(String(card.stats))}
+                        </span>
+                      </p>
+                    )}
 
-                      window.history.pushState(
-                        {
-                          card: card.card_name,
-                        },
-                        "",
-                        url,
-                      );
-                    }}
-                  >
-                    View Details
-                  </button>
+                    {hasValue(card.set_rarity) &&
+                      getSetName(card.set_rarity) && (
+                        <p>
+                          <span>Set:</span> {getSetName(card.set_rarity)}
+                        </p>
+                      )}
+
+                    {hasValue(card.set_rarity) &&
+                      getRarityName(card.set_rarity) && (
+                        <p>
+                          <span>Rarity:</span> {getRarityName(card.set_rarity)}
+                        </p>
+                      )}
+
+                    {hasValue(card.ability) && (
+                      <p className="card-description-line">
+                        <span className="card-field-label">Ability:</span>{" "}
+                        <span
+                          style={{
+                            whiteSpace: "pre-line",
+                          }}
+                        >
+                          {renderAbilityText(card.ability)}
+                        </span>
+                      </p>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCard(card);
+
+                        const url = new URL(window.location.href);
+
+                        url.searchParams.set("card", card.card_name);
+
+                        window.history.pushState(
+                          {
+                            card: card.card_name,
+                          },
+                          "",
+                          url,
+                        );
+                      }}
+                    >
+                      View Details
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )
-      )}
+              ))}
+            </div>
+          )
+        )}
 
-      {selectedCard && (
-        <CardModal
-          card={selectedCard}
-          close={() => {
-            if (window.history.state?.card) {
-              window.history.back();
-            } else {
-              setSelectedCard(null);
+        {selectedCard && (
+          <CardModal
+            card={selectedCard}
+            close={() => {
+              if (window.history.state?.card) {
+                window.history.back();
+              } else {
+                setSelectedCard(null);
 
-              const url = new URL(window.location.href);
+                const url = new URL(window.location.href);
 
-              url.searchParams.delete("card");
+                url.searchParams.delete("card");
 
-              window.history.replaceState({}, "", url);
-            }
-          }}
-        />
-      )}
-    </div>
+                window.history.replaceState({}, "", url);
+              }
+            }}
+          />
+        )}
+      </div>
+    </>
   );
 }
 

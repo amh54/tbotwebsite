@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import "../css/deckmodal.css";
+
 const HERO_COLORS = {
   "Beta-Carrotina": ["brown", "gray"],
   Citron: ["brown", "gray"],
@@ -13,7 +14,6 @@ const HERO_COLORS = {
   "Solar Flare": ["red", "yellow"],
   Spudow: ["red", "brown"],
   "Wall-Knight": ["brown", "yellow"],
-
   "Brain Freeze": ["black", "blue"],
   "Electric Boogaloo": ["blue", "purple"],
   "Huge-Gigantacus": ["pink", "black"],
@@ -42,6 +42,7 @@ const getHeroColors = (hero) => {
 
   return entry?.[1] || ["default", "default"];
 };
+
 function DeckCard({ decklist }) {
   const deck = decklist ?? {};
   const [heroColor1, heroColor2] = getHeroColors(deck.hero);
@@ -62,9 +63,6 @@ function DeckCard({ decklist }) {
   const [imgError, setImgError] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Keep this card's modal in sync with the URL: opens it when ?deck=<key>
-  // matches (including on mount / navigation), and closes it when the
-  // param is removed (e.g. via the Back button).
   useEffect(() => {
     if (!deckKey) return;
 
@@ -73,7 +71,6 @@ function DeckCard({ decklist }) {
     } else if (open) {
       setOpen(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, deckKey]);
 
   useEffect(() => {
@@ -86,8 +83,8 @@ function DeckCard({ decklist }) {
     };
 
     document.addEventListener("keydown", handleKeyDown);
+
     return () => document.removeEventListener("keydown", handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const toExternalUrl = (value) => {
@@ -97,7 +94,6 @@ function DeckCard({ decklist }) {
       return "";
     }
 
-    // Accept full URLs, markdown links, and plain domains from DB values.
     const markdownMatch = /\((https?:\/\/[^)]+)\)/i.exec(raw);
     const inlineUrlMatch = /https?:\/\/\S+/i.exec(raw);
 
@@ -191,14 +187,18 @@ function DeckCard({ decklist }) {
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
+
       link.href = blobUrl;
       link.download = `${deck.name || "decklist"}.png`.replace(/\s+/g, "_");
+
       document.body.appendChild(link);
       link.click();
       link.remove();
+
       URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error("Direct download blocked, opening image instead", err);
+
       window.open(deck.image, "_blank", "noopener,noreferrer");
     }
   };
@@ -236,15 +236,19 @@ function DeckCard({ decklist }) {
 
         <div className="deck-listing-info">
           <h3>{deck.name || "Untitled Deck"}</h3>
+
           <p>
             <span>Hero:</span> {deck.hero || "-"}
           </p>
+
           <p>
             <span>Category:</span> {deck.category || "-"}
           </p>
+
           <p>
             <span>Archetype:</span> {deck.archetype || "-"}
           </p>
+
           <p>
             <span>Cost:</span> {deck.cost || "-"}
             <img
@@ -254,10 +258,12 @@ function DeckCard({ decklist }) {
             />
           </p>
           {hasValue(deck.creator) && (
-            <p>
-              <span>Creator:</span> {deck.creator}
+            <p className="creator-field">
+              <span className="field-label">Creator:</span>
+              <span className="creator-value">{deck.creator}</span>
             </p>
           )}
+
           {hasValue(deck.optimization) && (
             <p>
               <span>Optimized by:</span> {deck.optimization}
@@ -367,6 +373,7 @@ function DeckCard({ decklist }) {
                       <h2 className="modal-title">
                         {deck.name || "Untitled Deck"}
                       </h2>
+
                       <span className="deck-hero">
                         {deck.hero || "Unknown Hero"}
                       </span>
@@ -382,6 +389,7 @@ function DeckCard({ decklist }) {
                     {hasValue(deckDocUrl) && (
                       <div className="metadata-item">
                         <span className="label">Deck Tutorial</span>
+
                         <a
                           href={deckDocUrl}
                           target="_blank"
@@ -405,8 +413,10 @@ function DeckCard({ decklist }) {
 
                     <div className="metadata-item cost-item">
                       <span className="label">Cost</span>
+
                       <span className="cost-value">
                         {deck.cost || "-"}
+
                         <img
                           src="https://i.ibb.co/jZkdqf6y/spark.webp"
                           alt="Spark icon"
