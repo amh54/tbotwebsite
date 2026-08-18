@@ -15,21 +15,29 @@
   margin-bottom: 30px;
 }
 
-/* =========================
-   DECK BROWSER
-========================= */
-
 .deck-browser {
   background: #15181b;
   border: 1px solid #23272b;
   border-radius: 14px;
-  overflow: visible;
+  overflow: hidden;
   margin-bottom: 30px;
 }
 
-/* =========================
-   TABS
-========================= */
+
+.deck-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+
+  object-fit: cover;
+  object-position: center;
+
+  margin: 0;
+  border: none;
+  border-bottom: 1px solid #23272b;
+
+  box-sizing: border-box;
+}
 
 .tabs {
   display: flex;
@@ -73,10 +81,6 @@
   object-fit: contain;
 }
 
-/* =========================
-   SEARCH
-========================= */
-
 .search-container {
   padding: 20px;
   border-bottom: 1px solid #333;
@@ -106,10 +110,6 @@
 .search::placeholder {
   color: #888;
 }
-
-/* =========================
-   FILTERS
-========================= */
 
 .filters {
   display: flex;
@@ -234,7 +234,7 @@
 }
 
 /* =========================
-   DECK INFORMATION
+   INFORMATION
 ========================= */
 
 .deck-card-info {
@@ -243,10 +243,6 @@
 
   text-align: left;
 
-  /*
-   * Allows the information area to shrink
-   * correctly inside the card.
-   */
   overflow: hidden;
 }
 
@@ -279,19 +275,8 @@
   margin-top: 0;
   margin-bottom: 6px;
 
-  /*
-   * IMPORTANT:
-   *
-   * Do not use nowrap here.
-   * The entire field remains normal text so
-   * it can wrap if it genuinely becomes too long.
-   */
   white-space: normal;
 
-  /*
-   * Keep normal words together.
-   * Only break when necessary.
-   */
   word-break: normal;
   overflow-wrap: break-word;
 
@@ -306,14 +291,6 @@
   color: #8fe38b;
   font-weight: 700;
 
-  /*
-   * Never split:
-   *
-   * Archetype:
-   * Creator:
-   * Category:
-   * Hero:
-   */
   white-space: nowrap;
   word-break: normal;
   overflow-wrap: normal;
@@ -322,18 +299,6 @@
 /* =========================
    FIELD VALUES
 ========================= */
-
-/*
- * Do NOT globally apply:
- *
- * word-break: break-word;
- * overflow-wrap: anywhere;
- *
- * to every span.
- *
- * Doing that can cause short values such as
- * "Control" and "shortbow" to behave incorrectly.
- */
 
 .deck-card-info span {
   word-break: normal;
@@ -512,6 +477,11 @@
     margin-bottom: 20px;
   }
 
+  .deck-browser {
+    border-radius: 10px;
+  }
+
+
   .tabs button {
     padding: 13px 8px;
     font-size: 14px;
@@ -537,5 +507,22 @@
   .deck-card-info p,
   .deck-card-info .card-text-content {
     font-size: 13px;
+  }
+}
+
+/* =========================
+   SMALL MOBILE
+========================= */
+
+@media (max-width: 400px) {
+
+  .tabs button {
+    gap: 5px;
+    padding: 12px 5px;
+  }
+
+  .tab-icon {
+    width: 18px;
+    height: 18px;
   }
 }
