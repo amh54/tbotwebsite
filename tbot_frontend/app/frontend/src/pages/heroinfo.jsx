@@ -4,7 +4,7 @@ import "../css/cardinfo.css";
 import "../css/navbar.css";
 import "../css/loading.css";
 import Navbar from "../components/navbar.jsx";
-import Footer from "../components/footer.jsx"
+import Footer from "../components/footer.jsx";
 
 const getApiBaseUrl = () => {
   const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
@@ -816,38 +816,34 @@ function HeroInfo() {
     </div>
   );
 
-if (loading) {
-  return (
-    <div className="loading-page">
-      <div className="loading-card">
+  if (loading) {
+    return (
+      <div className="loading-page">
+        <div className="loading-card">
+          <div className="loading-spinner" />
 
-        <div className="loading-spinner" />
+          <h2>
+            Loading heroes
+            <span className="loading-dots">
+              <span />
+              <span />
+              <span />
+            </span>
+          </h2>
 
-        <h2>
-          Loading heroes
-          <span className="loading-dots">
-            <span />
-            <span />
-            <span />
-          </span>
-        </h2>
+          <p>Preparing the hero browser and loading available heroes.</p>
 
-        <p>
-          Preparing the hero browser and loading available heroes.
-        </p>
+          <div className="loading-status">
+            <span>Loading hero data</span>
 
-        <div className="loading-status">
-          <span>Loading hero data</span>
-
-          <strong>
-            {totalHeroes > 0 ? `${totalHeroes} heroes` : "Loading..."}
-          </strong>
+            <strong>
+              {totalHeroes > 0 ? `${totalHeroes} heroes` : "Loading..."}
+            </strong>
+          </div>
         </div>
-
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <>
@@ -919,7 +915,7 @@ if (loading) {
           />
         )}
       </div>
-        <Footer credits="Special thanks to The_Cute_Chick otherwise known as TCC for uploading all of the hero images for me."/>
+      <Footer credits="Special thanks to The_Cute_Chick, otherwise known as TCC, for uploading all of the card images and transcribing most of the initial hero information used here." />
     </>
   );
 }

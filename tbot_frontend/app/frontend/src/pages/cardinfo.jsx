@@ -25,7 +25,6 @@ const getApiBaseUrl = () => {
   return "";
 };
 
-
 const API_BASE_URL = getApiBaseUrl();
 
 const STAT_ICON_LINKS = {
@@ -1089,12 +1088,12 @@ function CardInfo() {
 
     return () => window.removeEventListener("popstate", handlePopState);
   }, [cards]);
-    useEffect(() => {
-  document.title = "Card Info";
-  return () => {
-    document.title = "Tbot";
-  };
-}, []);
+  useEffect(() => {
+    document.title = "Card Info";
+    return () => {
+      document.title = "Tbot";
+    };
+  }, []);
 
   const normalCards = useMemo(() => {
     return cards.filter((card) => {
@@ -1584,8 +1583,6 @@ function CardInfo() {
 
   return (
     <>
-   
-
       {/* Navbar is now outside the padded page container */}
       <Navbar />
 
@@ -1884,7 +1881,7 @@ function CardInfo() {
           />
         )}
       </div>
-         <Footer credits="Special thanks to The_Cute_Chick otherwise known as TCC for uploading all of the card images for me."/>
+      <Footer credits="Special thanks to The_Cute_Chick, otherwise known as TCC, for uploading all of the card images and transcribing most of the initial card information used here." />
     </>
   );
 }
