@@ -97,7 +97,7 @@
 .kos-intro-item {
   width: 100%;
   display: grid;
-  grid-template-columns: 420px minmax(0, 1fr);
+  grid-template-columns: 320px minmax(0, 1fr);
   gap: 50px;
   align-items: start;
   padding: 35px 0;
@@ -105,33 +105,25 @@
   box-sizing: border-box;
 }
 
-.kos-intro-item:first-child {
-  padding-top: 0;
-}
-
-.kos-intro-item:last-child {
-  border-bottom: none;
-}
-
 .kos-intro-media {
-  width: 420px;
-  height: 260px;
+  width: 320px;
+  aspect-ratio: 1 / 1;
   display: block;
   overflow: hidden;
   background: #15191c;
   border: 1px solid #292e31;
   border-radius: 8px;
   box-sizing: border-box;
+  position: sticky;
+  top: 90px;
 }
 
 .kos-intro-media img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center top;
+  object-fit: cover;
 }
-
 .kos-intro-body {
   width: 100%;
   min-width: 0;
@@ -474,30 +466,6 @@
   background-color: #202020;
 }
 
-@media (max-width: 1250px) {
-  .kos-content {
-    width: calc(100% - 60px);
-  }
-
-  .kos-class-preview {
-    grid-template-columns: minmax(0, 1.1fr) minmax(210px, 0.9fr);
-    gap: 18px;
-  }
-
-  .kos-tier-list {
-    max-height: 300px;
-  }
-
-  .kos-class-media img {
-    max-height: 300px;
-  }
-
-  .kos-intro-media {
-    width: 360px;
-    height: 240px;
-  }
-}
-
 @media (max-width: 1050px) {
   .kos-class-grid {
     grid-template-columns: 1fr;
@@ -539,13 +507,13 @@
   }
 
   .kos-intro-item {
-    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-columns: 240px minmax(0, 1fr);
     gap: 30px;
   }
 
   .kos-intro-media {
-    width: 300px;
-    height: 210px;
+    width: 240px;
+    aspect-ratio: 1 / 1;
   }
 
   .kos-intro-body {
@@ -555,7 +523,6 @@
   .kos-intro-text {
     font-size: 16px;
   }
-
   .kos-class-preview {
     grid-template-columns: 320px minmax(0, 1fr);
   }
@@ -598,9 +565,11 @@
   }
 
   .kos-intro-media {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
+    width: 220px;
+    max-width: 60%;
+    aspect-ratio: 1 / 1;
+    position: static;
+    top: auto;
   }
 
   .kos-intro-body {
