@@ -2,15 +2,15 @@ import logging
 import os
 
 from django.conf import settings
-from django.db import DatabaseError
+from django.db import DatabaseError, connection
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Decklist, ZombieCards, KeepOrScrap
+from .models import Decklist, WebCards, KeepOrScrap
 from .serializers import (
     DeckSerializer,
-    ZombieCardSerializer,
+    WebCardSerializer,
     KeepOrScrapSerializer,
 )
 
@@ -28,9 +28,37 @@ def include_error_detail():
     }
 
 
+# ============================================================
+# DECKLISTS
+# ============================================================
+
 @api_view(["GET"])
 def decklists(request):
     try:
+        # Temporary Neon database diagnostic.
+        # This can be removed after the database connection
+        # has been confirmed.
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    current_database(),
+                    current_schema(),
+                    current_user
+            """)
+
+            db_info = cursor.fetchone()
+
+            cursor.execute("""
+                SELECT to_regclass('public.web_decks')
+            """)
+
+            web_decks = cursor.fetchone()
+
+        print("====================================")
+        print("DATABASE INFO:", db_info)
+        print("WEB_DECKS:", web_decks)
+        print("====================================")
+
         decks = Decklist.objects.all()
 
         serializer = DeckSerializer(
@@ -57,12 +85,16 @@ def decklists(request):
         )
 
 
+# ============================================================
+# CARDS
+# ============================================================
+
 @api_view(["GET"])
 def card_info(request):
     try:
-        cards = ZombieCards.objects.all()
+        cards = WebCards.objects.all()
 
-        serializer = ZombieCardSerializer(
+        serializer = WebCardSerializer(
             cards,
             many=True,
         )
@@ -86,14 +118,18 @@ def card_info(request):
         )
 
 
+# ============================================================
+# HERO INFORMATION
+# ============================================================
+
 @api_view(["GET"])
 def heroinfo(request):
     try:
-        heroes = ZombieCards.objects.filter(
+        heroes = WebCards.objects.filter(
             set_rarity__icontains="Hero"
         )
 
-        serializer = ZombieCardSerializer(
+        serializer = WebCardSerializer(
             heroes,
             many=True,
         )
@@ -119,6 +155,10 @@ def heroinfo(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
+# ============================================================
+# KEEP OR SCRAP
+# ============================================================
 
 @api_view(["GET"])
 def keep_or_scrap(request):
@@ -147,6 +187,12 @@ def keep_or_scrap(request):
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+# ============================================================
+# DECKLIST COUNT
+# ============================================================
+
 @api_view(["GET"])
 def decklist_count(request):
     try:
@@ -171,10 +217,16 @@ def decklist_count(request):
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+# ============================================================
+# CARD COUNT
+# ============================================================
+
 @api_view(["GET"])
 def card_count(request):
     try:
-        total = ZombieCards.objects.count()
+        total = WebCards.objects.count()
 
         return Response({
             "count": total,
@@ -195,6 +247,12 @@ def card_count(request):
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+# ============================================================
+# KEEP OR SCRAP COUNT
+# ============================================================
+
 @api_view(["GET"])
 def keeporscrap_count(request):
     try:
@@ -207,17 +265,28 @@ def keeporscrap_count(request):
     except DatabaseError as exc:
         logger.exception("Keep or Scrap count query failed")
 
+        payload = {
+            "error": "Database error while counting Keep or Scrap entries.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
         return Response(
-            {
-                "error": "Database error while counting Keep or Scrap entries.",
-                "details": str(exc),
-            },
-            status=500,
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+# ============================================================
+# HERO COUNT
+# ============================================================
+
 @api_view(["GET"])
 def hero_count(request):
     try:
-        count = ZombieCards.objects.filter(
+        count = WebCards.objects.filter(
             set_rarity__icontains="Hero"
         ).count()
 
@@ -228,9 +297,15 @@ def hero_count(request):
     except DatabaseError as exc:
         logger.exception("Hero count query failed")
 
+        payload = {
+            "error": "Database error while retrieving hero count.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
         return Response(
-            {
-                "error": "Database error while retrieving hero count.",
-            },
-            status=500,
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

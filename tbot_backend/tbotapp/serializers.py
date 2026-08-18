@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Decklist, ZombieCards, KeepOrScrap
+from .models import Decklist, WebCards, KeepOrScrap
 
 
 class DeckSerializer(serializers.ModelSerializer):
@@ -8,9 +8,9 @@ class DeckSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ZombieCardSerializer(serializers.ModelSerializer):
+class WebCardSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ZombieCards
+        model = WebCards
         fields = [
             "cardid",
             "card_type",

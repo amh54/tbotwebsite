@@ -1,11 +1,15 @@
 from django.db import models
 
+
 class Decklist(models.Model):
     deckid = models.IntegerField(primary_key=True)
     side = models.CharField(max_length=30)
     hero = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
-    category = models.CharField(max_length=30, db_column="category")
+    category = models.CharField(
+        max_length=30,
+        db_column="category",
+    )
     archetype = models.CharField(max_length=30)
     description = models.CharField(max_length=1500)
     deck_doc = models.CharField(max_length=300, blank=True)
@@ -22,11 +26,17 @@ class Decklist(models.Model):
     class Meta:
         db_table = "web_decks"
         managed = False
-class ZombieCards(models.Model):
+
+
+class WebCards(models.Model):
     cardid = models.SmallIntegerField(primary_key=True)
     card_type = models.CharField(max_length=50)
     card_name = models.CharField(max_length=200, blank=True)
-    side = models.CharField(max_length=20, null=True, blank=True)
+    side = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+    )
     title = models.CharField(max_length=100, blank=True)
     stats = models.CharField(max_length=300, blank=True)
     description = models.CharField(max_length=100, blank=True)
@@ -42,13 +52,17 @@ class ZombieCards(models.Model):
     button_emoji2 = models.CharField(max_length=130, blank=True)
 
     class Meta:
-        db_table = "zombiecards"
+        db_table = "web_cards"
         managed = False
-        
+
+
 class KeepOrScrap(models.Model):
     tierid = models.IntegerField(primary_key=True)
     side = models.CharField(max_length=40)
-    card_class = models.CharField(max_length=30, db_column="class")
+    card_class = models.CharField(
+        max_length=30,
+        db_column="class",
+    )
     image = models.CharField(max_length=400, blank=True)
     reasoning = models.CharField(max_length=1500, blank=True)
     creator = models.CharField(max_length=1000, blank=True)

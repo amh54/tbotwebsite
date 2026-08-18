@@ -13,102 +13,228 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+import dj_database_url
+
+
+# ============================================================
+# BASE DIRECTORY
+# ============================================================
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+# ============================================================
+# ENVIRONMENT HELPERS
+# ============================================================
 
 def parse_bool_env(value, default=False):
     if value is None:
         return default
-    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+    return str(value).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def parse_csv_env(value, default=None):
     if not value:
         return default or []
+
     parsed = []
+
     for item in value.split(","):
         cleaned = item.strip().strip("\"'")
+
         if cleaned:
             parsed.append(cleaned)
+
     return parsed
 
 
 def load_environment_variables():
+    """
+    Load variables from .env when running locally.
+
+    Locally, .env should win over stale shell/session
+    environment variables (like a leftover exported
+    DATABASE_URL). In production (Render), real platform
+    env vars must always take priority, so .env is skipped
+    there entirely.
+    """
+
+    # If we're on Render, don't touch os.environ at all —
+    # trust Render's dashboard-configured env vars fully.
+    if os.getenv("RENDER"):
+        return
+
     env_path = BASE_DIR / ".env"
+
     if not env_path.exists():
         return
 
-    for line in env_path.read_text(encoding="utf-8").splitlines():
+    for line in env_path.read_text(
+        encoding="utf-8"
+    ).splitlines():
+
         line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
+
+        if (
+            not line
+            or line.startswith("#")
+            or "=" not in line
+        ):
             continue
 
         key, value = line.split("=", 1)
+
         key = key.strip()
         value = value.strip().strip("\"'")
-        if key and key not in os.environ:
+
+        if key:
+            # .env always wins locally, overriding any
+            # stray exported value from your shell.
             os.environ[key] = value
 
 
 load_environment_variables()
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# ============================================================
+# SECURITY
+# ============================================================
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
-if not SECRET_KEY:
-    raise RuntimeError("SECRET_KEY must be set in the environment or in the .env file before running the project.")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = parse_bool_env(os.getenv("DEBUG"), default=True)
-ALLOWED_HOSTS = parse_csv_env(
-    os.getenv("ALLOWED_HOSTS"),
-    default=["localhost", "127.0.0.1"],
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY must be set in the environment "
+        "or in the .env file before running the project."
+    )
+
+
+# ============================================================
+# DEBUG
+# ============================================================
+
+DEBUG = parse_bool_env(
+    os.getenv("DEBUG"),
+    default=True,
 )
 
-# Render sets this automatically for web services.
-render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip().strip("\"'")
-if render_hostname and render_hostname not in ALLOWED_HOSTS:
+
+# ============================================================
+# ALLOWED HOSTS
+# ============================================================
+
+ALLOWED_HOSTS = parse_csv_env(
+    os.getenv("ALLOWED_HOSTS"),
+    default=[
+        "localhost",
+        "127.0.0.1",
+    ],
+)
+
+
+# ============================================================
+# RENDER HOSTNAME
+# ============================================================
+
+render_hostname = os.getenv(
+    "RENDER_EXTERNAL_HOSTNAME",
+    "",
+).strip().strip("\"'")
+
+
+if (
+    render_hostname
+    and render_hostname not in ALLOWED_HOSTS
+):
     ALLOWED_HOSTS.append(render_hostname)
 
-vercel_hostname = os.getenv("VERCEL_URL", "").strip().strip("\"'")
+
+# ============================================================
+# VERCEL HOSTNAME
+# ============================================================
+
+vercel_hostname = os.getenv(
+    "VERCEL_URL",
+    "",
+).strip().strip("\"'")
+
+
 if vercel_hostname:
+
     if "://" in vercel_hostname:
-        vercel_hostname = vercel_hostname.split("://", 1)[1]
+        vercel_hostname = vercel_hostname.split(
+            "://",
+            1,
+        )[1]
+
     if vercel_hostname not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(vercel_hostname)
 
-# Helpful default when deploying on Vercel previews and production domains.
-if parse_bool_env(os.getenv("VERCEL"), default=False) and ".vercel.app" not in ALLOWED_HOSTS:
+
+# ============================================================
+# VERCEL PREVIEWS
+# ============================================================
+
+if (
+    parse_bool_env(
+        os.getenv("VERCEL"),
+        default=False,
+    )
+    and ".vercel.app" not in ALLOWED_HOSTS
+):
     ALLOWED_HOSTS.append(".vercel.app")
 
 
-# Application definition
+# ============================================================
+# APPLICATIONS
+# ============================================================
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'tbotapp',
-    'rest_framework',
-    'corsheaders',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+
+    "tbotapp",
+
+    "rest_framework",
+    "corsheaders",
 ]
 
+
+# ============================================================
+# MIDDLEWARE
+# ============================================================
+
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+
+    "django.contrib.sessions.middleware.SessionMiddleware",
+
+    "corsheaders.middleware.CorsMiddleware",
+
+    "django.middleware.common.CommonMiddleware",
+
+    "django.middleware.csrf.CsrfViewMiddleware",
+
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+
+    "django.contrib.messages.middleware.MessageMiddleware",
+
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+
+# ============================================================
+# CORS
+# ============================================================
 
 CORS_ALLOWED_ORIGINS = parse_csv_env(
     os.getenv("CORS_ALLOWED_ORIGINS"),
@@ -120,6 +246,11 @@ CORS_ALLOWED_ORIGINS = parse_csv_env(
     ],
 )
 
+
+# ============================================================
+# CSRF
+# ============================================================
+
 CSRF_TRUSTED_ORIGINS = parse_csv_env(
     os.getenv("CSRF_TRUSTED_ORIGINS"),
     default=[
@@ -128,132 +259,159 @@ CSRF_TRUSTED_ORIGINS = parse_csv_env(
     ],
 )
 
+
 if vercel_hostname:
+
     vercel_origin = f"https://{vercel_hostname}"
+
     if vercel_origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(vercel_origin)
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# ============================================================
+# PROXY / HTTPS
+# ============================================================
+
+SECURE_PROXY_SSL_HEADER = (
+    "HTTP_X_FORWARDED_PROTO",
+    "https",
+)
+
 USE_X_FORWARDED_HOST = True
 
-ROOT_URLCONF = 'core.urls'
+
+# ============================================================
+# URL CONFIGURATION
+# ============================================================
+
+ROOT_URLCONF = "core.urls"
+
+
+# ============================================================
+# TEMPLATES
+# ============================================================
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": (
+            "django.template.backends.django.DjangoTemplates"
+        ),
+
+        "DIRS": [],
+
+        "APP_DIRS": True,
+
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+
+                "django.contrib.auth.context_processors.auth",
+
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+
+# ============================================================
+# WSGI
+# ============================================================
+
+WSGI_APPLICATION = "core.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+# ============================================================
+# DATABASE
+# ============================================================
+#
+# Neon PostgreSQL ONLY
+#
+# Local:
+#
+# DATABASE_URL=postgresql://user:password@host/db?sslmode=require
+#
+# Production:
+#
+# DATABASE_URL should be configured in Render's
+# environment variables.
+#
+# There is NO SQLite fallback.
+# ============================================================
 
-DB_ENGINE = os.getenv('DB_ENGINE')
-if not DB_ENGINE:
-    # Prefer MySQL only when the full MySQL connection set is available.
-    if os.getenv('DB_HOST') and os.getenv('DB_NAME') and os.getenv('DB_USER'):
-        DB_ENGINE = 'django.db.backends.mysql'
-    else:
-        DB_ENGINE = 'django.db.backends.sqlite3'
-
-if DB_ENGINE == 'django.db.backends.mysql':
-
-    db_options = {}
-
-    db_conn_max_age = os.getenv("DB_CONN_MAX_AGE", "").strip()
-
-    if db_conn_max_age:
-        try:
-            conn_max_age = int(db_conn_max_age)
-        except ValueError:
-            conn_max_age = 0
-    else:
-        conn_max_age = 0
-
-    db_ssl_default = parse_bool_env(os.getenv("VERCEL"), default=False)
-
-    if parse_bool_env(os.getenv("DB_SSL"), default=db_ssl_default):
-        db_options["ssl"] = {}
-
-    db_connect_timeout = os.getenv("DB_CONNECT_TIMEOUT", "").strip()
-
-    if not db_connect_timeout and parse_bool_env(
-        os.getenv("VERCEL"), default=False
-    ):
-        db_connect_timeout = "10"
-
-    if db_connect_timeout:
-        try:
-            db_options["connect_timeout"] = int(db_connect_timeout)
-        except ValueError:
-            pass
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('DB_NAME'),
-            'USER': os.getenv('DB_USER'),
-            'PASSWORD': os.getenv('DB_PASSWORD'),
-            'HOST': os.getenv('DB_HOST'),
-            'PORT': int(os.getenv('DB_PORT', '3306')),
-            'CONN_MAX_AGE': 0,
-            'OPTIONS': db_options,
-        }
-    }
-elif DB_ENGINE == 'django.db.backends.sqlite3':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    raise RuntimeError(f"Unsupported DB_ENGINE: {DB_ENGINE}")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL is not configured. "
+        "This project requires a Neon PostgreSQL database."
+    )
+
+
+DATABASES = {
+    "default": dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=0,
+        conn_health_checks=True,
+    )
+}
+
+
+# Neon requires SSL.
+DATABASES["default"]["OPTIONS"] = {
+    "sslmode": "require",
+    "connect_timeout": 10,
+}
+
+
+# ============================================================
+# PASSWORD VALIDATION
+# ============================================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        ),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "MinimumLengthValidator"
+        ),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "CommonPasswordValidator"
+        ),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "NumericPasswordValidator"
+        ),
     },
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+# ============================================================
+# INTERNATIONALIZATION
+# ============================================================
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# ============================================================
+# STATIC FILES
+# ============================================================
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"

@@ -1,25 +1,19 @@
-import "../css/App.css";
-import "../css/navbar.css";
+import "./css/App.css";
+import "./css/navbar.css";
+
 import { Link, Route, Routes } from "react-router-dom";
-import DecklistsPage from "./decklists.jsx";
-import CardInfo from "./cardinfo.jsx";
-import KeepOrScrap from "./keeporscrap.jsx";
-import HeroInfo from "./heroinfo.jsx";
-import Navbar from "../components/navbar.jsx";
-import TermsOfService from "./termsofservice";
-import Privacy from "./privacy.jsx";
+
+import DecklistsPage from "./pages/decklists.jsx";
+import CardInfo from "./pages/cardinfo.jsx";
+import KeepOrScrap from "./pages/keeporscrap.jsx";
+import HeroInfo from "./pages/heroinfo.jsx";
+import Navbar from "./components/navbar.jsx";
+import TermsOfService from "./pages/termsofservice.jsx";
+import Privacy from "./pages/privacy.jsx";
 
 function HomePage() {
   return (
     <div className="home">
-      <head>
-        <link
-          rel="icon"
-          href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
-        />
-        <title>Homepage</title>
-      </head>
-
       <Navbar />
 
       <section className="hero">
@@ -127,6 +121,7 @@ function HomePage() {
         <div className="quick-answer-grid">
           <div className="quick-answer-card">
             <h3>What is Tbot?</h3>
+
             <p>
               Tbot is a Plants vs. Zombies Heroes community website and Discord
               bot that brings together decklists, card information, hero
@@ -136,6 +131,7 @@ function HomePage() {
 
           <div className="quick-answer-card">
             <h3>What can I find on the website?</h3>
+
             <p>
               You can browse community decklists, search and filter cards, look
               up heroes, and use the Keep or Scrap section to review card
@@ -145,9 +141,11 @@ function HomePage() {
 
           <div className="quick-answer-card">
             <h3>Can I contribute?</h3>
+
             <p>
               Yes. Deck submissions, ideas, corrections, and feedback are
-              welcome through the Tbot community discord. <br />
+              welcome through the Tbot community Discord.
+              <br />
               <a
                 href="https://discord.gg/E5XzKf2PjN"
                 target="_blank"
@@ -160,6 +158,7 @@ function HomePage() {
 
           <div className="quick-answer-card">
             <h3>How can I support Tbot?</h3>
+
             <p>
               If you find the website or Discord bot useful, you can help
               support continued development and maintenance through Buy Me a
@@ -184,11 +183,17 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+
       <Route path="/decklists" element={<DecklistsPage />} />
+
       <Route path="/cardinfo" element={<CardInfo />} />
+
       <Route path="/keeporscrap" element={<KeepOrScrap />} />
+
       <Route path="/heroinfo" element={<HeroInfo />} />
+
       <Route path="/termsofservice" element={<TermsOfService />} />
+
       <Route path="/privacypolicy" element={<Privacy />} />
     </Routes>
   );

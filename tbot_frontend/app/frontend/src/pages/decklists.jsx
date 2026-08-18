@@ -615,13 +615,6 @@ function DecklistsPage() {
 
   return (
     <div className="deck-page">
-      <head>
-        <link
-          rel="icon"
-          href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
-        />
-        <title>Decklists</title>
-      </head>
 
       <Navbar />
 
