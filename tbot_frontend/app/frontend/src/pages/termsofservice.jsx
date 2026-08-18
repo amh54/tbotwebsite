@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/navbar";
 import "../css/termsofservice.css";
+import { useEffect } from "react";
 
 const SECTIONS = [
   { id: "about", label: "About Tbot" },
@@ -18,6 +19,12 @@ const SECTIONS = [
 ];
 
 function TermsOfService() {
+  useEffect(() => {
+  document.title = "Terms of Service";
+  return () => {
+    document.title = "Tbot";
+  };
+}, []);
   return (
     <div className="terms-page">
       <Navbar />

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
 import CardModal from "../components/cardmodal";
 import Navbar from "../components/navbar.jsx";
+import Footer from "../components/footer.jsx";
 import "../css/cardinfo.css";
 import "../css/navbar.css";
 import "../css/loading.css";
@@ -1088,6 +1089,12 @@ function CardInfo() {
 
     return () => window.removeEventListener("popstate", handlePopState);
   }, [cards]);
+    useEffect(() => {
+  document.title = "Card Info";
+  return () => {
+    document.title = "Tbot";
+  };
+}, []);
 
   const normalCards = useMemo(() => {
     return cards.filter((card) => {
@@ -1877,6 +1884,7 @@ function CardInfo() {
           />
         )}
       </div>
+         <Footer credits="Special thanks to The_Cute_Chick otherwise known as TCC for uploading all of the card images for me."/>
     </>
   );
 }

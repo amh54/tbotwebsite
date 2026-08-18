@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar";
+import Footer from "../components/footer";
 import "../css/decklists.css";
 import "../css/navbar.css";
 import "../css/loading.css";
@@ -289,6 +290,12 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
+  useEffect(() => {
+  document.title = "Decklists";
+  return () => {
+    document.title = "Tbot";
+  };
+}, []);
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -615,7 +622,6 @@ function DecklistsPage() {
 
   return (
     <div className="deck-page">
-
       <Navbar />
 
       <main className="deck-content">
@@ -731,6 +737,7 @@ function DecklistsPage() {
           )
         )}
       </main>
+      <Footer credits="Special thanks to rip for uploading all of the deck images for me. Also special thanks to the many PVZH community members who are building great decks to be hosted here on the Tbot site." />
     </div>
   );
 }

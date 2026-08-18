@@ -1,6 +1,5 @@
 import "./css/App.css";
 import "./css/navbar.css";
-
 import { Link, Route, Routes } from "react-router-dom";
 
 import DecklistsPage from "./pages/decklists.jsx";
@@ -8,6 +7,7 @@ import CardInfo from "./pages/cardinfo.jsx";
 import KeepOrScrap from "./pages/keeporscrap.jsx";
 import HeroInfo from "./pages/heroinfo.jsx";
 import Navbar from "./components/navbar.jsx";
+import Footer from "./components/footer.jsx";
 import TermsOfService from "./pages/termsofservice.jsx";
 import Privacy from "./pages/privacy.jsx";
 
@@ -175,6 +175,8 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      <Footer credits="Special thanks to the many pvzh communiy members who took time out of their day to gave me helpful feedback and critiques before publishing this site" />
     </div>
   );
 }

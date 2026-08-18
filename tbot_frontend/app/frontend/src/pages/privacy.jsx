@@ -1,8 +1,15 @@
 import React from "react";
 import "../css/privacy.css";
 import Navbar from "../components/navbar.jsx";
+import { useEffect } from "react";
 
 const Privacy = () => {
+    useEffect(() => {
+  document.title = "Privacy Policy";
+  return () => {
+    document.title = "Tbot";
+  };
+}, []);
   return (
     <main className="privacy-page">
           <Navbar />
