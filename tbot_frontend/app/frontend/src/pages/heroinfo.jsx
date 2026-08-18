@@ -915,7 +915,7 @@ function HeroInfo() {
           />
         )}
       </div>
-      <Footer credits="Special thanks to The_Cute_Chick, otherwise known as TCC, for uploading all of the card images and transcribing most of the initial hero information used here." />
+      <Footer credits="Special thanks to The_Cute_Chick, otherwise known as TCC, for uploading all of the hero images and transcribing most of the initial hero information used here." />
     </>
   );
 }
