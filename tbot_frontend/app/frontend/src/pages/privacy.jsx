@@ -1,7 +1,7 @@
-import React from "react";
 import "../css/privacy.css";
 import Navbar from "../components/navbar.jsx";
-import { useEffect } from "react";
+import { useEffect, React } from "react";
+import Footer from "../components/footer.jsx";
 
 const Privacy = () => {
     useEffect(() => {
@@ -13,7 +13,6 @@ const Privacy = () => {
   return (
     <main className="privacy-page">
           <Navbar />
-      {/* Hero */}
       <section className="privacy-hero">
         <div className="privacy-hero-content">
           <span className="privacy-label">TBOT</span>
@@ -28,11 +27,8 @@ const Privacy = () => {
           <span className="privacy-updated">Last Updated: August 16, 2026</span>
         </div>
       </section>
-
-      {/* Content */}
       <section className="privacy-content">
         <div className="privacy-layout">
-          {/* Sidebar */}
           <aside className="privacy-sidebar">
             <div className="privacy-sidebar-inner">
               <span className="privacy-sidebar-title">Privacy Statement</span>
@@ -50,8 +46,6 @@ const Privacy = () => {
               </nav>
             </div>
           </aside>
-
-          {/* Main Statement */}
           <article className="privacy-document">
             <section id="information" className="privacy-section">
               <span className="privacy-section-number">01</span>
@@ -214,6 +208,7 @@ const Privacy = () => {
           </article>
         </div>
       </section>
+        <Footer/>
     </main>
   );
 };

@@ -4,6 +4,7 @@ import "../css/cardinfo.css";
 import "../css/navbar.css";
 import "../css/loading.css";
 import Navbar from "../components/navbar.jsx";
+import Footer from "../components/footer.jsx"
 
 const getApiBaseUrl = () => {
   const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
@@ -918,6 +919,7 @@ if (loading) {
           />
         )}
       </div>
+        <Footer credits="Special thanks to The_Cute_Chick otherwise known as TCC for uploading all of the hero images for me."/>
     </>
   );
 }

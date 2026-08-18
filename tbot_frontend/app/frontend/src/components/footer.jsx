@@ -7,7 +7,7 @@ function Footer({ credits }) {
     <footer className="site-footer">
       <div className="footer-content">
         <p>
-          © {year} Tbot. All rights reserved. Developed by{" "}
+          © {year} Tbot. All rights reserved. Web page designed and coded by{" "}
           <span className="footer-highlight">Tbone</span>.
         </p>
 

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/navbar";
+import Footer from "../components/footer";
 import "../css/termsofservice.css";
 import { useEffect } from "react";
 
@@ -449,11 +450,6 @@ function TermsOfService() {
                 </p>
               </div>
             </section>
-
-            {/* =========================
-                FOOTER
-            ========================= */}
-
             <footer className="terms-footer">
               <span>Tbot Terms of Service</span>
 
@@ -462,6 +458,7 @@ function TermsOfService() {
           </article>
         </div>
       </main>
+        <Footer/>
     </div>
   );
 }

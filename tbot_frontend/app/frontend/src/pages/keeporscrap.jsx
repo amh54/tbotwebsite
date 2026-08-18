@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import "../css/keeporscrap.css";
 import "../css/loading.css";
 import Navbar from "../components/navbar";
+import Footer from "../components/footer";
 
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
@@ -581,6 +582,7 @@ function KeepOrScrap() {
           </div>
         </div>
       )}
+            <Footer />
     </div>
   );
 }
