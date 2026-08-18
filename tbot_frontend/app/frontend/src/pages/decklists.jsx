@@ -291,11 +291,11 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
   useEffect(() => {
-  document.title = "Decklists";
-  return () => {
-    document.title = "Tbot";
-  };
-}, []);
+    document.title = "Decklists";
+    return () => {
+      document.title = "Tbot";
+    };
+  }, []);
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -737,7 +737,7 @@ function DecklistsPage() {
           )
         )}
       </main>
-      <Footer credits="Special thanks to rip for uploading all of the deck images for me. Also special thanks to the many PVZH community members who are building great decks to be hosted here on the Tbot site and Discord bot." />
+      <Footer credits="Special thanks to rip for uploading all of the deck images, and to everyone in the PVZH community who continues to contribute great decks and help grow the Tbot website and Discord bot." />
     </div>
   );
 }
