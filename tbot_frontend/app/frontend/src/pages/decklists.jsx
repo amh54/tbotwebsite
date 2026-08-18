@@ -737,7 +737,7 @@ function DecklistsPage() {
           )
         )}
       </main>
-      <Footer credits="Special thanks to rip for uploading all of the deck images for me. Also special thanks to the many PVZH community members who are building great decks to be hosted here on the Tbot site." />
+      <Footer credits="Special thanks to rip for uploading all of the deck images for me. Also special thanks to the many PVZH community members who are building great decks to be hosted here on the Tbot site and Discord bot." />
     </div>
   );
 }
