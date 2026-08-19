@@ -362,13 +362,16 @@
     font-size: 38px;
   }
 
+ @media (max-width: 900px) {
   .filters {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
   }
 
   .select-wrapper {
     width: 100%;
-    flex: none;
+    min-width: 0;
   }
 
   .select-wrapper .react-select__control {
