@@ -357,25 +357,12 @@ if FRONTEND_URL:
 # ============================================================
 
 SESSION_COOKIE_HTTPONLY = True
-
-# Frontend and backend are different domains:
-# pvzhtbot.com
-# tbotwebsite.vercel.app
-#
-# The browser therefore needs to allow the Django
-# session cookie to be sent cross-site.
 SESSION_COOKIE_SAMESITE = "None"
-
-# Production is HTTPS.
 SESSION_COOKIE_SECURE = True
 
-# ============================================================
-# CSRF COOKIE
-# ============================================================
-
-CSRF_COOKIE_SECURE = not DEBUG
-
-CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
 
 
 # ============================================================
