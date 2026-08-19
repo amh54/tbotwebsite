@@ -358,13 +358,16 @@ if FRONTEND_URL:
 
 SESSION_COOKIE_HTTPONLY = True
 
-# HTTPS in production, HTTP locally.
-SESSION_COOKIE_SECURE = not DEBUG
+# Frontend and backend are different domains:
+# pvzhtbot.com
+# tbotwebsite.vercel.app
+#
+# The browser therefore needs to allow the Django
+# session cookie to be sent cross-site.
+SESSION_COOKIE_SAMESITE = "None"
 
-# Lax allows the Discord OAuth redirect to establish
-# the Django session while protecting against CSRF.
-SESSION_COOKIE_SAMESITE = "Lax"
-
+# Production is HTTPS.
+SESSION_COOKIE_SECURE = True
 
 # ============================================================
 # CSRF COOKIE
