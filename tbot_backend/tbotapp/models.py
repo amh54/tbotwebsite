@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.db.models.functions import Now
 
 class Decklist(models.Model):
     deckid = models.IntegerField(primary_key=True)
@@ -69,4 +69,130 @@ class KeepOrScrap(models.Model):
 
     class Meta:
         db_table = "web_keep_or_scrap"
+        managed = False
+        
+class UserProfile(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    discord_id = models.CharField(
+        max_length=30,
+        unique=True,
+    )
+
+    username = models.CharField(
+        max_length=100,
+    )
+
+    display_name = models.CharField(
+        max_length=100,
+    )
+
+    profile_slug = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    avatar = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+    )
+
+    bio = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    is_public = models.BooleanField(
+        default=False,
+    )
+
+    created_at = models.DateTimeField()
+
+    updated_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "user_profiles"
+        managed = False
+
+
+class UserDeck(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    profile_id = models.BigIntegerField()
+
+    name = models.CharField(max_length=255)
+    hero = models.CharField(max_length=255)
+    side = models.CharField(max_length=255)
+    category = models.CharField(max_length=255)
+    archetype = models.CharField(max_length=255)
+
+    description = models.TextField(
+    blank=True,
+    default="",
+)
+
+    image = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+    )
+
+    cost = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    aliases = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    cards = models.TextField(
+    blank=True,
+    null=True,
+)
+
+    inspiration = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    optimization = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    suggested_date = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    updated_date = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    deck_doc = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    created_at = models.DateTimeField(
+    db_default=Now(),
+)
+
+    modified_at = models.DateTimeField(
+    db_default=Now(),
+)
+
+    class Meta:
+        db_table = "user_decks"
         managed = False

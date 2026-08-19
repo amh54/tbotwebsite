@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 
 import dj_database_url
-
+import cloudinary
 
 # ============================================================
 # BASE DIRECTORY
@@ -59,14 +59,12 @@ def load_environment_variables():
     Load variables from .env when running locally.
 
     Locally, .env should win over stale shell/session
-    environment variables (like a leftover exported
-    DATABASE_URL). In production (Render), real platform
-    env vars must always take priority, so .env is skipped
-    there entirely.
+    environment variables.
+
+    In production (Render), real platform environment
+    variables always take priority.
     """
 
-    # If we're on Render, don't touch os.environ at all —
-    # trust Render's dashboard-configured env vars fully.
     if os.getenv("RENDER"):
         return
 
@@ -94,12 +92,65 @@ def load_environment_variables():
         value = value.strip().strip("\"'")
 
         if key:
-            # .env always wins locally, overriding any
-            # stray exported value from your shell.
             os.environ[key] = value
 
 
 load_environment_variables()
+
+
+# ============================================================
+# DISCORD OAUTH2
+# ============================================================
+
+DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
+
+DISCORD_CLIENT_SECRET = os.getenv(
+    "DISCORD_CLIENT_SECRET"
+)
+
+DISCORD_REDIRECT_URI = os.getenv(
+    "DISCORD_REDIRECT_URI",
+    "http://localhost:8000/auth/discord/callback/",
+)
+
+
+if not DISCORD_CLIENT_ID:
+    raise RuntimeError(
+        "DISCORD_CLIENT_ID must be set in the environment "
+        "or in the .env file."
+    )
+
+
+if not DISCORD_CLIENT_SECRET:
+    raise RuntimeError(
+        "DISCORD_CLIENT_SECRET must be set in the environment "
+        "or in the .env file."
+    )
+
+
+# ============================================================
+# DISCORD OWNER
+# ============================================================
+
+DISCORD_OWNER_ID = os.getenv(
+    "DISCORD_OWNER_ID"
+)
+
+if not DISCORD_OWNER_ID:
+    raise RuntimeError(
+        "DISCORD_OWNER_ID must be set in the environment "
+        "or in the .env file."
+    )
+
+
+# ============================================================
+# FRONTEND
+# ============================================================
+
+FRONTEND_URL = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:5173",
+).rstrip("/")
 
 
 # ============================================================
@@ -137,7 +188,20 @@ ALLOWED_HOSTS = parse_csv_env(
     ],
 )
 
+# ============================================================
+# CLOUDINARY
+# ============================================================
 
+CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
+    secure=True,
+)
 # ============================================================
 # RENDER HOSTNAME
 # ============================================================
@@ -199,6 +263,7 @@ INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
@@ -208,17 +273,21 @@ INSTALLED_APPS = [
     "corsheaders",
 ]
 
-
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+}
 # ============================================================
 # MIDDLEWARE
 # ============================================================
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+
     "django.middleware.security.SecurityMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
-
-    "corsheaders.middleware.CorsMiddleware",
 
     "django.middleware.common.CommonMiddleware",
 
@@ -246,6 +315,11 @@ CORS_ALLOWED_ORIGINS = parse_csv_env(
     ],
 )
 
+# IMPORTANT:
+# Allows the browser to send Django's session cookie
+# with requests from the React frontend.
+CORS_ALLOW_CREDENTIALS = True
+
 
 # ============================================================
 # CSRF
@@ -256,6 +330,8 @@ CSRF_TRUSTED_ORIGINS = parse_csv_env(
     default=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
     ],
 )
 
@@ -265,7 +341,24 @@ if vercel_hostname:
     vercel_origin = f"https://{vercel_hostname}"
 
     if vercel_origin not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append(vercel_origin)
+        CSRF_TRUSTED_ORIGINS.append(
+            vercel_origin
+        )
+
+
+# ============================================================
+# SESSION / AUTHENTICATION COOKIES
+# ============================================================
+
+# JavaScript cannot directly read the Django session cookie.
+SESSION_COOKIE_HTTPONLY = True
+
+# Allows the session cookie to work between your
+# React frontend and Django backend during local development.
+SESSION_COOKIE_SAMESITE = "Lax"
+
+# localhost development uses HTTP, not HTTPS.
+SESSION_COOKIE_SECURE = False
 
 
 # ============================================================
@@ -415,3 +508,21 @@ USE_TZ = True
 # ============================================================
 
 STATIC_URL = "static/"
+# ============================================================
+# MEDIA / UPLOADED FILES
+# ============================================================
+
+
+
+# ============================================================
+# DEFAULT FILE STORAGE
+# ============================================================
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}

@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../css/filterdropdown.css";
 
 function FilterDropdown({
   label,
-  options,
+  options = [],
   value = [],
   onChange,
   multi = true,
@@ -12,8 +12,8 @@ function FilterDropdown({
   const ref = useRef(null);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
         setOpen(false);
       }
     };
@@ -25,134 +25,128 @@ function FilterDropdown({
     };
   }, []);
 
-  const hasSelection = multi
-    ? Array.isArray(value) && value.length > 0
-    : Boolean(value);
+  const selectedValues = Array.isArray(value) ? value : [];
 
-  const handleClear = (e) => {
-    e.stopPropagation();
+  const hasSelection = multi ? selectedValues.length > 0 : Boolean(value);
 
-    onChange(multi ? [] : null);
-    setOpen(false);
-  };
-
-  const isSelected = (opt) => {
+  const isSelected = (option) => {
     if (multi) {
-      return Array.isArray(value)
-        ? value.some((v) => v.value === opt.value)
-        : false;
+      return selectedValues.some((selected) => selected.value === option.value);
     }
 
-    return value?.value === opt.value;
+    return value?.value === option.value;
   };
 
-  const handleSelect = (opt) => {
+  const handleSelect = (option) => {
     if (multi) {
-      const currentValue = Array.isArray(value) ? value : [];
-
-      const exists = currentValue.some(
-        (v) => v.value === opt.value,
+      const exists = selectedValues.some(
+        (selected) => selected.value === option.value,
       );
 
       if (exists) {
         onChange(
-          currentValue.filter(
-            (v) => v.value !== opt.value,
-          ),
+          selectedValues.filter((selected) => selected.value !== option.value),
         );
       } else {
-        onChange([...currentValue, opt]);
+        onChange([...selectedValues, option]);
       }
 
-      // Keep the menu open so multiple choices can be made
+      // Keep dropdown open for multi-select.
       setOpen(true);
-    } else {
-      onChange(isSelected(opt) ? null : opt);
-      setOpen(false);
+      return;
     }
+
+    onChange(isSelected(option) ? null : option);
+    setOpen(false);
+  };
+
+  const handleClear = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    onChange(multi ? [] : null);
   };
 
   const triggerLabel = multi
-    ? Array.isArray(value) && value.length > 0
-      ? value.map((v) => v.label).join(", ")
+    ? selectedValues.length > 0
+      ? selectedValues.map((item) => item.label).join(", ")
       : label
     : value?.label || label;
 
   return (
-    <div className="filter-dropdown" ref={ref}>
+    <div className={`filter-dropdown ${open ? "is-open" : ""}`} ref={ref}>
       <button
         type="button"
-        className={`filter-dropdown-trigger ${
-          open ? "open" : ""
-        }`}
-        onClick={() => setOpen((o) => !o)}
+        className={`filter-dropdown-trigger ${open ? "open" : ""}`}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen((current) => !current);
+        }}
+        aria-expanded={open}
       >
-        <span className="filter-dropdown-trigger-label">
-          {triggerLabel}
-        </span>
+        <span className="filter-dropdown-trigger-label">{triggerLabel}</span>
 
         {hasSelection ? (
           <span
             className="filter-dropdown-clear"
+            onClick={handleClear}
             role="button"
             tabIndex={0}
             aria-label={`Clear ${label} filter`}
-            onClick={handleClear}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                handleClear(e);
-              }
-            }}
           >
             ×
           </span>
         ) : (
-          <span className="filter-dropdown-arrow">
-            ▾
-          </span>
+          <span className="filter-dropdown-arrow">▾</span>
         )}
       </button>
 
       {open && (
-        <div className="filter-dropdown-menu">
-          {options.map((opt) => (
-            <div
-              key={opt.value}
-              className={`filter-dropdown-item ${
-                isSelected(opt) ? "selected" : ""
-              }`}
-              onClick={() => handleSelect(opt)}
-            >
-              {opt.icon && (
-                <span className="filter-item-icon">
-                  {opt.icon}
-                </span>
-              )}
-
-              {opt.image && (
-                <img
-                  src={opt.image}
-                  alt={opt.label}
-                  className="filter-item-image"
-                />
-              )}
-
-              <div className="filter-item-text">
-                <div className="filter-item-title">
-                  {opt.label}
-
-                  {typeof opt.count === "number" &&
-                    ` (${opt.count})`}
-                </div>
-
-                {opt.description && (
-                  <div className="filter-item-description">
-                    {opt.description}
-                  </div>
+        <div
+          className="filter-dropdown-menu"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {options.length === 0 ? (
+            <div className="filter-dropdown-empty">No options available</div>
+          ) : (
+            options.map((option) => (
+              <button
+                type="button"
+                key={option.value}
+                className={`filter-dropdown-item ${
+                  isSelected(option) ? "selected" : ""
+                }`}
+                onClick={() => handleSelect(option)}
+              >
+                {option.icon && (
+                  <span className="filter-item-icon">{option.icon}</span>
                 )}
-              </div>
-            </div>
-          ))}
+
+                {option.image && (
+                  <img
+                    src={option.image}
+                    alt=""
+                    className="filter-item-image"
+                  />
+                )}
+
+                <div className="filter-item-text">
+                  <div className="filter-item-title">
+                    {option.label}
+
+                    {typeof option.count === "number" && ` (${option.count})`}
+                  </div>
+
+                  {option.description && (
+                    <div className="filter-item-description">
+                      {option.description}
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>

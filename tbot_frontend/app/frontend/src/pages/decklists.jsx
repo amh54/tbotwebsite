@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
@@ -8,27 +9,16 @@ import "../css/navbar.css";
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
-  const stripTrailingSlashes = (value) => {
-    let normalized = value;
-
-    while (normalized.endsWith("/")) {
-      normalized = normalized.slice(0, -1);
-    }
-
-    return normalized;
-  };
-
   const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
 
   if (envBaseUrl) {
-    return stripTrailingSlashes(envBaseUrl);
+    return envBaseUrl.replace(/\/+$/, "");
   }
 
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
-    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
 
-    if (isLocalhost) {
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
       return "http://localhost:8000";
     }
   }
@@ -66,55 +56,39 @@ const ARCHETYPE_META = {
   },
 };
 
-const CATEGORY_META = {
-  budget: {
-    icon: "💵",
-    description: "Decks that are cheap for new players",
-  },
-  competitive: {
-    icon: "🏆",
-    description: "Some of the best decks in the game",
-  },
-  ladder: {
-    icon: "🪜",
-    description: "Decks that are mostly only good for ranked games",
-  },
-  meme: {
-    icon: "😂",
-    description: "Decks built for fun/weird combos",
-  },
+const HERO_ALIAS = {
+  bc: "beta-carrotina",
+  ct: "citron",
+  sf: "solar flare",
+  cz: "chompzilla",
+  gs: "green shadow",
+  gk: "grass knuckles",
+  sp: "spudow",
+  nc: "night cap",
+  ro: "rose",
+  cc: "captain combustible",
+  sb: "super brainz",
+  sm: "the smash",
+  if: "impfinity",
+  rb: "rustbolt",
+  eb: "electric boogaloo",
+  bf: "brain freeze",
+  pb: "professor brainstorm",
+  im: "immorticia",
+  zm: "z-mech",
+  nt: "neptuna",
+  hg: "huge-giganticus",
 };
 
+function normalizeText(value) {
+  return String(value ?? "").trim();
+}
+
+function normalizeKey(value) {
+  return normalizeText(value).toLowerCase();
+}
+
 function DecklistsPage() {
-  const normalizeFilterText = (value) => String(value || "").trim();
-
-  const normalizeFilterKey = (value) =>
-    normalizeFilterText(value).toLowerCase();
-
-  const HERO_ALIAS = {
-    bc: "beta-carrotina",
-    ct: "citron",
-    sf: "solar flare",
-    cz: "chompzilla",
-    gs: "green shadow",
-    gk: "grass knuckles",
-    sp: "spudow",
-    nc: "night cap",
-    ro: "rose",
-    cc: "captain combustible",
-    sb: "super brainz",
-    sm: "the smash",
-    if: "impfinity",
-    rb: "rustbolt",
-    eb: "electric boogaloo",
-    bf: "brain freeze",
-    pb: "professor brainstorm",
-    im: "immorticia",
-    zm: "z-mech",
-    nt: "neptuna",
-    hg: "huge-giganticus",
-  };
-
   const [decks, setDecks] = useState([]);
   const [totalDecks, setTotalDecks] = useState(0);
 
@@ -122,24 +96,41 @@ function DecklistsPage() {
   const [side, setSide] = useState("All");
 
   const [hero, setHero] = useState([]);
-  const [archetype, setArchetype] = useState([]);
   const [category, setCategory] = useState([]);
+  const [archetype, setArchetype] = useState([]);
+
+  const [allCards, setAllCards] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [allCards, setAllCards] = useState([]);
+  // ============================================================
+  // PAGE TITLE
+  // ============================================================
+
+  useEffect(() => {
+    document.title = "Decklists";
+
+    return () => {
+      document.title = "Tbot";
+    };
+  }, []);
+
+  // ============================================================
+  // LOAD DECK COUNT
+  // ============================================================
 
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchDeckCount = async () => {
       try {
-        const endpoint = `${API_BASE_URL}/tbotapp/decklist-count/`;
-
-        const response = await fetch(endpoint, {
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/decklist-count/`,
+          {
+            signal: controller.signal,
+          },
+        );
 
         if (!response.ok) {
           throw new Error(
@@ -162,16 +153,21 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
+  // ============================================================
+  // LOAD CARDS
+  // ============================================================
+
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchCards = async () => {
       try {
-        const endpoint = `${API_BASE_URL}/tbotapp/cardinfo/`;
-
-        const response = await fetch(endpoint, {
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/cardinfo/`,
+          {
+            signal: controller.signal,
+          },
+        );
 
         if (!response.ok) {
           return;
@@ -192,14 +188,20 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
+  // ============================================================
+  // LOAD DECKS
+  // ============================================================
+
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchDecks = async () => {
       try {
-        const decklistsEndpoint = `${API_BASE_URL}/tbotapp/decklists/`;
+        setLoading(true);
 
-        const response = await fetch(decklistsEndpoint, {
+        const endpoint = `${API_BASE_URL}/tbotapp/decklists/`;
+
+        const response = await fetch(endpoint, {
           signal: controller.signal,
         });
 
@@ -207,12 +209,12 @@ function DecklistsPage() {
           let message = `Request failed with status ${response.status}`;
 
           try {
-            const errorPayload = await response.json();
+            const payload = await response.json();
 
-            if (errorPayload?.detail) {
-              message = `${message}: ${errorPayload.detail}`;
-            } else if (errorPayload?.error) {
-              message = `${message}: ${errorPayload.error}`;
+            if (payload?.detail) {
+              message += `: ${payload.detail}`;
+            } else if (payload?.error) {
+              message += `: ${payload.error}`;
             }
           } catch (_error) {}
 
@@ -223,66 +225,44 @@ function DecklistsPage() {
           response.headers.get("content-type") || ""
         ).toLowerCase();
 
-        const responseText = await response.text();
-
-        const hint = import.meta.env.VITE_API_BASE_URL
-          ? "Check that VITE_API_BASE_URL points to your backend domain."
-          : "VITE_API_BASE_URL is missing; set it in frontend deployment settings.";
+        const text = await response.text();
 
         if (!contentType.includes("application/json")) {
-          if (responseText.trim().startsWith("<")) {
-            throw new Error(
-              `Received HTML instead of JSON from ${decklistsEndpoint}. ${hint}`,
-            );
-          }
-
           throw new Error(
-            `Unexpected response type ${
-              contentType || "unknown"
-            } from ${decklistsEndpoint}. ${hint}`,
+            "The decklist endpoint did not return JSON.",
           );
         }
 
-        let data;
+        const data = JSON.parse(text);
 
-        try {
-          data = JSON.parse(responseText);
-        } catch (_parseError) {
-          if (responseText.trim().startsWith("<")) {
-            throw new Error(
-              `Received HTML instead of JSON from ${decklistsEndpoint}. ${hint}`,
-            );
-          }
+        const results = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+            ? data.results
+            : [];
 
-          throw new Error(
-            `Invalid JSON received from ${decklistsEndpoint}. ${hint}`,
-          );
-        }
+        console.log("DECKS FROM API:", results);
 
-        if (Array.isArray(data)) {
-          setDecks(data);
-        } else {
-          const results = Array.isArray(data?.results) ? data.results : [];
-          setDecks(results);
-        }
-
+        setDecks(results);
         setError("");
+
+        if (!totalDecks && results.length) {
+          setTotalDecks(results.length);
+        }
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error(err);
-
-          const hint = import.meta.env.VITE_API_BASE_URL
-            ? ""
-            : " Configure VITE_API_BASE_URL in your frontend deployment settings.";
+          console.error("Unable to load decklists:", err);
 
           setError(
-            `Unable to load decklists right now.${hint} ${
+            `Unable to load decklists right now. ${
               err.message || ""
             }`.trim(),
           );
         }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -290,216 +270,175 @@ function DecklistsPage() {
 
     return () => controller.abort();
   }, []);
-  useEffect(() => {
-    document.title = "Decklists";
-    return () => {
-      document.title = "Tbot";
-    };
-  }, []);
+
+  // ============================================================
+  // SIDE FILTER
+  // ============================================================
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
     }
 
-    const selectedSide = side.toLowerCase();
+    const selectedSide = normalizeKey(side);
 
     return decks.filter(
-      (deck) => String(deck.side || "").toLowerCase() === selectedSide,
+      (deck) => normalizeKey(deck.side) === selectedSide,
     );
   }, [decks, side]);
 
-  const heroOptionDecks = useMemo(() => {
-    return sideFilteredDecks.filter((deck) => {
-      const categoryMatch =
-        category.length === 0 ||
-        category.some(
-          (selectedCategory) =>
-            normalizeFilterKey(deck.category) ===
-            normalizeFilterKey(selectedCategory.value),
-        );
-
-      const archetypeMatch =
-        archetype.length === 0 ||
-        archetype.every((selectedArchetype) =>
-          normalizeFilterKey(deck.archetype).includes(
-            normalizeFilterKey(selectedArchetype.value),
-          ),
-        );
-
-      return categoryMatch && archetypeMatch;
-    });
-  }, [sideFilteredDecks, category, archetype]);
-
-  const categoryOptionDecks = useMemo(() => {
-    return sideFilteredDecks.filter((deck) => {
-      const heroMatch =
-        hero.length === 0 ||
-        hero.some(
-          (selectedHero) =>
-            normalizeFilterKey(deck.hero) ===
-            normalizeFilterKey(selectedHero.value),
-        );
-
-      const archetypeMatch =
-        archetype.length === 0 ||
-        archetype.every((selectedArchetype) =>
-          normalizeFilterKey(deck.archetype).includes(
-            normalizeFilterKey(selectedArchetype.value),
-          ),
-        );
-
-      return heroMatch && archetypeMatch;
-    });
-  }, [sideFilteredDecks, hero, archetype]);
-
-  const archetypeOptionDecks = useMemo(() => {
-    return sideFilteredDecks.filter((deck) => {
-      const heroMatch =
-        hero.length === 0 ||
-        hero.some(
-          (selectedHero) =>
-            normalizeFilterKey(deck.hero) ===
-            normalizeFilterKey(selectedHero.value),
-        );
-
-      const categoryMatch =
-        category.length === 0 ||
-        category.some(
-          (selectedCategory) =>
-            normalizeFilterKey(deck.category) ===
-            normalizeFilterKey(selectedCategory.value),
-        );
-
-      return heroMatch && categoryMatch;
-    });
-  }, [sideFilteredDecks, hero, category]);
+  // ============================================================
+  // HERO OPTIONS
+  //
+  // IMPORTANT:
+  // These are generated ONLY from the selected side.
+  // They do not depend on category/archetype filters.
+  // ============================================================
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
 
-    heroOptionDecks.forEach((deck) => {
-      const heroName = normalizeFilterText(deck.hero);
+    sideFilteredDecks.forEach((deck) => {
+      const heroName = normalizeText(deck.hero);
 
       if (!heroName) {
         return;
       }
 
-      const key = normalizeFilterKey(heroName);
+      const key = normalizeKey(heroName);
 
       if (!heroMap.has(key)) {
         heroMap.set(key, {
-          heroName,
-          side: normalizeFilterKey(deck.side),
+          value: heroName,
+          label: heroName,
           count: 0,
+          side: normalizeKey(deck.side),
         });
       }
 
       heroMap.get(key).count += 1;
     });
 
-    return [...heroMap.values()]
-      .map(({ heroName, side, count }) => {
+    return Array.from(heroMap.values())
+      .map((option) => {
         const matchedCard = allCards.find(
           (card) =>
-            normalizeFilterKey(card.card_name) === normalizeFilterKey(heroName),
+            normalizeKey(card.card_name) ===
+            normalizeKey(option.label),
         );
 
         return {
-          value: heroName,
-          label: heroName,
-          count,
+          ...option,
           description: matchedCard?.flavor_text || "",
           image: matchedCard?.thumbnail || "",
-          side,
         };
       })
-      .sort((a, b) => {
-        const sideOrder = {
-          plants: 0,
-          zombies: 1,
-        };
-
-        const sideCompare =
-          (sideOrder[a.side] ?? 99) - (sideOrder[b.side] ?? 99);
-
-        if (sideCompare !== 0) {
-          return sideCompare;
-        }
-
-        return a.label.localeCompare(b.label, undefined, {
+      .sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, {
           sensitivity: "base",
-        });
-      });
-  }, [heroOptionDecks, allCards]);
+        }),
+      );
+  }, [sideFilteredDecks, allCards]);
+
+  // ============================================================
+  // CATEGORY OPTIONS
+  //
+  // Generated independently from hero/archetype selections.
+  // ============================================================
 
   const categoryOptions = useMemo(() => {
-    const grouped = categoryOptionDecks.reduce((acc, deck) => {
-      const normalized = normalizeFilterText(deck.category);
+    const categoryMap = new Map();
 
-      if (!normalized) {
-        return acc;
+    sideFilteredDecks.forEach((deck) => {
+      const categoryName = normalizeText(deck.category);
+
+      if (!categoryName) {
+        return;
       }
 
-      const key = normalizeFilterKey(normalized);
+      const key = normalizeKey(categoryName);
 
-      if (!acc[key]) {
-        acc[key] = {
-          value: normalized,
-          label: normalized,
+      if (!categoryMap.has(key)) {
+        categoryMap.set(key, {
+          value: categoryName,
+          label: categoryName,
           count: 0,
-          ...(CATEGORY_META[key] || {}),
-        };
+        });
       }
 
-      acc[key].count += 1;
+      categoryMap.get(key).count += 1;
+    });
 
-      return acc;
-    }, {});
-
-    return Object.values(grouped).sort((a, b) =>
+    return Array.from(categoryMap.values()).sort((a, b) =>
       a.label.localeCompare(b.label, undefined, {
         sensitivity: "base",
       }),
     );
-  }, [categoryOptionDecks]);
+  }, [sideFilteredDecks]);
+
+  // ============================================================
+  // ARCHETYPE OPTIONS
+  //
+  // Generated independently from hero/category selections.
+  // ============================================================
 
   const archetypeOptions = useMemo(() => {
-    return Object.entries(ARCHETYPE_META)
-      .map(([value, meta]) => {
-        const count = archetypeOptionDecks.filter((deck) =>
-          normalizeFilterKey(deck.archetype).includes(value),
-        ).length;
+    const counts = {};
 
-        return {
-          value,
-          label: value.charAt(0).toUpperCase() + value.slice(1),
-          ...meta,
-          count,
-        };
-      })
+    Object.keys(ARCHETYPE_META).forEach((key) => {
+      counts[key] = 0;
+    });
+
+    sideFilteredDecks.forEach((deck) => {
+      const deckArchetype = normalizeKey(deck.archetype);
+
+      if (!deckArchetype) {
+        return;
+      }
+
+      Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
+        if (deckArchetype.includes(archetypeName)) {
+          counts[archetypeName] += 1;
+        }
+      });
+    });
+
+    return Object.entries(ARCHETYPE_META)
+      .map(([value, meta]) => ({
+        value,
+        label:
+          value.charAt(0).toUpperCase() +
+          value.slice(1),
+        count: counts[value] || 0,
+        ...meta,
+      }))
       .filter((option) => option.count > 0);
-  }, [archetypeOptionDecks]);
+  }, [sideFilteredDecks]);
+
+  // ============================================================
+  // SORT DECKS
+  // ============================================================
 
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
-      const normalizeSide = (value) => String(value || "").toLowerCase();
-
       const sideOrder = {
         plants: 0,
         zombies: 1,
       };
 
+      const sideA = normalizeKey(a.side);
+      const sideB = normalizeKey(b.side);
+
       const sideCompare =
-        (sideOrder[normalizeSide(a.side)] ?? 99) -
-        (sideOrder[normalizeSide(b.side)] ?? 99);
+        (sideOrder[sideA] ?? 99) -
+        (sideOrder[sideB] ?? 99);
 
       if (sideCompare !== 0) {
         return sideCompare;
       }
 
-      const heroCompare = (a.hero || "").localeCompare(
-        b.hero || "",
+      const heroCompare = normalizeText(a.hero).localeCompare(
+        normalizeText(b.hero),
         undefined,
         {
           sensitivity: "base",
@@ -510,35 +449,32 @@ function DecklistsPage() {
         return heroCompare;
       }
 
-      return (a.name || "").localeCompare(b.name || "", undefined, {
-        sensitivity: "base",
-      });
+      return normalizeText(a.name).localeCompare(
+        normalizeText(b.name),
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      );
     });
   }, [decks]);
 
-  const clearFilters = () => {
-    setSearch("");
-    setHero([]);
-    setArchetype([]);
-    setCategory([]);
-  };
-
-  const handleSideChange = (newSide) => {
-    setSide(newSide);
-    clearFilters();
-  };
+  // ============================================================
+  // FILTER DECKS
+  // ============================================================
 
   const filteredDecks = useMemo(() => {
+    const searchValue = normalizeKey(search);
+
+    const alias =
+      HERO_ALIAS[searchValue]
+        ? normalizeKey(HERO_ALIAS[searchValue])
+        : "";
+
     return sortedDecks.filter((deck) => {
-      const searchValue = String(search || "")
-        .trim()
-        .toLowerCase();
-
-      const heroAliasMatch = (HERO_ALIAS[searchValue] || "").toLowerCase();
-
-      const expandedSearchValue = heroAliasMatch || searchValue;
-
-      const isHeroShortcutSearch = Boolean(heroAliasMatch);
+      // --------------------------------------------------------
+      // SEARCH
+      // --------------------------------------------------------
 
       const searchableValues = [
         deck.name,
@@ -546,57 +482,104 @@ function DecklistsPage() {
         deck.optimization,
         deck.hero,
         deck.archetype,
+        deck.category,
         deck.cards,
       ]
         .filter(Boolean)
-        .map((value) => String(value).toLowerCase());
+        .map((value) => normalizeKey(value));
 
       const searchMatch =
         !searchValue ||
-        (isHeroShortcutSearch
-          ? String(deck.hero || "")
-              .toLowerCase()
-              .includes(expandedSearchValue)
+        (alias
+          ? normalizeKey(deck.hero).includes(alias)
           : searchableValues.some((value) =>
-              value.includes(expandedSearchValue),
+              value.includes(searchValue),
             ));
 
-      const sideValue = String(deck.side || "").toLowerCase();
+      // --------------------------------------------------------
+      // SIDE
+      // --------------------------------------------------------
+
+      const deckSide = normalizeKey(deck.side);
 
       const sideMatch =
         side === "All" ||
-        (side === "Plants" && sideValue === "plants") ||
-        (side === "Zombies" && sideValue === "zombies");
+        deckSide === normalizeKey(side);
+
+      // --------------------------------------------------------
+      // HERO
+        // --------------------------------------------------------
 
       const heroMatch =
         hero.length === 0 ||
         hero.some(
           (selectedHero) =>
-            normalizeFilterKey(deck.hero) ===
-            normalizeFilterKey(selectedHero.value),
+            normalizeKey(deck.hero) ===
+            normalizeKey(selectedHero.value),
         );
 
-      const deckArchetype = normalizeFilterKey(deck.archetype);
-
-      const archetypeMatch =
-        archetype.length === 0 ||
-        archetype.every((selectedArchetype) =>
-          deckArchetype.includes(normalizeFilterKey(selectedArchetype.value)),
-        );
+      // --------------------------------------------------------
+      // CATEGORY
+      // --------------------------------------------------------
 
       const categoryMatch =
         category.length === 0 ||
         category.some(
           (selectedCategory) =>
-            normalizeFilterKey(deck.category) ===
-            normalizeFilterKey(selectedCategory.value),
+            normalizeKey(deck.category) ===
+            normalizeKey(selectedCategory.value),
+        );
+
+      // --------------------------------------------------------
+      // ARCHETYPE
+      // --------------------------------------------------------
+
+      const deckArchetype = normalizeKey(deck.archetype);
+
+      const archetypeMatch =
+        archetype.length === 0 ||
+        archetype.every((selectedArchetype) =>
+          deckArchetype.includes(
+            normalizeKey(selectedArchetype.value),
+          ),
         );
 
       return (
-        searchMatch && sideMatch && heroMatch && archetypeMatch && categoryMatch
+        searchMatch &&
+        sideMatch &&
+        heroMatch &&
+        categoryMatch &&
+        archetypeMatch
       );
     });
-  }, [sortedDecks, search, side, hero, archetype, category]);
+  }, [
+    sortedDecks,
+    search,
+    side,
+    hero,
+    category,
+    archetype,
+  ]);
+
+  // ============================================================
+  // CLEAR FILTERS
+  // ============================================================
+
+  const clearFilters = () => {
+    setSearch("");
+    setHero([]);
+    setCategory([]);
+    setArchetype([]);
+  };
+
+  const handleSideChange = (newSide) => {
+    setSide(newSide);
+    clearFilters();
+  };
+
+  // ============================================================
+  // LOADING
+  // ============================================================
 
   if (loading) {
     return (
@@ -606,19 +589,28 @@ function DecklistsPage() {
 
           <h2>Loading decklists</h2>
 
-          <p>Preparing the deck browser and loading available decks.</p>
+          <p>
+            Preparing the deck browser and loading available
+            decks.
+          </p>
 
           <div className="loading-status">
             <span>Loading deck data</span>
 
             <strong>
-              {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
+              {totalDecks > 0
+                ? `${totalDecks} decks`
+                : "Loading..."}
             </strong>
           </div>
         </div>
       </div>
     );
   }
+
+  // ============================================================
+  // RENDER
+  // ============================================================
 
   return (
     <div className="deck-page">
@@ -628,7 +620,16 @@ function DecklistsPage() {
         <h1>Decklists</h1>
 
         <div className="deck-browser">
-        <img className="deck-banner" src="https://i.ibb.co/8nBNRL66/deckbannerbyairheadz.webp" alt="Deck Banner"/>
+          <img
+            className="deck-banner"
+            src="https://i.ibb.co/8nBNRL66/deckbannerbyairheadz.webp"
+            alt="Deck Banner"
+          />
+
+          {/* ================================================== */}
+          {/* SIDE TABS */}
+          {/* ================================================== */}
+
           <div className="tabs">
             <button
               type="button"
@@ -648,6 +649,7 @@ function DecklistsPage() {
                 alt="Plants"
                 className="tab-icon"
               />
+
               Plants
             </button>
 
@@ -661,18 +663,29 @@ function DecklistsPage() {
                 alt="Zombies"
                 className="tab-icon"
               />
+
               Zombies
             </button>
           </div>
+
+          {/* ================================================== */}
+          {/* SEARCH */}
+          {/* ================================================== */}
 
           <div className="search-container">
             <input
               className="search"
               placeholder="Search decks, creators, heroes, cards..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
             />
           </div>
+
+          {/* ================================================== */}
+          {/* FILTERS */}
+          {/* ================================================== */}
 
           <div className="filters">
             <div className="select-wrapper">
@@ -715,22 +728,34 @@ function DecklistsPage() {
           </div>
         </div>
 
+        {/* ================================================== */}
+        {/* RESULTS */}
+        {/* ================================================== */}
+
         {error ? (
           <p className="error-message">{error}</p>
         ) : (
           <p className="results-count">
-            Showing {filteredDecks.length} of {totalDecks} decks
+            Showing {filteredDecks.length} of{" "}
+            {totalDecks || decks.length} decks
           </p>
         )}
 
         {!error && filteredDecks.length === 0 ? (
-          <p className="no-results">No decklists found.</p>
+          <p className="no-results">
+            No decklists found.
+          </p>
         ) : (
           !error && (
             <div className="deck-grid">
               {filteredDecks.map((deck) => (
                 <DeckCard
-                  key={`${deck.side}-${deck.deckid || deck.id || deck.name}`}
+                  key={`${deck.side}-${
+                    deck.deckid ||
+                    deck.deckID ||
+                    deck.id ||
+                    deck.name
+                  }`}
                   decklist={deck}
                 />
               ))}
@@ -738,6 +763,7 @@ function DecklistsPage() {
           )
         )}
       </main>
+
       <Footer credits="Special thanks to rip for uploading all of the deck images, and to everyone in the PVZH community who continues to contribute great decks and help grow the Tbot website and Discord bot. Credit to AirheadZ for designing the deck banner used on this page." />
     </div>
   );

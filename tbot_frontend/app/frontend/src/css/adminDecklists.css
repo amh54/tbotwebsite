@@ -1,0 +1,198 @@
+/* ============================================================
+   ADMIN DECKLIST HEADER
+   ============================================================ */
+
+.admin-decklists-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-back-link {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #8f969a;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.admin-back-link:hover {
+  color: #8fe38b;
+}
+
+.admin-decklists-header h1 {
+  margin: 0;
+}
+
+.admin-decklists-header p {
+  margin: 8px 0 0;
+  color: #92999d;
+}
+
+.admin-add-deck-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 7px;
+  background: #8fe38b;
+  color: #101416;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.admin-add-deck-button:hover {
+  background: #a4ef9f;
+  transform: translateY(-1px);
+}
+
+
+/* ============================================================
+   ADMIN DECK GRID
+   ============================================================ */
+
+.admin-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(520px, 1fr)
+  );
+  gap: 20px;
+}
+
+
+/* ============================================================
+   DECK WRAPPER
+   ============================================================ */
+
+.admin-deck-wrapper {
+  min-width: 0;
+}
+
+
+/*
+ * The actual deck card is still the exact same DeckCard
+ * used by the public Decklists page.
+ */
+
+.admin-deck-wrapper .deck-listing-card {
+  height: 100%;
+}
+
+
+/* ============================================================
+   ADMIN ACTIONS
+   ============================================================ */
+
+.admin-deck-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.admin-edit-button,
+.admin-delete-button {
+  flex: 1;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.admin-edit-button {
+  background: #202427;
+  border: 1px solid #292d30;
+  color: #ffffff;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.admin-edit-button:hover {
+  background: #292e31;
+  border-color: #8fe38b;
+  color: #8fe38b;
+}
+
+.admin-delete-button {
+  background: #202427;
+  border: 1px solid #292d30;
+  color: #d5d5d5;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.admin-delete-button:hover {
+  background: #2b2020;
+  border-color: #d95c5c;
+  color: #ff7b7b;
+}
+
+.admin-delete-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+
+/* ============================================================
+   DELETE ERROR
+   ============================================================ */
+
+.admin-delete-error {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border: 1px solid #633636;
+  border-radius: 6px;
+  background: #211719;
+  color: #ff8a8a;
+  font-size: 14px;
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 800px) {
+  .admin-decklists-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-add-deck-button {
+    width: 100%;
+  }
+
+  .admin-deck-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-deck-actions {
+    flex-direction: column;
+  }
+
+  .admin-edit-button,
+  .admin-delete-button {
+    width: 100%;
+  }
+}

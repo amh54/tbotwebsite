@@ -1,16 +1,116 @@
 from rest_framework import serializers
-from .models import Decklist, WebCards, KeepOrScrap
+
+from .models import Decklist, WebCards, KeepOrScrap, UserDeck
 
 
-class DeckSerializer(serializers.ModelSerializer):
+# ============================================================
+# PUBLIC DECKLIST SERIALIZER
+# ============================================================
+
+class PublicDeckSerializer(serializers.ModelSerializer):
+    """
+    Serializer used by the public decklist page.
+
+    The cards field is intentionally excluded.
+    """
+
     class Meta:
         model = Decklist
-        fields = "__all__"
 
+        fields = [
+            "deckid",
+            "name",
+            "hero",
+            "side",
+            "category",
+            "archetype",
+            "description",
+            "image",
+            "creator",
+            "cost",
+            "aliases",
+            "inspiration",
+            "optimization",
+            "suggested_date",
+            "updated_date",
+            "deck_doc",
+        ]
+
+
+# ============================================================
+# ADMIN DECKLIST SERIALIZER
+# ============================================================
+
+class AdminDeckSerializer(serializers.ModelSerializer):
+    """
+    Serializer used only by owner/admin endpoints.
+
+    The cards field is intentionally included here.
+    """
+
+    class Meta:
+        model = Decklist
+
+        fields = [
+            "deckid",
+            "name",
+            "hero",
+            "side",
+            "category",
+            "archetype",
+            "description",
+            "image",
+            "creator",
+            "cost",
+            "aliases",
+            "cards",
+            "inspiration",
+            "optimization",
+            "suggested_date",
+            "updated_date",
+            "deck_doc",
+        ]
+class UserDeckSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserDeck
+
+        fields = [
+            "id",
+            "profile_id",
+            "name",
+            "hero",
+            "side",
+            "category",
+            "archetype",
+            "description",
+            "image",
+            "cost",
+            "aliases",
+            "cards",
+            "inspiration",
+            "optimization",
+            "suggested_date",
+            "updated_date",
+            "deck_doc",
+            "created_at",
+            "modified_at",
+        ]
+
+        read_only_fields = [
+            "id",
+            "profile_id",
+            "created_at",
+            "modified_at",
+        ]
+
+# ============================================================
+# WEB CARDS
+# ============================================================
 
 class WebCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = WebCards
+
         fields = [
             "cardid",
             "card_type",
@@ -32,9 +132,14 @@ class WebCardSerializer(serializers.ModelSerializer):
         ]
 
 
+# ============================================================
+# KEEP OR SCRAP
+# ============================================================
+
 class KeepOrScrapSerializer(serializers.ModelSerializer):
     class Meta:
         model = KeepOrScrap
+
         fields = [
             "tierid",
             "side",

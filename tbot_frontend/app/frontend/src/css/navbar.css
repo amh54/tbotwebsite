@@ -168,7 +168,254 @@
 .navbar-dropdown:hover .navbar-arrow {
   transform: rotate(180deg);
 }
+.navbar-auth {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+}
 
+.navbar-auth-loading {
+  font-size: 14px;
+  color: #9da5a8;
+}
+
+.navbar-discord-login {
+  border: 0;
+  border-radius: 7px;
+  padding: 9px 14px;
+  background: #5865f2;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.navbar-discord-login:hover {
+  background: #4752c4;
+  transform: translateY(-1px);
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-user-name {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.navbar-logout-button {
+  border: 1px solid #3a4145;
+  border-radius: 7px;
+  padding: 8px 12px;
+  background: #202427;
+  color: #d8dddf;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.navbar-logout-button:hover {
+  background: #292e31;
+  border-color: #50575b;
+}
+
+.navbar-logout-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.navbar-mobile-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 24px;
+  margin-top: 12px;
+  border-top: 1px solid #292e31;
+}
+
+.navbar-mobile-user {
+  color: #b8c0c3;
+  font-size: 14px;
+}
+
+.navbar-mobile-user strong {
+  color: #ffffff;
+}
+
+.navbar-mobile-auth .navbar-discord-login,
+.navbar-mobile-auth .navbar-logout-button {
+  width: 100%;
+}
+/* ============================================================
+   DISCORD ACCOUNT
+   ============================================================ */
+
+.navbar-account {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.navbar-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+}
+
+.navbar-user-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #5865f2;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.navbar-user-name {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.navbar-discord-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 7px;
+  background: #5865f2;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.navbar-discord-login:hover {
+  background: #4752c4;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.navbar-logout-button {
+  border: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: transparent;
+  color: #9da5a8;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.navbar-logout-button:hover {
+  background: #202427;
+  color: #ffffff;
+}
+
+.navbar-logout-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ============================================================
+   MOBILE ACCOUNT
+   ============================================================ */
+
+.navbar-mobile-account {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.navbar-mobile-user {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.navbar-mobile-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navbar-mobile-user-label {
+  color: #8f989c;
+  font-size: 12px;
+}
+
+.navbar-mobile-user-info strong {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.navbar-mobile-logout {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: #202427;
+  color: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.navbar-mobile-logout:hover {
+  background: #292e31;
+}
+
+.navbar-mobile-logout:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.navbar-discord-login-mobile {
+  width: 100%;
+}
+.navbar-my-profile-link {
+  color: #8fe38b;
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.navbar-my-profile-link:hover {
+  color: #b5ffb1;
+}
+@media (max-width: 900px) {
+  .navbar-auth {
+    display: none;
+  }
+}
 /* =========================
    DESKTOP DROPDOWN MENU
 ========================= */

@@ -1,28 +1,36 @@
-/* =========================
+/* ============================================================
    DECK LISTING IMAGE
-========================= */
+   ============================================================ */
 
 .deck-card-image-only {
   position: relative;
+
   width: 100%;
   max-width: 260px;
+
   margin: 0;
+
   display: flex;
   flex-direction: column;
   align-items: center;
+
   background: transparent;
 }
 
-/* =========================
+/* ============================================================
    DECK LISTING CARD
-========================= */
+   ============================================================ */
 
 .deck-listing-card {
   --hero-color-1: #15181b;
   --hero-color-2: #15181b;
 
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+
+  grid-template-columns:
+    280px
+    minmax(0, 1fr);
+
   gap: 14px;
 
   background: linear-gradient(
@@ -34,48 +42,54 @@
   );
 
   border: 1px solid #23272b;
+
   border-radius: 12px;
+
   padding: 10px;
 
   overflow: hidden;
+
   min-width: 0;
 }
 
-/* =========================
+/* ============================================================
    DECK INFORMATION
-========================= */
+   ============================================================ */
 
 .deck-listing-info {
   display: flex;
   flex-direction: column;
+
   gap: 8px;
 
   padding: 8px 10px 8px 0;
 
   min-width: 0;
+
   overflow: hidden;
 }
 
-/* =========================
+/* ============================================================
    DECK TITLE
-========================= */
+   ============================================================ */
 
 .deck-listing-info h3 {
   margin: 0 0 8px;
 
   font-size: 1.4rem;
+
   font-weight: 800;
+
   line-height: 1.2;
 
   color: #ffffff;
 
   overflow-wrap: break-word;
-  word-break: normal;
 }
 
-/* =========================
-   DECK INFORMATION TEXT
-========================= */
+/* ============================================================
+   DECK INFORMATION
+   ============================================================ */
 
 .deck-listing-info p {
   margin: 0;
@@ -83,6 +97,7 @@
   color: #d5dde4;
 
   line-height: 1.4;
+
   font-size: 1.3rem;
 
   white-space: normal;
@@ -90,23 +105,23 @@
   min-width: 0;
 
   overflow-wrap: break-word;
-  word-break: normal;
 }
 
-/* =========================
+/* ============================================================
    FIELD LABELS
-========================= */
+   ============================================================ */
 
 .deck-listing-info p > span {
   color: #8fe38b;
+
   font-weight: 700;
 
   white-space: nowrap;
 }
 
-/* =========================
+/* ============================================================
    CREATOR
-========================= */
+   ============================================================ */
 
 .creator-field {
   display: block;
@@ -114,14 +129,15 @@
   white-space: normal;
 
   min-width: 0;
+
   max-width: 100%;
 
   overflow-wrap: break-word;
-  word-break: normal;
 }
 
 .creator-field .field-label {
   color: #8fe38b;
+
   font-weight: 700;
 
   white-space: nowrap;
@@ -129,6 +145,7 @@
 
 .creator-field .creator-value {
   color: #d5dde4;
+
   font-weight: 400;
 
   font-size: 1.3rem;
@@ -136,12 +153,11 @@
   white-space: normal;
 
   overflow-wrap: break-word;
-  word-break: normal;
 }
 
-/* =========================
+/* ============================================================
    HERO COLORS
-========================= */
+   ============================================================ */
 
 .hero-red-green {
   --hero-color-1: #d94b4b;
@@ -243,22 +259,25 @@
   --hero-color-2: #8b5fc7;
 }
 
-/* =========================
+/* ============================================================
    DECK IMAGE
-========================= */
+   ============================================================ */
 
 .deck-card-image-only img {
+  display: block;
+
   width: 100%;
 
   object-fit: cover;
+
   object-position: center;
 
   border-radius: 8px;
 }
 
-/* =========================
-   VIEW DETAILS BUTTON
-========================= */
+/* ============================================================
+   VIEW DETAILS
+   ============================================================ */
 
 .view-details-btn {
   margin-top: 8px;
@@ -266,9 +285,11 @@
   padding: 8px 12px;
 
   background: #222;
+
   color: #fff;
 
   border: none;
+
   border-radius: 6px;
 
   cursor: pointer;
@@ -278,57 +299,103 @@
   opacity: 0.95;
 }
 
-/* =========================
+/* ============================================================
    MODAL OVERLAY
-========================= */
+   ============================================================ */
 
 .modal-overlay {
   position: fixed;
+
   inset: 0;
 
-  background: rgba(0, 0, 0, 0.6);
+  width: 100%;
+  height: 100%;
+
+  background: rgba(0, 0, 0, 0.72);
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
-  z-index: 1000;
+  padding: 24px;
+
+  box-sizing: border-box;
+
+  z-index: 99999;
+
+  animation: deckModalFadeIn 0.16s ease;
 }
 
-/* =========================
+@keyframes deckModalFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ============================================================
    MODAL
-========================= */
+   ============================================================ */
 
 .modal {
   position: relative;
 
-  background: #0b0b0b;
-  color: #fff;
+  width: min(1100px, calc(100vw - 48px));
 
-  width: min(1000px, 92%);
-  max-height: 90vh;
+  max-width: 1100px;
 
-  overflow: hidden;
+  max-height: calc(100vh - 48px);
 
-  border-radius: 12px;
+  margin: 0;
 
   padding: 24px;
 
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  box-sizing: border-box;
+
+  overflow: hidden;
+
+  border: 1px solid #333;
+
+  border-radius: 14px;
+
+  background: #0b0b0b;
+
+  color: #ffffff;
+
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.65);
+
+  animation: deckModalScaleIn 0.18s ease;
+}
+
+@keyframes deckModalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .modal::backdrop {
-  background: rgba(0, 0, 0, 0.65);
+  background: transparent;
 }
 
-/* =========================
+/* ============================================================
    MODAL BACKGROUND
-========================= */
+   ============================================================ */
 
 .modal::before {
   content: "";
 
   position: absolute;
+
   inset: 0;
 
   background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center /
@@ -345,18 +412,20 @@
   pointer-events: none;
 }
 
-/* =========================
+/* ============================================================
    MODAL SCROLL
-========================= */
+   ============================================================ */
 
 .modal-scroll-content {
   position: relative;
 
   z-index: 1;
 
-  max-height: calc(90vh - 48px);
+  max-height: calc(100vh - 96px);
 
   overflow-y: auto;
+
+  padding-right: 6px;
 
   scrollbar-width: thin;
 
@@ -381,46 +450,45 @@
   background: rgba(255, 255, 255, 0.28);
 }
 
-/* =========================
-   MODAL CLOSE
-========================= */
+/* ============================================================
+   CLOSE BUTTON
+   ============================================================ */
 
 .modal-close {
   position: absolute;
 
   top: 8px;
-  right: 36px;
+  right: 18px;
 
-  z-index: 10;
+  z-index: 20;
 
   width: 44px;
   height: 44px;
 
-  border: none;
+  padding: 0;
+
+  border: 0;
 
   background: transparent;
 
-  color: white;
+  color: #ffffff;
 
-  font-size: 32px;
+  font-size: 34px;
+
   line-height: 44px;
 
   text-align: center;
 
   cursor: pointer;
-
-  padding: 0;
-
-  box-sizing: border-box;
 }
 
 .modal-close:hover {
   color: #8fe38b;
 }
 
-/* =========================
+/* ============================================================
    MODAL CONTENT
-========================= */
+   ============================================================ */
 
 .modal-content {
   position: relative;
@@ -429,78 +497,39 @@
 
   display: flex;
 
-  gap: 24px;
-
   align-items: flex-start;
 
-  flex-wrap: wrap;
+  gap: 28px;
+
+  min-width: 0;
 }
 
-/* =========================
-   MODAL ACTIONS
-========================= */
-
-.modal-actions {
-  display: flex;
-
-  gap: 10px;
-
-  margin-top: 12px;
-
-  flex-wrap: wrap;
-}
-
-.share-btn,
-.download-btn {
-  flex: 1;
-
-  min-width: 140px;
-
-  padding: 9px 12px;
-
-  background: #202020;
-  color: #fff;
-
-  border: 1px solid #444;
-
-  border-radius: 6px;
-
-  cursor: pointer;
-
-  font-size: 0.9rem;
-
-  transition:
-    border-color 0.2s ease,
-    color 0.2s ease;
-}
-
-.share-btn:hover,
-.download-btn:hover {
-  border-color: #8fe38b;
-
-  color: #8fe38b;
-}
-
-/* =========================
-   MODAL IMAGE
-========================= */
+/* ============================================================
+   MODAL IMAGE COLUMN
+   ============================================================ */
 
 .modal-image {
-  flex: 0 0 min(420px, 42%);
+  flex: 0 0 min(430px, 42%);
 
-  max-width: 420px;
+  width: min(430px, 42%);
+
+  max-width: 430px;
+
+  min-width: 0;
 }
 
-.modal-image img {
+.modal-image > img {
+  display: block;
+
   width: 100%;
 
   height: auto;
 
-  max-height: 70vh;
+  max-height: 68vh;
 
   object-fit: contain;
 
-  border-radius: 6px;
+  border-radius: 8px;
 
   border: 2px solid transparent;
 
@@ -509,7 +538,7 @@
     box-shadow 0.2s ease;
 }
 
-.modal-image img:hover {
+.modal-image > img:hover {
   border-color: #8fe38b;
 
   box-shadow:
@@ -518,9 +547,9 @@
     0 0 40px rgba(143, 227, 139, 0.18);
 }
 
-/* =========================
+/* ============================================================
    IMAGE META
-========================= */
+   ============================================================ */
 
 .image-meta {
   margin-top: 12px;
@@ -551,16 +580,142 @@
 }
 
 .image-meta span {
-  font-weight: 700;
-
   color: #ffffff;
+
+  font-weight: 700;
 
   overflow-wrap: anywhere;
 }
 
-/* =========================
+/* ============================================================
+   MODAL ACTIONS
+   ============================================================ */
+
+.modal-actions {
+  display: flex;
+
+  gap: 10px;
+
+  margin-top: 12px;
+
+  flex-wrap: wrap;
+}
+
+.share-btn,
+.download-btn {
+  flex: 1;
+
+  min-width: 140px;
+
+  padding: 9px 12px;
+
+  background: #202020;
+
+  color: #ffffff;
+
+  border: 1px solid #444;
+
+  border-radius: 6px;
+
+  cursor: pointer;
+
+  font-size: 0.9rem;
+
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.share-btn:hover,
+.download-btn:hover {
+  border-color: #8fe38b;
+
+  color: #8fe38b;
+
+  background: #242824;
+}
+
+/* ============================================================
+   ADMIN MODAL ACTIONS
+   ============================================================ */
+
+.admin-modal-actions {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+
+  gap: 10px;
+
+  margin-top: 10px;
+
+  padding-top: 10px;
+
+  border-top: 1px solid #333;
+}
+
+.admin-modal-edit,
+.admin-modal-delete {
+  min-height: 42px;
+
+  padding: 9px 14px;
+
+  border-radius: 7px;
+
+  font-size: 0.9rem;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.admin-modal-edit {
+  background: #18251b;
+
+  color: #8fe38b;
+
+  border: 1px solid #47734a;
+}
+
+.admin-modal-edit:hover {
+  background: #213324;
+
+  color: #a6efa2;
+
+  border-color: #8fe38b;
+
+  transform: translateY(-1px);
+}
+
+.admin-modal-delete {
+  background: #281b1d;
+
+  color: #ff8c8c;
+
+  border: 1px solid #754349;
+}
+
+.admin-modal-delete:hover {
+  background: #382125;
+
+  color: #ffaaaa;
+
+  border-color: #ff7070;
+
+  transform: translateY(-1px);
+}
+
+/* ============================================================
    MODAL INFO
-========================= */
+   ============================================================ */
 
 .modal-info {
   flex: 1;
@@ -576,16 +731,16 @@
   gap: 18px;
 }
 
-/* =========================
+/* ============================================================
    MODAL HEADER
-========================= */
+   ============================================================ */
 
 .modal-header {
   display: flex;
 
   align-items: flex-start;
 
-  padding-right: 84px;
+  padding-right: 58px;
 
   min-width: 0;
 }
@@ -607,25 +762,31 @@
 .modal-title {
   margin: 0;
 
+  color: #ffffff;
+
   font-size: clamp(1.6rem, 2vw, 2.3rem);
 
-  overflow-wrap: anywhere;
+  font-weight: 800;
 
-  max-width: 100%;
+  line-height: 1.15;
+
+  overflow-wrap: anywhere;
 }
 
 .deck-hero {
   display: inline-block;
 
-  background: #000;
-
-  color: white;
-
-  border: 1px solid white;
-
-  border-radius: 999px;
+  max-width: 100%;
 
   padding: 5px 12px;
+
+  background: #000000;
+
+  color: #ffffff;
+
+  border: 1px solid #ffffff;
+
+  border-radius: 999px;
 
   font-size: 14px;
 
@@ -633,14 +794,12 @@
 
   font-weight: 600;
 
-  max-width: 100%;
-
   overflow-wrap: anywhere;
 }
 
-/* =========================
+/* ============================================================
    MODAL SECTIONS
-========================= */
+   ============================================================ */
 
 .modal-section {
   display: flex;
@@ -655,18 +814,46 @@
 .modal-section h3 {
   margin: 0;
 
+  color: #f2f2f2;
+
   font-size: 0.96rem;
 
-  color: #f2f2f2;
+  font-weight: 700;
 
   text-transform: uppercase;
 
   letter-spacing: 0.04em;
 }
 
-/* =========================
-   MODAL METADATA
-========================= */
+/* ============================================================
+   DESCRIPTION
+   ============================================================ */
+
+.description-section {
+  padding: 14px;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid #333;
+
+  border-radius: 10px;
+}
+
+.description {
+  margin: 0;
+
+  color: #e2e2e2;
+
+  line-height: 1.65;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   METADATA
+   ============================================================ */
 
 .modal-metadata {
   display: grid;
@@ -683,17 +870,17 @@
 
   gap: 6px;
 
+  min-width: 0;
+
+  min-height: 80px;
+
+  padding: 14px;
+
   background: rgba(255, 255, 255, 0.04);
 
   border: 1px solid #333;
 
   border-radius: 10px;
-
-  padding: 14px;
-
-  min-height: 80px;
-
-  min-width: 0;
 
   transition:
     border-color 0.2s ease,
@@ -707,14 +894,16 @@
 }
 
 .label {
+  color: #a6b4d3;
+
   font-size: 0.85rem;
 
   font-weight: 700;
-
-  color: #a6b4d3;
 }
 
 .value {
+  min-width: 0;
+
   color: #e5e9f0;
 
   line-height: 1.6;
@@ -722,68 +911,37 @@
   white-space: pre-wrap;
 
   overflow-wrap: anywhere;
-
-  min-width: 0;
 }
 
-/* =========================
-   DESCRIPTION
-========================= */
-
-.description {
-  white-space: pre-wrap;
-
-  color: #e2e2e2;
-
-  line-height: 1.65;
-
-  overflow-wrap: anywhere;
-}
-
-.description-section {
-  background: rgba(255, 255, 255, 0.04);
-
-  border: 1px solid #333;
-
-  border-radius: 10px;
-
-  padding: 14px;
-
-  min-width: 0;
-}
-
-/* =========================
+/* ============================================================
    COST
-========================= */
-
-.modal-cards {
-  padding-bottom: 8px;
-}
+   ============================================================ */
 
 .cost-item {
   display: flex;
 
   flex-direction: column;
 
-  gap: 2px;
+  gap: 4px;
 }
 
 .cost-value {
+  color: #ffffff;
+
   font-size: 1.5rem;
 
   font-weight: 900;
 
   line-height: 1;
-
-  color: #ffffff;
 }
 
-/* =========================
-   SPARK ICON
-========================= */
+/* ============================================================
+   SPARK
+   ============================================================ */
 
 .spark-icon {
   width: 18px !important;
+
   height: 18px !important;
 
   object-fit: contain !important;
@@ -795,39 +953,9 @@
   border-radius: 0 !important;
 }
 
-/* =========================
-   CREATOR MODAL
-========================= */
-
-.creator-item {
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 5px;
-}
-
-.creator-name {
-  font-weight: 700;
-
-  color: #ffffff;
-
-  line-height: 1.2;
-
-  overflow-wrap: anywhere;
-}
-
-.creator-date {
-  color: #e5e9f0;
-
-  line-height: 1.2;
-
-  font-size: 0.95rem;
-}
-
-/* =========================
-   DECK DOCUMENT LINK
-========================= */
+/* ============================================================
+   DECK DOCUMENT
+   ============================================================ */
 
 .deck-doc-link {
   color: #8fe38b;
@@ -843,16 +971,14 @@
   color: #b7f3b4;
 }
 
-/* =========================
+/* ============================================================
    IMAGE PLACEHOLDER
-========================= */
+   ============================================================ */
 
 .deck-image-placeholder {
   width: 100%;
 
-  height: 160px;
-
-  background: #222;
+  min-height: 160px;
 
   display: flex;
 
@@ -860,46 +986,16 @@
 
   justify-content: center;
 
+  background: #222;
+
+  color: #92999d;
+
   border-radius: 6px;
 }
 
-/* =========================
-   NAVIGATION
-========================= */
-
-.logo a {
-  color: #8fe38b;
-
-  font-size: 1.5rem;
-
-  font-weight: 700;
-
-  text-decoration: none;
-}
-
-.nav-links {
-  display: flex;
-
-  gap: 14px;
-
-  align-items: center;
-}
-
-.nav-links a {
-  color: #e7e0d3;
-
-  text-decoration: none;
-
-  font-size: 0.95rem;
-}
-
-.nav-links a:hover {
-  color: #8fe38b;
-}
-
-/* =========================
+/* ============================================================
    TABLET
-========================= */
+   ============================================================ */
 
 @media (max-width: 980px) {
   .deck-listing-card {
@@ -921,24 +1017,10 @@
   }
 
   .deck-listing-info h3 {
-    margin: 0 0 8px;
-
     font-size: 1.35rem;
-
-    font-weight: 800;
-
-    line-height: 1.2;
-
-    color: #ffffff;
   }
 
   .deck-listing-info p {
-    margin: 0;
-
-    color: #d5dde4;
-
-    line-height: 1.4;
-
     font-size: 1rem;
   }
 
@@ -954,20 +1036,46 @@
     font-size: 0.86rem;
   }
 
+  .modal {
+    width: calc(100vw - 32px);
+
+    max-height: calc(100vh - 32px);
+
+    padding: 20px;
+  }
+
+  .modal-scroll-content {
+    max-height: calc(100vh - 72px);
+  }
+
   .modal-content {
     flex-direction: column;
+
+    gap: 20px;
   }
 
   .modal-image {
     width: 100%;
 
     max-width: 100%;
+
+    flex: none;
+  }
+
+  .modal-image > img {
+    max-height: 60vh;
+  }
+
+  .modal-info {
+    width: 100%;
+
+    padding: 0;
   }
 }
 
-/* =========================
-   SMALL MOBILE
-========================= */
+/* ============================================================
+   MOBILE
+   ============================================================ */
 
 @media (max-width: 560px) {
   .deck-listing-card {
@@ -988,5 +1096,520 @@
 
   .creator-field .creator-value {
     font-size: 0.95rem;
+  }
+
+  .modal-overlay {
+    padding: 10px;
+  }
+
+  .modal {
+    width: 100%;
+
+    max-height: calc(100vh - 20px);
+
+    padding: 18px 14px;
+  }
+
+  .modal-scroll-content {
+    max-height: calc(100vh - 56px);
+
+    padding-right: 2px;
+  }
+
+  .modal-close {
+    top: 4px;
+
+    right: 8px;
+  }
+
+  .modal-header {
+    padding-right: 42px;
+  }
+
+  .modal-title {
+    font-size: 1.55rem;
+  }
+
+  .modal-metadata {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .share-btn,
+  .download-btn {
+    width: 100%;
+  }
+
+  .admin-modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-image > img {
+    max-height: 52vh;
+  }
+}
+
+/* ============================================================
+   ADMIN EDITABLE MODAL FIELDS
+   ============================================================ */
+
+.admin-modal-field {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+
+  width: 100%;
+
+  min-width: 0;
+}
+
+.admin-modal-field span {
+  color: #8fe38b;
+
+  font-size: 0.82rem;
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.04em;
+}
+
+.admin-modal-field input,
+.admin-modal-textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 10px 12px;
+
+  background: rgba(255, 255, 255, 0.06);
+
+  color: #ffffff;
+
+  border: 1px solid #444;
+
+  border-radius: 8px;
+
+  font-family: inherit;
+
+  font-size: 0.95rem;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.admin-modal-field input:focus,
+.admin-modal-textarea:focus {
+  border-color: #8fe38b;
+
+  background: rgba(143, 227, 139, 0.06);
+
+  box-shadow: 0 0 0 2px rgba(143, 227, 139, 0.12);
+}
+
+.admin-modal-textarea {
+  resize: vertical;
+
+  min-height: 150px;
+
+  line-height: 1.55;
+}
+
+/* ============================================================
+   ADMIN SAVE BUTTON
+   ============================================================ */
+
+.admin-modal-save {
+  min-height: 42px;
+
+  padding: 9px 14px;
+
+  border-radius: 7px;
+
+  font-size: 0.9rem;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  background: #18251b;
+
+  color: #8fe38b;
+
+  border: 1px solid #47734a;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.admin-modal-save:hover:not(:disabled) {
+  background: #213324;
+
+  color: #a6efa2;
+
+  border-color: #8fe38b;
+
+  transform: translateY(-1px);
+}
+
+.admin-modal-save:disabled,
+.admin-modal-edit:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   EDIT MODE METADATA
+   ============================================================ */
+
+.modal-metadata .admin-modal-field {
+  min-width: 0;
+
+  min-height: 80px;
+
+  padding: 14px;
+
+  box-sizing: border-box;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid #333;
+
+  border-radius: 10px;
+}
+
+.modal-metadata .admin-modal-field input {
+  margin-top: auto;
+}
+
+/* ============================================================
+   ADMIN CARD SELECT
+   ============================================================ */
+
+.admin-modal-cards-field {
+  grid-column: 1 / -1;
+
+  width: 100%;
+
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  padding: 14px;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid #333;
+
+  border-radius: 10px;
+}
+
+/* Main React Select control */
+
+.admin-modal-cards-field .deck-cards-select__control {
+  width: 100%;
+
+  min-height: 150px;
+
+  align-items: flex-start;
+
+  box-sizing: border-box;
+}
+
+/* Selected cards container */
+
+.admin-modal-cards-field .deck-cards-select__value-container {
+  min-height: 125px;
+
+  max-height: 280px;
+
+  overflow-y: auto;
+
+  align-content: flex-start;
+
+  align-items: flex-start;
+
+  padding: 10px;
+
+  gap: 7px;
+
+  scrollbar-width: thin;
+
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.admin-modal-cards-field
+  .deck-cards-select__value-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-modal-cards-field
+  .deck-cards-select__value-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-modal-cards-field
+  .deck-cards-select__value-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+
+  border-radius: 999px;
+}
+
+/* Selected card pills */
+
+.admin-modal-cards-field .deck-cards-select__multi-value {
+  max-width: 100%;
+
+  flex-shrink: 0;
+
+  margin: 0;
+
+  border-radius: 8px;
+
+  background: #2a3d2b;
+
+  border: 1px solid #47734a;
+
+  overflow: hidden;
+}
+
+/* Allow long card names to fully display */
+
+.admin-modal-cards-field .deck-cards-select__multi-value__label {
+  max-width: none;
+
+  color: #a6efa2;
+
+  font-size: 0.88rem;
+
+  font-weight: 600;
+
+  line-height: 1.35;
+
+  white-space: normal;
+
+  overflow: visible;
+
+  text-overflow: unset;
+
+  overflow-wrap: anywhere;
+
+  word-break: normal;
+
+  padding: 5px 6px 5px 10px;
+}
+
+/* Remove button on selected card */
+
+.admin-modal-cards-field .deck-cards-select__multi-value__remove {
+  color: #a6efa2;
+
+  padding: 0 8px;
+
+  border-radius: 0 7px 7px 0;
+}
+
+.admin-modal-cards-field .deck-cards-select__multi-value__remove:hover {
+  background: #3a523c;
+
+  color: #ffffff;
+}
+
+/* Search input */
+
+.admin-modal-cards-field .deck-cards-select__input-container {
+  margin: 0;
+
+  padding: 4px;
+
+  color: #ffffff;
+}
+
+/* Dropdown */
+
+.admin-modal-cards-field .deck-cards-select__menu {
+  width: 100%;
+
+  margin-top: 4px;
+
+  background: #202020;
+
+  border: 1px solid #444;
+
+  border-radius: 8px;
+
+  overflow: hidden;
+
+  z-index: 100000;
+}
+
+/* Dropdown list */
+
+.admin-modal-cards-field .deck-cards-select__menu-list {
+  max-height: 280px;
+
+  padding: 4px;
+
+  scrollbar-width: thin;
+
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.admin-modal-cards-field .deck-cards-select__menu-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-modal-cards-field
+  .deck-cards-select__menu-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-modal-cards-field
+  .deck-cards-select__menu-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+
+  border-radius: 999px;
+}
+
+/* Individual card options */
+
+.admin-modal-cards-field .deck-cards-select__option {
+  padding: 10px 12px;
+
+  color: #ffffff;
+
+  background: #202020;
+
+  line-height: 1.4;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
+
+  word-break: normal;
+
+  cursor: pointer;
+
+  border-radius: 5px;
+}
+
+.admin-modal-cards-field .deck-cards-select__option--is-focused {
+  background: #333333;
+
+  color: #ffffff;
+}
+
+.admin-modal-cards-field .deck-cards-select__option--is-selected {
+  background: #2a3d2b;
+
+  color: #a6efa2;
+}
+
+/* No options / loading text */
+
+.admin-modal-cards-field .deck-cards-select__menu-notice {
+  color: #999999;
+
+  padding: 12px;
+}
+
+/* Hint below card selector */
+
+.admin-modal-field-hint {
+  margin: 8px 0 0;
+
+  color: #888;
+
+  font-size: 0.8rem;
+
+  line-height: 1.4;
+}
+
+/* ============================================================
+   EDIT MODE IMAGE URL
+   ============================================================ */
+
+.modal-image > .admin-modal-field {
+  margin-top: 12px;
+}
+
+.modal-image > .admin-modal-field input {
+  width: 100%;
+}
+
+/* ============================================================
+   EDIT MODE HEADER
+   ============================================================ */
+
+.modal-title-content > .admin-modal-field {
+  margin-bottom: 4px;
+}
+
+.modal-title-content > .admin-modal-field input {
+  font-size: 1.25rem;
+
+  font-weight: 700;
+}
+
+/* ============================================================
+   MOBILE ADMIN EDITING
+   ============================================================ */
+
+@media (max-width: 560px) {
+  .admin-modal-field input,
+  .admin-modal-textarea {
+    font-size: 0.9rem;
+
+    padding: 9px 10px;
+  }
+
+  .modal-metadata .admin-modal-field {
+    min-height: auto;
+  }
+
+  .admin-modal-textarea {
+    min-height: 130px;
+  }
+
+  /* Card selector on mobile */
+
+  .admin-modal-cards-field {
+    padding: 10px;
+  }
+
+  .admin-modal-cards-field .deck-cards-select__control {
+    min-height: 130px;
+  }
+
+  .admin-modal-cards-field .deck-cards-select__value-container {
+    min-height: 105px;
+
+    max-height: 220px;
+
+    padding: 8px;
+  }
+
+  .admin-modal-cards-field .deck-cards-select__multi-value__label {
+    font-size: 0.82rem;
+
+    line-height: 1.3;
+  }
+
+  .admin-modal-cards-field .deck-cards-select__menu-list {
+    max-height: 220px;
   }
 }

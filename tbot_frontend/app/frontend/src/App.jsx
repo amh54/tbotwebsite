@@ -1,7 +1,7 @@
 import "./css/App.css";
 import "./css/navbar.css";
 import { Link, Route, Routes } from "react-router-dom";
-
+import Admin from "./pages/admin.jsx";
 import DecklistsPage from "./pages/decklists.jsx";
 import CardInfo from "./pages/cardinfo.jsx";
 import KeepOrScrap from "./pages/keeporscrap.jsx";
@@ -10,6 +10,8 @@ import Navbar from "./components/navbar.jsx";
 import Footer from "./components/footer.jsx";
 import TermsOfService from "./pages/termsofservice.jsx";
 import Privacy from "./pages/privacy.jsx";
+import AdminDecklists from "./pages/admin-decklists.jsx";
+import Profile from "./pages/profile.jsx";
 
 function HomePage() {
   return (
@@ -176,7 +178,7 @@ function HomePage() {
         </div>
       </section>
 
-      <Footer credits="Special thanks to the many pvzh communiy members who took time out of their day to gave me helpful feedback and critiques before publishing this site" />
+     <Footer credits="Special thanks to the many PvZ Heroes community members who took time out of their day to give me helpful feedback and critiques before I published this site." />
     </div>
   );
 }
@@ -195,8 +197,10 @@ function App() {
       <Route path="/heroinfo" element={<HeroInfo />} />
 
       <Route path="/termsofservice" element={<TermsOfService />} />
-
+      <Route path="/admin" element={<Admin />} />
       <Route path="/privacypolicy" element={<Privacy />} />
+     <Route path="/profile/:profile_slug" element={<Profile />} />
+      <Route path="/admin/decklists" element={<AdminDecklists />} />
     </Routes>
   );
 }

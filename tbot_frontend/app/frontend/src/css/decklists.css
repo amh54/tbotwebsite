@@ -112,14 +112,17 @@
 }
 
 .filters {
-  display: flex;
-  width: 100%;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 0;
+  position: relative;
+  z-index: 20;
+  overflow: visible !important;
 }
 
 .select-wrapper {
-  flex: 1;
-  min-width: 0;
+  position: relative;
+  overflow: visible !important;
 }
 
 .clear-filter-btn {
@@ -165,10 +168,6 @@
   z-index: 9999;
 }
 
-/* =========================
-   RESULTS
-========================= */
-
 .results-count {
   margin: 25px 0;
   color: #aaa;
@@ -182,19 +181,12 @@
   color: #aaa;
 }
 
-/* =========================
-   DECK GRID
-========================= */
-
 .deck-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
 
-/* =========================
-   DECK CARD
-========================= */
 
 .deck-card {
   background: #15181b;
@@ -219,10 +211,6 @@
   min-width: 0;
 }
 
-/* =========================
-   DECK IMAGE
-========================= */
-
 .deck-card img {
   width: 200px;
   flex-shrink: 0;
@@ -233,9 +221,6 @@
   border-radius: 8px;
 }
 
-/* =========================
-   INFORMATION
-========================= */
 
 .deck-card-info {
   flex: 1;
@@ -246,9 +231,6 @@
   overflow: hidden;
 }
 
-/* =========================
-   DECK TITLE
-========================= */
 
 .deck-card-info h2 {
   font-size: 21px;
@@ -264,9 +246,6 @@
   word-break: normal;
 }
 
-/* =========================
-   INFORMATION FIELDS
-========================= */
 
 .deck-card-info p {
   font-size: 13px;
@@ -283,9 +262,7 @@
   min-width: 0;
 }
 
-/* =========================
-   FIELD LABELS
-========================= */
+
 
 .deck-card-info p > span:first-child {
   color: #8fe38b;
@@ -296,17 +273,12 @@
   overflow-wrap: normal;
 }
 
-/* =========================
-   FIELD VALUES
-========================= */
+
 
 .deck-card-info span {
   word-break: normal;
 }
 
-/* =========================
-   GENERATED TEXT
-========================= */
 
 .deck-card-info .card-text-content {
   font-size: 13px;
@@ -318,9 +290,6 @@
   overflow-wrap: break-word;
 }
 
-/* =========================
-   DESCRIPTION
-========================= */
 
 .deck-card-info .description,
 .deck-card-info .deck-description {
@@ -329,10 +298,6 @@
   word-break: normal;
   overflow-wrap: break-word;
 }
-
-/* =========================
-   DECK BUTTON
-========================= */
 
 .deck-card button {
   width: 100%;
@@ -360,9 +325,6 @@
   color: #8fe38b;
 }
 
-/* =========================
-   MEDIUM SCREENS
-========================= */
 
 @media (max-width: 1100px) {
   .deck-content {
@@ -390,10 +352,6 @@
     font-size: 12.5px;
   }
 }
-
-/* =========================
-   TABLET
-========================= */
 
 @media (max-width: 900px) {
   .deck-content {
@@ -463,10 +421,6 @@
   }
 }
 
-/* =========================
-   MOBILE
-========================= */
-
 @media (max-width: 600px) {
   .deck-content {
     padding: 15px;
@@ -510,9 +464,6 @@
   }
 }
 
-/* =========================
-   SMALL MOBILE
-========================= */
 
 @media (max-width: 400px) {
 
