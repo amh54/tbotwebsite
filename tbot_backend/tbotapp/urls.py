@@ -13,16 +13,19 @@ urlpatterns = [
         views.decklists,
         name="decklists",
     ),
-path(
-    "legacy-decklists/",
-    views.legacy_decklists,
-    name="legacy-decklists",
-),
-path(
-    "legacy-decklist-count/",
-    views.legacy_decklist_count,
-    name="legacy-decklist-count",
-),
+
+    path(
+        "legacy-decklists/",
+        views.legacy_decklists,
+        name="legacy-decklists",
+    ),
+
+    path(
+        "legacy-decklist-count/",
+        views.legacy_decklist_count,
+        name="legacy-decklist-count",
+    ),
+
     path(
         "cardinfo/",
         views.card_info,
@@ -80,7 +83,7 @@ path(
     ),
 
     # ============================================================
-    # ADMIN / OWNER DECKLISTS
+    # ADMIN / OWNER
     # ============================================================
 
     path(
@@ -94,6 +97,10 @@ path(
         views.owner_action,
         name="owner_action",
     ),
+
+    # ------------------------------------------------------------
+    # Current decklists
+    # ------------------------------------------------------------
 
     path(
         "admin/decklists/",
@@ -111,6 +118,28 @@ path(
         "admin/decklists/<str:deckid>/delete/",
         views.admin_decklist_delete,
         name="admin_decklist_delete",
+    ),
+
+    # ------------------------------------------------------------
+    # Legacy decklists
+    # ------------------------------------------------------------
+
+    path(
+        "admin/legacy-decklists/",
+        views.admin_legacy_decklists,
+        name="admin_legacy_decklists",
+    ),
+
+    path(
+        "admin/legacy-decklists/<str:deckid>/",
+        views.admin_legacy_decklist_update,
+        name="admin_legacy_decklist_update",
+    ),
+
+    path(
+        "admin/legacy-decklists/<str:deckid>/delete/",
+        views.admin_legacy_decklist_delete,
+        name="admin_legacy_decklist_delete",
     ),
 
     # ============================================================
@@ -140,63 +169,36 @@ path(
         views.discord_logout,
         name="discord_logout",
     ),
+
+    # ============================================================
+    # PROFILES
+    # ============================================================
+
     path(
-    "profile/me/",
-    views.profile_me,
-    name="profile_me",
-),
+        "profile/me/",
+        views.profile_me,
+        name="profile_me",
+    ),
 
-path(
-    "profile/<str:profile_slug>/",
-    views.profile_detail,
-    name="profile_detail",
-),
-# ============================================================
-# USER DECKS
-# ============================================================
+    path(
+        "profile/<str:profile_slug>/",
+        views.profile_by_slug,
+        name="profile_by_slug",
+    ),
 
-path(
-    "user-decks/",
-    views.user_decks,
-    name="user_decks",
-),
+    # ============================================================
+    # USER DECKS
+    # ============================================================
 
-path(
-    "user-decks/<int:deck_id>/",
-    views.user_deck_detail,
-    name="user_deck_detail",
-),
-path(
-    "profile/<str:profile_slug>/",
-    views.profile_by_slug,
-    name="profile_by_slug",
-),
+    path(
+        "user-decks/",
+        views.user_decks,
+        name="user_decks",
+    ),
 
-   path(
-    "admin/legacy-decklists/",
-    views.admin_legacy_decklists,
-    name="admin_legacy_decklists",
-),
-
-path(
-    "admin/legacy-decklists/<str:deckid>/",
-    views.admin_legacy_decklist_update,
-    name="admin_legacy_decklist_update",
-),
-
-path(
-    "admin/legacy-decklists/<str:deckid>/delete/",
-    views.admin_legacy_decklist_delete,
-    name="admin_legacy_decklist_delete",
-),
-path(
-    "admin/legacy-decklists/",
-    views.admin_legacy_decklist_create,
-    name="admin-legacy-decklist-create",
-),
-path(
-    "admin/decklists/",
-    views.admin_decklist_create,
-    name="admin-decklist-create",
-),
+    path(
+        "user-decks/<int:deck_id>/",
+        views.user_deck_detail,
+        name="user_deck_detail",
+    ),
 ]

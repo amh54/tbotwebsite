@@ -28,6 +28,10 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+/* ============================================================
+   CSRF
+   ============================================================ */
+
 const getCookie = (name) => {
   const cookies = document.cookie.split(";");
 
@@ -42,8 +46,20 @@ const getCookie = (name) => {
   return null;
 };
 
+const getCsrfToken = () => {
+  const name = "csrftoken";
+
+  const cookies = document.cookie.split(";").map((cookie) => cookie.trim());
+
+  const csrfCookie = cookies.find((cookie) => cookie.startsWith(`${name}=`));
+
+  return csrfCookie
+    ? decodeURIComponent(csrfCookie.substring(name.length + 1))
+    : "";
+};
+
 const ensureCsrfToken = async () => {
-  let csrfToken = getCookie("csrftoken");
+  let csrfToken = getCookie("csrftoken") || getCsrfToken();
 
   if (csrfToken) {
     return csrfToken;
@@ -60,7 +76,7 @@ const ensureCsrfToken = async () => {
     );
   }
 
-  csrfToken = getCookie("csrftoken");
+  csrfToken = getCookie("csrftoken") || getCsrfToken();
 
   if (!csrfToken) {
     throw new Error(
@@ -70,6 +86,10 @@ const ensureCsrfToken = async () => {
 
   return csrfToken;
 };
+
+/* ============================================================
+   API ERROR HANDLING
+   ============================================================ */
 
 const getApiErrorMessage = async (response, fallback) => {
   let message = fallback;
@@ -102,6 +122,10 @@ const getApiErrorMessage = async (response, fallback) => {
 
   return message;
 };
+
+/* ============================================================
+   FILTER METADATA
+   ============================================================ */
 
 const ARCHETYPE_META = {
   aggro: {
@@ -154,6 +178,10 @@ const normalizeText = (value) => String(value ?? "").trim();
 
 const normalizeKey = (value) => normalizeText(value).toLowerCase();
 
+/* ============================================================
+   COMPONENT
+   ============================================================ */
+
 function AdminLegacyDecks() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -173,10 +201,16 @@ function AdminLegacyDecks() {
   const [loading, setLoading] = useState(!isAddPage);
   const [error, setError] = useState("");
   const [cardsError, setCardsError] = useState("");
+
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
   const [editError, setEditError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+
+  /* ============================================================
+     PAGE TITLE
+     ============================================================ */
 
   useEffect(() => {
     document.title = isAddPage
@@ -188,11 +222,19 @@ function AdminLegacyDecks() {
     };
   }, [isAddPage]);
 
+  /* ============================================================
+     INITIALIZE CSRF
+     ============================================================ */
+
   useEffect(() => {
     ensureCsrfToken().catch((err) => {
       console.error("Unable to initialize CSRF:", err);
     });
   }, []);
+
+  /* ============================================================
+     FETCH CARDS
+     ============================================================ */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -243,6 +285,10 @@ function AdminLegacyDecks() {
 
     return () => controller.abort();
   }, []);
+
+  /* ============================================================
+     FETCH LEGACY DECKS
+     ============================================================ */
 
   useEffect(() => {
     if (isAddPage) {
@@ -317,6 +363,10 @@ function AdminLegacyDecks() {
     return () => controller.abort();
   }, [isAddPage]);
 
+  /* ============================================================
+     SIDE FILTER
+     ============================================================ */
+
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
@@ -326,6 +376,10 @@ function AdminLegacyDecks() {
       (deck) => normalizeKey(deck.side) === normalizeKey(side),
     );
   }, [decks, side]);
+
+  /* ============================================================
+     HERO OPTIONS
+     ============================================================ */
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
@@ -356,6 +410,10 @@ function AdminLegacyDecks() {
       }),
     );
   }, [sideFilteredDecks]);
+
+  /* ============================================================
+     CATEGORY OPTIONS
+     ============================================================ */
 
   const categoryOptions = useMemo(() => {
     const categoryMap = new Map();
@@ -388,6 +446,10 @@ function AdminLegacyDecks() {
     );
   }, [sideFilteredDecks]);
 
+  /* ============================================================
+     ARCHETYPE OPTIONS
+     ============================================================ */
+
   const archetypeOptions = useMemo(() => {
     const counts = {};
 
@@ -414,6 +476,10 @@ function AdminLegacyDecks() {
       }))
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
+
+  /* ============================================================
+     SORT
+     ============================================================ */
 
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
@@ -452,6 +518,10 @@ function AdminLegacyDecks() {
       );
     });
   }, [decks]);
+
+  /* ============================================================
+     FILTER
+     ============================================================ */
 
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
@@ -506,6 +576,10 @@ function AdminLegacyDecks() {
     });
   }, [sortedDecks, search, side, hero, category, archetype]);
 
+  /* ============================================================
+     FILTER CONTROLS
+     ============================================================ */
+
   const clearFilters = () => {
     setSearch("");
     setHero([]);
@@ -517,6 +591,10 @@ function AdminLegacyDecks() {
     setSide(newSide);
     clearFilters();
   };
+
+  /* ============================================================
+     EDIT DECK
+     ============================================================ */
 
   const handleEdit = async (deck, form) => {
     const deckId = deck.deckid ?? deck.deckID ?? deck.id;
@@ -530,6 +608,7 @@ function AdminLegacyDecks() {
 
     try {
       const csrfToken = await ensureCsrfToken();
+
       const formData = new FormData();
 
       formData.append("name", form?.name ?? "");
@@ -597,15 +676,18 @@ function AdminLegacyDecks() {
     }
   };
 
+  /* ============================================================
+     ADD DECK
+     ============================================================ */
+
   const handleAdd = async (form) => {
     setEditSaving(true);
     setEditError("");
 
     try {
       const csrfToken = await ensureCsrfToken();
-      const formData = new FormData();
 
-      formData.append("deckid", form?.deckid ?? "");
+      const formData = new FormData();
       formData.append("name", form?.name ?? "");
       formData.append("hero", form?.hero ?? "");
       formData.append("side", form?.side ?? "");
@@ -660,6 +742,10 @@ function AdminLegacyDecks() {
       setEditSaving(false);
     }
   };
+
+  /* ============================================================
+     DELETE DECK
+     ============================================================ */
 
   const handleDelete = async (deck) => {
     const deckId = deck.deckid ?? deck.deckID ?? deck.id;
@@ -723,9 +809,12 @@ function AdminLegacyDecks() {
     }
   };
 
+  /* ============================================================
+     ADD PAGE
+     ============================================================ */
+
   if (isAddPage) {
     const blankDeck = {
-      deckid: "",
       name: "",
       hero: "",
       side: "",
@@ -792,6 +881,10 @@ function AdminLegacyDecks() {
     );
   }
 
+  /* ============================================================
+     LOADING
+     ============================================================ */
+
   if (loading) {
     return (
       <div className="loading-page">
@@ -813,6 +906,10 @@ function AdminLegacyDecks() {
       </div>
     );
   }
+
+  /* ============================================================
+     MAIN PAGE
+     ============================================================ */
 
   return (
     <div className="deck-page">
