@@ -359,7 +359,211 @@ def admin_decklists(request):
 # ============================================================
 # ADMIN LEGACY DECKLISTS
 # ============================================================
+# ============================================================
+# DECK CARD VALIDATION
+# ============================================================
 
+def validate_deck_cards(side, hero, selected_cards):
+    side = str(side or "").strip()
+
+    if side.lower() in {"plant", "plants"}:
+        side = "Plants"
+    elif side.lower() in {"zombie", "zombies"}:
+        side = "Zombies"
+
+    hero_name = str(hero or "").strip()
+
+    if not hero_name:
+        return {
+            "error": "A hero is required."
+        }
+
+    # --------------------------------------------------------
+    # HERO
+    # --------------------------------------------------------
+
+    hero_card = (
+        WebCards.objects
+        .filter(
+            card_name__iexact=hero_name,
+            side__iexact=side,
+        )
+        .first()
+    )
+
+    if not hero_card:
+        return {
+            "error": "The selected hero does not belong to the selected deck side.",
+            "side": side,
+            "hero": hero_name,
+        }
+
+    hero_rarity = str(
+        getattr(hero_card, "set_rarity", "") or ""
+    ).strip().lower()
+
+    if "hero" not in hero_rarity:
+        return {
+            "error": "The selected card is not a valid hero.",
+            "hero": hero_name,
+        }
+
+    # --------------------------------------------------------
+    # HERO CARD TYPES
+    # --------------------------------------------------------
+
+    hero_card_types = {
+        value.strip().lower()
+        for value in str(
+            getattr(hero_card, "card_type", "") or ""
+        ).split(",")
+        if value.strip()
+    }
+
+    if not hero_card_types:
+        return {
+            "error": "The selected hero does not have any card types configured.",
+            "hero": hero_name,
+        }
+
+    # --------------------------------------------------------
+    # NORMALIZE SELECTED CARDS
+    # --------------------------------------------------------
+
+    normalized_cards = normalize_card_list(
+        selected_cards
+    )
+
+    if not normalized_cards:
+        return {
+            "cards": ""
+        }
+
+    # --------------------------------------------------------
+    # LOAD ALL POSSIBLE CARDS
+    # --------------------------------------------------------
+
+    side_cards = list(
+        WebCards.objects
+        .filter(
+            side__iexact=side,
+        )
+        .exclude(
+            set_rarity__iexact="Token"
+        )
+    )
+
+    # --------------------------------------------------------
+    # BUILD NORMALIZED LOOKUP
+    # --------------------------------------------------------
+
+    card_lookup = {}
+
+    for card in side_cards:
+
+        card_name = str(
+            getattr(card, "card_name", "") or ""
+        ).strip()
+
+        if not card_name:
+            continue
+
+        card_lookup.setdefault(
+            card_name.lower(),
+            card,
+        )
+
+    # --------------------------------------------------------
+    # VALIDATE
+    # --------------------------------------------------------
+
+    invalid_cards = []
+    incompatible_cards = []
+
+    valid_cards = []
+
+    for selected_card in normalized_cards:
+
+        cleaned_name = str(
+            selected_card or ""
+        ).strip()
+
+        lookup_key = cleaned_name.lower()
+
+        card = card_lookup.get(
+            lookup_key
+        )
+
+        if not card:
+            invalid_cards.append(
+                cleaned_name
+            )
+            continue
+
+        card_rarity = str(
+            getattr(card, "set_rarity", "") or ""
+        ).strip().lower()
+
+        if card_rarity == "token":
+            incompatible_cards.append(
+                cleaned_name
+            )
+            continue
+
+        card_types = {
+            value.strip().lower()
+            for value in str(
+                getattr(card, "card_type", "") or ""
+            ).split(",")
+            if value.strip()
+        }
+
+        if not card_types.intersection(
+            hero_card_types
+        ):
+            incompatible_cards.append(
+                cleaned_name
+            )
+            continue
+
+        valid_cards.append(
+            str(
+                getattr(card, "card_name", "")
+            ).strip()
+        )
+
+    # --------------------------------------------------------
+    # ERRORS
+    # --------------------------------------------------------
+
+    if invalid_cards:
+        return {
+            "error": (
+                "One or more selected cards do not "
+                "belong to the selected deck side."
+            ),
+            "side": side,
+            "invalid_cards": invalid_cards,
+        }
+
+    if incompatible_cards:
+        return {
+            "error": (
+                "One or more selected cards are not "
+                "compatible with the selected hero."
+            ),
+            "hero": hero_name,
+            "card_types": sorted(hero_card_types),
+            "invalid_cards": incompatible_cards,
+        }
+
+    # --------------------------------------------------------
+    # SUCCESS
+    # --------------------------------------------------------
+
+    return {
+        "cards": ", ".join(valid_cards)
+    }
 @api_view(["GET", "POST"])
 @ensure_csrf_cookie
 @owner_required
@@ -537,62 +741,60 @@ def admin_legacy_decklists(request):
         # ========================================================
 
         if "cards" in data:
-
             selected_cards = normalize_card_list(
                 data.get("cards")
-            )
-
+                )
             print(
-                "SELECTED CARDS:",
-                selected_cards,
-            )
-
+                        "SELECTED CARDS:",
+                        selected_cards,
+                    )
+        
             existing_cards = set(
-                WebCards.objects
-                .filter(
-                    card_name__in=selected_cards,
-                    side__iexact=deck_side,
-                )
-                .values_list(
-                    "card_name",
-                    flat=True,
-                )
-            )
-
+                        WebCards.objects
+                        .filter(
+                            card_name__in=selected_cards,
+                            side__iexact=deck_side,
+                        )
+                        .values_list(
+                            "card_name",
+                            flat=True,
+                        )
+                    )
+        
             print(
-                "EXISTING CARDS:",
-                existing_cards,
-            )
-
+                        "EXISTING CARDS:",
+                        existing_cards,
+                    )
+        
             invalid_cards = [
-                card
-                for card in selected_cards
-                if card not in existing_cards
-            ]
-
+                        card
+                        for card in selected_cards
+                        if card not in existing_cards
+                    ]
+        
             print(
-                "INVALID CARDS:",
-                invalid_cards,
-            )
-
+                        "INVALID CARDS:",
+                        invalid_cards,
+                    )
+        
             if invalid_cards:
-
-                return Response(
-                    {
-                        "error": (
-                            "One or more selected cards "
-                            "do not belong to the selected "
-                            "deck side."
-                        ),
-                        "side": deck_side,
-                        "invalid_cards": invalid_cards,
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
+        
+                        return Response(
+                            {
+                                "error": (
+                                    "One or more selected cards "
+                                    "do not belong to the selected "
+                                    "deck side."
+                                ),
+                                "side": deck_side,
+                                "invalid_cards": invalid_cards,
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+        
             data["cards"] = ", ".join(
-                selected_cards
-            )
+                        selected_cards
+                    )
 
         # ========================================================
         # CLOUDINARY IMAGE UPLOAD
@@ -906,7 +1108,7 @@ def admin_legacy_decklist_update(request, deckid):
 
     print("COPIED DATA:", data)
 
-    # ========================================================
+        # ========================================================
     # CARDS
     # ========================================================
 
@@ -918,41 +1120,49 @@ def admin_legacy_decklist_update(request, deckid):
             data.get("cards")
         )
 
-        print("SELECTED CARDS:", selected_cards)
-
-        existing_cards = set(
-            WebCards.objects
-            .filter(
-                card_name__in=selected_cards
-            )
-            .values_list(
-                "card_name",
-                flat=True,
-            )
+        print(
+            "SELECTED CARDS:",
+            selected_cards,
         )
 
-        print("EXISTING CARDS:", existing_cards)
+        # Use the incoming hero/side when supplied.
+        # Otherwise retain the existing deck values.
+        selected_side = data.get(
+            "side",
+            deck.side,
+        )
 
-        invalid_cards = [
-            card
-            for card in selected_cards
-            if card not in existing_cards
-        ]
+        selected_hero = data.get(
+            "hero",
+            deck.hero,
+        )
 
-        print("INVALID CARDS:", invalid_cards)
+        validation = validate_deck_cards(
+            side=selected_side,
+            hero=selected_hero,
+            selected_cards=selected_cards,
+        )
 
-        if invalid_cards:
+        if validation.get("error"):
+
+            print(
+                "CARD VALIDATION ERROR:",
+                validation,
+            )
 
             return Response(
-                {
-                    "error": "One or more selected cards do not exist.",
-                    "invalid_cards": invalid_cards,
-                },
+                validation,
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        data["cards"] = ", ".join(
-            selected_cards
+        data["cards"] = validation.get(
+            "cards",
+            "",
+        )
+
+        print(
+            "VALIDATED CARDS:",
+            data["cards"],
         )
 
     # ========================================================

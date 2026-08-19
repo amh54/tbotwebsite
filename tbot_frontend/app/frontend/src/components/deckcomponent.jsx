@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Select from "react-select";
+import CreatableSelect from "react-select/creatable";
 import "../css/deckmodal.css";
 
 const HERO_COLORS = {
@@ -28,6 +29,35 @@ const HERO_COLORS = {
   "Z-mech": ["orange", "purple"],
 };
 
+const HERO_CLASSES = {
+  "Beta-Carrotina": ["Guardian", "Smarty"],
+  Citron: ["Guardian", "Smarty"],
+  "Captain Combustible": ["Kabloom", "Mega-Grow"],
+  Chompzilla: ["Mega-Grow", "Solar"],
+  "Grass Knuckles": ["Guardian", "Mega-Grow"],
+  "Green Shadow": ["Mega-Grow", "Smarty"],
+  "Night Cap": ["Kabloom", "Smarty"],
+  Rose: ["Smarty", "Solar"],
+  "Solar Flare": ["Kabloom", "Solar"],
+  Spudow: ["Guardian", "Kabloom"],
+  "Wall-Knight": ["Guardian", "Solar"],
+  "Brain Freeze": ["Beastly", "Sneaky"],
+  "Electric Boogaloo": ["Crazy", "Hearty"],
+  "Huge-Gigantacus": ["Brainy", "Sneaky"],
+  "Super Brainz": ["Brainy", "Fighting"],
+  Immorticia: ["Brainy", "Beastly"],
+  Impfinity: ["Crazy", "Sneaky"],
+  Neptuna: ["Hearty", "Sneaky"],
+  "Professor Brainstorm": ["Brainy", "Crazy"],
+  Rustbolt: ["Hearty", "Brainy"],
+  "The Smash": ["Beastly", "Hearty"],
+  "Z-mech": ["Crazy", "Hearty"],
+};
+
+const CATEGORY_OPTIONS = ["Budget", "Competitive", "Ladder", "Meme"];
+
+const ARCHETYPE_OPTIONS = ["Aggro", "Combo", "Control", "Midrange", "Tempo"];
+
 const normalizeHeroName = (hero) =>
   String(hero || "")
     .trim()
@@ -44,6 +74,16 @@ const getHeroColors = (hero) => {
   return entry?.[1] || ["default", "default"];
 };
 
+const getHeroClasses = (hero) => {
+  const normalizedHero = normalizeHeroName(hero);
+
+  const entry = Object.entries(HERO_CLASSES).find(
+    ([name]) => normalizeHeroName(name) === normalizedHero,
+  );
+
+  return entry?.[1] || [];
+};
+
 const normalizeSide = (side) => {
   const value = String(side || "")
     .trim()
@@ -57,7 +97,7 @@ const normalizeSide = (side) => {
     return "Zombies";
   }
 
-  return String(side || "").trim();
+  return "";
 };
 
 const getCardSide = (card) => {
@@ -75,6 +115,11 @@ const getCardSide = (card) => {
 
   return "";
 };
+
+const normalizeCardType = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
 
 const getApiBaseUrl = () => {
   const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
@@ -132,6 +177,24 @@ const parseCardLines = (value) =>
     .split(/[\n,]+/)
     .map((line) => line.trim())
     .filter(Boolean);
+
+const parseMultiValues = (value) =>
+  String(value ?? "")
+    .split(/[,\n]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const valuesToOptions = (value) =>
+  parseMultiValues(value).map((item) => ({
+    value: item,
+    label: item,
+  }));
+
+const optionsToCombinedValue = (options) =>
+  (options || [])
+    .map((option) => String(option?.value || "").trim())
+    .filter(Boolean)
+    .join(" ");
 
 const cardLinesToOptions = (value, options = []) => {
   const optionMap = new Map(
@@ -251,6 +314,123 @@ const selectStyles = {
   }),
 };
 
+const categoryOptions = CATEGORY_OPTIONS.map((value) => ({
+  value,
+  label: value,
+}));
+
+const archetypeOptions = ARCHETYPE_OPTIONS.map((value) => ({
+  value,
+  label: value,
+}));
+const singleValueStyles = {
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: "#202020",
+    borderColor: state.isFocused ? "#8fe38b" : "#444",
+    minHeight: "45px",
+    boxShadow: "none",
+    "&:hover": {
+      borderColor: "#8fe38b",
+    },
+  }),
+
+  valueContainer: (base) => ({
+    ...base,
+    gap: "6px",
+    padding: "6px 8px",
+    minWidth: 0,
+    overflow: "visible",
+    flex: "1 1 auto",
+  }),
+
+  singleValue: (base) => ({
+    ...base,
+    position: "static",
+    transform: "none",
+
+    maxWidth: "none",
+    overflow: "visible",
+    textOverflow: "clip",
+    whiteSpace: "nowrap",
+
+    backgroundColor: "#2a3d2b",
+    border: "1px solid #47734a",
+    borderRadius: "999px",
+
+    color: "#a6efa2",
+    fontSize: "0.85rem",
+    fontWeight: 600,
+
+    padding: "3px 10px",
+    margin: 0,
+
+    width: "fit-content",
+    flexShrink: 0,
+  }),
+
+  placeholder: (base) => ({
+    ...base,
+    color: "#888",
+  }),
+
+  input: (base) => ({
+    ...base,
+    color: "white",
+    margin: 0,
+    padding: 0,
+  }),
+
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
+
+  indicatorsContainer: (base) => ({
+    ...base,
+    flexShrink: 0,
+  }),
+
+  dropdownIndicator: (base) => ({
+    ...base,
+    color: "#666",
+    flexShrink: 0,
+    ":hover": {
+      color: "#8fe38b",
+    },
+  }),
+
+  clearIndicator: (base) => ({
+    ...base,
+    color: "#666",
+    flexShrink: 0,
+    padding: "8px",
+    ":hover": {
+      color: "#ff8c8c",
+    },
+  }),
+
+  menu: (base) => ({
+    ...base,
+    backgroundColor: "#202020",
+    zIndex: 100,
+  }),
+
+  menuList: (base) => ({
+    ...base,
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+    "::-webkit-scrollbar": {
+      display: "none",
+    },
+  }),
+
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isFocused ? "#333" : "#202020",
+    color: "white",
+    cursor: "pointer",
+  }),
+};
 function DeckCard({
   decklist,
   admin = false,
@@ -343,9 +523,30 @@ function DeckCard({
     return options.sort((a, b) => a.label.localeCompare(b.label));
   }, [allCards, normalizedFormSide]);
 
+  const selectedHeroClasses = useMemo(
+    () => getHeroClasses(form.hero),
+    [form.hero],
+  );
+
   const cardOptions = useMemo(() => {
     const seen = new Set();
     const options = [];
+
+    if (normalizedFormSide !== "Plants" && normalizedFormSide !== "Zombies") {
+      return options;
+    }
+
+    if (!form.hero) {
+      return options;
+    }
+
+    const heroClasses = selectedHeroClasses.map((className) =>
+      normalizeCardType(className),
+    );
+
+    if (heroClasses.length === 0) {
+      return options;
+    }
 
     (Array.isArray(allCards) ? allCards : []).forEach((card) => {
       const name = String(
@@ -366,6 +567,10 @@ function DeckCard({
         return;
       }
 
+      if (rarity.includes("token")) {
+        return;
+      }
+
       const cardDescription = String(card?.description ?? "")
         .trim()
         .toLowerCase();
@@ -376,10 +581,23 @@ function DeckCard({
 
       const cardSide = getCardSide(card);
 
-      if (normalizedFormSide === "Plants" || normalizedFormSide === "Zombies") {
-        if (cardSide !== normalizedFormSide) {
-          return;
-        }
+      if (cardSide !== normalizedFormSide) {
+        return;
+      }
+
+      const cardTypes = String(
+        card?.card_type ?? card?.cardType ?? card?.type ?? "",
+      )
+        .split(/[,&/|]+/)
+        .map((type) => normalizeCardType(type))
+        .filter(Boolean);
+
+      const belongsToHeroClass = cardTypes.some((type) =>
+        heroClasses.includes(type),
+      );
+
+      if (!belongsToHeroClass) {
+        return;
       }
 
       const key = name.toLowerCase();
@@ -397,7 +615,7 @@ function DeckCard({
     });
 
     return options.sort((a, b) => a.label.localeCompare(b.label));
-  }, [allCards, normalizedFormSide]);
+  }, [allCards, normalizedFormSide, form.hero, selectedHeroClasses]);
 
   const createForm = (source = {}) => ({
     name: source.name ?? "",
@@ -416,6 +634,8 @@ function DeckCard({
     updated_date: source.updated_date ?? "",
     deck_doc: source.deck_doc ?? "",
     cards: source.cards ?? "",
+    categorySelected: valuesToOptions(source.category ?? ""),
+    archetypeSelected: valuesToOptions(source.archetype ?? ""),
     cardsSelected: [],
   });
 
@@ -468,6 +688,9 @@ function DeckCard({
           .trim()
           .toLowerCase(),
     ) || null;
+
+  const selectedCategoryOptions = form.categorySelected || [];
+  const selectedArchetypeOptions = form.archetypeSelected || [];
 
   useEffect(() => {
     if (addMode) {
@@ -680,11 +903,13 @@ function DeckCard({
     setForm((previous) => ({
       ...previous,
       hero: selected?.value || "",
+      cardsSelected: [],
+      cards: "",
     }));
   };
 
-  const handleSideChange = (event) => {
-    const value = normalizeSide(event.target.value);
+  const handleSideChange = (selected) => {
+    const value = normalizeSide(selected?.value || "");
 
     setForm((previous) => ({
       ...previous,
@@ -699,6 +924,26 @@ function DeckCard({
     setForm((previous) => ({
       ...previous,
       cardsSelected: selected || [],
+    }));
+  };
+
+  const handleCategoryChange = (selected) => {
+    const options = selected || [];
+
+    setForm((previous) => ({
+      ...previous,
+      categorySelected: options,
+      category: optionsToCombinedValue(options),
+    }));
+  };
+
+  const handleArchetypeChange = (selected) => {
+    const options = selected || [];
+
+    setForm((previous) => ({
+      ...previous,
+      archetypeSelected: options,
+      archetype: optionsToCombinedValue(options),
     }));
   };
 
@@ -741,6 +986,21 @@ function DeckCard({
       return;
     }
 
+    if (!normalizedFormSide) {
+      alert("Please select Plants or Zombies.");
+      return;
+    }
+
+    if (!form.hero) {
+      alert("Please select a hero.");
+      return;
+    }
+
+    if (!form.cardsSelected || form.cardsSelected.length === 0) {
+      alert("Please select at least one card.");
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -759,8 +1019,8 @@ function DeckCard({
         name: form.name ?? "",
         hero: form.hero ?? "",
         side: normalizedSide,
-        category: form.category ?? "",
-        archetype: form.archetype ?? "",
+        category: optionsToCombinedValue(form.categorySelected),
+        archetype: optionsToCombinedValue(form.archetypeSelected),
         description: form.description ?? "",
         image: hasNewImage ? "" : String(form.image ?? "").trim(),
         image_file: hasNewImage ? form.image_file : null,
@@ -773,6 +1033,7 @@ function DeckCard({
         deck_doc: form.deck_doc ?? "",
         cards: cardOptionsToLines(validCards),
       };
+
       const result = addMode
         ? await onAdd(payload)
         : await onSave(deck, payload);
@@ -951,6 +1212,36 @@ function DeckCard({
                       value={form.name}
                       onChange={(value) => handleChange("name", value)}
                     />
+                  </div>
+                </div>
+
+                <section className="modal-section">
+                  <h3>Deck Setup</h3>
+
+                  <div className="modal-metadata">
+                    <div className="admin-modal-field">
+                      <span>Side</span>
+
+                      <Select
+                        options={[
+                          { value: "Plants", label: "Plants" },
+                          { value: "Zombies", label: "Zombies" },
+                        ]}
+                        value={
+                          normalizedFormSide
+                            ? {
+                                value: normalizedFormSide,
+                                label: normalizedFormSide,
+                              }
+                            : null
+                        }
+                        onChange={handleSideChange}
+                        placeholder="Select side..."
+                        isClearable
+                        styles={singleValueStyles}
+                        classNamePrefix="deck-side-select"
+                      />
+                    </div>
 
                     <div className="admin-modal-field">
                       <span>Hero</span>
@@ -959,14 +1250,51 @@ function DeckCard({
                         options={heroOptions}
                         value={selectedHero}
                         onChange={handleHeroChange}
-                        placeholder="Select hero..."
+                        placeholder={
+                          normalizedFormSide
+                            ? "Select hero..."
+                            : "Select side first..."
+                        }
                         isClearable
-                        styles={selectStyles}
+                        isDisabled={!normalizedFormSide}
+                        styles={singleValueStyles}
                         classNamePrefix="deck-hero-select"
                       />
                     </div>
+
+                    <div className="admin-modal-field">
+                      <span>Category</span>
+
+                      <CreatableSelect
+                        isMulti
+                        options={categoryOptions}
+                        value={selectedCategoryOptions}
+                        onChange={handleCategoryChange}
+                        placeholder="Select categories..."
+                        styles={selectStyles}
+                        classNamePrefix="deck-category-select"
+                        closeMenuOnSelect={false}
+                        isSearchable
+                      />
+                    </div>
+
+                    <div className="admin-modal-field">
+                      <span>Archetype</span>
+
+                      <CreatableSelect
+                        isMulti
+                        options={archetypeOptions}
+                        value={selectedArchetypeOptions}
+                        onChange={handleArchetypeChange}
+                        placeholder="Select archetypes..."
+                        styles={selectStyles}
+                        classNamePrefix="deck-archetype-select"
+                        closeMenuOnSelect={false}
+                        isSearchable
+                      />
+                    </div>
                   </div>
-                </div>
+                </section>
 
                 <section className="modal-section description-section">
                   <h3>Description</h3>
@@ -979,33 +1307,10 @@ function DeckCard({
 
                 <section className="modal-metadata">
                   <AdminModalField
-                    label="Category"
-                    value={form.category}
-                    onChange={(value) => handleChange("category", value)}
-                  />
-
-                  <AdminModalField
-                    label="Archetype"
-                    value={form.archetype}
-                    onChange={(value) => handleChange("archetype", value)}
-                  />
-
-                  <AdminModalField
                     label="Cost"
                     value={form.cost}
                     onChange={(value) => handleChange("cost", value)}
                   />
-
-                  <label className="admin-modal-field">
-                    <span>Side</span>
-
-                    <input
-                      type="text"
-                      value={form.side ?? ""}
-                      onChange={handleSideChange}
-                      placeholder="Plants or Zombies"
-                    />
-                  </label>
 
                   <AdminModalField
                     label="Creator"
@@ -1044,7 +1349,12 @@ function DeckCard({
                   />
 
                   <div className="admin-modal-field admin-modal-cards-field">
-                    <span>Cards</span>
+                    <span>
+                      Cards
+                      {form.hero && selectedHeroClasses.length > 0
+                        ? ` — ${selectedHeroClasses.join(" / ")}`
+                        : ""}
+                    </span>
 
                     <Select
                       isMulti
@@ -1052,19 +1362,17 @@ function DeckCard({
                       value={form.cardsSelected || []}
                       onChange={handleCardsChange}
                       placeholder={
-                        normalizedFormSide === "Plants" ||
-                        normalizedFormSide === "Zombies"
-                          ? "Search cards..."
-                          : "Enter Plants or Zombies first..."
+                        !normalizedFormSide
+                          ? "Select side first..."
+                          : !form.hero
+                            ? "Select hero first..."
+                            : "Search cards..."
                       }
                       classNamePrefix="deck-cards-select"
                       styles={selectStyles}
                       closeMenuOnSelect={false}
                       isSearchable
-                      isDisabled={
-                        normalizedFormSide !== "Plants" &&
-                        normalizedFormSide !== "Zombies"
-                      }
+                      isDisabled={!normalizedFormSide || !form.hero}
                     />
                   </div>
                 </section>
@@ -1337,15 +1645,44 @@ function DeckCard({
                           />
 
                           <div className="admin-modal-field">
+                            <span>Side</span>
+
+                            <Select
+                              options={[
+                                { value: "Plants", label: "Plants" },
+                                { value: "Zombies", label: "Zombies" },
+                              ]}
+                              value={
+                                normalizedFormSide
+                                  ? {
+                                      value: normalizedFormSide,
+                                      label: normalizedFormSide,
+                                    }
+                                  : null
+                              }
+                              onChange={handleSideChange}
+                              placeholder="Select side..."
+                              isClearable
+                              styles={singleValueStyles}
+                              classNamePrefix="deck-side-select"
+                            />
+                          </div>
+
+                          <div className="admin-modal-field">
                             <span>Hero</span>
 
                             <Select
                               options={heroOptions}
                               value={selectedHero}
                               onChange={handleHeroChange}
-                              placeholder="Select hero..."
+                              placeholder={
+                                normalizedFormSide
+                                  ? "Select hero..."
+                                  : "Select side first..."
+                              }
                               isClearable
-                              styles={selectStyles}
+                              isDisabled={!normalizedFormSide}
+                              styles={singleValueStyles}
                               classNamePrefix="deck-hero-select"
                             />
                           </div>
@@ -1380,34 +1717,43 @@ function DeckCard({
                   <section className="modal-metadata">
                     {editing ? (
                       <>
-                        <AdminModalField
-                          label="Category"
-                          value={form.category}
-                          onChange={(value) => handleChange("category", value)}
-                        />
+                        <div className="admin-modal-field">
+                          <span>Category</span>
 
-                        <AdminModalField
-                          label="Archetype"
-                          value={form.archetype}
-                          onChange={(value) => handleChange("archetype", value)}
-                        />
+                          <CreatableSelect
+                            isMulti
+                            options={categoryOptions}
+                            value={selectedCategoryOptions}
+                            onChange={handleCategoryChange}
+                            placeholder="Select categories..."
+                            styles={selectStyles}
+                            classNamePrefix="deck-category-select"
+                            closeMenuOnSelect={false}
+                            isSearchable
+                          />
+                        </div>
+
+                        <div className="admin-modal-field">
+                          <span>Archetype</span>
+
+                          <CreatableSelect
+                            isMulti
+                            options={archetypeOptions}
+                            value={selectedArchetypeOptions}
+                            onChange={handleArchetypeChange}
+                            placeholder="Select archetypes..."
+                            styles={selectStyles}
+                            classNamePrefix="deck-archetype-select"
+                            closeMenuOnSelect={false}
+                            isSearchable
+                          />
+                        </div>
 
                         <AdminModalField
                           label="Cost"
                           value={form.cost}
                           onChange={(value) => handleChange("cost", value)}
                         />
-
-                        <label className="admin-modal-field">
-                          <span>Side</span>
-
-                          <input
-                            type="text"
-                            value={form.side ?? ""}
-                            onChange={handleSideChange}
-                            placeholder="Plants or Zombies"
-                          />
-                        </label>
 
                         <AdminModalField
                           label="Creator"
@@ -1454,7 +1800,12 @@ function DeckCard({
                         />
 
                         <div className="admin-modal-field admin-modal-cards-field">
-                          <span>Cards</span>
+                          <span>
+                            Cards
+                            {form.hero && selectedHeroClasses.length > 0
+                              ? ` — ${selectedHeroClasses.join(" / ")}`
+                              : ""}
+                          </span>
 
                           <Select
                             isMulti
@@ -1462,19 +1813,17 @@ function DeckCard({
                             value={form.cardsSelected || []}
                             onChange={handleCardsChange}
                             placeholder={
-                              normalizedFormSide === "Plants" ||
-                              normalizedFormSide === "Zombies"
-                                ? "Search cards..."
-                                : "Enter Plants or Zombies first..."
+                              !normalizedFormSide
+                                ? "Select side first..."
+                                : !form.hero
+                                  ? "Select hero first..."
+                                  : "Search cards..."
                             }
                             classNamePrefix="deck-cards-select"
                             styles={selectStyles}
                             closeMenuOnSelect={false}
                             isSearchable
-                            isDisabled={
-                              normalizedFormSide !== "Plants" &&
-                              normalizedFormSide !== "Zombies"
-                            }
+                            isDisabled={!normalizedFormSide || !form.hero}
                           />
                         </div>
                       </>
