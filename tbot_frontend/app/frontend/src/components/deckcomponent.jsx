@@ -61,42 +61,16 @@ const normalizeSide = (side) => {
 };
 
 const getCardSide = (card) => {
-  const possibleValues = [
-    card?.side,
-    card?.Side,
-    card?.class_side,
-    card?.classSide,
-    card?.card_side,
-    card?.cardSide,
-    card?.faction,
-    card?.type,
-    card?.class,
-    card?.card_class,
-    card?.cardClass,
-    card?.side_name,
-    card?.sideName,
-  ];
+  const side = String(card?.side ?? "")
+    .trim()
+    .toLowerCase();
 
-  for (const value of possibleValues) {
-    const normalized = String(value || "")
-      .trim()
-      .toLowerCase();
+  if (side === "plant" || side === "plants") {
+    return "Plants";
+  }
 
-    if (
-      normalized === "plant" ||
-      normalized === "plants" ||
-      normalized.includes("plant")
-    ) {
-      return "Plants";
-    }
-
-    if (
-      normalized === "zombie" ||
-      normalized === "zombies" ||
-      normalized.includes("zombie")
-    ) {
-      return "Zombies";
-    }
+  if (side === "zombie" || side === "zombies") {
+    return "Zombies";
   }
 
   return "";
@@ -316,58 +290,58 @@ function DeckCard({
   };
 
   const description = hasValue(deck.description)
-  ? deck.description
-  : "No description available.";
+    ? deck.description
+    : "No description available.";
 
-const normalizedFormSide = normalizeSide(form.side);
+  const normalizedFormSide = normalizeSide(form.side);
 
-const heroOptions = useMemo(() => {
-  const seen = new Set();
-  const options = [];
+  const heroOptions = useMemo(() => {
+    const seen = new Set();
+    const options = [];
 
-  (Array.isArray(allCards) ? allCards : []).forEach((card) => {
-    const rarity = String(
-      card?.set_rarity ?? card?.setRarity ?? card?.rarity ?? "",
-    )
-      .trim()
-      .toLowerCase();
+    (Array.isArray(allCards) ? allCards : []).forEach((card) => {
+      const rarity = String(
+        card?.set_rarity ?? card?.setRarity ?? card?.rarity ?? "",
+      )
+        .trim()
+        .toLowerCase();
 
-    if (rarity !== "premium - hero") {
-      return;
-    }
-
-    const cardSide = getCardSide(card);
-
-    if (normalizedFormSide === "Plants" || normalizedFormSide === "Zombies") {
-      if (cardSide !== normalizedFormSide) {
+      if (rarity !== "premium - hero") {
         return;
       }
-    }
 
-    const name = String(
-      card?.card_name ?? card?.title ?? card?.name ?? "",
-    ).trim();
+      const cardSide = getCardSide(card);
 
-    if (!name) {
-      return;
-    }
+      if (normalizedFormSide === "Plants" || normalizedFormSide === "Zombies") {
+        if (cardSide !== normalizedFormSide) {
+          return;
+        }
+      }
 
-    const key = name.toLowerCase();
+      const name = String(
+        card?.card_name ?? card?.title ?? card?.name ?? "",
+      ).trim();
 
-    if (seen.has(key)) {
-      return;
-    }
+      if (!name) {
+        return;
+      }
 
-    seen.add(key);
+      const key = name.toLowerCase();
 
-    options.push({
-      value: name,
-      label: name,
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.add(key);
+
+      options.push({
+        value: name,
+        label: name,
+      });
     });
-  });
 
-  return options.sort((a, b) => a.label.localeCompare(b.label));
-}, [allCards, normalizedFormSide]);
+    return options.sort((a, b) => a.label.localeCompare(b.label));
+  }, [allCards, normalizedFormSide]);
 
   const cardOptions = useMemo(() => {
     const seen = new Set();
@@ -715,6 +689,9 @@ const heroOptions = useMemo(() => {
     setForm((previous) => ({
       ...previous,
       side: value,
+      hero: "",
+      cardsSelected: [],
+      cards: "",
     }));
   };
 
@@ -796,7 +773,6 @@ const heroOptions = useMemo(() => {
         deck_doc: form.deck_doc ?? "",
         cards: cardOptionsToLines(validCards),
       };
-
       const result = addMode
         ? await onAdd(payload)
         : await onSave(deck, payload);
