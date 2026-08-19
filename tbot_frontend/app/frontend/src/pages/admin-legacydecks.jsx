@@ -59,6 +59,7 @@ const getCsrfToken = () => {
 };
 
 const ensureCsrfToken = async () => {
+  // Try the cookie first in case it is readable.
   let csrfToken = getCookie("csrftoken") || getCsrfToken();
 
   if (csrfToken) {
@@ -68,6 +69,9 @@ const ensureCsrfToken = async () => {
   const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
     method: "GET",
     credentials: "include",
+    headers: {
+      Accept: "application/json",
+    },
   });
 
   if (!response.ok) {
@@ -76,7 +80,21 @@ const ensureCsrfToken = async () => {
     );
   }
 
-  csrfToken = getCookie("csrftoken") || getCsrfToken();
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch {
+    // Ignore invalid JSON and try the cookie below.
+  }
+
+  // IMPORTANT:
+  // Use the token returned directly by Django.
+  csrfToken =
+    data?.csrfToken ||
+    data?.csrf_token ||
+    getCookie("csrftoken") ||
+    getCsrfToken();
 
   if (!csrfToken) {
     throw new Error(
