@@ -70,6 +70,11 @@ const getCardSide = (card) => {
     card?.cardSide,
     card?.faction,
     card?.type,
+    card?.class,
+    card?.card_class,
+    card?.cardClass,
+    card?.side_name,
+    card?.sideName,
   ];
 
   for (const value of possibleValues) {
@@ -77,11 +82,19 @@ const getCardSide = (card) => {
       .trim()
       .toLowerCase();
 
-    if (normalized === "plant" || normalized === "plants") {
+    if (
+      normalized === "plant" ||
+      normalized === "plants" ||
+      normalized.includes("plant")
+    ) {
       return "Plants";
     }
 
-    if (normalized === "zombie" || normalized === "zombies") {
+    if (
+      normalized === "zombie" ||
+      normalized === "zombies" ||
+      normalized.includes("zombie")
+    ) {
       return "Zombies";
     }
   }
@@ -321,6 +334,14 @@ function DeckCard({
         return;
       }
 
+      const cardSide = getCardSide(card);
+
+      if (normalizedFormSide === "Plants" || normalizedFormSide === "Zombies") {
+        if (cardSide !== normalizedFormSide) {
+          return;
+        }
+      }
+
       const name = String(
         card?.card_name ?? card?.title ?? card?.name ?? "",
       ).trim();
@@ -344,7 +365,7 @@ function DeckCard({
     });
 
     return options.sort((a, b) => a.label.localeCompare(b.label));
-  }, [allCards]);
+  }, [allCards, normalizedFormSide]);
 
   const normalizedFormSide = normalizeSide(form.side);
 

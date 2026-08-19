@@ -881,7 +881,11 @@ function AdminLegacyDecks() {
               admin
               adminMode
               addMode
-              allCards={allCards}
+              allCards={allCards.filter(
+                (card) =>
+                  !blankDeck.side ||
+                  normalizeKey(card.side) === normalizeKey(blankDeck.side),
+              )}
               onAdd={handleAdd}
               editSaving={editSaving}
             />
