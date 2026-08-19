@@ -28,10 +28,6 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-/* ============================================================
-   CSRF
-   ============================================================ */
-
 const getCookie = (name) => {
   const cookies = document.cookie.split(";");
 
@@ -46,28 +42,14 @@ const getCookie = (name) => {
   return null;
 };
 
-const getCsrfToken = () => {
-  const name = "csrftoken";
-
-  const cookies = document.cookie.split(";").map((cookie) => cookie.trim());
-
-  const csrfCookie = cookies.find((cookie) => cookie.startsWith(`${name}=`));
-
-  return csrfCookie
-    ? decodeURIComponent(csrfCookie.substring(name.length + 1))
-    : "";
-};
-
 const ensureCsrfToken = async () => {
-  // Try the cookie first in case it is readable.
-  let csrfToken = getCookie("csrftoken") || getCsrfToken();
+  let token = getCookie("csrftoken");
 
-  if (csrfToken) {
-    return csrfToken;
+  if (token) {
+    return token;
   }
 
   const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
     credentials: "include",
     headers: {
       Accept: "application/json",
@@ -75,39 +57,23 @@ const ensureCsrfToken = async () => {
   });
 
   if (!response.ok) {
-    throw new Error(
-      "Unable to initialize CSRF protection. Please refresh the page.",
-    );
+    throw new Error("Unable to initialize CSRF protection.");
   }
-
-  let data = {};
 
   try {
-    data = await response.json();
+    const data = await response.json();
+
+    token = data?.csrfToken || data?.csrf_token || getCookie("csrftoken");
   } catch {
-    // Ignore invalid JSON and try the cookie below.
+    token = getCookie("csrftoken");
   }
 
-  // IMPORTANT:
-  // Use the token returned directly by Django.
-  csrfToken =
-    data?.csrfToken ||
-    data?.csrf_token ||
-    getCookie("csrftoken") ||
-    getCsrfToken();
-
-  if (!csrfToken) {
-    throw new Error(
-      "CSRF token is missing. Please refresh the page and try again.",
-    );
+  if (!token) {
+    throw new Error("CSRF token is missing.");
   }
 
-  return csrfToken;
+  return token;
 };
-
-/* ============================================================
-   API ERROR HANDLING
-   ============================================================ */
 
 const getApiErrorMessage = async (response, fallback) => {
   let message = fallback;
@@ -120,7 +86,7 @@ const getApiErrorMessage = async (response, fallback) => {
     } else if (data?.error) {
       message += `: ${data.error}`;
     } else if (data?.fields) {
-      const fieldMessages = Object.entries(data.fields)
+      const fields = Object.entries(data.fields)
         .map(([field, messages]) => {
           const text = Array.isArray(messages)
             ? messages.join(", ")
@@ -130,8 +96,8 @@ const getApiErrorMessage = async (response, fallback) => {
         })
         .join(" | ");
 
-      if (fieldMessages) {
-        message += `: ${fieldMessages}`;
+      if (fields) {
+        message += `: ${fields}`;
       }
     }
   } catch {
@@ -140,10 +106,6 @@ const getApiErrorMessage = async (response, fallback) => {
 
   return message;
 };
-
-/* ============================================================
-   FILTER METADATA
-   ============================================================ */
 
 const ARCHETYPE_META = {
   aggro: {
@@ -196,18 +158,14 @@ const normalizeText = (value) => String(value ?? "").trim();
 
 const normalizeKey = (value) => normalizeText(value).toLowerCase();
 
-/* ============================================================
-   COMPONENT
-   ============================================================ */
-
 function AdminLegacyDecks() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isAddPage = location.pathname === "/admin/legacy-decks/add";
+  const isAddPage =
+    location.pathname.replace(/\/+$/, "") === "/admin/legacy-decks/add";
 
   const [decks, setDecks] = useState([]);
-  const [totalDecks, setTotalDecks] = useState(0);
   const [allCards, setAllCards] = useState([]);
 
   const [search, setSearch] = useState("");
@@ -220,15 +178,11 @@ function AdminLegacyDecks() {
   const [error, setError] = useState("");
   const [cardsError, setCardsError] = useState("");
 
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-
   const [editError, setEditError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
-  /* ============================================================
-     PAGE TITLE
-     ============================================================ */
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     document.title = isAddPage
@@ -240,31 +194,23 @@ function AdminLegacyDecks() {
     };
   }, [isAddPage]);
 
-  /* ============================================================
-     INITIALIZE CSRF
-     ============================================================ */
-
   useEffect(() => {
     ensureCsrfToken().catch((err) => {
-      console.error("Unable to initialize CSRF:", err);
+      console.error("CSRF initialization failed:", err);
     });
   }, []);
-
-  /* ============================================================
-     FETCH CARDS
-     ============================================================ */
 
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchCards = async () => {
+    const loadCards = async () => {
       try {
         setCardsError("");
 
         const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
           method: "GET",
-          signal: controller.signal,
           credentials: "include",
+          signal: controller.signal,
           headers: {
             Accept: "application/json",
           },
@@ -274,7 +220,7 @@ function AdminLegacyDecks() {
           throw new Error(
             await getApiErrorMessage(
               response,
-              `Card list request failed with status ${response.status}`,
+              `Card request failed with status ${response.status}`,
             ),
           );
         }
@@ -290,23 +236,16 @@ function AdminLegacyDecks() {
         );
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Unable to load card information:", err);
-
-          setCardsError(
-            err.message || "Unable to load card information right now.",
-          );
+          console.error(err);
+          setCardsError(err.message || "Unable to load card information.");
         }
       }
     };
 
-    fetchCards();
+    loadCards();
 
     return () => controller.abort();
   }, []);
-
-  /* ============================================================
-     FETCH LEGACY DECKS
-     ============================================================ */
 
   useEffect(() => {
     if (isAddPage) {
@@ -315,7 +254,7 @@ function AdminLegacyDecks() {
 
     const controller = new AbortController();
 
-    const fetchDecks = async () => {
+    const loadDecks = async () => {
       try {
         setLoading(true);
         setError("");
@@ -324,8 +263,8 @@ function AdminLegacyDecks() {
           `${API_BASE_URL}/tbotapp/admin/legacy-decklists/`,
           {
             method: "GET",
-            signal: controller.signal,
             credentials: "include",
+            signal: controller.signal,
             headers: {
               Accept: "application/json",
             },
@@ -333,11 +272,6 @@ function AdminLegacyDecks() {
         );
 
         if (!response.ok) {
-          const message = await getApiErrorMessage(
-            response,
-            `Request failed with status ${response.status}`,
-          );
-
           if (response.status === 401) {
             throw new Error(
               "You must be logged in with Discord to access the admin page.",
@@ -350,7 +284,12 @@ function AdminLegacyDecks() {
             );
           }
 
-          throw new Error(message);
+          throw new Error(
+            await getApiErrorMessage(
+              response,
+              `Request failed with status ${response.status}`,
+            ),
+          );
         }
 
         const data = await response.json();
@@ -362,12 +301,10 @@ function AdminLegacyDecks() {
             : [];
 
         setDecks(results);
-        setTotalDecks(results.length);
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Unable to load admin legacy decks:", err);
-
-          setError(err.message || "Unable to load legacy decks right now.");
+          console.error("Unable to load legacy decks:", err);
+          setError(err.message || "Unable to load legacy decks.");
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -376,14 +313,10 @@ function AdminLegacyDecks() {
       }
     };
 
-    fetchDecks();
+    loadDecks();
 
     return () => controller.abort();
   }, [isAddPage]);
-
-  /* ============================================================
-     SIDE FILTER
-     ============================================================ */
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -395,78 +328,66 @@ function AdminLegacyDecks() {
     );
   }, [decks, side]);
 
-  /* ============================================================
-     HERO OPTIONS
-     ============================================================ */
-
   const heroOptions = useMemo(() => {
-    const heroMap = new Map();
+    const map = new Map();
 
     sideFilteredDecks.forEach((deck) => {
-      const heroName = normalizeText(deck.hero);
+      const value = normalizeText(deck.hero);
 
-      if (!heroName) {
+      if (!value) {
         return;
       }
 
-      const key = normalizeKey(heroName);
+      const key = normalizeKey(value);
 
-      if (!heroMap.has(key)) {
-        heroMap.set(key, {
-          value: heroName,
-          label: heroName,
+      if (!map.has(key)) {
+        map.set(key, {
+          value,
+          label: value,
           count: 0,
         });
       }
 
-      heroMap.get(key).count += 1;
+      map.get(key).count += 1;
     });
 
-    return Array.from(heroMap.values()).sort((a, b) =>
+    return Array.from(map.values()).sort((a, b) =>
       a.label.localeCompare(b.label, undefined, {
         sensitivity: "base",
       }),
     );
   }, [sideFilteredDecks]);
 
-  /* ============================================================
-     CATEGORY OPTIONS
-     ============================================================ */
-
   const categoryOptions = useMemo(() => {
-    const categoryMap = new Map();
+    const map = new Map();
 
     sideFilteredDecks.forEach((deck) => {
-      const categoryName = normalizeText(deck.category);
+      const value = normalizeText(deck.category);
 
-      if (!categoryName) {
+      if (!value) {
         return;
       }
 
-      const key = normalizeKey(categoryName);
+      const key = normalizeKey(value);
 
-      if (!categoryMap.has(key)) {
-        categoryMap.set(key, {
-          value: categoryName,
-          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
+      if (!map.has(key)) {
+        map.set(key, {
+          value,
+          label: value.charAt(0).toUpperCase() + value.slice(1),
           count: 0,
           ...(CATEGORY_META[key] || {}),
         });
       }
 
-      categoryMap.get(key).count += 1;
+      map.get(key).count += 1;
     });
 
-    return Array.from(categoryMap.values()).sort((a, b) =>
+    return Array.from(map.values()).sort((a, b) =>
       a.label.localeCompare(b.label, undefined, {
         sensitivity: "base",
       }),
     );
   }, [sideFilteredDecks]);
-
-  /* ============================================================
-     ARCHETYPE OPTIONS
-     ============================================================ */
 
   const archetypeOptions = useMemo(() => {
     const counts = {};
@@ -476,11 +397,11 @@ function AdminLegacyDecks() {
     });
 
     sideFilteredDecks.forEach((deck) => {
-      const deckArchetype = normalizeKey(deck.archetype);
+      const value = normalizeKey(deck.archetype);
 
-      Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
-        if (deckArchetype.includes(archetypeName)) {
-          counts[archetypeName] += 1;
+      Object.keys(ARCHETYPE_META).forEach((key) => {
+        if (value.includes(key)) {
+          counts[key] += 1;
         }
       });
     });
@@ -494,10 +415,6 @@ function AdminLegacyDecks() {
       }))
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
-
-  /* ============================================================
-     SORT
-     ============================================================ */
 
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
@@ -537,10 +454,6 @@ function AdminLegacyDecks() {
     });
   }, [decks]);
 
-  /* ============================================================
-     FILTER
-     ============================================================ */
-
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
 
@@ -555,37 +468,35 @@ function AdminLegacyDecks() {
         deck.cards,
       ]
         .filter(Boolean)
-        .map((value) => normalizeKey(value));
+        .map(normalizeKey);
 
       const searchMatch =
         !searchValue ||
         searchableValues.some((value) => value.includes(searchValue));
 
-      const deckSide = normalizeKey(deck.side);
-
-      const sideMatch = side === "All" || deckSide === normalizeKey(side);
+      const sideMatch =
+        side === "All" || normalizeKey(deck.side) === normalizeKey(side);
 
       const heroMatch =
         hero.length === 0 ||
         hero.some(
-          (selectedHero) =>
-            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
+          (selected) =>
+            normalizeKey(deck.hero) === normalizeKey(selected.value),
         );
 
       const categoryMatch =
         category.length === 0 ||
         category.some(
-          (selectedCategory) =>
-            normalizeKey(deck.category) ===
-            normalizeKey(selectedCategory.value),
+          (selected) =>
+            normalizeKey(deck.category) === normalizeKey(selected.value),
         );
 
       const deckArchetype = normalizeKey(deck.archetype);
 
       const archetypeMatch =
         archetype.length === 0 ||
-        archetype.every((selectedArchetype) =>
-          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
+        archetype.every((selected) =>
+          deckArchetype.includes(normalizeKey(selected.value)),
         );
 
       return (
@@ -593,10 +504,6 @@ function AdminLegacyDecks() {
       );
     });
   }, [sortedDecks, search, side, hero, category, archetype]);
-
-  /* ============================================================
-     FILTER CONTROLS
-     ============================================================ */
 
   const clearFilters = () => {
     setSearch("");
@@ -610,11 +517,7 @@ function AdminLegacyDecks() {
     clearFilters();
   };
 
-  /* ============================================================
-     EDIT DECK
-     ============================================================ */
-
-  const handleEdit = async (deck, form) => {
+  const handleSave = async (deck, form) => {
     const deckId = deck.deckid ?? deck.deckID ?? deck.id;
 
     if (!deckId) {
@@ -629,20 +532,26 @@ function AdminLegacyDecks() {
 
       const formData = new FormData();
 
-      formData.append("name", form?.name ?? "");
-      formData.append("hero", form?.hero ?? "");
-      formData.append("side", form?.side ?? "");
-      formData.append("category", form?.category ?? "");
-      formData.append("archetype", form?.archetype ?? "");
-      formData.append("description", form?.description ?? "");
-      formData.append("creator", form?.creator ?? "");
-      formData.append("cost", form?.cost ?? "");
-      formData.append("inspiration", form?.inspiration ?? "");
-      formData.append("optimization", form?.optimization ?? "");
-      formData.append("suggested_date", form?.suggested_date ?? "");
-      formData.append("updated_date", form?.updated_date ?? "");
-      formData.append("deck_doc", form?.deck_doc ?? "");
-      formData.append("cards", form?.cards ?? "");
+      const fields = [
+        "name",
+        "hero",
+        "side",
+        "category",
+        "archetype",
+        "description",
+        "creator",
+        "cost",
+        "inspiration",
+        "optimization",
+        "suggested_date",
+        "updated_date",
+        "deck_doc",
+        "cards",
+      ];
+
+      fields.forEach((field) => {
+        formData.append(field, form?.[field] ?? "");
+      });
 
       if (form?.image_file instanceof File) {
         formData.append("image_file", form.image_file);
@@ -676,9 +585,9 @@ function AdminLegacyDecks() {
 
       setDecks((current) =>
         current.map((item) => {
-          const currentId = item.deckid ?? item.deckID ?? item.id;
+          const itemId = item.deckid ?? item.deckID ?? item.id;
 
-          return String(currentId) === String(deckId)
+          return String(itemId) === String(deckId)
             ? { ...item, ...updatedDeck }
             : item;
         }),
@@ -687,16 +596,11 @@ function AdminLegacyDecks() {
       return updatedDeck;
     } catch (err) {
       setEditError(err.message || "Unable to update legacy deck.");
-
       throw err;
     } finally {
       setEditSaving(false);
     }
   };
-
-  /* ============================================================
-     ADD DECK
-     ============================================================ */
 
   const handleAdd = async (form) => {
     setEditSaving(true);
@@ -706,20 +610,27 @@ function AdminLegacyDecks() {
       const csrfToken = await ensureCsrfToken();
 
       const formData = new FormData();
-      formData.append("name", form?.name ?? "");
-      formData.append("hero", form?.hero ?? "");
-      formData.append("side", form?.side ?? "");
-      formData.append("category", form?.category ?? "");
-      formData.append("archetype", form?.archetype ?? "");
-      formData.append("description", form?.description ?? "");
-      formData.append("creator", form?.creator ?? "");
-      formData.append("cost", form?.cost ?? "");
-      formData.append("inspiration", form?.inspiration ?? "");
-      formData.append("optimization", form?.optimization ?? "");
-      formData.append("suggested_date", form?.suggested_date ?? "");
-      formData.append("updated_date", form?.updated_date ?? "");
-      formData.append("deck_doc", form?.deck_doc ?? "");
-      formData.append("cards", form?.cards ?? "");
+
+      const fields = [
+        "name",
+        "hero",
+        "side",
+        "category",
+        "archetype",
+        "description",
+        "creator",
+        "cost",
+        "inspiration",
+        "optimization",
+        "suggested_date",
+        "updated_date",
+        "deck_doc",
+        "cards",
+      ];
+
+      fields.forEach((field) => {
+        formData.append(field, form?.[field] ?? "");
+      });
 
       if (form?.image_file instanceof File) {
         formData.append("image_file", form.image_file);
@@ -754,16 +665,11 @@ function AdminLegacyDecks() {
       return createdDeck;
     } catch (err) {
       setEditError(err.message || "Unable to add legacy deck.");
-
       throw err;
     } finally {
       setEditSaving(false);
     }
   };
-
-  /* ============================================================
-     DELETE DECK
-     ============================================================ */
 
   const handleDelete = async (deck) => {
     const deckId = deck.deckid ?? deck.deckID ?? deck.id;
@@ -813,23 +719,17 @@ function AdminLegacyDecks() {
 
       setDecks((current) =>
         current.filter((item) => {
-          const currentId = item.deckid ?? item.deckID ?? item.id;
+          const itemId = item.deckid ?? item.deckID ?? item.id;
 
-          return String(currentId) !== String(deckId);
+          return String(itemId) !== String(deckId);
         }),
       );
-
-      setTotalDecks((current) => Math.max(0, current - 1));
     } catch (err) {
       setDeleteError(err.message || "Unable to delete legacy deck.");
     } finally {
       setDeleteLoading(false);
     }
   };
-
-  /* ============================================================
-     ADD PAGE
-     ============================================================ */
 
   if (isAddPage) {
     const blankDeck = {
@@ -881,11 +781,7 @@ function AdminLegacyDecks() {
               admin
               adminMode
               addMode
-              allCards={allCards.filter(
-                (card) =>
-                  !blankDeck.side ||
-                  normalizeKey(card.side) === normalizeKey(blankDeck.side),
-              )}
+              allCards={allCards}
               onAdd={handleAdd}
               editSaving={editSaving}
             />
@@ -903,10 +799,6 @@ function AdminLegacyDecks() {
     );
   }
 
-  /* ============================================================
-     LOADING
-     ============================================================ */
-
   if (loading) {
     return (
       <div className="loading-page">
@@ -919,19 +811,14 @@ function AdminLegacyDecks() {
 
           <div className="loading-status">
             <span>Loading legacy deck data</span>
-
             <strong>
-              {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
+              {decks.length > 0 ? `${decks.length} decks` : "Loading..."}
             </strong>
           </div>
         </div>
       </div>
     );
   }
-
-  /* ============================================================
-     MAIN PAGE
-     ============================================================ */
 
   return (
     <div className="deck-page">
@@ -955,6 +842,8 @@ function AdminLegacyDecks() {
             </Link>
           </div>
         </div>
+
+        {error && <div className="admin-error">{error}</div>}
 
         {deleteError && <div className="admin-error">{deleteError}</div>}
 
@@ -1051,36 +940,35 @@ function AdminLegacyDecks() {
           </div>
         </div>
 
-        {error ? (
-          <div className="admin-error">{error}</div>
-        ) : (
+        {!error && (
           <p className="results-count">
-            Showing {filteredDecks.length} of {totalDecks || decks.length}{" "}
-            legacy decks
+            Showing {filteredDecks.length} of {decks.length} legacy decks
           </p>
         )}
 
-        {!error && filteredDecks.length === 0 ? (
+        {!error && filteredDecks.length === 0 && (
           <p className="no-results">No legacy decks found.</p>
-        ) : (
-          !error && (
-            <div className="deck-grid">
-              {filteredDecks.map((deck) => (
-                <div
-                  key={`${deck.side}-${deck.deckid || deck.deckID || deck.id}-${deck.name}`}
-                >
+        )}
+
+        {!error && filteredDecks.length > 0 && (
+          <div className="deck-grid">
+            {filteredDecks.map((deck) => {
+              const id = deck.deckid ?? deck.deckID ?? deck.id;
+
+              return (
+                <div key={`${deck.side}-${id}-${deck.name}`}>
                   <DeckCard
                     decklist={deck}
                     admin
                     allCards={allCards}
-                    onSave={handleEdit}
+                    onSave={handleSave}
                     onDelete={handleDelete}
                     editSaving={editSaving}
                   />
                 </div>
-              ))}
-            </div>
-          )
+              );
+            })}
+          </div>
         )}
       </main>
 

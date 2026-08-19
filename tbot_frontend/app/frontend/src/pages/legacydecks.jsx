@@ -131,21 +131,6 @@ function normalizeKey(value) {
   return normalizeText(value).toLowerCase();
 }
 
-/*
- * Converts every possible database representation of cards
- * into individual card names.
- *
- * Handles:
- *
- * Card One
- * Card Two
- *
- * "Card One\nCard Two"
- *
- * "Card One\\nCard Two"
- *
- * Card One, Card Two
- */
 function parseCardNames(value) {
   if (value === null || value === undefined) {
     return [];
@@ -153,20 +138,10 @@ function parseCardNames(value) {
 
   let cards = String(value);
 
-  /*
-   * Convert literal backslash+n into a real newline.
-   *
-   * This handles database values such as:
-   *
-   * Card One\nCard Two
-   */
   cards = cards.replace(/\\r\\n/g, "\n");
   cards = cards.replace(/\\n/g, "\n");
   cards = cards.replace(/\\r/g, "\n");
 
-  /*
-   * Split on actual newlines or commas.
-   */
   return cards
     .split(/\r?\n|,/)
     .map((card) => card.trim())
@@ -262,7 +237,9 @@ function LegacyDecksPage() {
         });
 
         if (!response.ok) {
-          return;
+          throw new Error(
+            `Card information request failed with status ${response.status}`,
+          );
         }
 
         const data = await response.json();
@@ -309,7 +286,9 @@ function LegacyDecksPage() {
             } else if (payload?.error) {
               message += `: ${payload.error}`;
             }
-          } catch (_error) {}
+          } catch (_error) {
+            // Ignore JSON parsing errors.
+          }
 
           throw new Error(message);
         }
@@ -332,24 +311,16 @@ function LegacyDecksPage() {
             ? data.results
             : [];
 
-        /*
-         * Normalize the cards field immediately.
-         *
-         * This makes sure every legacy deck has a usable
-         * cards value even if the backend sends null.
-         */
         const normalizedResults = results.map((deck) => ({
           ...deck,
           cards: deck?.cards ?? "",
         }));
 
-        console.log("LEGACY DECKS FROM API:", normalizedResults);
-
         setDecks(normalizedResults);
 
-        if (!totalDecks && normalizedResults.length) {
-          setTotalDecks(normalizedResults.length);
-        }
+        setTotalDecks((currentTotal) =>
+          currentTotal > 0 ? currentTotal : normalizedResults.length,
+        );
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to load legacy decklists:", err);
@@ -417,7 +388,8 @@ function LegacyDecksPage() {
     return Array.from(heroMap.values())
       .map((option) => {
         const matchedCard = allCards.find(
-          (card) => normalizeKey(card.card_name) === normalizeKey(option.label),
+          (card) =>
+            normalizeKey(card?.card_name) === normalizeKey(option.label),
         );
 
         return {
@@ -557,14 +529,8 @@ function LegacyDecksPage() {
       : "";
 
     return sortedDecks.filter((deck) => {
-      /*
-       * Parse cards individually.
-       */
       const deckCards = normalizeCardSearchValue(deck.cards);
 
-      /*
-       * Search all normal deck fields.
-       */
       const searchableValues = [
         deck.name,
         deck.creator,
@@ -576,9 +542,6 @@ function LegacyDecksPage() {
         .filter(Boolean)
         .map((value) => normalizeKey(value));
 
-      /*
-       * Add individual card names to searchable values.
-       */
       searchableValues.push(...deckCards);
 
       const searchMatch =
@@ -790,10 +753,15 @@ function LegacyDecksPage() {
         ) : (
           !error && (
             <div className="deck-grid">
-              {filteredDecks.map((deck) => (
+              {filteredDecks.map((deck, index) => (
                 <DeckCard
-                  key={`${deck.side}-${deck.deckid}-${deck.name}`}
+                  key={
+                    deck.deckid ??
+                    deck.deckID ??
+                    `${deck.side}-${deck.hero}-${deck.name}-${index}`
+                  }
                   decklist={deck}
+                  allCards={allCards}
                 />
               ))}
             </div>
