@@ -3,17 +3,7 @@ from rest_framework import serializers
 from .models import Decklist, WebCards, KeepOrScrap, UserDeck, LegacyDecklist
 
 
-# ============================================================
-# PUBLIC DECKLIST SERIALIZER
-# ============================================================
-
 class PublicDeckSerializer(serializers.ModelSerializer):
-    """
-    Serializer used by the public decklist page.
-
-    The cards field is intentionally excluded.
-    """
-
     class Meta:
         model = Decklist
 
@@ -29,6 +19,7 @@ class PublicDeckSerializer(serializers.ModelSerializer):
             "creator",
             "cost",
             "aliases",
+            "cards",
             "inspiration",
             "optimization",
             "suggested_date",
@@ -60,6 +51,7 @@ class PublicLegacyDeckSerializer(serializers.ModelSerializer):
             "image",
             "creator",
             "cost",
+            "cards",
             "aliases",
             "inspiration",
             "optimization",

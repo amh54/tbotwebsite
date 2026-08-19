@@ -3,6 +3,7 @@ import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
+
 import "../css/decklists.css";
 import "../css/navbar.css";
 import "../css/loading.css";
@@ -130,6 +131,54 @@ function normalizeKey(value) {
   return normalizeText(value).toLowerCase();
 }
 
+/*
+ * Converts every possible database representation of cards
+ * into individual card names.
+ *
+ * Handles:
+ *
+ * Card One
+ * Card Two
+ *
+ * "Card One\nCard Two"
+ *
+ * "Card One\\nCard Two"
+ *
+ * Card One, Card Two
+ */
+function parseCardNames(value) {
+  if (value === null || value === undefined) {
+    return [];
+  }
+
+  let cards = String(value);
+
+  /*
+   * Convert literal backslash+n into a real newline.
+   *
+   * This handles database values such as:
+   *
+   * Card One\nCard Two
+   */
+  cards = cards.replace(/\\r\\n/g, "\n");
+  cards = cards.replace(/\\n/g, "\n");
+  cards = cards.replace(/\\r/g, "\n");
+
+  /*
+   * Split on actual newlines or commas.
+   */
+  return cards
+    .split(/\r?\n|,/)
+    .map((card) => card.trim())
+    .filter(Boolean);
+}
+
+function normalizeCardSearchValue(value) {
+  return parseCardNames(value)
+    .map((card) => normalizeKey(card))
+    .filter(Boolean);
+}
+
 /* ============================================================
    PAGE
 ============================================================ */
@@ -241,6 +290,7 @@ function LegacyDecksPage() {
     const fetchDecks = async () => {
       try {
         setLoading(true);
+        setError("");
 
         const endpoint = `${API_BASE_URL}/tbotapp/legacy-decklists/`;
 
@@ -282,13 +332,23 @@ function LegacyDecksPage() {
             ? data.results
             : [];
 
-        console.log("LEGACY DECKS FROM API:", results);
+        /*
+         * Normalize the cards field immediately.
+         *
+         * This makes sure every legacy deck has a usable
+         * cards value even if the backend sends null.
+         */
+        const normalizedResults = results.map((deck) => ({
+          ...deck,
+          cards: deck?.cards ?? "",
+        }));
 
-        setDecks(results);
-        setError("");
+        console.log("LEGACY DECKS FROM API:", normalizedResults);
 
-        if (!totalDecks && results.length) {
-          setTotalDecks(results.length);
+        setDecks(normalizedResults);
+
+        if (!totalDecks && normalizedResults.length) {
+          setTotalDecks(normalizedResults.length);
         }
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -394,7 +454,6 @@ function LegacyDecksPage() {
           value: categoryName,
           label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
           count: 0,
-
           ...(CATEGORY_META[key] || {}),
         });
       }
@@ -437,11 +496,8 @@ function LegacyDecksPage() {
     return Object.entries(ARCHETYPE_META)
       .map(([value, meta]) => ({
         value,
-
         label: value.charAt(0).toUpperCase() + value.slice(1),
-
         count: counts[value] || 0,
-
         ...meta,
       }))
       .filter((option) => option.count > 0);
@@ -501,6 +557,14 @@ function LegacyDecksPage() {
       : "";
 
     return sortedDecks.filter((deck) => {
+      /*
+       * Parse cards individually.
+       */
+      const deckCards = normalizeCardSearchValue(deck.cards);
+
+      /*
+       * Search all normal deck fields.
+       */
       const searchableValues = [
         deck.name,
         deck.creator,
@@ -508,10 +572,14 @@ function LegacyDecksPage() {
         deck.hero,
         deck.archetype,
         deck.category,
-        deck.cards,
       ]
         .filter(Boolean)
         .map((value) => normalizeKey(value));
+
+      /*
+       * Add individual card names to searchable values.
+       */
+      searchableValues.push(...deckCards);
 
       const searchMatch =
         !searchValue ||
@@ -606,10 +674,9 @@ function LegacyDecksPage() {
         <h1>Legacy Decks</h1>
 
         <div className="deck-browser">
-
-          {/* ================================================== */}
-          {/* SIDE TABS */}
-          {/* ================================================== */}
+          {/* ==================================================
+             SIDE TABS
+          ================================================== */}
 
           <div className="tabs">
             <button
@@ -647,22 +714,22 @@ function LegacyDecksPage() {
             </button>
           </div>
 
-          {/* ================================================== */}
-          {/* SEARCH */}
-          {/* ================================================== */}
+          {/* ==================================================
+             SEARCH
+          ================================================== */}
 
           <div className="search-container">
             <input
               className="search"
               placeholder="Search legacy decks, creators, heroes, cards..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
-          {/* ================================================== */}
-          {/* FILTERS */}
-          {/* ================================================== */}
+          {/* ==================================================
+             FILTERS
+          ================================================== */}
 
           <div className="filters">
             <div className="select-wrapper">
@@ -705,9 +772,9 @@ function LegacyDecksPage() {
           </div>
         </div>
 
-        {/* ================================================== */}
-        {/* RESULTS */}
-        {/* ================================================== */}
+        {/* ==================================================
+           RESULTS
+        ================================================== */}
 
         {error ? (
           <p className="error-message">{error}</p>

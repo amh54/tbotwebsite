@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
@@ -55,6 +54,7 @@ const ARCHETYPE_META = {
       "Focuses on slowly building a big board, winning trades and overwhelming the opponent.",
   },
 };
+
 const CATEGORY_META = {
   budget: {
     icon: "💵",
@@ -73,6 +73,7 @@ const CATEGORY_META = {
     description: "Decks built for fun or unusual combos",
   },
 };
+
 const HERO_ALIAS = {
   bc: "beta-carrotina",
   ct: "citron",
@@ -103,6 +104,34 @@ function normalizeText(value) {
 
 function normalizeKey(value) {
   return normalizeText(value).toLowerCase();
+}
+
+/*
+ * Converts the cards field into individual card names.
+ *
+ * Supports:
+ *
+ * Forget-Me-Nuts
+ * Galacta-Cactus
+ * Garlic
+ *
+ * Actual newline characters:
+ * "\n"
+ *
+ * Escaped newline characters:
+ * "\\n"
+ *
+ * Comma-separated cards:
+ * "Garlic, Lima-Pleurodon, Brainana"
+ */
+function parseDeckCards(value) {
+  return String(value ?? "")
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .split(/\r?\n|,/)
+    .map((card) => card.trim())
+    .filter(Boolean);
 }
 
 function DecklistsPage() {
@@ -179,12 +208,9 @@ function DecklistsPage() {
 
     const fetchCards = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/cardinfo/`,
-          {
-            signal: controller.signal,
-          },
-        );
+        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           return;
@@ -245,9 +271,7 @@ function DecklistsPage() {
         const text = await response.text();
 
         if (!contentType.includes("application/json")) {
-          throw new Error(
-            "The decklist endpoint did not return JSON.",
-          );
+          throw new Error("The decklist endpoint did not return JSON.");
         }
 
         const data = JSON.parse(text);
@@ -271,9 +295,7 @@ function DecklistsPage() {
           console.error("Unable to load decklists:", err);
 
           setError(
-            `Unable to load decklists right now. ${
-              err.message || ""
-            }`.trim(),
+            `Unable to load decklists right now. ${err.message || ""}`.trim(),
           );
         }
       } finally {
@@ -299,17 +321,11 @@ function DecklistsPage() {
 
     const selectedSide = normalizeKey(side);
 
-    return decks.filter(
-      (deck) => normalizeKey(deck.side) === selectedSide,
-    );
+    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
   }, [decks, side]);
 
   // ============================================================
   // HERO OPTIONS
-  //
-  // IMPORTANT:
-  // These are generated ONLY from the selected side.
-  // They do not depend on category/archetype filters.
   // ============================================================
 
   const heroOptions = useMemo(() => {
@@ -339,9 +355,7 @@ function DecklistsPage() {
     return Array.from(heroMap.values())
       .map((option) => {
         const matchedCard = allCards.find(
-          (card) =>
-            normalizeKey(card.card_name) ===
-            normalizeKey(option.label),
+          (card) => normalizeKey(card.card_name) === normalizeKey(option.label),
         );
 
         return {
@@ -358,48 +372,42 @@ function DecklistsPage() {
   }, [sideFilteredDecks, allCards]);
 
   // ============================================================
-// CATEGORY OPTIONS
-//
-// Generated independently from hero/archetype selections.
-// ============================================================
+  // CATEGORY OPTIONS
+  // ============================================================
 
-const categoryOptions = useMemo(() => {
-  const categoryMap = new Map();
+  const categoryOptions = useMemo(() => {
+    const categoryMap = new Map();
 
-  sideFilteredDecks.forEach((deck) => {
-    const categoryName = normalizeText(deck.category);
+    sideFilteredDecks.forEach((deck) => {
+      const categoryName = normalizeText(deck.category);
 
-    if (!categoryName) {
-      return;
-    }
+      if (!categoryName) {
+        return;
+      }
 
-    const key = normalizeKey(categoryName);
+      const key = normalizeKey(categoryName);
 
-    if (!categoryMap.has(key)) {
-      categoryMap.set(key, {
-        value: categoryName,
-        label:
-          categoryName.charAt(0).toUpperCase() +
-          categoryName.slice(1),
-        count: 0,
-        ...CATEGORY_META[key],
-      });
-    }
+      if (!categoryMap.has(key)) {
+        categoryMap.set(key, {
+          value: categoryName,
+          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
+          count: 0,
+          ...CATEGORY_META[key],
+        });
+      }
 
-    categoryMap.get(key).count += 1;
-  });
+      categoryMap.get(key).count += 1;
+    });
 
-  return Array.from(categoryMap.values()).sort((a, b) =>
-    a.label.localeCompare(b.label, undefined, {
-      sensitivity: "base",
-    }),
-  );
-}, [sideFilteredDecks]);
+    return Array.from(categoryMap.values()).sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, {
+        sensitivity: "base",
+      }),
+    );
+  }, [sideFilteredDecks]);
 
   // ============================================================
   // ARCHETYPE OPTIONS
-  //
-  // Generated independently from hero/category selections.
   // ============================================================
 
   const archetypeOptions = useMemo(() => {
@@ -426,9 +434,7 @@ const categoryOptions = useMemo(() => {
     return Object.entries(ARCHETYPE_META)
       .map(([value, meta]) => ({
         value,
-        label:
-          value.charAt(0).toUpperCase() +
-          value.slice(1),
+        label: value.charAt(0).toUpperCase() + value.slice(1),
         count: counts[value] || 0,
         ...meta,
       }))
@@ -449,9 +455,7 @@ const categoryOptions = useMemo(() => {
       const sideA = normalizeKey(a.side);
       const sideB = normalizeKey(b.side);
 
-      const sideCompare =
-        (sideOrder[sideA] ?? 99) -
-        (sideOrder[sideB] ?? 99);
+      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
 
       if (sideCompare !== 0) {
         return sideCompare;
@@ -480,20 +484,43 @@ const categoryOptions = useMemo(() => {
   }, [decks]);
 
   // ============================================================
-  // FILTER DECKS
+  // FILTER / SEARCH DECKS
   // ============================================================
 
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
 
-    const alias =
-      HERO_ALIAS[searchValue]
-        ? normalizeKey(HERO_ALIAS[searchValue])
-        : "";
+    const alias = HERO_ALIAS[searchValue]
+      ? normalizeKey(HERO_ALIAS[searchValue])
+      : "";
 
     return sortedDecks.filter((deck) => {
       // --------------------------------------------------------
-      // SEARCH
+      // CARDS
+      //
+      // Turn the database cards field into individual card names.
+      //
+      // Example:
+      //
+      // Forget-Me-Nuts
+      // Galacta-Cactus
+      // Garlic
+      //
+      // becomes:
+      //
+      // [
+      //   "Forget-Me-Nuts",
+      //   "Galacta-Cactus",
+      //   "Garlic"
+      // ]
+      // --------------------------------------------------------
+
+      const deckCards = parseDeckCards(deck.cards);
+
+      const searchableCardValues = deckCards.map((card) => normalizeKey(card));
+
+      // --------------------------------------------------------
+      // OTHER SEARCHABLE VALUES
       // --------------------------------------------------------
 
       const searchableValues = [
@@ -503,18 +530,31 @@ const categoryOptions = useMemo(() => {
         deck.hero,
         deck.archetype,
         deck.category,
-        deck.cards,
       ]
         .filter(Boolean)
         .map((value) => normalizeKey(value));
 
-      const searchMatch =
-        !searchValue ||
-        (alias
-          ? normalizeKey(deck.hero).includes(alias)
-          : searchableValues.some((value) =>
-              value.includes(searchValue),
-            ));
+      // --------------------------------------------------------
+      // SEARCH
+      // --------------------------------------------------------
+
+      let searchMatch = true;
+
+      if (searchValue) {
+        if (alias) {
+          searchMatch = normalizeKey(deck.hero).includes(alias);
+        } else {
+          const normalFieldMatch = searchableValues.some((value) =>
+            value.includes(searchValue),
+          );
+
+          const cardMatch = searchableCardValues.some((card) =>
+            card.includes(searchValue),
+          );
+
+          searchMatch = normalFieldMatch || cardMatch;
+        }
+      }
 
       // --------------------------------------------------------
       // SIDE
@@ -522,20 +562,17 @@ const categoryOptions = useMemo(() => {
 
       const deckSide = normalizeKey(deck.side);
 
-      const sideMatch =
-        side === "All" ||
-        deckSide === normalizeKey(side);
+      const sideMatch = side === "All" || deckSide === normalizeKey(side);
 
       // --------------------------------------------------------
       // HERO
-        // --------------------------------------------------------
+      // --------------------------------------------------------
 
       const heroMatch =
         hero.length === 0 ||
         hero.some(
           (selectedHero) =>
-            normalizeKey(deck.hero) ===
-            normalizeKey(selectedHero.value),
+            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
         );
 
       // --------------------------------------------------------
@@ -559,27 +596,14 @@ const categoryOptions = useMemo(() => {
       const archetypeMatch =
         archetype.length === 0 ||
         archetype.every((selectedArchetype) =>
-          deckArchetype.includes(
-            normalizeKey(selectedArchetype.value),
-          ),
+          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
         );
 
       return (
-        searchMatch &&
-        sideMatch &&
-        heroMatch &&
-        categoryMatch &&
-        archetypeMatch
+        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
       );
     });
-  }, [
-    sortedDecks,
-    search,
-    side,
-    hero,
-    category,
-    archetype,
-  ]);
+  }, [sortedDecks, search, side, hero, category, archetype]);
 
   // ============================================================
   // CLEAR FILTERS
@@ -609,18 +633,13 @@ const categoryOptions = useMemo(() => {
 
           <h2>Loading decklists</h2>
 
-          <p>
-            Preparing the deck browser and loading available
-            decks.
-          </p>
+          <p>Preparing the deck browser and loading available decks.</p>
 
           <div className="loading-status">
             <span>Loading deck data</span>
 
             <strong>
-              {totalDecks > 0
-                ? `${totalDecks} decks`
-                : "Loading..."}
+              {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
             </strong>
           </div>
         </div>
@@ -669,7 +688,6 @@ const categoryOptions = useMemo(() => {
                 alt="Plants"
                 className="tab-icon"
               />
-
               Plants
             </button>
 
@@ -683,7 +701,6 @@ const categoryOptions = useMemo(() => {
                 alt="Zombies"
                 className="tab-icon"
               />
-
               Zombies
             </button>
           </div>
@@ -697,9 +714,7 @@ const categoryOptions = useMemo(() => {
               className="search"
               placeholder="Search decks, creators, heroes, cards..."
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
@@ -756,25 +771,19 @@ const categoryOptions = useMemo(() => {
           <p className="error-message">{error}</p>
         ) : (
           <p className="results-count">
-            Showing {filteredDecks.length} of{" "}
-            {totalDecks || decks.length} decks
+            Showing {filteredDecks.length} of {totalDecks || decks.length} decks
           </p>
         )}
 
         {!error && filteredDecks.length === 0 ? (
-          <p className="no-results">
-            No decklists found.
-          </p>
+          <p className="no-results">No decklists found.</p>
         ) : (
           !error && (
             <div className="deck-grid">
               {filteredDecks.map((deck) => (
                 <DeckCard
                   key={`${deck.side}-${
-                    deck.deckid ||
-                    deck.deckID ||
-                    deck.id ||
-                    deck.name
+                    deck.deckid || deck.deckID || deck.id || deck.name
                   }`}
                   decklist={deck}
                 />
