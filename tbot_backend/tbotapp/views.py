@@ -63,6 +63,7 @@ def include_error_detail():
 # ============================================================
 
 @api_view(["GET"])
+@ensure_csrf_cookie
 def csrf_token(request):
     token = get_token(request)
 
