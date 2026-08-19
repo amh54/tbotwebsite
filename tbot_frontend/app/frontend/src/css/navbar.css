@@ -1,11 +1,10 @@
-/* =========================
+/* ============================================================
    NAVBAR
-========================= */
+============================================================ */
 
 .site-navbar {
   position: sticky;
   top: 0;
-
   z-index: 1000;
 
   width: 100%;
@@ -19,9 +18,9 @@
   font-family: inherit;
 }
 
-/* =========================
+/* ============================================================
    NAVBAR INNER
-========================= */
+============================================================ */
 
 .navbar-inner {
   width: 100%;
@@ -33,11 +32,13 @@
   align-items: center;
 
   gap: 45px;
+
+  box-sizing: border-box;
 }
 
-/* =========================
+/* ============================================================
    LOGO
-========================= */
+============================================================ */
 
 .navbar-logo {
   display: flex;
@@ -48,7 +49,6 @@
   flex-shrink: 0;
 
   color: #f1f1f1;
-
   text-decoration: none;
 
   transition: color 0.2s ease;
@@ -74,8 +74,6 @@
   transition: color 0.2s ease;
 }
 
-/* TBOT turns green when the logo is hovered */
-
 .navbar-logo:hover {
   color: #8fe38b;
 }
@@ -84,9 +82,9 @@
   color: #8fe38b;
 }
 
-/* =========================
+/* ============================================================
    DESKTOP NAVIGATION
-========================= */
+============================================================ */
 
 .navbar-links {
   height: 76px;
@@ -104,10 +102,6 @@
   align-items: center;
 }
 
-/* =========================
-   DROPDOWN BUTTON
-========================= */
-
 .navbar-dropdown-button {
   height: 100%;
 
@@ -119,18 +113,15 @@
   padding: 0 18px;
 
   border: none;
-
   background: transparent;
 
   color: #f1f1f1;
 
   font-family: inherit;
-
   font-size: 0.92rem;
   font-weight: 800;
 
   letter-spacing: 0.04em;
-
   text-transform: uppercase;
 
   cursor: pointer;
@@ -142,13 +133,12 @@
 
 .navbar-dropdown:hover .navbar-dropdown-button {
   color: #8fe38b;
-
   background: rgba(143, 227, 139, 0.035);
 }
 
-/* =========================
+/* ============================================================
    ARROW
-========================= */
+============================================================ */
 
 .navbar-arrow {
   width: 0;
@@ -168,257 +158,10 @@
 .navbar-dropdown:hover .navbar-arrow {
   transform: rotate(180deg);
 }
-.navbar-auth {
-  display: flex;
-  align-items: center;
-  margin-left: 12px;
-}
-
-.navbar-auth-loading {
-  font-size: 14px;
-  color: #9da5a8;
-}
-
-.navbar-discord-login {
-  border: 0;
-  border-radius: 7px;
-  padding: 9px 14px;
-  background: #5865f2;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease;
-}
-
-.navbar-discord-login:hover {
-  background: #4752c4;
-  transform: translateY(-1px);
-}
-
-.navbar-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.navbar-user-name {
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.navbar-logout-button {
-  border: 1px solid #3a4145;
-  border-radius: 7px;
-  padding: 8px 12px;
-  background: #202427;
-  color: #d8dddf;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.navbar-logout-button:hover {
-  background: #292e31;
-  border-color: #50575b;
-}
-
-.navbar-logout-button:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.navbar-mobile-auth {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px 24px;
-  margin-top: 12px;
-  border-top: 1px solid #292e31;
-}
-
-.navbar-mobile-user {
-  color: #b8c0c3;
-  font-size: 14px;
-}
-
-.navbar-mobile-user strong {
-  color: #ffffff;
-}
-
-.navbar-mobile-auth .navbar-discord-login,
-.navbar-mobile-auth .navbar-logout-button {
-  width: 100%;
-}
-/* ============================================================
-   DISCORD ACCOUNT
-   ============================================================ */
-
-.navbar-account {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-}
-
-.navbar-user {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.navbar-user-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  display: block;
-}
-
-.navbar-user-avatar-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #5865f2;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.navbar-user-name {
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.navbar-discord-login {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 7px;
-  background: #5865f2;
-  color: #ffffff;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease;
-}
-
-.navbar-discord-login:hover {
-  background: #4752c4;
-  color: #ffffff;
-  transform: translateY(-1px);
-}
-
-.navbar-logout-button {
-  border: 0;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: transparent;
-  color: #9da5a8;
-  font-size: 13px;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-}
-
-.navbar-logout-button:hover {
-  background: #202427;
-  color: #ffffff;
-}
-
-.navbar-logout-button:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
 
 /* ============================================================
-   MOBILE ACCOUNT
-   ============================================================ */
-
-.navbar-mobile-account {
-  padding: 18px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.navbar-mobile-user {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
-
-.navbar-mobile-user-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.navbar-mobile-user-label {
-  color: #8f989c;
-  font-size: 12px;
-}
-
-.navbar-mobile-user-info strong {
-  color: #ffffff;
-  font-size: 14px;
-}
-
-.navbar-mobile-logout {
-  width: 100%;
-  margin-top: 12px;
-  padding: 9px 12px;
-  border: 0;
-  border-radius: 7px;
-  background: #202427;
-  color: #ffffff;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.navbar-mobile-logout:hover {
-  background: #292e31;
-}
-
-.navbar-mobile-logout:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.navbar-discord-login-mobile {
-  width: 100%;
-}
-.navbar-my-profile-link {
-  color: #8fe38b;
-  text-decoration: none;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: color 0.2s ease;
-}
-
-.navbar-my-profile-link:hover {
-  color: #b5ffb1;
-}
-@media (max-width: 900px) {
-  .navbar-auth {
-    display: none;
-  }
-}
-/* =========================
    DESKTOP DROPDOWN MENU
-========================= */
+============================================================ */
 
 .navbar-dropdown-menu {
   position: absolute;
@@ -452,6 +195,8 @@
     visibility 0.18s ease;
 
   pointer-events: none;
+
+  box-sizing: border-box;
 }
 
 .navbar-dropdown:hover .navbar-dropdown-menu {
@@ -463,9 +208,9 @@
   pointer-events: auto;
 }
 
-/* =========================
-   DROPDOWN LINKS (shared look)
-========================= */
+/* ============================================================
+   DROPDOWN LINKS
+============================================================ */
 
 .navbar-dropdown-menu a,
 .navbar-mobile-section-menu a {
@@ -483,7 +228,6 @@
   font-weight: 600;
 
   letter-spacing: 0.04em;
-
   text-transform: uppercase;
 
   transition:
@@ -501,9 +245,189 @@
   padding-left: 17px;
 }
 
-/* =========================
-   MOBILE HAMBURGER BUTTON
-========================= */
+/* ============================================================
+   DESKTOP ACCOUNT
+============================================================ */
+
+.navbar-account {
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+
+  flex-shrink: 0;
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+}
+
+.navbar-user-avatar {
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  flex-shrink: 0;
+
+  display: block;
+}
+
+.navbar-user-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #5865f2;
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.navbar-user-name {
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+/* ============================================================
+   DISCORD LOGIN
+============================================================ */
+
+.navbar-discord-login {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 36px;
+
+  padding: 0 14px;
+
+  border: none;
+  border-radius: 7px;
+
+  background: #5865f2;
+
+  color: #ffffff;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.navbar-discord-login:hover {
+  background: #4752c4;
+
+  color: #ffffff;
+
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   LOGOUT
+============================================================ */
+
+.navbar-logout-button {
+  border: 0;
+
+  padding: 6px 10px;
+
+  border-radius: 6px;
+
+  background: transparent;
+
+  color: #9da5a8;
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.navbar-logout-button:hover {
+  background: #202427;
+
+  color: #ffffff;
+}
+
+.navbar-logout-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ============================================================
+   MY PROFILE
+============================================================ */
+
+.navbar-my-profile-link {
+  color: #8fe38b;
+
+  text-decoration: none;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  transition: color 0.2s ease;
+}
+
+.navbar-my-profile-link:hover {
+  color: #b5ffb1;
+}
+
+/* ============================================================
+   ADMIN LINK
+============================================================ */
+
+.navbar-admin-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #8fe38b;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.navbar-admin-link:hover {
+  color: #b5ffb1;
+}
+
+/* ============================================================
+   MOBILE HAMBURGER
+============================================================ */
 
 .navbar-mobile-toggle {
   display: none;
@@ -512,11 +436,14 @@
   height: 42px;
 
   border: 1px solid #333;
+
   border-radius: 8px;
 
   background: #1c1c1c;
 
   cursor: pointer;
+
+  flex-shrink: 0;
 }
 
 .navbar-mobile-toggle span {
@@ -532,17 +459,296 @@
   border-radius: 999px;
 }
 
-/* =========================
-   MOBILE FULL-SCREEN OVERLAY
-========================= */
+/* ============================================================
+   MOBILE OVERLAY
+============================================================ */
 
 .navbar-mobile-overlay {
   display: none;
 }
 
-/* =========================
-   MOBILE BREAKPOINT
-========================= */
+/* ============================================================
+   MOBILE ACCOUNT
+============================================================ */
+
+.navbar-mobile-account {
+  display: flex;
+  flex-direction: column;
+
+  padding: 18px 20px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  box-sizing: border-box;
+
+  flex-shrink: 0;
+}
+
+.navbar-mobile-user {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  width: 100%;
+}
+
+.navbar-mobile-profile {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  width: 100%;
+
+  color: inherit;
+
+  text-decoration: none;
+}
+
+.navbar-mobile-user-info {
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+
+  min-width: 0;
+}
+
+.navbar-mobile-user-label {
+  color: #8f989c;
+
+  font-size: 12px;
+}
+
+.navbar-mobile-user-info strong {
+  color: #ffffff;
+
+  font-size: 14px;
+
+  overflow-wrap: anywhere;
+}
+
+.navbar-mobile-profile-link {
+  display: block;
+
+  margin-top: 12px;
+
+  padding: 9px 12px;
+
+  border-radius: 7px;
+
+  background: #202427;
+
+  color: #8fe38b;
+
+  text-decoration: none;
+
+  text-align: center;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.navbar-mobile-profile-link:hover {
+  background: #292e31;
+  color: #b5ffb1;
+}
+
+.navbar-admin-link-mobile {
+  width: 100%;
+
+  margin-top: 10px;
+
+  padding: 9px 12px;
+
+  border-radius: 7px;
+
+  background: rgba(143, 227, 139, 0.08);
+
+  box-sizing: border-box;
+}
+
+.navbar-mobile-logout {
+  width: 100%;
+
+  margin-top: 12px;
+
+  padding: 9px 12px;
+
+  border: 0;
+
+  border-radius: 7px;
+
+  background: #202427;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  cursor: pointer;
+}
+
+.navbar-mobile-logout:hover {
+  background: #292e31;
+}
+
+.navbar-mobile-logout:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.navbar-discord-login-mobile {
+  display: flex;
+
+  width: 100%;
+  min-height: 44px;
+
+  box-sizing: border-box;
+
+  align-items: center;
+  justify-content: center;
+
+  margin: 0;
+
+  padding: 0 16px;
+
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   MOBILE NAVIGATION
+============================================================ */
+
+.navbar-mobile-links {
+  display: flex;
+  flex-direction: column;
+
+  padding: 10px 8px 24px;
+
+  box-sizing: border-box;
+}
+
+.navbar-mobile-section {
+  border-bottom: 1px solid #202326;
+}
+
+.navbar-mobile-section-button {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 18px 12px;
+
+  border: none;
+
+  background: transparent;
+
+  color: #f1f1f1;
+
+  font-family: inherit;
+
+  font-size: 1rem;
+  font-weight: 800;
+
+  letter-spacing: 0.04em;
+
+  text-transform: uppercase;
+
+  cursor: pointer;
+
+  transition: color 0.15s ease;
+}
+
+.navbar-mobile-section-button:hover {
+  color: #8fe38b;
+}
+
+.navbar-mobile-section .navbar-arrow {
+  border-top: 8px solid #f1f1f1;
+
+  transition: transform 0.2s ease;
+}
+
+.navbar-mobile-section.open .navbar-arrow {
+  transform: rotate(180deg);
+}
+
+/* ============================================================
+   MOBILE SUBMENU
+============================================================ */
+
+.navbar-mobile-section-menu {
+  max-height: 0;
+
+  overflow: hidden;
+
+  padding: 0 6px;
+
+  transition:
+    max-height 0.25s ease,
+    padding 0.25s ease;
+}
+
+.navbar-mobile-section.open .navbar-mobile-section-menu {
+  max-height: 400px;
+
+  padding: 4px 6px 12px;
+}
+
+.navbar-mobile-section-menu a {
+  padding: 13px 15px;
+}
+
+.navbar-mobile-section-menu a:hover {
+  padding-left: 19px;
+}
+
+/* ============================================================
+   MOBILE CLOSE BUTTON
+============================================================ */
+
+.navbar-mobile-close {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 999px;
+
+  background: #1c1c1c;
+
+  color: #f1f1f1;
+
+  font-size: 1.6rem;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.navbar-mobile-close:hover {
+  background: #262626;
+
+  color: #8fe38b;
+}
+
+/* ============================================================
+   TABLET / MOBILE
+============================================================ */
 
 @media (max-width: 800px) {
   .site-navbar {
@@ -553,7 +759,23 @@
     height: 68px;
 
     padding: 0 18px;
+
+    gap: 0;
   }
+
+  /* Hide desktop navigation */
+
+  .navbar-links {
+    display: none;
+  }
+
+  /* Hide desktop account */
+
+  .navbar-account {
+    display: none;
+  }
+
+  /* Show hamburger */
 
   .navbar-mobile-toggle {
     display: block;
@@ -561,170 +783,118 @@
     margin-left: auto;
   }
 
-  /* Hide the desktop hover nav entirely on mobile */
-
-  .navbar-links {
-    display: none;
-  }
-
-  /* =========================
-     FULL-SCREEN OVERLAY PANEL
-  ========================= */
+  /* ========================================================
+     MOBILE OVERLAY
+  ======================================================== */
 
   .navbar-mobile-overlay {
     position: fixed;
+
     inset: 0;
 
-    z-index: 2000;
+    z-index: 9999;
 
     display: flex;
+
     flex-direction: column;
+
+    width: 100%;
+    height: 100%;
 
     background: #0d0d0d;
 
     transform: translateX(100%);
+
     visibility: hidden;
+
+    opacity: 0;
 
     transition:
       transform 0.25s ease,
-      visibility 0.25s ease;
+      visibility 0.25s ease,
+      opacity 0.25s ease;
 
+    overflow-x: hidden;
     overflow-y: auto;
+
+    pointer-events: none;
+
+    box-sizing: border-box;
   }
 
   .navbar-mobile-overlay.open {
     transform: translateX(0);
+
     visibility: visible;
+
+    opacity: 1;
+
+    pointer-events: auto;
   }
+
+  /* ========================================================
+     MOBILE HEADER
+  ======================================================== */
 
   .navbar-mobile-header {
     display: flex;
+
     align-items: center;
     justify-content: space-between;
 
+    width: 100%;
+
     height: 68px;
+
     flex-shrink: 0;
 
     padding: 0 18px;
 
     border-bottom: 1px solid #24272b;
+
+    box-sizing: border-box;
   }
 
-  .navbar-mobile-close {
-    width: 42px;
-    height: 42px;
+  /* ========================================================
+     MOBILE ACCOUNT
+  ======================================================== */
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: none;
-    border-radius: 999px;
-
-    background: #1c1c1c;
-    color: #f1f1f1;
-
-    font-size: 1.6rem;
-    line-height: 1;
-
-    cursor: pointer;
-
-    transition:
-      background 0.15s ease,
-      color 0.15s ease;
-  }
-
-  .navbar-mobile-close:hover {
-    background: #262626;
-    color: #8fe38b;
-  }
-
-  /* =========================
-     MOBILE ACCORDION SECTIONS
-  ========================= */
-
-  .navbar-mobile-links {
-    display: flex;
-    flex-direction: column;
-
-    padding: 10px 8px 24px;
-  }
-
-  .navbar-mobile-section {
-    border-bottom: 1px solid #202326;
-  }
-
-  .navbar-mobile-section-button {
+  .navbar-mobile-account {
     width: 100%;
 
+    box-sizing: border-box;
+  }
+
+  .navbar-mobile-account .navbar-discord-login {
+    width: 100%;
+
+    min-height: 46px;
+
     display: flex;
-    align-items: center;
-    justify-content: space-between;
 
-    padding: 18px 12px;
+    pointer-events: auto;
 
-    border: none;
-    background: transparent;
+    position: relative;
 
-    color: #f1f1f1;
-
-    font-family: inherit;
-    font-size: 1rem;
-    font-weight: 800;
-
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-
-    cursor: pointer;
-
-    transition: color 0.15s ease;
+    z-index: 10001;
   }
 
-  .navbar-mobile-section-button:hover {
-    color: #8fe38b;
-  }
+  /* ========================================================
+     MOBILE NAV
+  ======================================================== */
 
-  .navbar-mobile-section .navbar-arrow {
-    border-top: 8px solid #f1f1f1;
+  .navbar-mobile-links {
+    width: 100%;
 
-    transition: transform 0.2s ease;
-  }
+    flex-shrink: 0;
 
-  .navbar-mobile-section.open .navbar-arrow {
-    transform: rotate(180deg);
-  }
-
-  /* =========================
-     MOBILE SUB-MENU (accordion body)
-  ========================= */
-
-  .navbar-mobile-section-menu {
-    max-height: 0;
-    overflow: hidden;
-
-    padding: 0 6px;
-
-    transition: max-height 0.25s ease;
-  }
-
-  .navbar-mobile-section.open .navbar-mobile-section-menu {
-    max-height: 400px;
-
-    padding: 4px 6px 12px;
-  }
-
-  .navbar-mobile-section-menu a {
-    padding: 13px 15px;
-  }
-
-  .navbar-mobile-section-menu a:hover {
-    padding-left: 19px;
+    box-sizing: border-box;
   }
 }
 
-/* =========================
+/* ============================================================
    SMALL MOBILE
-========================= */
+============================================================ */
 
 @media (max-width: 500px) {
   .navbar-inner {
@@ -742,5 +912,36 @@
 
   .navbar-mobile-header {
     padding: 0 14px;
+  }
+
+  .navbar-mobile-account {
+    padding: 16px;
+  }
+}
+
+/* ============================================================
+   TABLET / IPAD SPECIFIC
+============================================================ */
+
+/*
+   iPads can fall into this range depending on orientation.
+   Keep the mobile account system active and make the Discord
+   login large enough to reliably tap.
+*/
+
+@media (min-width: 501px) and (max-width: 800px) {
+  .navbar-mobile-account {
+    padding: 20px 24px;
+  }
+
+  .navbar-mobile-account .navbar-discord-login {
+    min-height: 48px;
+
+    font-size: 15px;
+  }
+
+  .navbar-mobile-links {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
