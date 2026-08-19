@@ -59,16 +59,22 @@ const getCookie = (name) => {
 };
 
 const ensureCsrfToken = async () => {
-  let csrfToken = getCookie("csrftoken");
+  let csrfToken = getCookie("csrftoken") || getCsrfToken();
 
   if (csrfToken) {
     return csrfToken;
   }
 
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/tbotapp/csrf/`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -76,7 +82,12 @@ const ensureCsrfToken = async () => {
     );
   }
 
-  csrfToken = getCookie("csrftoken");
+  const data = await response.json();
+
+  csrfToken =
+    data?.csrfToken ||
+    getCookie("csrftoken") ||
+    getCsrfToken();
 
   if (!csrfToken) {
     throw new Error(
