@@ -27,11 +27,15 @@ function FilterDropdown({
 
   const selectedValues = Array.isArray(value) ? value : [];
 
-  const hasSelection = multi ? selectedValues.length > 0 : Boolean(value);
+  const hasSelection = multi
+    ? selectedValues.length > 0
+    : Boolean(value);
 
   const isSelected = (option) => {
     if (multi) {
-      return selectedValues.some((selected) => selected.value === option.value);
+      return selectedValues.some(
+        (selected) => selected.value === option.value,
+      );
     }
 
     return value?.value === option.value;
@@ -45,7 +49,9 @@ function FilterDropdown({
 
       if (exists) {
         onChange(
-          selectedValues.filter((selected) => selected.value !== option.value),
+          selectedValues.filter(
+            (selected) => selected.value !== option.value,
+          ),
         );
       } else {
         onChange([...selectedValues, option]);
@@ -67,6 +73,10 @@ function FilterDropdown({
     onChange(multi ? [] : null);
   };
 
+  const handleTriggerClick = () => {
+    setOpen((current) => !current);
+  };
+
   const triggerLabel = multi
     ? selectedValues.length > 0
       ? selectedValues.map((item) => item.label).join(", ")
@@ -74,18 +84,19 @@ function FilterDropdown({
     : value?.label || label;
 
   return (
-    <div className={`filter-dropdown ${open ? "is-open" : ""}`} ref={ref}>
+    <div
+      className={`filter-dropdown ${open ? "is-open" : ""}`}
+      ref={ref}
+    >
       <button
         type="button"
         className={`filter-dropdown-trigger ${open ? "open" : ""}`}
-        onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          setOpen((current) => !current);
-        }}
+        onClick={handleTriggerClick}
         aria-expanded={open}
       >
-        <span className="filter-dropdown-trigger-label">{triggerLabel}</span>
+        <span className="filter-dropdown-trigger-label">
+          {triggerLabel}
+        </span>
 
         {hasSelection ? (
           <span
@@ -94,11 +105,21 @@ function FilterDropdown({
             role="button"
             tabIndex={0}
             aria-label={`Clear ${label} filter`}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                handleClear(event);
+              }
+            }}
           >
             ×
           </span>
         ) : (
-          <span className="filter-dropdown-arrow">▾</span>
+          <span
+            className="filter-dropdown-arrow"
+            aria-hidden="true"
+          >
+            ▾
+          </span>
         )}
       </button>
 
@@ -108,7 +129,9 @@ function FilterDropdown({
           onClick={(event) => event.stopPropagation()}
         >
           {options.length === 0 ? (
-            <div className="filter-dropdown-empty">No options available</div>
+            <div className="filter-dropdown-empty">
+              No options available
+            </div>
           ) : (
             options.map((option) => (
               <button
@@ -120,7 +143,12 @@ function FilterDropdown({
                 onClick={() => handleSelect(option)}
               >
                 {option.icon && (
-                  <span className="filter-item-icon">{option.icon}</span>
+                  <span
+                    className="filter-item-icon"
+                    aria-hidden="true"
+                  >
+                    {option.icon}
+                  </span>
                 )}
 
                 {option.image && (
@@ -135,7 +163,8 @@ function FilterDropdown({
                   <div className="filter-item-title">
                     {option.label}
 
-                    {typeof option.count === "number" && ` (${option.count})`}
+                    {typeof option.count === "number" &&
+                      ` (${option.count})`}
                   </div>
 
                   {option.description && (

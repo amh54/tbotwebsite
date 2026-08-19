@@ -55,7 +55,24 @@ const ARCHETYPE_META = {
       "Focuses on slowly building a big board, winning trades and overwhelming the opponent.",
   },
 };
-
+const CATEGORY_META = {
+  budget: {
+    icon: "💵",
+    description: "Decks that are cheap for new players",
+  },
+  competitive: {
+    icon: "🏆",
+    description: "Some of the best decks in the game",
+  },
+  ladder: {
+    icon: "🪜",
+    description: "Decks that are mostly only good for ranked games",
+  },
+  meme: {
+    icon: "😂",
+    description: "Decks built for fun or unusual combos",
+  },
+};
 const HERO_ALIAS = {
   bc: "beta-carrotina",
   ct: "citron",
@@ -341,40 +358,43 @@ function DecklistsPage() {
   }, [sideFilteredDecks, allCards]);
 
   // ============================================================
-  // CATEGORY OPTIONS
-  //
-  // Generated independently from hero/archetype selections.
-  // ============================================================
+// CATEGORY OPTIONS
+//
+// Generated independently from hero/archetype selections.
+// ============================================================
 
-  const categoryOptions = useMemo(() => {
-    const categoryMap = new Map();
+const categoryOptions = useMemo(() => {
+  const categoryMap = new Map();
 
-    sideFilteredDecks.forEach((deck) => {
-      const categoryName = normalizeText(deck.category);
+  sideFilteredDecks.forEach((deck) => {
+    const categoryName = normalizeText(deck.category);
 
-      if (!categoryName) {
-        return;
-      }
+    if (!categoryName) {
+      return;
+    }
 
-      const key = normalizeKey(categoryName);
+    const key = normalizeKey(categoryName);
 
-      if (!categoryMap.has(key)) {
-        categoryMap.set(key, {
-          value: categoryName,
-          label: categoryName,
-          count: 0,
-        });
-      }
+    if (!categoryMap.has(key)) {
+      categoryMap.set(key, {
+        value: categoryName,
+        label:
+          categoryName.charAt(0).toUpperCase() +
+          categoryName.slice(1),
+        count: 0,
+        ...CATEGORY_META[key],
+      });
+    }
 
-      categoryMap.get(key).count += 1;
-    });
+    categoryMap.get(key).count += 1;
+  });
 
-    return Array.from(categoryMap.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, undefined, {
-        sensitivity: "base",
-      }),
-    );
-  }, [sideFilteredDecks]);
+  return Array.from(categoryMap.values()).sort((a, b) =>
+    a.label.localeCompare(b.label, undefined, {
+      sensitivity: "base",
+    }),
+  );
+}, [sideFilteredDecks]);
 
   // ============================================================
   // ARCHETYPE OPTIONS
