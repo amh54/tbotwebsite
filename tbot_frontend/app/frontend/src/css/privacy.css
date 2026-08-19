@@ -1,7 +1,3 @@
-/* =========================
-   PRIVACY PAGE
-========================= */
-
 .privacy-page {
   min-height: 100vh;
   width: 100%;
@@ -9,11 +5,6 @@
   background: #101416;
   color: #ffffff;
 }
-
-
-/* =========================
-   HERO
-========================= */
 
 .privacy-hero {
   position: relative;
@@ -80,11 +71,6 @@
   font-size: 13px;
 }
 
-
-/* =========================
-   CONTENT
-========================= */
-
 .privacy-content {
   width: min(1150px, calc(100% - 80px));
 
@@ -102,11 +88,6 @@
 
   align-items: start;
 }
-
-
-/* =========================
-   SIDEBAR
-========================= */
 
 .privacy-sidebar {
   position: sticky;
@@ -167,11 +148,6 @@
   background: rgba(143, 227, 139, 0.06);
 }
 
-
-/* =========================
-   DOCUMENT
-========================= */
-
 .privacy-document {
   min-width: 0;
 }
@@ -188,6 +164,8 @@
   margin-bottom: 55px;
 
   border-bottom: 1px solid #24282c;
+
+  scroll-margin-top: 110px;
 }
 
 .privacy-section:last-child {
@@ -242,11 +220,6 @@
   margin-bottom: 0;
 }
 
-
-/* =========================
-   LISTS
-========================= */
-
 .privacy-section ul {
   margin: 20px 0;
 
@@ -287,11 +260,6 @@
   box-shadow: 0 0 8px rgba(143, 227, 139, 0.4);
 }
 
-
-/* =========================
-   NOTE
-========================= */
-
 .privacy-note {
   margin-top: 28px;
 
@@ -322,11 +290,6 @@
   font-size: 14px;
 }
 
-
-/* =========================
-   MOBILE
-========================= */
-
 @media (max-width: 850px) {
   .privacy-hero {
     padding: 65px 25px 55px;
@@ -355,8 +318,11 @@
 
     gap: 4px;
   }
-}
 
+  .privacy-section {
+    scroll-margin-top: 30px;
+  }
+}
 
 @media (max-width: 600px) {
   .privacy-hero {
@@ -391,6 +357,8 @@
     padding-bottom: 40px;
 
     margin-bottom: 40px;
+
+    scroll-margin-top: 20px;
   }
 
   .privacy-section-number {

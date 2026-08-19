@@ -7,7 +7,7 @@ import { useEffect } from "react";
 const SECTIONS = [
   { id: "about", label: "About Tbot" },
   { id: "website", label: "Website Use" },
-  { id: "discord", label: "Discord Bot Use" },
+  { id: "discord", label: "Discord Bot & Login" },
   { id: "availability", label: "Availability" },
   { id: "decklists", label: "Decklists & Community Content" },
   { id: "game", label: "Game Information" },
@@ -21,20 +21,18 @@ const SECTIONS = [
 
 function TermsOfService() {
   useEffect(() => {
-  document.title = "Terms of Service";
-  return () => {
-    document.title = "Tbot";
-  };
-}, []);
+    document.title = "Terms of Service";
+
+    return () => {
+      document.title = "Tbot";
+    };
+  }, []);
+
   return (
     <div className="terms-page">
       <Navbar />
 
       <main className="terms-content">
-        {/* =========================
-            PAGE HEADER
-        ========================= */}
-
         <header className="terms-page-header">
           <div>
             <span className="terms-page-eyebrow">TBOT WEBSITE</span>
@@ -45,15 +43,7 @@ function TermsOfService() {
           </div>
         </header>
 
-        {/* =========================
-            MAIN LAYOUT
-        ========================= */}
-
         <div className="terms-layout">
-          {/* =========================
-              SIDEBAR
-          ========================= */}
-
           <aside className="terms-sidebar">
             <div className="terms-sidebar-title">
               <span>ON THIS PAGE</span>
@@ -76,15 +66,7 @@ function TermsOfService() {
             </div>
           </aside>
 
-          {/* =========================
-              DOCUMENT
-          ========================= */}
-
           <article className="terms-document">
-            {/* =========================
-                INTRODUCTION
-            ========================= */}
-
             <section className="terms-introduction">
               <p>
                 These Terms of Service explain the rules and expectations
@@ -93,15 +75,11 @@ function TermsOfService() {
 
               <p>
                 Tbot is a community-created project for Plants vs. Zombies
-                Heroes players. By using Tbot or accessing this website, you
-                agree to use the services responsibly and in accordance with
-                these terms.
+                Heroes players. By using Tbot, accessing this website, or
+                choosing to authenticate with Discord, you agree to use the
+                services responsibly and in accordance with these terms.
               </p>
             </section>
-
-            {/* =========================
-                ABOUT
-            ========================= */}
 
             <section id="about" className="terms-section">
               <div className="terms-section-heading">
@@ -126,6 +104,8 @@ function TermsOfService() {
                   <li>Keep or Scrap and other guides</li>
                   <li>Random deck and utility commands</li>
                   <li>Games and miscellaneous entertainment features</li>
+                  <li>Discord account authentication</li>
+                  <li>Account-specific website features</li>
                 </ul>
 
                 <p>
@@ -134,10 +114,6 @@ function TermsOfService() {
                 </p>
               </div>
             </section>
-
-            {/* =========================
-                WEBSITE
-            ========================= */}
 
             <section id="website" className="terms-section">
               <div className="terms-section-heading">
@@ -154,22 +130,26 @@ function TermsOfService() {
                 </p>
 
                 <p>
+                  Some features of the website may require users to authenticate
+                  with Discord. By choosing to use an authenticated feature, you
+                  agree to provide accurate information through the
+                  authentication process and to use the feature only for its
+                  intended purpose.
+                </p>
+
+                <p>
                   You agree not to intentionally interfere with the operation of
                   the website, attempt to gain unauthorized access to its
-                  systems, or use the website in a way that could negatively
-                  affect other users.
+                  systems, bypass access controls or permissions, or use the
+                  website in a way that could negatively affect other users.
                 </p>
               </div>
             </section>
 
-            {/* =========================
-                DISCORD
-            ========================= */}
-
             <section id="discord" className="terms-section">
               <div className="terms-section-heading">
                 <span>03</span>
-                <h2>Discord Bot Use</h2>
+                <h2>Discord Bot & Login</h2>
               </div>
 
               <div className="terms-section-content">
@@ -195,12 +175,34 @@ function TermsOfService() {
                   operation. Required permissions may change as new features are
                   introduced.
                 </p>
+
+                <p>
+                  Tbot may allow users to authenticate with their Discord
+                  account through Discord's authentication services. By choosing
+                  to log in with Discord, you authorize Tbot to receive the
+                  account information provided by Discord through the
+                  authentication process as necessary to identify and
+                  authenticate your Tbot account.
+                </p>
+
+                <p>
+                  Tbot does not receive or store your Discord password through
+                  the Discord authentication process.
+                </p>
+
+                <p>
+                  Authenticated accounts may be used to provide account-specific
+                  features, permissions, or other functionality available on the
+                  Tbot website.
+                </p>
+
+                <p>
+                  You are responsible for maintaining control of your Discord
+                  account and for any activity performed through an account used
+                  to authenticate with Tbot.
+                </p>
               </div>
             </section>
-
-            {/* =========================
-                AVAILABILITY
-            ========================= */}
 
             <section id="availability" className="terms-section">
               <div className="terms-section-heading">
@@ -222,15 +224,11 @@ function TermsOfService() {
                 <p>
                   The website or bot may become unavailable because of
                   maintenance, technical problems, hosting issues, database
-                  problems, Discord-related issues, updates, or other
-                  circumstances.
+                  problems, Discord-related issues, authentication service
+                  issues, updates, or other circumstances.
                 </p>
               </div>
             </section>
-
-            {/* =========================
-                DECKLISTS
-            ========================= */}
 
             <section id="decklists" className="terms-section">
               <div className="terms-section-heading">
@@ -255,12 +253,16 @@ function TermsOfService() {
                   Decklists and other community information may be updated,
                   corrected, reorganized, or removed at any time.
                 </p>
+
+                <p>
+                  By submitting content to Tbot, including decklists,
+                  descriptions, or other community information, you represent
+                  that you have the right to submit that content and authorize
+                  Tbot to store, display, organize, and make it available
+                  through its website or Discord features.
+                </p>
               </div>
             </section>
-
-            {/* =========================
-                GAME INFORMATION
-            ========================= */}
 
             <section id="game" className="terms-section">
               <div className="terms-section-heading">
@@ -290,10 +292,6 @@ function TermsOfService() {
               </div>
             </section>
 
-            {/* =========================
-                CONTENT
-            ========================= */}
-
             <section id="content" className="terms-section">
               <div className="terms-section-heading">
                 <span>07</span>
@@ -316,10 +314,6 @@ function TermsOfService() {
               </div>
             </section>
 
-            {/* =========================
-                THIRD PARTY
-            ========================= */}
-
             <section id="third-party" className="terms-section">
               <div className="terms-section-heading">
                 <span>08</span>
@@ -329,25 +323,29 @@ function TermsOfService() {
               <div className="terms-section-content">
                 <p>
                   Tbot may depend on third-party services such as Discord,
-                  hosting providers, databases, APIs, or other external
-                  services.
+                  Discord's authentication services, hosting providers,
+                  databases, APIs, or other external services.
                 </p>
 
                 <p>
-                  Tbot is not responsible for outages, changes, limitations, or
-                  failures caused by third-party services.
+                  When you choose to authenticate with Discord, Tbot uses
+                  Discord's authentication services to verify your identity and
+                  obtain the account information necessary to provide
+                  authenticated Tbot features.
                 </p>
 
                 <p>
-                  Your use of Discord is also subject to Discord's own terms and
-                  policies.
+                  Tbot is not responsible for outages, changes, limitations,
+                  security issues, or failures caused by third-party services.
+                </p>
+
+                <p>
+                  Your use of Discord is also subject to Discord's own terms,
+                  policies, and rules. Tbot does not control Discord's services,
+                  availability, or policies.
                 </p>
               </div>
             </section>
-
-            {/* =========================
-                PRIVACY
-            ========================= */}
 
             <section id="privacy" className="terms-section">
               <div className="terms-section-heading">
@@ -368,8 +366,23 @@ function TermsOfService() {
                 </p>
 
                 <p>
-                  Tbot does not intentionally collect unnecessary personal
-                  information through its normal decklist functionality.
+                  Users who choose to authenticate with Discord may have limited
+                  Discord account information stored by Tbot, such as their
+                  Discord user ID and username or display name provided through
+                  the authentication process.
+                </p>
+
+                <p>
+                  This information may be used to authenticate users, associate
+                  activity with an account, and provide account-specific
+                  functionality or permissions.
+                </p>
+
+                <p>
+                  Tbot does not receive or store Discord passwords through the
+                  authentication process and does not intentionally collect
+                  private Discord messages for its normal website or bot
+                  functionality.
                 </p>
 
                 <p>
@@ -378,10 +391,6 @@ function TermsOfService() {
                 </p>
               </div>
             </section>
-
-            {/* =========================
-                CHANGES
-            ========================= */}
 
             <section id="changes" className="terms-section">
               <div className="terms-section-heading">
@@ -392,19 +401,22 @@ function TermsOfService() {
               <div className="terms-section-content">
                 <p>
                   Tbot's features, commands, website pages, database structure,
-                  permissions, and functionality may change at any time.
+                  permissions, authentication system, and functionality may
+                  change at any time.
                 </p>
 
                 <p>
                   The owner of Tbot reserves the right to add, modify, restrict,
                   suspend, or remove features without prior notice.
                 </p>
+
+                <p>
+                  Access to certain features may also be restricted or removed
+                  if necessary to maintain the security or proper operation of
+                  Tbot.
+                </p>
               </div>
             </section>
-
-            {/* =========================
-                RESPONSIBILITY
-            ========================= */}
 
             <section id="responsibility" className="terms-section">
               <div className="terms-section-heading">
@@ -429,12 +441,18 @@ function TermsOfService() {
                   Users are responsible for how they use information provided by
                   Tbot, including decklists, card information, and guides.
                 </p>
+
+                <p>
+                  Users are also responsible for maintaining the security of the
+                  Discord account they use to authenticate with Tbot.
+                </p>
+
+                <p>
+                  Users must not attempt to access administrative features or
+                  permissions that have not been authorized for their account.
+                </p>
               </div>
             </section>
-
-            {/* =========================
-                CONTACT
-            ========================= */}
 
             <section id="contact" className="terms-section">
               <div className="terms-section-heading">
@@ -445,11 +463,13 @@ function TermsOfService() {
               <div className="terms-section-content">
                 <p>
                   If you encounter an issue with Tbot, the website, a decklist,
-                  or another feature, you may contact the Tbot owner through the
-                  available Tbot Discord community contact methods.
+                  Discord authentication, or another feature, you may contact
+                  the Tbot owner through the available Tbot Discord community
+                  contact methods.
                 </p>
               </div>
             </section>
+
             <footer className="terms-footer">
               <span>Tbot Terms of Service</span>
 
@@ -458,7 +478,8 @@ function TermsOfService() {
           </article>
         </div>
       </main>
-        <Footer/>
+
+      <Footer />
     </div>
   );
 }
