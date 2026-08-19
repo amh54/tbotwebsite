@@ -193,6 +193,7 @@ function App() {
 
       <Route path="/decklists" element={<DecklistsPage />} />
       <Route path="/legacydecks" element={<LegacyDecksPage />} />
+
       <Route path="/cardinfo" element={<CardInfo />} />
       <Route path="/keeporscrap" element={<KeepOrScrap />} />
       <Route path="/heroinfo" element={<HeroInfo />} />
@@ -203,7 +204,6 @@ function App() {
       <Route path="/admin" element={<Admin />} />
       <Route path="/admin/decklists" element={<AdminDecklists />} />
       <Route path="/admin/legacy-decks" element={<AdminLegacyDecks />} />
-
       <Route path="/admin/legacy-decks/add" element={<AdminLegacyDecks />} />
 
       <Route path="/profile/:profile_slug" element={<Profile />} />
