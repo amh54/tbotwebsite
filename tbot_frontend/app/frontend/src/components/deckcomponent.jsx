@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import CreatableSelect from "react-select/creatable";
+import Select from "react-select";
 import "../css/deckmodal.css";
 
 const HERO_COLORS = {
@@ -42,6 +42,51 @@ const getHeroColors = (hero) => {
   );
 
   return entry?.[1] || ["default", "default"];
+};
+
+const normalizeSide = (side) => {
+  const value = String(side || "")
+    .trim()
+    .toLowerCase();
+
+  if (value === "plant" || value === "plants") {
+    return "Plants";
+  }
+
+  if (value === "zombie" || value === "zombies") {
+    return "Zombies";
+  }
+
+  return String(side || "").trim();
+};
+
+const getCardSide = (card) => {
+  const possibleValues = [
+    card?.side,
+    card?.Side,
+    card?.class_side,
+    card?.classSide,
+    card?.card_side,
+    card?.cardSide,
+    card?.faction,
+    card?.type,
+  ];
+
+  for (const value of possibleValues) {
+    const normalized = String(value || "")
+      .trim()
+      .toLowerCase();
+
+    if (normalized === "plant" || normalized === "plants") {
+      return "Plants";
+    }
+
+    if (normalized === "zombie" || normalized === "zombies") {
+      return "Zombies";
+    }
+  }
+
+  return "";
 };
 
 const getApiBaseUrl = () => {
@@ -101,19 +146,26 @@ const parseCardLines = (value) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
-const cardLinesToOptions = (value) =>
-  parseCardLines(value).map((name) => ({
-    value: name,
-    label: name,
-  }));
+const cardLinesToOptions = (value, options = []) => {
+  const optionMap = new Map(
+    options.map((option) => [
+      String(option.value).trim().toLowerCase(),
+      option,
+    ]),
+  );
+
+  return parseCardLines(value)
+    .map((name) => optionMap.get(name.toLowerCase()))
+    .filter(Boolean);
+};
 
 const cardOptionsToLines = (options) =>
   (options || [])
-    .map((option) => String(option?.value || option?.label || "").trim())
+    .map((option) => String(option?.value || "").trim())
     .filter(Boolean)
     .join("\n");
 
-const cardSelectStyles = {
+const selectStyles = {
   control: (base, state) => ({
     ...base,
     backgroundColor: "#202020",
@@ -254,12 +306,24 @@ function DeckCard({
     ? deck.description
     : "No description available.";
 
-  const cardOptions = useMemo(() => {
+  const heroOptions = useMemo(() => {
     const seen = new Set();
     const options = [];
 
     (Array.isArray(allCards) ? allCards : []).forEach((card) => {
-      const name = String(card?.card_name || card?.title || "").trim();
+      const rarity = String(
+        card?.set_rarity ?? card?.setRarity ?? card?.rarity ?? "",
+      )
+        .trim()
+        .toLowerCase();
+
+      if (rarity !== "premium - hero") {
+        return;
+      }
+
+      const name = String(
+        card?.card_name ?? card?.title ?? card?.name ?? "",
+      ).trim();
 
       if (!name) {
         return;
@@ -282,11 +346,68 @@ function DeckCard({
     return options.sort((a, b) => a.label.localeCompare(b.label));
   }, [allCards]);
 
+  const normalizedFormSide = normalizeSide(form.side);
+
+  const cardOptions = useMemo(() => {
+    const seen = new Set();
+    const options = [];
+
+    (Array.isArray(allCards) ? allCards : []).forEach((card) => {
+      const name = String(
+        card?.card_name ?? card?.title ?? card?.name ?? "",
+      ).trim();
+
+      if (!name) {
+        return;
+      }
+
+      const rarity = String(
+        card?.set_rarity ?? card?.setRarity ?? card?.rarity ?? "",
+      )
+        .trim()
+        .toLowerCase();
+
+      if (rarity === "premium - hero") {
+        return;
+      }
+
+      const cardDescription = String(card?.description ?? "")
+        .trim()
+        .toLowerCase();
+
+      if (cardDescription.includes("superpower")) {
+        return;
+      }
+
+      const cardSide = getCardSide(card);
+
+      if (normalizedFormSide === "Plants" || normalizedFormSide === "Zombies") {
+        if (cardSide !== normalizedFormSide) {
+          return;
+        }
+      }
+
+      const key = name.toLowerCase();
+
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.add(key);
+
+      options.push({
+        value: name,
+        label: name,
+      });
+    });
+
+    return options.sort((a, b) => a.label.localeCompare(b.label));
+  }, [allCards, normalizedFormSide]);
+
   const createForm = (source = {}) => ({
-    deckid: source.deckid ?? source.deckID ?? source.id ?? "",
     name: source.name ?? "",
     hero: source.hero ?? "",
-    side: source.side ?? "",
+    side: normalizeSide(source.side ?? ""),
     category: source.category ?? "",
     archetype: source.archetype ?? "",
     description: source.description ?? "",
@@ -300,7 +421,7 @@ function DeckCard({
     updated_date: source.updated_date ?? "",
     deck_doc: source.deck_doc ?? "",
     cards: source.cards ?? "",
-    cardsSelected: cardLinesToOptions(source.cards ?? ""),
+    cardsSelected: [],
   });
 
   const toExternalUrl = (value) => {
@@ -343,6 +464,15 @@ function DeckCard({
   };
 
   const deckDocUrl = toExternalUrl(editing ? form.deck_doc : deck.deck_doc);
+
+  const selectedHero =
+    heroOptions.find(
+      (option) =>
+        option.value.toLowerCase() ===
+        String(form.hero || "")
+          .trim()
+          .toLowerCase(),
+    ) || null;
 
   useEffect(() => {
     if (addMode) {
@@ -396,6 +526,52 @@ function DeckCard({
     };
   }, [open, saving, editSaving]);
 
+  useEffect(() => {
+    if (!editing) {
+      return;
+    }
+
+    setForm((previous) => {
+      const currentCards = Array.isArray(previous.cardsSelected)
+        ? previous.cardsSelected
+        : [];
+
+      const validCards = currentCards.filter((option) =>
+        cardOptions.some(
+          (cardOption) =>
+            cardOption.value.toLowerCase() ===
+            String(option?.value || "").toLowerCase(),
+        ),
+      );
+
+      if (validCards.length === currentCards.length) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        cardsSelected: validCards,
+      };
+    });
+  }, [cardOptions, editing]);
+
+  useEffect(() => {
+    if (!editing || !form.cards) {
+      return;
+    }
+
+    if (!Array.isArray(form.cardsSelected) || form.cardsSelected.length === 0) {
+      const matchingCards = cardLinesToOptions(form.cards, cardOptions);
+
+      if (matchingCards.length > 0) {
+        setForm((previous) => ({
+          ...previous,
+          cardsSelected: matchingCards,
+        }));
+      }
+    }
+  }, [cardOptions, editing]);
+
   const openModal = () => {
     if (addMode) {
       setOpen(true);
@@ -407,7 +583,14 @@ function DeckCard({
 
     setOpen(true);
     setEditing(false);
-    setForm(createForm(deck));
+
+    const initialForm = createForm(deck);
+
+    setForm({
+      ...initialForm,
+      cardsSelected: cardLinesToOptions(deck.cards ?? "", cardOptions),
+    });
+
     setImgError(false);
 
     if (!deckKey) {
@@ -453,7 +636,13 @@ function DeckCard({
       return;
     }
 
-    setForm(createForm(deck));
+    const initialForm = createForm(deck);
+
+    setForm({
+      ...initialForm,
+      cardsSelected: cardLinesToOptions(deck.cards ?? "", cardOptions),
+    });
+
     setImgError(false);
     setEditing(true);
   };
@@ -468,20 +657,44 @@ function DeckCard({
       return;
     }
 
-    setForm(createForm(deck));
+    const initialForm = createForm(deck);
+
+    setForm({
+      ...initialForm,
+      cardsSelected: cardLinesToOptions(deck.cards ?? "", cardOptions),
+    });
+
     setEditing(false);
     setImgError(false);
   };
 
   const handleChange = (field, value) => {
+    const nextValue = field === "side" ? normalizeSide(value) : value;
+
     setForm((previous) => ({
       ...previous,
-      [field]: value,
+      [field]: nextValue,
     }));
 
     if (field === "image_file") {
       setImgError(false);
     }
+  };
+
+  const handleHeroChange = (selected) => {
+    setForm((previous) => ({
+      ...previous,
+      hero: selected?.value || "",
+    }));
+  };
+
+  const handleSideChange = (event) => {
+    const value = normalizeSide(event.target.value);
+
+    setForm((previous) => ({
+      ...previous,
+      side: value,
+    }));
   };
 
   const handleCardsChange = (selected) => {
@@ -534,12 +747,20 @@ function DeckCard({
       setSaving(true);
 
       const hasNewImage = form.image_file instanceof File;
+      const normalizedSide = normalizeSide(form.side);
+
+      const validCards = (form.cardsSelected || []).filter((option) =>
+        cardOptions.some(
+          (cardOption) =>
+            cardOption.value.toLowerCase() ===
+            String(option?.value || "").toLowerCase(),
+        ),
+      );
 
       const payload = {
-        deckid: addMode ? (form.deckid ?? "") : deckId,
         name: form.name ?? "",
         hero: form.hero ?? "",
-        side: form.side ?? "",
+        side: normalizedSide,
         category: form.category ?? "",
         archetype: form.archetype ?? "",
         description: form.description ?? "",
@@ -552,7 +773,7 @@ function DeckCard({
         suggested_date: form.suggested_date ?? "",
         updated_date: form.updated_date ?? "",
         deck_doc: form.deck_doc ?? "",
-        cards: cardOptionsToLines(form.cardsSelected),
+        cards: cardOptionsToLines(validCards),
       };
 
       const result = addMode
@@ -563,15 +784,16 @@ function DeckCard({
         return;
       }
 
-      if (addMode) {
-        setForm(createForm(result));
-        setEditing(false);
-        setImgError(false);
+      const resultForm = createForm(result);
 
-        return;
-      }
+      setForm({
+        ...resultForm,
+        cardsSelected: cardLinesToOptions(
+          result.cards ?? payload.cards ?? "",
+          cardOptions,
+        ),
+      });
 
-      setForm(createForm(result));
       setEditing(false);
       setImgError(false);
     } catch (error) {
@@ -728,22 +950,24 @@ function DeckCard({
                 <div className="modal-header">
                   <div className="modal-title-content">
                     <AdminModalField
-                      label="Deck ID"
-                      value={form.deckid}
-                      onChange={(value) => handleChange("deckid", value)}
-                    />
-
-                    <AdminModalField
                       label="Deck Name"
                       value={form.name}
                       onChange={(value) => handleChange("name", value)}
                     />
 
-                    <AdminModalField
-                      label="Hero"
-                      value={form.hero}
-                      onChange={(value) => handleChange("hero", value)}
-                    />
+                    <div className="admin-modal-field">
+                      <span>Hero</span>
+
+                      <Select
+                        options={heroOptions}
+                        value={selectedHero}
+                        onChange={handleHeroChange}
+                        placeholder="Select hero..."
+                        isClearable
+                        styles={selectStyles}
+                        classNamePrefix="deck-hero-select"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -775,11 +999,16 @@ function DeckCard({
                     onChange={(value) => handleChange("cost", value)}
                   />
 
-                  <AdminModalField
-                    label="Side"
-                    value={form.side}
-                    onChange={(value) => handleChange("side", value)}
-                  />
+                  <label className="admin-modal-field">
+                    <span>Side</span>
+
+                    <input
+                      type="text"
+                      value={form.side ?? ""}
+                      onChange={handleSideChange}
+                      placeholder="Plants or Zombies"
+                    />
+                  </label>
 
                   <AdminModalField
                     label="Creator"
@@ -820,24 +1049,26 @@ function DeckCard({
                   <div className="admin-modal-field admin-modal-cards-field">
                     <span>Cards</span>
 
-                    <CreatableSelect
+                    <Select
                       isMulti
                       options={cardOptions}
                       value={form.cardsSelected || []}
                       onChange={handleCardsChange}
-                      placeholder="Search and add cards..."
+                      placeholder={
+                        normalizedFormSide === "Plants" ||
+                        normalizedFormSide === "Zombies"
+                          ? "Search cards..."
+                          : "Enter Plants or Zombies first..."
+                      }
                       classNamePrefix="deck-cards-select"
-                      styles={cardSelectStyles}
+                      styles={selectStyles}
                       closeMenuOnSelect={false}
-                      formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
+                      isSearchable
+                      isDisabled={
+                        normalizedFormSide !== "Plants" &&
+                        normalizedFormSide !== "Zombies"
+                      }
                     />
-
-                    {cardOptions.length === 0 && (
-                      <p className="admin-modal-field-hint">
-                        No card list loaded yet — you can still type card names
-                        manually.
-                      </p>
-                    )}
                   </div>
                 </section>
               </div>
@@ -1108,11 +1339,19 @@ function DeckCard({
                             onChange={(value) => handleChange("name", value)}
                           />
 
-                          <AdminModalField
-                            label="Hero"
-                            value={form.hero}
-                            onChange={(value) => handleChange("hero", value)}
-                          />
+                          <div className="admin-modal-field">
+                            <span>Hero</span>
+
+                            <Select
+                              options={heroOptions}
+                              value={selectedHero}
+                              onChange={handleHeroChange}
+                              placeholder="Select hero..."
+                              isClearable
+                              styles={selectStyles}
+                              classNamePrefix="deck-hero-select"
+                            />
+                          </div>
                         </>
                       ) : (
                         <>
@@ -1162,11 +1401,16 @@ function DeckCard({
                           onChange={(value) => handleChange("cost", value)}
                         />
 
-                        <AdminModalField
-                          label="Side"
-                          value={form.side}
-                          onChange={(value) => handleChange("side", value)}
-                        />
+                        <label className="admin-modal-field">
+                          <span>Side</span>
+
+                          <input
+                            type="text"
+                            value={form.side ?? ""}
+                            onChange={handleSideChange}
+                            placeholder="Plants or Zombies"
+                          />
+                        </label>
 
                         <AdminModalField
                           label="Creator"
@@ -1215,26 +1459,26 @@ function DeckCard({
                         <div className="admin-modal-field admin-modal-cards-field">
                           <span>Cards</span>
 
-                          <CreatableSelect
+                          <Select
                             isMulti
                             options={cardOptions}
                             value={form.cardsSelected || []}
                             onChange={handleCardsChange}
-                            placeholder="Search and add cards..."
+                            placeholder={
+                              normalizedFormSide === "Plants" ||
+                              normalizedFormSide === "Zombies"
+                                ? "Search cards..."
+                                : "Enter Plants or Zombies first..."
+                            }
                             classNamePrefix="deck-cards-select"
-                            styles={cardSelectStyles}
+                            styles={selectStyles}
                             closeMenuOnSelect={false}
-                            formatCreateLabel={(inputValue) =>
-                              `Add "${inputValue}"`
+                            isSearchable
+                            isDisabled={
+                              normalizedFormSide !== "Plants" &&
+                              normalizedFormSide !== "Zombies"
                             }
                           />
-
-                          {cardOptions.length === 0 && (
-                            <p className="admin-modal-field-hint">
-                              No card list loaded yet — you can still type card
-                              names manually.
-                            </p>
-                          )}
                         </div>
                       </>
                     ) : (
