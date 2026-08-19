@@ -23,19 +23,15 @@
   margin-bottom: 30px;
 }
 
-
 .deck-banner {
   display: block;
   width: 100%;
   height: auto;
-
   object-fit: cover;
   object-position: center;
-
   margin: 0;
   border: none;
   border-bottom: 1px solid #23272b;
-
   box-sizing: border-box;
 }
 
@@ -50,16 +46,12 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-
   background: transparent;
   color: #aaa;
-
   border: none;
   padding: 16px;
-
   font-size: 16px;
   cursor: pointer;
-
   transition:
     background 0.15s ease,
     color 0.15s ease;
@@ -89,16 +81,12 @@
 .search {
   width: 100%;
   height: 45px;
-
   padding: 0 15px;
   box-sizing: border-box;
-
   background: #202020;
   color: white;
-
   border: 1px solid #444;
   border-radius: 8px;
-
   font-size: 16px;
   outline: none;
 }
@@ -128,18 +116,13 @@
 .clear-filter-btn {
   flex: 0 0 auto;
   min-width: 110px;
-
   background: #202020;
   color: white;
-
   border: none;
   border-left: 1px solid #333;
-
   padding: 0 30px;
-
   font-size: 15px;
   cursor: pointer;
-
   transition:
     background 0.15s ease,
     color 0.15s ease;
@@ -187,18 +170,14 @@
   gap: 24px;
 }
 
-
 .deck-card {
   background: #15181b;
   border: 1px solid #23272b;
   border-radius: 12px;
-
   padding: 20px;
-
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-
   min-width: 0;
   overflow: hidden;
 }
@@ -207,112 +186,82 @@
   display: flex;
   gap: 16px;
   align-items: flex-start;
-
   min-width: 0;
 }
 
 .deck-card img {
   width: 200px;
   flex-shrink: 0;
-
   height: auto;
   object-fit: contain;
-
   border-radius: 8px;
 }
-
 
 .deck-card-info {
   flex: 1;
   min-width: 0;
-
   text-align: left;
-
   overflow: hidden;
 }
-
 
 .deck-card-info h2 {
   font-size: 21px;
   line-height: 1.25;
   font-weight: 700;
-
   color: #ffffff;
-
   margin-top: 0;
   margin-bottom: 10px;
-
   overflow-wrap: break-word;
   word-break: normal;
 }
-
 
 .deck-card-info p {
   font-size: 13px;
   line-height: 1.4;
-
   margin-top: 0;
   margin-bottom: 6px;
-
   white-space: normal;
-
   word-break: normal;
   overflow-wrap: break-word;
-
   min-width: 0;
 }
-
-
 
 .deck-card-info p > span:first-child {
   color: #8fe38b;
   font-weight: 700;
-
   white-space: nowrap;
   word-break: normal;
   overflow-wrap: normal;
 }
 
-
-
 .deck-card-info span {
   word-break: normal;
 }
 
-
 .deck-card-info .card-text-content {
   font-size: 13px;
   line-height: 1.4;
-
   white-space: normal;
-
   word-break: normal;
   overflow-wrap: break-word;
 }
 
-
 .deck-card-info .description,
 .deck-card-info .deck-description {
   white-space: normal;
-
   word-break: normal;
   overflow-wrap: break-word;
 }
 
 .deck-card button {
   width: 100%;
-
   padding: 10px;
   margin-top: 15px;
-
   background: #202020;
   color: white;
-
   border: 1px solid #444;
   border-radius: 6px;
-
   cursor: pointer;
-
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
@@ -325,6 +274,127 @@
   color: #8fe38b;
 }
 
+.admin-decklists-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.admin-decklists-topbar h1 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.admin-decklists-subtitle {
+  margin: 0;
+  color: #aaa;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.admin-decklists-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.admin-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 18px;
+  box-sizing: border-box;
+  background: #202020;
+  color: #ffffff;
+  border: 1px solid #444;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.admin-back-button:hover {
+  background: #333;
+  border-color: #8fe38b;
+  color: #8fe38b;
+}
+
+.admin-add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 18px;
+  box-sizing: border-box;
+  background: #8fe38b;
+  color: #101416;
+  border: 1px solid #8fe38b;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.admin-add-button:hover {
+  background: #b0f2ac;
+  border-color: #b0f2ac;
+  color: #101416;
+}
+
+.admin-error {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: #241719;
+  color: #ff8585;
+  border: 1px solid #51272a;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.admin-delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+.admin-delete-dialog {
+  padding: 20px 28px;
+  background: #15181b;
+  color: #ffffff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.admin-deck-grid {
+  position: relative;
+}
+
+.admin-deck-grid .deck-card {
+  width: 100%;
+}
 
 @media (max-width: 1100px) {
   .deck-content {
@@ -362,7 +432,20 @@
     font-size: 38px;
   }
 
- @media (max-width: 900px) {
+  .admin-decklists-topbar {
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .admin-decklists-actions {
+    width: 100%;
+  }
+
+  .admin-back-button,
+  .admin-add-button {
+    flex: 1;
+  }
+
   .filters {
     display: grid;
     grid-template-columns: 1fr;
@@ -376,20 +459,16 @@
 
   .select-wrapper .react-select__control {
     min-height: 50px;
-
     border-right: none;
     border-bottom: 1px solid #333;
-
     border-radius: 0;
   }
 
   .clear-filter-btn {
     width: 100%;
     min-height: 50px;
-
     border-left: none;
     border-top: 1px solid #333;
-
     padding: 12px 20px;
   }
 
@@ -438,7 +517,6 @@
     border-radius: 10px;
   }
 
-
   .tabs button {
     padding: 13px 8px;
     font-size: 14px;
@@ -465,11 +543,28 @@
   .deck-card-info .card-text-content {
     font-size: 13px;
   }
+
+  .admin-decklists-topbar {
+    margin-bottom: 20px;
+  }
+
+  .admin-decklists-subtitle {
+    font-size: 14px;
+  }
+
+  .admin-decklists-actions {
+    gap: 8px;
+  }
+
+  .admin-back-button,
+  .admin-add-button {
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
 }
 
-
 @media (max-width: 400px) {
-
   .tabs button {
     gap: 5px;
     padding: 12px 5px;
@@ -479,5 +574,15 @@
     width: 18px;
     height: 18px;
   }
-}
+
+  .admin-decklists-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .admin-back-button,
+  .admin-add-button {
+    width: 100%;
+    flex: none;
+  }
 }

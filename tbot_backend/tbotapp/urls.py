@@ -13,7 +13,16 @@ urlpatterns = [
         views.decklists,
         name="decklists",
     ),
-
+path(
+    "legacy-decklists/",
+    views.legacy_decklists,
+    name="legacy-decklists",
+),
+path(
+    "legacy-decklist-count/",
+    views.legacy_decklist_count,
+    name="legacy-decklist-count",
+),
     path(
         "cardinfo/",
         views.card_info,
@@ -161,5 +170,33 @@ path(
     "profile/<str:profile_slug>/",
     views.profile_by_slug,
     name="profile_by_slug",
+),
+
+   path(
+    "admin/legacy-decklists/",
+    views.admin_legacy_decklists,
+    name="admin_legacy_decklists",
+),
+
+path(
+    "admin/legacy-decklists/<str:deckid>/",
+    views.admin_legacy_decklist_update,
+    name="admin_legacy_decklist_update",
+),
+
+path(
+    "admin/legacy-decklists/<str:deckid>/delete/",
+    views.admin_legacy_decklist_delete,
+    name="admin_legacy_decklist_delete",
+),
+path(
+    "admin/legacy-decklists/",
+    views.admin_legacy_decklist_create,
+    name="admin-legacy-decklist-create",
+),
+path(
+    "admin/decklists/",
+    views.admin_decklist_create,
+    name="admin-decklist-create",
 ),
 ]

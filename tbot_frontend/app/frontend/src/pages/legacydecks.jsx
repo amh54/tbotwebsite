@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 
 import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
-import Footer from "../components/footer";
 
 import "../css/decklists.css";
 import "../css/loading.css";
@@ -28,9 +27,77 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-/* ============================================================
-   HELPERS
-============================================================ */
+const ARCHETYPE_META = {
+  aggro: {
+    icon: "⚡",
+    description:
+      "Attempts to kill the opponent as soon as possible, usually winning the game by turn 4-7.",
+  },
+  combo: {
+    icon: "🧩",
+    description:
+      "Uses a specific card synergy to do massive damage to the opponent (OTK or One Turn Kill decks).",
+  },
+  midrange: {
+    icon: "⚖️",
+    description:
+      "Slower than aggro, usually likes to set up earlygame boards into mid-cost cards to win the game.",
+  },
+  control: {
+    icon: "🛡️",
+    description:
+      "Focuses on removal and card advantage, winning in the late game.",
+  },
+  tempo: {
+    icon: "🏃",
+    description:
+      "Focuses on slowly building a big board, winning trades and overwhelming the opponent.",
+  },
+};
+
+const CATEGORY_META = {
+  budget: {
+    icon: "💵",
+    description: "Decks that are cheap for new players",
+  },
+  competitive: {
+    icon: "🏆",
+    description: "Some of the best decks in the game",
+  },
+  ladder: {
+    icon: "🪜",
+    description: "Decks that are mostly only good for ranked games",
+  },
+  meme: {
+    icon: "😂",
+    description: "Decks built for fun or unusual combos",
+  },
+};
+
+const HERO_ALIAS = {
+  bc: "beta-carrotina",
+  ct: "citron",
+  sf: "solar flare",
+  cz: "chompzilla",
+  gs: "green shadow",
+  gk: "grass knuckles",
+  sp: "spudow",
+  nc: "night cap",
+  ro: "rose",
+  cc: "captain combustible",
+
+  sb: "super brainz",
+  sm: "the smash",
+  if: "impfinity",
+  rb: "rustbolt",
+  eb: "electric boogaloo",
+  bf: "brain freeze",
+  pb: "professor brainstorm",
+  im: "immorticia",
+  zm: "z-mech",
+  nt: "neptuna",
+  hg: "huge-giganticus",
+};
 
 function normalizeText(value) {
   return String(value ?? "").trim();
@@ -39,10 +106,6 @@ function normalizeText(value) {
 function normalizeKey(value) {
   return normalizeText(value).toLowerCase();
 }
-
-/* ============================================================
-   CSRF
-============================================================ */
 
 const getCookie = (name) => {
   const cookies = document.cookie.split(";");
@@ -87,10 +150,6 @@ const ensureCsrfToken = async () => {
   return csrfToken;
 };
 
-/* ============================================================
-   API ERROR
-============================================================ */
-
 const getApiErrorMessage = async (response, fallback) => {
   let message = fallback;
 
@@ -123,73 +182,7 @@ const getApiErrorMessage = async (response, fallback) => {
   return message;
 };
 
-/* ============================================================
-   ARCHETYPE META
-============================================================ */
-
-const ARCHETYPE_META = {
-  aggro: {
-    icon: "⚡",
-    description:
-      "Attempts to kill the opponent as soon as possible, usually winning the game by turn 4-7.",
-  },
-
-  combo: {
-    icon: "🧩",
-    description:
-      "Uses a specific card synergy to do massive damage to the opponent.",
-  },
-
-  midrange: {
-    icon: "⚖️",
-    description:
-      "Slower than aggro, usually setting up early boards into mid-cost cards.",
-  },
-
-  control: {
-    icon: "🛡️",
-    description:
-      "Focuses on removal and card advantage, winning in the late game.",
-  },
-
-  tempo: {
-    icon: "🏃",
-    description:
-      "Focuses on building a strong board, winning trades and overwhelming the opponent.",
-  },
-};
-
-/* ============================================================
-   CATEGORY META
-============================================================ */
-
-const CATEGORY_META = {
-  budget: {
-    icon: "💵",
-    description: "Decks that are cheap for new players",
-  },
-
-  competitive: {
-    icon: "🏆",
-    description: "Some of the best decks in the game",
-  },
-
-  ladder: {
-    icon: "🪜",
-    description: "Decks that are mostly only good for ranked games",
-  },
-
-  meme: {
-    icon: "😂",
-    description: "Decks built for fun or unusual combos",
-  },
-};
-
-/* ============================================================
-   PAGE
-============================================================ */
-
-function AdminDecklists() {
+function LegacyDecksAdmin() {
   const [decks, setDecks] = useState([]);
   const [allCards, setAllCards] = useState([]);
 
@@ -211,31 +204,19 @@ function AdminDecklists() {
   const [editError, setEditError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
-  /* ============================================================
-     TITLE
-  ============================================================ */
-
   useEffect(() => {
-    document.title = "Admin - Decklists";
+    document.title = "Admin - Legacy Decks";
 
     return () => {
       document.title = "Tbot";
     };
   }, []);
 
-  /* ============================================================
-     CSRF
-  ============================================================ */
-
   useEffect(() => {
     ensureCsrfToken().catch((err) => {
       console.error("Unable to initialize CSRF:", err);
     });
   }, []);
-
-  /* ============================================================
-     LOAD DECKS
-  ============================================================ */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -246,7 +227,7 @@ function AdminDecklists() {
         setError("");
 
         const response = await fetch(
-          `${API_BASE_URL}/tbotapp/admin/decklists/`,
+          `${API_BASE_URL}/tbotapp/admin/legacy-decklists/`,
           {
             method: "GET",
             signal: controller.signal,
@@ -271,7 +252,7 @@ function AdminDecklists() {
 
           if (response.status === 403) {
             throw new Error(
-              "Owner permissions are required to access the admin decklists.",
+              "Owner permissions are required to access legacy decks.",
             );
           }
 
@@ -289,9 +270,8 @@ function AdminDecklists() {
         setDecks(results);
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Unable to load admin decklists:", err);
-
-          setError(err.message || "Unable to load decklists right now.");
+          console.error("Unable to load admin legacy decks:", err);
+          setError(err.message || "Unable to load legacy decks right now.");
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -304,10 +284,6 @@ function AdminDecklists() {
 
     return () => controller.abort();
   }, []);
-
-  /* ============================================================
-     LOAD CARDS
-  ============================================================ */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -359,23 +335,15 @@ function AdminDecklists() {
     return () => controller.abort();
   }, []);
 
-  /* ============================================================
-     SIDE FILTER
-  ============================================================ */
-
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
     }
 
-    const selectedSide = normalizeKey(side);
-
-    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
+    return decks.filter(
+      (deck) => normalizeKey(deck.side) === normalizeKey(side),
+    );
   }, [decks, side]);
-
-  /* ============================================================
-     HERO OPTIONS
-  ============================================================ */
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
@@ -420,10 +388,6 @@ function AdminDecklists() {
       );
   }, [sideFilteredDecks, allCards]);
 
-  /* ============================================================
-     CATEGORY OPTIONS
-  ============================================================ */
-
   const categoryOptions = useMemo(() => {
     const categoryMap = new Map();
 
@@ -455,10 +419,6 @@ function AdminDecklists() {
     );
   }, [sideFilteredDecks]);
 
-  /* ============================================================
-     ARCHETYPE OPTIONS
-  ============================================================ */
-
   const archetypeOptions = useMemo(() => {
     const counts = {};
 
@@ -489,10 +449,6 @@ function AdminDecklists() {
       }))
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
-
-  /* ============================================================
-     SORT
-  ============================================================ */
 
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
@@ -532,12 +488,12 @@ function AdminDecklists() {
     });
   }, [decks]);
 
-  /* ============================================================
-     FILTER
-  ============================================================ */
-
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
+
+    const alias = HERO_ALIAS[searchValue]
+      ? normalizeKey(HERO_ALIAS[searchValue])
+      : "";
 
     return sortedDecks.filter((deck) => {
       const searchableValues = [
@@ -554,11 +510,12 @@ function AdminDecklists() {
 
       const searchMatch =
         !searchValue ||
-        searchableValues.some((value) => value.includes(searchValue));
+        (alias
+          ? normalizeKey(deck.hero).includes(alias)
+          : searchableValues.some((value) => value.includes(searchValue)));
 
-      const deckSide = normalizeKey(deck.side);
-
-      const sideMatch = side === "All" || deckSide === normalizeKey(side);
+      const sideMatch =
+        side === "All" || normalizeKey(deck.side) === normalizeKey(side);
 
       const heroMatch =
         hero.length === 0 ||
@@ -589,7 +546,6 @@ function AdminDecklists() {
     });
   }, [sortedDecks, search, side, hero, category, archetype]);
 
-
   const clearFilters = () => {
     setSearch("");
     setHero([]);
@@ -610,7 +566,7 @@ function AdminDecklists() {
     const deckId = deck.deckid ?? deck.deckID ?? deck.id;
 
     if (!deckId) {
-      throw new Error("Unable to determine the deck ID.");
+      throw new Error("Unable to determine the legacy deck ID.");
     }
 
     setEditSaving(true);
@@ -641,7 +597,7 @@ function AdminDecklists() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/tbotapp/admin/decklists/${encodeURIComponent(
+        `${API_BASE_URL}/tbotapp/admin/legacy-decklists/${encodeURIComponent(
           deckId,
         )}/`,
         {
@@ -662,7 +618,9 @@ function AdminDecklists() {
         );
 
         if (response.status === 403) {
-          throw new Error("Owner permissions are required to edit decklists.");
+          throw new Error(
+            "Owner permissions are required to edit legacy decks.",
+          );
         }
 
         throw new Error(message);
@@ -688,16 +646,15 @@ function AdminDecklists() {
 
       return updatedDeck;
     } catch (err) {
-      console.error("Unable to update deck:", err);
+      console.error("Unable to update legacy deck:", err);
 
-      setEditError(err.message || "Unable to update deck.");
+      setEditError(err.message || "Unable to update legacy deck.");
 
       throw err;
     } finally {
       setEditSaving(false);
     }
   };
-
 
   const handleDelete = async (deck) => {
     const deckId = deck.deckid ?? deck.deckID ?? deck.id;
@@ -708,7 +665,7 @@ function AdminDecklists() {
 
     const confirmed = window.confirm(
       `Are you sure you want to delete "${
-        deck.name || "this deck"
+        deck.name || "this legacy deck"
       }"?\n\nThis cannot be undone.`,
     );
 
@@ -723,7 +680,7 @@ function AdminDecklists() {
       const csrfToken = await ensureCsrfToken();
 
       const response = await fetch(
-        `${API_BASE_URL}/tbotapp/admin/decklists/${encodeURIComponent(
+        `${API_BASE_URL}/tbotapp/admin/legacy-decklists/${encodeURIComponent(
           deckId,
         )}/`,
         {
@@ -744,7 +701,7 @@ function AdminDecklists() {
 
         if (response.status === 403) {
           throw new Error(
-            "Owner permissions are required to delete decklists.",
+            "Owner permissions are required to delete legacy decks.",
           );
         }
 
@@ -760,9 +717,9 @@ function AdminDecklists() {
         }),
       );
     } catch (err) {
-      console.error("Unable to delete deck:", err);
+      console.error("Unable to delete legacy deck:", err);
 
-      setDeleteError(err.message || "Unable to delete deck.");
+      setDeleteError(err.message || "Unable to delete legacy deck.");
     } finally {
       setDeleteLoading(false);
     }
@@ -774,12 +731,12 @@ function AdminDecklists() {
         <div className="loading-card">
           <div className="loading-spinner" />
 
-          <h2>Loading decklists</h2>
+          <h2>Loading legacy decks</h2>
 
-          <p>Preparing the deck browser and loading available decks.</p>
+          <p>Preparing the legacy deck manager and loading available decks.</p>
 
           <div className="loading-status">
-            <span>Loading deck data</span>
+            <span>Loading legacy deck data</span>
             <strong>Loading...</strong>
           </div>
         </div>
@@ -789,14 +746,13 @@ function AdminDecklists() {
 
   return (
     <div className="deck-page">
-
       <main className="deck-content">
         <div className="admin-decklists-topbar">
           <div>
-            <h1>Decklists</h1>
+            <h1>Legacy Decks</h1>
 
             <p className="admin-decklists-subtitle">
-              Manage the decklists available on Tbot.
+              Manage the legacy decklists available on Tbot.
             </p>
           </div>
 
@@ -805,8 +761,8 @@ function AdminDecklists() {
               ← Admin
             </Link>
 
-            <Link to="/admin/decklists/add" className="admin-add-button">
-              + Add Deck
+            <Link to="/admin/legacy-decklists/add" className="admin-add-button">
+              + Add Legacy Deck
             </Link>
           </div>
         </div>
@@ -820,10 +776,6 @@ function AdminDecklists() {
         )}
 
         <div className="deck-browser">
-          {/* ================================================== */}
-          {/* SIDE TABS */}
-          {/* ================================================== */}
-
           <div className="tabs">
             <button
               type="button"
@@ -860,22 +812,14 @@ function AdminDecklists() {
             </button>
           </div>
 
-          {/* ================================================== */}
-          {/* SEARCH */}
-          {/* ================================================== */}
-
           <div className="search-container">
             <input
               className="search"
-              placeholder="Search decks, creators, heroes, cards..."
+              placeholder="Search legacy decks, creators, heroes, cards..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
-
-          {/* ================================================== */}
-          {/* FILTERS */}
-          {/* ================================================== */}
 
           <div className="filters">
             <div className="select-wrapper">
@@ -918,20 +862,16 @@ function AdminDecklists() {
           </div>
         </div>
 
-        {/* ================================================== */}
-        {/* RESULTS */}
-        {/* ================================================== */}
-
         {error ? (
           <div className="admin-error">{error}</div>
         ) : (
           <p className="results-count">
-            Showing {filteredDecks.length} of {decks.length} decks
+            Showing {filteredDecks.length} of {decks.length} legacy decks
           </p>
         )}
 
         {!error && filteredDecks.length === 0 ? (
-          <p className="no-results">No decklists found.</p>
+          <p className="no-results">No legacy decks found.</p>
         ) : (
           !error && (
             <div className="deck-grid">
@@ -954,15 +894,13 @@ function AdminDecklists() {
         )}
       </main>
 
-      <Footer credits />
-
       {deleteLoading && (
         <div className="admin-delete-overlay">
-          <div className="admin-delete-dialog">Deleting deck...</div>
+          <div className="admin-delete-dialog">Deleting legacy deck...</div>
         </div>
       )}
     </div>
   );
 }
 
-export default AdminDecklists;
+export default LegacyDecksAdmin;

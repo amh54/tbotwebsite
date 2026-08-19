@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Decklist, WebCards, KeepOrScrap, UserDeck
+from .models import Decklist, WebCards, KeepOrScrap, UserDeck, LegacyDecklist
 
 
 # ============================================================
@@ -35,8 +35,38 @@ class PublicDeckSerializer(serializers.ModelSerializer):
             "updated_date",
             "deck_doc",
         ]
+# ============================================================
+# PUBLIC LEGACY DECK SERIALIZER
+# ============================================================
 
+class PublicLegacyDeckSerializer(serializers.ModelSerializer):
+    """
+    Serializer used by the public legacy decklist page.
 
+    The cards field is intentionally excluded.
+    """
+
+    class Meta:
+        model = LegacyDecklist
+
+        fields = [
+            "deckid",
+            "name",
+            "hero",
+            "side",
+            "category",
+            "archetype",
+            "description",
+            "image",
+            "creator",
+            "cost",
+            "aliases",
+            "inspiration",
+            "optimization",
+            "suggested_date",
+            "updated_date",
+            "deck_doc",
+        ]
 # ============================================================
 # ADMIN DECKLIST SERIALIZER
 # ============================================================
@@ -69,6 +99,28 @@ class AdminDeckSerializer(serializers.ModelSerializer):
             "suggested_date",
             "updated_date",
             "deck_doc",
+        ]
+class AdminLegacyDeckSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LegacyDecklist
+        fields = [
+            "deckid",
+            "side",
+            "hero",
+            "name",
+            "category",
+            "archetype",
+            "description",
+            "deck_doc",
+            "image",
+            "creator",
+            "optimization",
+            "inspiration",
+            "cost",
+            "aliases",
+            "cards",
+            "suggested_date",
+            "updated_date",
         ]
 class UserDeckSerializer(serializers.ModelSerializer):
     class Meta:

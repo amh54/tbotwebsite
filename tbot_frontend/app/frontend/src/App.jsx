@@ -1,6 +1,7 @@
 import "./css/App.css";
 import "./css/navbar.css";
 import { Link, Route, Routes } from "react-router-dom";
+
 import Admin from "./pages/admin.jsx";
 import DecklistsPage from "./pages/decklists.jsx";
 import CardInfo from "./pages/cardinfo.jsx";
@@ -12,6 +13,8 @@ import TermsOfService from "./pages/termsofservice.jsx";
 import Privacy from "./pages/privacy.jsx";
 import AdminDecklists from "./pages/admin-decklists.jsx";
 import Profile from "./pages/profile.jsx";
+import LegacyDecksPage from "./pages/legacydecks.jsx";
+import AdminLegacyDecks from "./pages/admin-legacydecks.jsx";
 
 function HomePage() {
   return (
@@ -178,7 +181,7 @@ function HomePage() {
         </div>
       </section>
 
-     <Footer credits="Special thanks to the many PvZ Heroes community members who took time out of their day to give me helpful feedback and critiques before I published this site." />
+      <Footer credits="Special thanks to the many PvZ Heroes community members who took time out of their day to give me helpful feedback and critiques before I published this site." />
     </div>
   );
 }
@@ -189,18 +192,21 @@ function App() {
       <Route path="/" element={<HomePage />} />
 
       <Route path="/decklists" element={<DecklistsPage />} />
-
+      <Route path="/legacydecks" element={<LegacyDecksPage />} />
       <Route path="/cardinfo" element={<CardInfo />} />
-
       <Route path="/keeporscrap" element={<KeepOrScrap />} />
-
       <Route path="/heroinfo" element={<HeroInfo />} />
 
       <Route path="/termsofservice" element={<TermsOfService />} />
-      <Route path="/admin" element={<Admin />} />
       <Route path="/privacypolicy" element={<Privacy />} />
-     <Route path="/profile/:profile_slug" element={<Profile />} />
+
+      <Route path="/admin" element={<Admin />} />
       <Route path="/admin/decklists" element={<AdminDecklists />} />
+      <Route path="/admin/legacy-decks" element={<AdminLegacyDecks />} />
+
+      <Route path="/admin/legacy-decks/add" element={<AdminLegacyDecks />} />
+
+      <Route path="/profile/:profile_slug" element={<Profile />} />
     </Routes>
   );
 }

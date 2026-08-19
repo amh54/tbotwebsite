@@ -88,8 +88,6 @@ const getImageUrl = (value) => {
     return `${API_BASE_URL}${image}`;
   }
 
-  // Existing database images may be stored as:
-  // decklists/example.webp
   if (image.startsWith("decklists/")) {
     return `${API_BASE_URL}/media/${image}`;
   }
@@ -218,8 +216,10 @@ function DeckCard({
   decklist,
   admin = false,
   adminMode = false,
+  addMode = false,
   onDelete,
   onSave,
+  onAdd,
   editSaving = false,
   allCards = [],
 }) {
@@ -233,8 +233,8 @@ function DeckCard({
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [open, setOpen] = useState(addMode);
+  const [editing, setEditing] = useState(addMode);
   const [saving, setSaving] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -345,6 +345,14 @@ function DeckCard({
   const deckDocUrl = toExternalUrl(editing ? form.deck_doc : deck.deck_doc);
 
   useEffect(() => {
+    if (addMode) {
+      setOpen(true);
+      setEditing(true);
+      setForm(createForm({}));
+      setImgError(false);
+      return;
+    }
+
     if (!deckKey) {
       return;
     }
@@ -355,7 +363,7 @@ function DeckCard({
       setOpen(false);
       setEditing(false);
     }
-  }, [searchParams, deckKey]);
+  }, [searchParams, deckKey, addMode]);
 
   useEffect(() => {
     if (!open) {
@@ -389,6 +397,14 @@ function DeckCard({
   }, [open, saving, editSaving]);
 
   const openModal = () => {
+    if (addMode) {
+      setOpen(true);
+      setEditing(true);
+      setForm(createForm({}));
+      setImgError(false);
+      return;
+    }
+
     setOpen(true);
     setEditing(false);
     setForm(createForm(deck));
@@ -406,6 +422,14 @@ function DeckCard({
 
   const closeModal = () => {
     if (saving || editSaving) {
+      return;
+    }
+
+    if (addMode) {
+      if (typeof window !== "undefined") {
+        window.history.back();
+      }
+
       return;
     }
 
@@ -436,6 +460,11 @@ function DeckCard({
 
   const cancelEditing = () => {
     if (saving || editSaving) {
+      return;
+    }
+
+    if (addMode) {
+      closeModal();
       return;
     }
 
@@ -471,7 +500,7 @@ function DeckCard({
       setForm((previous) => ({
         ...previous,
         image_file: null,
-        image: deck.image ?? "",
+        image: addMode ? "" : (deck.image ?? ""),
       }));
 
       return;
@@ -487,11 +516,16 @@ function DeckCard({
   };
 
   const handleSave = async () => {
-    if (typeof onSave !== "function") {
+    if (addMode) {
+      if (typeof onAdd !== "function") {
+        console.error("onAdd was not provided.");
+        return;
+      }
+    } else if (typeof onSave !== "function") {
       return;
     }
 
-    if (!deckId) {
+    if (!addMode && !deckId) {
       console.error("Cannot save deck: missing deck ID.", deck);
       return;
     }
@@ -502,18 +536,15 @@ function DeckCard({
       const hasNewImage = form.image_file instanceof File;
 
       const payload = {
-        deckid: deckId,
+        deckid: addMode ? (form.deckid ?? "") : deckId,
         name: form.name ?? "",
         hero: form.hero ?? "",
         side: form.side ?? "",
         category: form.category ?? "",
         archetype: form.archetype ?? "",
         description: form.description ?? "",
-
-        image: hasNewImage ? "" : String(form.image ?? deck.image ?? "").trim(),
-
+        image: hasNewImage ? "" : String(form.image ?? "").trim(),
         image_file: hasNewImage ? form.image_file : null,
-
         creator: form.creator ?? "",
         cost: form.cost ?? "",
         inspiration: form.inspiration ?? "",
@@ -524,16 +555,30 @@ function DeckCard({
         cards: cardOptionsToLines(form.cardsSelected),
       };
 
-      const updatedDeck = await onSave(deck, payload);
+      const result = addMode
+        ? await onAdd(payload)
+        : await onSave(deck, payload);
 
-      if (updatedDeck) {
-        setForm(createForm(updatedDeck));
+      if (!result) {
+        return;
       }
 
+      if (addMode) {
+        setForm(createForm(result));
+        setEditing(false);
+        setImgError(false);
+
+        return;
+      }
+
+      setForm(createForm(result));
       setEditing(false);
       setImgError(false);
     } catch (error) {
-      console.error("Failed to save deck:", error);
+      console.error(
+        addMode ? "Failed to add deck:" : "Failed to save deck:",
+        error,
+      );
     } finally {
       setSaving(false);
     }
@@ -605,6 +650,204 @@ function DeckCard({
   const isSaving = saving || editSaving;
   const editImage = getImageUrl(form.image);
 
+  if (addMode) {
+    if (!open) {
+      return null;
+    }
+
+    return (
+      <div
+        className="modal-overlay"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget && !isSaving) {
+            closeModal();
+          }
+        }}
+      >
+        <dialog
+          open
+          className="modal"
+          aria-label="Add Legacy Deck"
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="modal-close"
+            onClick={closeModal}
+            aria-label="Close add deck"
+            disabled={isSaving}
+          >
+            ×
+          </button>
+
+          <div className="modal-scroll-content">
+            <div className="modal-content">
+              <div className="modal-image">
+                {editImage && !imgError ? (
+                  <img
+                    src={editImage}
+                    alt={form.name || "Deck image"}
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <div className="deck-image-placeholder">No image</div>
+                )}
+
+                <label className="admin-modal-field">
+                  <span>Upload Image</span>
+
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={handleImageFileChange}
+                  />
+                </label>
+
+                <div className="admin-modal-actions">
+                  <button
+                    type="button"
+                    className="admin-modal-edit"
+                    onClick={closeModal}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    className="admin-modal-save"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? "Adding..." : "Add Deck"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="modal-info">
+                <div className="modal-header">
+                  <div className="modal-title-content">
+                    <AdminModalField
+                      label="Deck ID"
+                      value={form.deckid}
+                      onChange={(value) => handleChange("deckid", value)}
+                    />
+
+                    <AdminModalField
+                      label="Deck Name"
+                      value={form.name}
+                      onChange={(value) => handleChange("name", value)}
+                    />
+
+                    <AdminModalField
+                      label="Hero"
+                      value={form.hero}
+                      onChange={(value) => handleChange("hero", value)}
+                    />
+                  </div>
+                </div>
+
+                <section className="modal-section description-section">
+                  <h3>Description</h3>
+
+                  <AdminModalTextArea
+                    value={form.description}
+                    onChange={(value) => handleChange("description", value)}
+                  />
+                </section>
+
+                <section className="modal-metadata">
+                  <AdminModalField
+                    label="Category"
+                    value={form.category}
+                    onChange={(value) => handleChange("category", value)}
+                  />
+
+                  <AdminModalField
+                    label="Archetype"
+                    value={form.archetype}
+                    onChange={(value) => handleChange("archetype", value)}
+                  />
+
+                  <AdminModalField
+                    label="Cost"
+                    value={form.cost}
+                    onChange={(value) => handleChange("cost", value)}
+                  />
+
+                  <AdminModalField
+                    label="Side"
+                    value={form.side}
+                    onChange={(value) => handleChange("side", value)}
+                  />
+
+                  <AdminModalField
+                    label="Creator"
+                    value={form.creator}
+                    onChange={(value) => handleChange("creator", value)}
+                  />
+
+                  <AdminModalField
+                    label="Optimization"
+                    value={form.optimization}
+                    onChange={(value) => handleChange("optimization", value)}
+                  />
+
+                  <AdminModalField
+                    label="Inspiration"
+                    value={form.inspiration}
+                    onChange={(value) => handleChange("inspiration", value)}
+                  />
+
+                  <AdminModalField
+                    label="Suggested Date"
+                    value={form.suggested_date}
+                    onChange={(value) => handleChange("suggested_date", value)}
+                  />
+
+                  <AdminModalField
+                    label="Updated Date"
+                    value={form.updated_date}
+                    onChange={(value) => handleChange("updated_date", value)}
+                  />
+
+                  <AdminModalField
+                    label="Deck Tutorial URL"
+                    value={form.deck_doc}
+                    onChange={(value) => handleChange("deck_doc", value)}
+                  />
+
+                  <div className="admin-modal-field admin-modal-cards-field">
+                    <span>Cards</span>
+
+                    <CreatableSelect
+                      isMulti
+                      options={cardOptions}
+                      value={form.cardsSelected || []}
+                      onChange={handleCardsChange}
+                      placeholder="Search and add cards..."
+                      classNamePrefix="deck-cards-select"
+                      styles={cardSelectStyles}
+                      closeMenuOnSelect={false}
+                      formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
+                    />
+
+                    {cardOptions.length === 0 && (
+                      <p className="admin-modal-field-hint">
+                        No card list loaded yet — you can still type card names
+                        manually.
+                      </p>
+                    )}
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </dialog>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}>
@@ -663,7 +906,6 @@ function DeckCard({
           {hasValue(deck.creator) && (
             <p className="creator-field">
               <span className="field-label">Creator:</span>
-
               <span className="creator-value">{deck.creator}</span>
             </p>
           )}
@@ -976,7 +1218,7 @@ function DeckCard({
                           <CreatableSelect
                             isMulti
                             options={cardOptions}
-                            value={form.cardsSelected}
+                            value={form.cardsSelected || []}
                             onChange={handleCardsChange}
                             placeholder="Search and add cards..."
                             classNamePrefix="deck-cards-select"
@@ -1014,13 +1256,11 @@ function DeckCard({
 
                         <div className="metadata-item">
                           <span className="label">Category</span>
-
                           <span className="value">{deck.category || "-"}</span>
                         </div>
 
                         <div className="metadata-item">
                           <span className="label">Archetype</span>
-
                           <span className="value">{deck.archetype || "-"}</span>
                         </div>
 

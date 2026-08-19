@@ -1,6 +1,5 @@
 from django.db import models
 from django.db.models.functions import Now
-
 class Decklist(models.Model):
     deckid = models.IntegerField(primary_key=True)
     side = models.CharField(max_length=30)
@@ -54,7 +53,31 @@ class WebCards(models.Model):
     class Meta:
         db_table = "web_cards"
         managed = False
+class LegacyDecklist(models.Model):
+    deckid = models.IntegerField(primary_key=True)
+    side = models.CharField(max_length=30)
+    hero = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
+    category = models.CharField(
+        max_length=30,
+        db_column="category",
+    )
+    archetype = models.CharField(max_length=30)
+    description = models.CharField(max_length=1500)
+    deck_doc = models.CharField(max_length=300, blank=True)
+    image = models.CharField(max_length=300)
+    creator = models.CharField(max_length=300, blank=True)
+    optimization = models.CharField(max_length=60, blank=True)
+    inspiration = models.CharField(max_length=60, blank=True)
+    cost = models.CharField(max_length=10, blank=True)
+    aliases = models.CharField(max_length=300, blank=True)
+    cards = models.CharField(max_length=400, blank=True)
+    suggested_date = models.CharField(max_length=20, blank=True)
+    updated_date = models.CharField(max_length=20, blank=True)
 
+    class Meta:
+        db_table = "web_legacy_decks"
+        managed = False
 
 class KeepOrScrap(models.Model):
     tierid = models.IntegerField(primary_key=True)

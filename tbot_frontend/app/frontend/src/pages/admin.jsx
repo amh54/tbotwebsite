@@ -14,13 +14,10 @@ function Admin() {
   useEffect(() => {
     const checkOwner = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/admin/check/`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/tbotapp/admin/check/`, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!response.ok) {
           navigate("/");
@@ -36,11 +33,7 @@ function Admin() {
 
         setAuthorized(true);
       } catch (error) {
-        console.error(
-          "Unable to verify admin permissions:",
-          error
-        );
-
+        console.error("Unable to verify admin permissions:", error);
         navigate("/");
       } finally {
         setLoading(false);
@@ -56,9 +49,7 @@ function Admin() {
         <main className="admin-content">
           <div className="admin-content-header">
             <h1>Checking permissions...</h1>
-            <p>
-              Verifying owner access.
-            </p>
+            <p>Verifying owner access.</p>
           </div>
         </main>
       </div>
@@ -78,74 +69,55 @@ function Admin() {
         </div>
 
         <nav className="admin-sidebar-nav">
-          <Link
-            to="/admin"
-            className="admin-nav-link active"
-          >
+          <Link to="/admin" className="admin-nav-link active">
             Dashboard
           </Link>
 
           <div className="admin-nav-section">
-            <div className="admin-nav-heading">
-              Decklists
-            </div>
+            <div className="admin-nav-heading">Decklists</div>
 
-            <Link to="/admin/decklists">
-              View all
-            </Link>
+            <Link to="/admin/decklists">View all</Link>
 
-            <Link to="/admin/decklists/add">
-              Add deck
+            <Link to="/admin/decklists/add">Add deck</Link>
+          </div>
+
+          <div className="admin-nav-section">
+            <div className="admin-nav-heading">Legacy Decks</div>
+
+            <Link to="/admin/legacy-decks">View all</Link>
+
+            <Link to="/admin/legacy-decks/add" className="admin-add-button">
+              + Add Legacy Deck
             </Link>
           </div>
 
           <div className="admin-nav-section">
-            <div className="admin-nav-heading">
-              Cards
-            </div>
+            <div className="admin-nav-heading">Cards</div>
 
-            <Link to="/admin/cards">
-              View all
-            </Link>
+            <Link to="/admin/cards">View all</Link>
 
-            <Link to="/admin/cards/add">
-              Add card
-            </Link>
+            <Link to="/admin/cards/add">Add card</Link>
           </div>
 
           <div className="admin-nav-section">
-            <div className="admin-nav-heading">
-              Heroes
-            </div>
+            <div className="admin-nav-heading">Heroes</div>
 
-            <Link to="/admin/heroes">
-              View all
-            </Link>
+            <Link to="/admin/heroes">View all</Link>
 
-            <Link to="/admin/heroes/add">
-              Add hero
-            </Link>
+            <Link to="/admin/heroes/add">Add hero</Link>
           </div>
 
           <div className="admin-nav-section">
-            <div className="admin-nav-heading">
-              Keep or Scrap
-            </div>
+            <div className="admin-nav-heading">Keep or Scrap</div>
 
-            <Link to="/admin/keeporscrap">
-              View all
-            </Link>
+            <Link to="/admin/keeporscrap">View all</Link>
 
-            <Link to="/admin/keeporscrap/add">
-              Add entry
-            </Link>
+            <Link to="/admin/keeporscrap/add">Add entry</Link>
           </div>
         </nav>
 
         <div className="admin-sidebar-footer">
-          <Link to="/">
-            ← Back to Tbot
-          </Link>
+          <Link to="/">← Back to Tbot</Link>
         </div>
       </aside>
 
@@ -153,64 +125,39 @@ function Admin() {
         <div className="admin-content-header">
           <div>
             <h1>Dashboard</h1>
-
-            <p>
-              Manage the Tbot website.
-            </p>
+            <p>Manage the Tbot website.</p>
           </div>
         </div>
 
         <div className="admin-dashboard-grid">
-          <Link
-            to="/admin/decklists"
-            className="admin-dashboard-card"
-          >
-            <span className="admin-card-label">
-              Decklists
-            </span>
+          <Link to="/admin/decklists" className="admin-dashboard-card">
+            <span className="admin-card-label">Decklists</span>
 
-            <span className="admin-card-action">
-              Manage →
-            </span>
+            <span className="admin-card-action">Manage →</span>
           </Link>
 
-          <Link
-            to="/admin/cards"
-            className="admin-dashboard-card"
-          >
-            <span className="admin-card-label">
-              Cards
-            </span>
+          <Link to="/admin/legacy-decks" className="admin-dashboard-card">
+            <span className="admin-card-label">Legacy Decks</span>
 
-            <span className="admin-card-action">
-              Manage →
-            </span>
+            <span className="admin-card-action">Manage →</span>
           </Link>
 
-          <Link
-            to="/admin/heroes"
-            className="admin-dashboard-card"
-          >
-            <span className="admin-card-label">
-              Heroes
-            </span>
+          <Link to="/admin/cards" className="admin-dashboard-card">
+            <span className="admin-card-label">Cards</span>
 
-            <span className="admin-card-action">
-              Manage →
-            </span>
+            <span className="admin-card-action">Manage →</span>
           </Link>
 
-          <Link
-            to="/admin/keeporscrap"
-            className="admin-dashboard-card"
-          >
-            <span className="admin-card-label">
-              Keep or Scrap
-            </span>
+          <Link to="/admin/heroes" className="admin-dashboard-card">
+            <span className="admin-card-label">Heroes</span>
 
-            <span className="admin-card-action">
-              Manage →
-            </span>
+            <span className="admin-card-action">Manage →</span>
+          </Link>
+
+          <Link to="/admin/keeporscrap" className="admin-dashboard-card">
+            <span className="admin-card-label">Keep or Scrap</span>
+
+            <span className="admin-card-action">Manage →</span>
           </Link>
         </div>
       </main>

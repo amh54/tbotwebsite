@@ -24,6 +24,7 @@ from rest_framework.response import Response
 
 from .models import (
     Decklist,
+     LegacyDecklist,
     WebCards,
     KeepOrScrap,
     UserProfile,
@@ -31,7 +32,9 @@ from .models import (
 )
 from .serializers import (
     PublicDeckSerializer,
+    AdminLegacyDeckSerializer,
     AdminDeckSerializer,
+    PublicLegacyDeckSerializer,
     WebCardSerializer,
     KeepOrScrapSerializer,
     UserDeckSerializer
@@ -252,8 +255,65 @@ def decklists(request):
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+# ============================================================
+# PUBLIC LEGACY DECKLISTS
+# ============================================================
+
+@api_view(["GET"])
+def legacy_decklists(request):
+    try:
+        decks = LegacyDecklist.objects.all().order_by(
+            "side",
+            "hero",
+            "name",
+        )
+
+        serializer = PublicLegacyDeckSerializer(
+            decks,
+            many=True,
+        )
+
+        return Response(serializer.data)
+
+    except DatabaseError as exc:
+        logger.exception(
+            "Unable to load legacy decklists: %s",
+            exc,
+        )
+
+        return Response(
+            {
+                "error": "Unable to load legacy decklists.",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
+# ============================================================
+# PUBLIC LEGACY DECK COUNT
+# ============================================================
+
+@api_view(["GET"])
+def legacy_decklist_count(request):
+    try:
+        count = LegacyDecklist.objects.count()
+
+        return Response({
+            "count": count,
+        })
+
+    except DatabaseError as exc:
+        logger.exception(
+            "Unable to load legacy deck count: %s",
+            exc,
+        )
+
+        return Response(
+            {
+                "error": "Unable to load legacy deck count.",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 # ============================================================
 # ADMIN DECKLISTS
 # ============================================================
@@ -296,8 +356,909 @@ def admin_decklists(request):
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+# ============================================================
+# ADMIN LEGACY DECKLISTS
+# ============================================================
 
+@api_view(["GET"])
+@owner_required
+def admin_legacy_decklists(request):
 
+    try:
+        decks = (
+            LegacyDecklist.objects
+            .all()
+            .order_by(
+                "side",
+                "hero",
+                "name",
+            )
+        )
+
+        serializer = AdminLegacyDeckSerializer(
+            decks,
+            many=True,
+        )
+
+        return Response(serializer.data)
+
+    except DatabaseError as exc:
+
+        logger.exception(
+            "Admin legacy decklist query failed"
+        )
+
+        payload = {
+            "error": "Database query failed for admin legacy decklists.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+@api_view(["PATCH", "DELETE"])
+@owner_required
+def admin_legacy_decklist_detail(request, deckid):
+
+    try:
+        deck = LegacyDecklist.objects.get(
+            deckid=deckid
+        )
+
+    except LegacyDecklist.DoesNotExist:
+        return Response(
+            {
+                "error": "Legacy deck not found."
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # ========================================================
+    # DELETE
+    # ========================================================
+
+    if request.method == "DELETE":
+
+        deck.delete()
+
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+    # ========================================================
+    # PATCH
+    # ========================================================
+
+    if request.method == "PATCH":
+
+        data = request.data.copy()
+
+        image_file = request.FILES.get("image_file")
+
+        if image_file:
+            import os
+            from django.core.files.storage import default_storage
+
+            filename = default_storage.save(
+                f"decklists/{image_file.name}",
+                image_file,
+            )
+
+            data["image"] = default_storage.url(filename)
+
+        serializer = AdminLegacyDeckSerializer(
+            deck,
+            data=data,
+            partial=True,
+        )
+
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "error": "Unable to update legacy deck.",
+                    "fields": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        deck = serializer.save()
+
+        return Response(
+            AdminLegacyDeckSerializer(deck).data,
+            status=status.HTTP_200_OK,
+        )
+# ============================================================
+# ADMIN LEGACY DECKLIST CREATE
+# ============================================================
+
+@api_view(["POST"])
+@owner_required
+@parser_classes([MultiPartParser, FormParser])
+def admin_legacy_decklist_create(request):
+
+    data = request.data.copy()
+
+    # ========================================================
+    # DEBUG
+    # ========================================================
+
+    print("\n========================================")
+    print("ADMIN LEGACY DECKLIST CREATE")
+    print("METHOD:", request.method)
+    print("CONTENT TYPE:", request.content_type)
+    print("FILES:", request.FILES)
+    print("DATA:", request.data)
+    print("========================================")
+
+    # ========================================================
+    # REQUIRED FIELDS
+    # ========================================================
+
+    required_fields = [
+        "deckid",
+        "side",
+        "hero",
+        "name",
+        "category",
+        "archetype",
+        "description",
+    ]
+
+    missing_fields = [
+        field
+        for field in required_fields
+        if not str(data.get(field, "")).strip()
+    ]
+
+    if missing_fields:
+
+        return Response(
+            {
+                "error": "Missing required fields.",
+                "fields": {
+                    field: [
+                        "This field is required."
+                    ]
+                    for field in missing_fields
+                },
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ========================================================
+    # DECK ID
+    # ========================================================
+
+    deckid = str(
+        data.get("deckid")
+    ).strip()
+
+    if not deckid:
+
+        return Response(
+            {
+                "error": "Deck ID is required."
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ========================================================
+    # DUPLICATE DECK ID
+    # ========================================================
+
+    if LegacyDecklist.objects.filter(
+        deckid=deckid
+    ).exists():
+
+        return Response(
+            {
+                "error": (
+                    f"Legacy deck ID {deckid} "
+                    "already exists."
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ========================================================
+    # CARDS
+    # ========================================================
+
+    if "cards" in data:
+
+        selected_cards = normalize_card_list(
+            data.get("cards")
+        )
+
+        existing_cards = set(
+            WebCards.objects
+            .filter(
+                card_name__in=selected_cards
+            )
+            .values_list(
+                "card_name",
+                flat=True,
+            )
+        )
+
+        invalid_cards = [
+            card
+            for card in selected_cards
+            if card not in existing_cards
+        ]
+
+        if invalid_cards:
+
+            return Response(
+                {
+                    "error": (
+                        "One or more selected cards "
+                        "do not exist."
+                    ),
+                    "invalid_cards": invalid_cards,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data["cards"] = ", ".join(
+            selected_cards
+        )
+
+    # ========================================================
+    # CLOUDINARY IMAGE UPLOAD
+    # ========================================================
+
+    uploaded_image = (
+        request.FILES.get("image_file")
+        or request.FILES.get("image")
+    )
+
+    if not uploaded_image:
+
+        return Response(
+            {
+                "error": (
+                    "A deck image is required."
+                )
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    print(
+        "UPLOADING LEGACY DECK IMAGE TO CLOUDINARY..."
+    )
+
+    try:
+
+        image_url = save_deck_image(
+            uploaded_image,
+            deckid=deckid,
+            deck_name=data.get("name") or deckid,
+        )
+
+        data["image"] = image_url
+
+        print(
+            "CLOUDINARY IMAGE URL:",
+            image_url,
+        )
+
+    except ValueError as exc:
+
+        return Response(
+            {
+                "error": str(exc)
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    except Exception as exc:
+
+        logger.exception(
+            "Unable to save legacy deck image."
+        )
+
+        payload = {
+            "error": (
+                "Unable to save uploaded image."
+            ),
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    # ========================================================
+    # REMOVE FILE-ONLY FIELDS
+    # ========================================================
+
+    data.pop(
+        "image_file",
+        None,
+    )
+
+    data.pop(
+        "remove_image",
+        None,
+    )
+
+    # ========================================================
+    # CREATE SERIALIZER
+    # ========================================================
+
+    print(
+        "DATA BEFORE LEGACY DECK SERIALIZER:",
+        data,
+    )
+
+    serializer = AdminLegacyDeckSerializer(
+        data=data
+    )
+
+    if not serializer.is_valid():
+
+        print(
+            "LEGACY DECK CREATION SERIALIZER ERRORS:",
+            serializer.errors,
+        )
+
+        return Response(
+            {
+                "error": (
+                    "Unable to create legacy deck."
+                ),
+                "fields": serializer.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ========================================================
+    # SAVE
+    # ========================================================
+
+    try:
+
+        legacy_deck = serializer.save()
+
+    except DatabaseError as exc:
+
+        logger.exception(
+            "Unable to create legacy deck %s",
+            deckid,
+        )
+
+        payload = {
+            "error": (
+                "Database creation failed."
+            ),
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    except Exception as exc:
+
+        logger.exception(
+            "Unexpected legacy deck creation error."
+        )
+
+        payload = {
+            "error": (
+                "Unable to create legacy deck."
+            ),
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    # ========================================================
+    # SUCCESS
+    # ========================================================
+
+    return Response(
+        AdminLegacyDeckSerializer(
+            legacy_deck
+        ).data,
+        status=status.HTTP_201_CREATED,
+    )
+# ============================================================
+# ADMIN LEGACY DECKLIST UPDATE
+# ============================================================
+
+@api_view(["PATCH"])
+@owner_required
+@parser_classes([MultiPartParser, FormParser])
+def admin_legacy_decklist_update(request, deckid):
+
+    print("\n========================================")
+    print("ADMIN LEGACY DECKLIST UPDATE START")
+    print("DECK ID:", deckid)
+    print("METHOD:", request.method)
+    print("CONTENT TYPE:", request.content_type)
+    print("FILES:", request.FILES)
+    print("DATA:", request.data)
+    print("========================================")
+
+    try:
+
+        deck = LegacyDecklist.objects.get(
+            deckid=deckid
+        )
+
+    except LegacyDecklist.DoesNotExist:
+
+        print("LEGACY DECK NOT FOUND")
+
+        return Response(
+            {
+                "error": "Legacy decklist not found."
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    except DatabaseError as exc:
+
+        print("DATABASE ERROR:", repr(exc))
+
+        logger.exception(
+            "Unable to retrieve legacy decklist %s",
+            deckid,
+        )
+
+        payload = {
+            "error": "Database query failed.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    print("LEGACY DECK FOUND:", deck.deckid)
+
+    # ========================================================
+    # COPY REQUEST DATA
+    # ========================================================
+
+    data = request.data.copy()
+
+    print("COPIED DATA:", data)
+
+    # ========================================================
+    # CARDS
+    # ========================================================
+
+    if "cards" in data:
+
+        print("PROCESSING CARDS")
+
+        selected_cards = normalize_card_list(
+            data.get("cards")
+        )
+
+        print("SELECTED CARDS:", selected_cards)
+
+        existing_cards = set(
+            WebCards.objects
+            .filter(
+                card_name__in=selected_cards
+            )
+            .values_list(
+                "card_name",
+                flat=True,
+            )
+        )
+
+        print("EXISTING CARDS:", existing_cards)
+
+        invalid_cards = [
+            card
+            for card in selected_cards
+            if card not in existing_cards
+        ]
+
+        print("INVALID CARDS:", invalid_cards)
+
+        if invalid_cards:
+
+            return Response(
+                {
+                    "error": "One or more selected cards do not exist.",
+                    "invalid_cards": invalid_cards,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data["cards"] = ", ".join(
+            selected_cards
+        )
+
+    # ========================================================
+    # IMAGE UPLOAD
+    # ========================================================
+
+    uploaded_image = (
+        request.FILES.get("image_file")
+        or request.FILES.get("image")
+    )
+
+    print("UPLOADED IMAGE:", uploaded_image)
+
+    if uploaded_image:
+
+        print("STARTING CLOUDINARY UPLOAD")
+
+        try:
+
+            image_url = save_deck_image(
+                uploaded_image,
+                deckid=deckid,
+                deck_name=data.get("name") or deck.name,
+            )
+
+            print("CLOUDINARY IMAGE URL:", image_url)
+
+            data["image"] = image_url
+
+        except ValueError as exc:
+
+            print("IMAGE VALUE ERROR:", repr(exc))
+
+            return Response(
+                {
+                    "error": str(exc)
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except Exception as exc:
+
+            print("IMAGE UPLOAD ERROR:", repr(exc))
+
+            logger.exception(
+                "Unable to save legacy deck image."
+            )
+
+            payload = {
+                "error": "Unable to save uploaded image.",
+                "error_type": exc.__class__.__name__,
+            }
+
+            if include_error_detail():
+                payload["detail"] = str(exc)
+
+            return Response(
+                payload,
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    # ========================================================
+    # REMOVE IMAGE
+    # ========================================================
+
+    remove_image = str(
+        data.get("remove_image", "")
+    ).lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+    if remove_image and not uploaded_image:
+
+        data["image"] = ""
+
+    data.pop(
+        "remove_image",
+        None,
+    )
+
+    # ========================================================
+    # REMOVE image_file
+    # ========================================================
+
+    data.pop(
+        "image_file",
+        None,
+    )
+
+    print("DATA BEFORE SERIALIZER:", data)
+
+    # ========================================================
+    # SERIALIZE
+    # ========================================================
+
+    serializer = AdminLegacyDeckSerializer(
+        deck,
+        data=data,
+        partial=True,
+    )
+
+    if not serializer.is_valid():
+
+        print("========================================")
+        print("LEGACY DECK UPDATE SERIALIZER ERROR")
+        print(serializer.errors)
+        print("========================================")
+
+        return Response(
+            {
+                "error": "Invalid legacy decklist data.",
+                "fields": serializer.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ========================================================
+    # SAVE
+    # ========================================================
+
+    try:
+
+        updated_deck = serializer.save()
+
+        print(
+            "LEGACY DECK SAVED:",
+            updated_deck.deckid,
+        )
+
+        print(
+            "NEW IMAGE:",
+            updated_deck.image,
+        )
+
+    except DatabaseError as exc:
+
+        logger.exception(
+            "Unable to update legacy decklist %s",
+            deckid,
+        )
+
+        payload = {
+            "error": "Database update failed.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    print("ADMIN LEGACY DECKLIST UPDATE SUCCESS")
+    print("========================================\n")
+
+    return Response(
+        AdminLegacyDeckSerializer(
+            updated_deck
+        ).data,
+        status=status.HTTP_200_OK,
+    )
+@api_view(["POST"])
+@owner_required
+@parser_classes([MultiPartParser, FormParser])
+def admin_decklist_create(request):
+    data = request.data.copy()
+
+    # ========================================================
+    # CARDS
+    # ========================================================
+
+    if "cards" in data:
+        selected_cards = normalize_card_list(data.get("cards"))
+
+        existing_cards = set(
+            WebCards.objects
+            .filter(card_name__in=selected_cards)
+            .values_list("card_name", flat=True)
+        )
+
+        invalid_cards = [
+            card
+            for card in selected_cards
+            if card not in existing_cards
+        ]
+
+        if invalid_cards:
+            return Response(
+                {
+                    "error": "One or more selected cards do not exist.",
+                    "invalid_cards": invalid_cards,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data["cards"] = ", ".join(selected_cards)
+
+    # ========================================================
+    # IMAGE
+    # ========================================================
+
+    uploaded_image = (
+        request.FILES.get("image_file")
+        or request.FILES.get("image")
+    )
+
+    if uploaded_image:
+        try:
+            image_url = save_deck_image(
+                uploaded_image,
+                deckid=data.get("deckid") or "",
+                deck_name=data.get("name") or "deck",
+            )
+
+            data["image"] = image_url
+
+        except ValueError as exc:
+            return Response(
+                {"error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except Exception as exc:
+            logger.exception("Unable to save deck image.")
+
+            payload = {
+                "error": "Unable to save uploaded image.",
+                "error_type": exc.__class__.__name__,
+            }
+
+            if include_error_detail():
+                payload["detail"] = str(exc)
+
+            return Response(
+                payload,
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    data.pop("image_file", None)
+    data.pop("remove_image", None)
+
+    # ========================================================
+    # CREATE
+    # ========================================================
+
+    serializer = AdminDeckSerializer(data=data)
+
+    if not serializer.is_valid():
+        return Response(
+            {
+                "error": "Invalid decklist data.",
+                "fields": serializer.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        deck = serializer.save()
+
+    except DatabaseError as exc:
+        logger.exception("Unable to create decklist.")
+
+        payload = {
+            "error": "Database creation failed.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    return Response(
+        AdminDeckSerializer(deck).data,
+        status=status.HTTP_201_CREATED,
+    )
+
+# ============================================================
+# ADMIN LEGACY DECKLIST DELETE
+# ============================================================
+
+@csrf_exempt
+@api_view(["DELETE"])
+@owner_required
+def admin_legacy_decklist_delete(
+    request,
+    deckid,
+):
+
+    try:
+
+        deck = LegacyDecklist.objects.get(
+            deckid=deckid
+        )
+
+    except LegacyDecklist.DoesNotExist:
+
+        return Response(
+            {
+                "error": "Legacy decklist not found."
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    except DatabaseError as exc:
+
+        logger.exception(
+            "Unable to retrieve legacy decklist %s for deletion",
+            deckid,
+        )
+
+        payload = {
+            "error": "Database query failed.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    try:
+
+        deck.delete()
+
+    except DatabaseError as exc:
+
+        logger.exception(
+            "Unable to delete legacy decklist %s",
+            deckid,
+        )
+
+        payload = {
+            "error": "Database deletion failed.",
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
+        return Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    return Response(
+        {
+            "success": True,
+            "deleted": deckid,
+        },
+        status=status.HTTP_200_OK,
+    )
 # ============================================================
 # NORMALIZE CARD INPUT
 # ============================================================
