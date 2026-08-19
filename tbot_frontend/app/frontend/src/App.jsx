@@ -1,5 +1,6 @@
 import "./css/App.css";
 import "./css/navbar.css";
+
 import { Link, Route, Routes } from "react-router-dom";
 
 import Admin from "./pages/admin.jsx";
@@ -39,45 +40,37 @@ function HomePage() {
         <div className="feature-grid">
           <div className="feature-command">
             <h3>Decklists</h3>
-
             <p>
               Browse community decklists and find decks by hero, class,
               archetype, type, name, and other information.
             </p>
-
             <Link to="/decklists">Explore Decklists →</Link>
           </div>
 
           <div className="feature-command">
             <h3>Card Information</h3>
-
             <p>
               Search through Plant and Zombie cards using detailed filters for
               class, cost, attack, health, keywords, tribes, set, and rarity.
             </p>
-
             <Link to="/cardinfo">Explore Cards →</Link>
           </div>
 
           <div className="feature-command">
             <h3>Hero Information</h3>
-
             <p>
               Browse the Plant and Zombie heroes and view their classes,
               abilities, traits, stats, and complete card details.
             </p>
-
             <Link to="/heroinfo">Explore Heroes →</Link>
           </div>
 
           <div className="feature-command">
             <h3>Keep or Scrap</h3>
-
             <p>
               Use class-by-class recommendations to help decide which cards are
               worth keeping and which cards may be worth scrapping.
             </p>
-
             <Link to="/keeporscrap">View Keep or Scrap →</Link>
           </div>
         </div>
@@ -126,7 +119,6 @@ function HomePage() {
         <div className="quick-answer-grid">
           <div className="quick-answer-card">
             <h3>What is Tbot?</h3>
-
             <p>
               Tbot is a Plants vs. Zombies Heroes community website and Discord
               bot that brings together decklists, card information, hero
@@ -136,7 +128,6 @@ function HomePage() {
 
           <div className="quick-answer-card">
             <h3>What can I find on the website?</h3>
-
             <p>
               You can browse community decklists, search and filter cards, look
               up heroes, and use the Keep or Scrap section to review card
@@ -146,7 +137,6 @@ function HomePage() {
 
           <div className="quick-answer-card">
             <h3>Can I contribute?</h3>
-
             <p>
               Yes. Deck submissions, ideas, corrections, and feedback are
               welcome through the Tbot community Discord.
@@ -163,7 +153,6 @@ function HomePage() {
 
           <div className="quick-answer-card">
             <h3>How can I support Tbot?</h3>
-
             <p>
               If you find the website or Discord bot useful, you can help
               support continued development and maintenance through Buy Me a
@@ -203,10 +192,28 @@ function App() {
 
       <Route path="/admin" element={<Admin />} />
       <Route path="/admin/decklists" element={<AdminDecklists />} />
-      <Route path="/admin/legacy-decks" element={<AdminLegacyDecks />} />
-      <Route path="/admin/legacy-decks/add" element={<AdminLegacyDecks />} />
+
+      <Route
+        path="/admin/legacy-decks"
+        element={<AdminLegacyDecks />}
+      />
+
+      <Route
+        path="/admin/legacy-decks/add"
+        element={<AdminLegacyDecks />}
+      />
 
       <Route path="/profile/:profile_slug" element={<Profile />} />
+
+      <Route
+        path="*"
+        element={
+          <div style={{ padding: "40px", color: "#fff" }}>
+            <h1>404</h1>
+            <p>Page not found.</p>
+          </div>
+        }
+      />
     </Routes>
   );
 }

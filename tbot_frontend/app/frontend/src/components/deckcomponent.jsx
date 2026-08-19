@@ -316,58 +316,58 @@ function DeckCard({
   };
 
   const description = hasValue(deck.description)
-    ? deck.description
-    : "No description available.";
+  ? deck.description
+  : "No description available.";
 
-  const heroOptions = useMemo(() => {
-    const seen = new Set();
-    const options = [];
+const normalizedFormSide = normalizeSide(form.side);
 
-    (Array.isArray(allCards) ? allCards : []).forEach((card) => {
-      const rarity = String(
-        card?.set_rarity ?? card?.setRarity ?? card?.rarity ?? "",
-      )
-        .trim()
-        .toLowerCase();
+const heroOptions = useMemo(() => {
+  const seen = new Set();
+  const options = [];
 
-      if (rarity !== "premium - hero") {
+  (Array.isArray(allCards) ? allCards : []).forEach((card) => {
+    const rarity = String(
+      card?.set_rarity ?? card?.setRarity ?? card?.rarity ?? "",
+    )
+      .trim()
+      .toLowerCase();
+
+    if (rarity !== "premium - hero") {
+      return;
+    }
+
+    const cardSide = getCardSide(card);
+
+    if (normalizedFormSide === "Plants" || normalizedFormSide === "Zombies") {
+      if (cardSide !== normalizedFormSide) {
         return;
       }
+    }
 
-      const cardSide = getCardSide(card);
+    const name = String(
+      card?.card_name ?? card?.title ?? card?.name ?? "",
+    ).trim();
 
-      if (normalizedFormSide === "Plants" || normalizedFormSide === "Zombies") {
-        if (cardSide !== normalizedFormSide) {
-          return;
-        }
-      }
+    if (!name) {
+      return;
+    }
 
-      const name = String(
-        card?.card_name ?? card?.title ?? card?.name ?? "",
-      ).trim();
+    const key = name.toLowerCase();
 
-      if (!name) {
-        return;
-      }
+    if (seen.has(key)) {
+      return;
+    }
 
-      const key = name.toLowerCase();
+    seen.add(key);
 
-      if (seen.has(key)) {
-        return;
-      }
-
-      seen.add(key);
-
-      options.push({
-        value: name,
-        label: name,
-      });
+    options.push({
+      value: name,
+      label: name,
     });
+  });
 
-    return options.sort((a, b) => a.label.localeCompare(b.label));
-  }, [allCards, normalizedFormSide]);
-
-  const normalizedFormSide = normalizeSide(form.side);
+  return options.sort((a, b) => a.label.localeCompare(b.label));
+}, [allCards, normalizedFormSide]);
 
   const cardOptions = useMemo(() => {
     const seen = new Set();

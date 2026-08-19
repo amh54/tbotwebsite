@@ -187,64 +187,155 @@ function LegacyDecksPage() {
   }, []);
 
   /* ============================================================
-     LOAD LEGACY DECK COUNT
-  ============================================================ */
+     LOAD LEGACY DATA
+     
+     One effect instead of three separate effects.
+============================================================ */
 
   useEffect(() => {
     const controller = new AbortController();
+    let mounted = true;
 
-    const fetchDeckCount = async () => {
+    const loadLegacyData = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        /*
+         * Load the count and legacy decks together.
+         */
+        const [countResponse, decksResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/tbotapp/legacy-decklist-count/`, {
+            signal: controller.signal,
+          }),
+
+          fetch(`${API_BASE_URL}/tbotapp/legacy-decklists/`, {
+            signal: controller.signal,
+          }),
+        ]);
+
+        if (!countResponse.ok) {
+          throw new Error(
+            `Legacy deck count request failed with status ${countResponse.status}`,
+          );
+        }
+
+        if (!decksResponse.ok) {
+          let message = `Legacy deck request failed with status ${decksResponse.status}`;
+
+          try {
+            const payload = await decksResponse.json();
+
+            if (payload?.detail) {
+              message += `: ${payload.detail}`;
+            } else if (payload?.error) {
+              message += `: ${payload.error}`;
+            }
+          } catch {
+            // Ignore JSON parsing errors.
+          }
+
+          throw new Error(message);
+        }
+
+        const countData = await countResponse.json();
+
+        const contentType = (
+          decksResponse.headers.get("content-type") || ""
+        ).toLowerCase();
+
+        if (!contentType.includes("application/json")) {
+          throw new Error(
+            "The legacy decklist endpoint did not return JSON.",
+          );
+        }
+
+        const deckData = await decksResponse.json();
+
+        const results = Array.isArray(deckData)
+          ? deckData
+          : Array.isArray(deckData?.results)
+            ? deckData.results
+            : [];
+
+        const normalizedResults = results.map((deck) => ({
+          ...deck,
+          cards: deck?.cards ?? "",
+        }));
+
+        if (!mounted) {
+          return;
+        }
+
+        setDecks(normalizedResults);
+
+        setTotalDecks(
+          Number(countData?.count) || normalizedResults.length,
+        );
+      } catch (err) {
+        if (err.name === "AbortError") {
+          return;
+        }
+
+        console.error("Unable to load legacy decklists:", err);
+
+        if (mounted) {
+          setError(
+            `Unable to load legacy decklists right now. ${
+              err.message || ""
+            }`.trim(),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadLegacyData();
+
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
+  }, []);
+
+  /* ============================================================
+     LOAD CARD INFORMATION
+
+     This is kept separate because it is only needed for
+     hero dropdown information.
+
+     If you don't need hero images/descriptions in the
+     dropdown, this entire effect can be removed.
+============================================================ */
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let mounted = true;
+
+    const fetchCards = async () => {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/tbotapp/legacy-decklist-count/`,
+          `${API_BASE_URL}/tbotapp/cardinfo/`,
           {
             signal: controller.signal,
           },
         );
 
         if (!response.ok) {
-          throw new Error(
-            `Legacy deck count request failed with status ${response.status}`,
-          );
-        }
-
-        const data = await response.json();
-
-        setTotalDecks(Number(data?.count) || 0);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load legacy deck count:", err);
-        }
-      }
-    };
-
-    fetchDeckCount();
-
-    return () => controller.abort();
-  }, []);
-
-  /* ============================================================
-     LOAD CARDS
-  ============================================================ */
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchCards = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(
+          console.error(
             `Card information request failed with status ${response.status}`,
           );
+          return;
         }
 
         const data = await response.json();
 
-        setAllCards(Array.isArray(data) ? data : []);
+        if (mounted) {
+          setAllCards(Array.isArray(data) ? data : []);
+        }
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to load card information:", err);
@@ -254,98 +345,15 @@ function LegacyDecksPage() {
 
     fetchCards();
 
-    return () => controller.abort();
-  }, []);
-
-  /* ============================================================
-     LOAD LEGACY DECKS
-  ============================================================ */
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchDecks = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const endpoint = `${API_BASE_URL}/tbotapp/legacy-decklists/`;
-
-        const response = await fetch(endpoint, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          let message = `Request failed with status ${response.status}`;
-
-          try {
-            const payload = await response.json();
-
-            if (payload?.detail) {
-              message += `: ${payload.detail}`;
-            } else if (payload?.error) {
-              message += `: ${payload.error}`;
-            }
-          } catch (_error) {
-            // Ignore JSON parsing errors.
-          }
-
-          throw new Error(message);
-        }
-
-        const contentType = (
-          response.headers.get("content-type") || ""
-        ).toLowerCase();
-
-        const text = await response.text();
-
-        if (!contentType.includes("application/json")) {
-          throw new Error("The legacy decklist endpoint did not return JSON.");
-        }
-
-        const data = JSON.parse(text);
-
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
-
-        const normalizedResults = results.map((deck) => ({
-          ...deck,
-          cards: deck?.cards ?? "",
-        }));
-
-        setDecks(normalizedResults);
-
-        setTotalDecks((currentTotal) =>
-          currentTotal > 0 ? currentTotal : normalizedResults.length,
-        );
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load legacy decklists:", err);
-
-          setError(
-            `Unable to load legacy decklists right now. ${
-              err.message || ""
-            }`.trim(),
-          );
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
+    return () => {
+      mounted = false;
+      controller.abort();
     };
-
-    fetchDecks();
-
-    return () => controller.abort();
   }, []);
 
   /* ============================================================
      SIDE FILTER
-  ============================================================ */
+============================================================ */
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -354,12 +362,14 @@ function LegacyDecksPage() {
 
     const selectedSide = normalizeKey(side);
 
-    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
+    return decks.filter(
+      (deck) => normalizeKey(deck.side) === selectedSide,
+    );
   }, [decks, side]);
 
   /* ============================================================
      HERO OPTIONS
-  ============================================================ */
+============================================================ */
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
@@ -389,7 +399,8 @@ function LegacyDecksPage() {
       .map((option) => {
         const matchedCard = allCards.find(
           (card) =>
-            normalizeKey(card?.card_name) === normalizeKey(option.label),
+            normalizeKey(card?.card_name) ===
+            normalizeKey(option.label),
         );
 
         return {
@@ -407,7 +418,7 @@ function LegacyDecksPage() {
 
   /* ============================================================
      CATEGORY OPTIONS
-  ============================================================ */
+============================================================ */
 
   const categoryOptions = useMemo(() => {
     const categoryMap = new Map();
@@ -424,7 +435,9 @@ function LegacyDecksPage() {
       if (!categoryMap.has(key)) {
         categoryMap.set(key, {
           value: categoryName,
-          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
+          label:
+            categoryName.charAt(0).toUpperCase() +
+            categoryName.slice(1),
           count: 0,
           ...(CATEGORY_META[key] || {}),
         });
@@ -442,7 +455,7 @@ function LegacyDecksPage() {
 
   /* ============================================================
      ARCHETYPE OPTIONS
-  ============================================================ */
+============================================================ */
 
   const archetypeOptions = useMemo(() => {
     const counts = {};
@@ -477,7 +490,7 @@ function LegacyDecksPage() {
 
   /* ============================================================
      SORT
-  ============================================================ */
+============================================================ */
 
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
@@ -489,7 +502,9 @@ function LegacyDecksPage() {
       const sideA = normalizeKey(a.side);
       const sideB = normalizeKey(b.side);
 
-      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
+      const sideCompare =
+        (sideOrder[sideA] ?? 99) -
+        (sideOrder[sideB] ?? 99);
 
       if (sideCompare !== 0) {
         return sideCompare;
@@ -519,7 +534,7 @@ function LegacyDecksPage() {
 
   /* ============================================================
      FILTER
-  ============================================================ */
+============================================================ */
 
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
@@ -548,17 +563,22 @@ function LegacyDecksPage() {
         !searchValue ||
         (alias
           ? normalizeKey(deck.hero).includes(alias)
-          : searchableValues.some((value) => value.includes(searchValue)));
+          : searchableValues.some((value) =>
+              value.includes(searchValue),
+            ));
 
       const deckSide = normalizeKey(deck.side);
 
-      const sideMatch = side === "All" || deckSide === normalizeKey(side);
+      const sideMatch =
+        side === "All" ||
+        deckSide === normalizeKey(side);
 
       const heroMatch =
         hero.length === 0 ||
         hero.some(
           (selectedHero) =>
-            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
+            normalizeKey(deck.hero) ===
+            normalizeKey(selectedHero.value),
         );
 
       const categoryMatch =
@@ -574,18 +594,31 @@ function LegacyDecksPage() {
       const archetypeMatch =
         archetype.length === 0 ||
         archetype.every((selectedArchetype) =>
-          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
+          deckArchetype.includes(
+            normalizeKey(selectedArchetype.value),
+          ),
         );
 
       return (
-        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
+        searchMatch &&
+        sideMatch &&
+        heroMatch &&
+        categoryMatch &&
+        archetypeMatch
       );
     });
-  }, [sortedDecks, search, side, hero, category, archetype]);
+  }, [
+    sortedDecks,
+    search,
+    side,
+    hero,
+    category,
+    archetype,
+  ]);
 
   /* ============================================================
      CLEAR FILTERS
-  ============================================================ */
+============================================================ */
 
   const clearFilters = () => {
     setSearch("");
@@ -601,7 +634,7 @@ function LegacyDecksPage() {
 
   /* ============================================================
      LOADING
-  ============================================================ */
+============================================================ */
 
   if (loading) {
     return (
@@ -611,13 +644,18 @@ function LegacyDecksPage() {
 
           <h2>Loading legacy decks</h2>
 
-          <p>Preparing the legacy deck browser and loading available decks.</p>
+          <p>
+            Preparing the legacy deck browser and loading available
+            decks.
+          </p>
 
           <div className="loading-status">
             <span>Loading legacy deck data</span>
 
             <strong>
-              {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
+              {totalDecks > 0
+                ? `${totalDecks} decks`
+                : "Loading..."}
             </strong>
           </div>
         </div>
@@ -627,7 +665,7 @@ function LegacyDecksPage() {
 
   /* ============================================================
      RENDER
-  ============================================================ */
+============================================================ */
 
   return (
     <div className="deck-page">
@@ -637,9 +675,6 @@ function LegacyDecksPage() {
         <h1>Legacy Decks</h1>
 
         <div className="deck-browser">
-          {/* ==================================================
-             SIDE TABS
-          ================================================== */}
 
           <div className="tabs">
             <button
@@ -660,6 +695,7 @@ function LegacyDecksPage() {
                 alt="Plants"
                 className="tab-icon"
               />
+
               Plants
             </button>
 
@@ -673,26 +709,21 @@ function LegacyDecksPage() {
                 alt="Zombies"
                 className="tab-icon"
               />
+
               Zombies
             </button>
           </div>
-
-          {/* ==================================================
-             SEARCH
-          ================================================== */}
 
           <div className="search-container">
             <input
               className="search"
               placeholder="Search legacy decks, creators, heroes, cards..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
             />
           </div>
-
-          {/* ==================================================
-             FILTERS
-          ================================================== */}
 
           <div className="filters">
             <div className="select-wrapper">
@@ -735,21 +766,19 @@ function LegacyDecksPage() {
           </div>
         </div>
 
-        {/* ==================================================
-           RESULTS
-        ================================================== */}
-
         {error ? (
           <p className="error-message">{error}</p>
         ) : (
           <p className="results-count">
-            Showing {filteredDecks.length} of {totalDecks || decks.length}{" "}
-            legacy decks
+            Showing {filteredDecks.length} of{" "}
+            {totalDecks || decks.length} legacy decks
           </p>
         )}
 
         {!error && filteredDecks.length === 0 ? (
-          <p className="no-results">No legacy decks found.</p>
+          <p className="no-results">
+            No legacy decks found.
+          </p>
         ) : (
           !error && (
             <div className="deck-grid">
