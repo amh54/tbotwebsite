@@ -172,12 +172,6 @@ const getImageUrl = (value) => {
   return `${API_BASE_URL}/${image}`;
 };
 
-const parseCardLines = (value) =>
-  String(value ?? "")
-    .split(/[\n,]+/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-
 const parseMultiValues = (value) =>
   String(value ?? "")
     .split(/[,\n]+/)
@@ -196,7 +190,34 @@ const optionsToCombinedValue = (options) =>
     .filter(Boolean)
     .join(" ");
 
-const cardLinesToOptions = (value, options = []) => {
+// ---- Card ratio helpers -----------------------------------------------
+// Cards are stored in the same `cards` text field as before, one per line,
+// but each line is now `Card Name|count` so no backend/model changes are
+// needed — it's still just a text field.
+
+const MAX_CARD_RATIO = 4;
+const TARGET_CARD_RATIO_TOTAL = 40;
+
+const parseCardRatioLines = (value) =>
+  String(value ?? "")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [namePart, countPart] = line.split("|");
+      const name = String(namePart || "").trim();
+      const parsedCount = Number(countPart);
+
+      const count =
+        Number.isFinite(parsedCount) && parsedCount > 0
+          ? Math.min(parsedCount, MAX_CARD_RATIO)
+          : 1;
+
+      return { name, count };
+    })
+    .filter((entry) => entry.name);
+
+const cardRatioLinesToOptions = (value, options = []) => {
   const optionMap = new Map(
     options.map((option) => [
       String(option.value).trim().toLowerCase(),
@@ -204,16 +225,51 @@ const cardLinesToOptions = (value, options = []) => {
     ]),
   );
 
-  return parseCardLines(value)
-    .map((name) => optionMap.get(name.toLowerCase()))
+  return parseCardRatioLines(value)
+    .map((entry) => {
+      const matched = optionMap.get(entry.name.toLowerCase());
+
+      if (!matched) {
+        return null;
+      }
+
+      return { ...matched, count: entry.count };
+    })
     .filter(Boolean);
 };
 
-const cardOptionsToLines = (options) =>
+const cardOptionsToRatioLines = (options) =>
   (options || [])
-    .map((option) => String(option?.value || "").trim())
+    .map((option) => {
+      const name = String(option?.value || "").trim();
+      const count = Number(option?.count) || 0;
+
+      if (!name || count <= 0) {
+        return "";
+      }
+
+      return `${name}|${count}`;
+    })
     .filter(Boolean)
     .join("\n");
+
+const formatCardsDisplay = (value) => {
+  const entries = parseCardRatioLines(value);
+
+  if (entries.length === 0) {
+    return "";
+  }
+
+  return entries.map((entry) => `${entry.name} x${entry.count}`).join(", ");
+};
+
+const sumCardRatios = (options) =>
+  (options || []).reduce(
+    (sum, option) => sum + (Number(option?.count) || 0),
+    0,
+  );
+
+// -------------------------------------------------------------------------
 
 const selectStyles = {
   control: (base, state) => ({
@@ -431,6 +487,84 @@ const singleValueStyles = {
     cursor: "pointer",
   }),
 };
+
+// Renders the per-card +/- ratio steppers plus the running total.
+// Purely additive UI — doesn't touch any existing styling/classes.
+function CardRatioEditor({ options, onChange, disabled, total }) {
+  if (!options || options.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="admin-modal-field admin-modal-cards-ratio">
+      <span>Card Ratios (must total {TARGET_CARD_RATIO_TOTAL})</span>
+
+      {options.map((option) => {
+        const count = option.count ?? 1;
+
+        return (
+          <div
+            key={option.value}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              margin: "4px 0",
+            }}
+          >
+            <span style={{ flex: 1 }}>{option.label}</span>
+
+            <button
+              type="button"
+              onClick={() => onChange(option.value, -1)}
+              disabled={disabled}
+              aria-label={`Decrease ${option.label} count`}
+            >
+              −
+            </button>
+
+            <span style={{ minWidth: "20px", textAlign: "center" }}>
+              {count}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => onChange(option.value, 1)}
+              disabled={disabled || count >= MAX_CARD_RATIO}
+              aria-label={`Increase ${option.label} count`}
+            >
+              +
+            </button>
+          </div>
+        );
+      })}
+
+      <div
+        style={{
+          marginTop: "6px",
+          fontWeight: 600,
+          color: total === TARGET_CARD_RATIO_TOTAL ? "#8fe38b" : "#ff8c8c",
+        }}
+      >
+        Total: {total} / {TARGET_CARD_RATIO_TOTAL}
+      </div>
+    </div>
+  );
+}
+
+// Inline, in-modal error message (replaces alert() for cards-related errors).
+function CardsErrorMessage({ message }) {
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <div style={{ color: "#ff8c8c", fontSize: "0.85rem", marginTop: "4px" }}>
+      {message}
+    </div>
+  );
+}
+
 function DeckCard({
   decklist,
   admin = false,
@@ -458,6 +592,7 @@ function DeckCard({
   const [imgError, setImgError] = useState(false);
   const [copied, setCopied] = useState(false);
   const [form, setForm] = useState({});
+  const [cardsError, setCardsError] = useState("");
 
   const deckImage = getImageUrl(deck.image);
 
@@ -617,6 +752,11 @@ function DeckCard({
     return options.sort((a, b) => a.label.localeCompare(b.label));
   }, [allCards, normalizedFormSide, form.hero, selectedHeroClasses]);
 
+  const totalCardRatio = useMemo(
+    () => sumCardRatios(form.cardsSelected),
+    [form.cardsSelected],
+  );
+
   const createForm = (source = {}) => ({
     name: source.name ?? "",
     hero: source.hero ?? "",
@@ -698,6 +838,7 @@ function DeckCard({
       setEditing(true);
       setForm(createForm({}));
       setImgError(false);
+      setCardsError("");
       return;
     }
 
@@ -779,7 +920,7 @@ function DeckCard({
     }
 
     if (!Array.isArray(form.cardsSelected) || form.cardsSelected.length === 0) {
-      const matchingCards = cardLinesToOptions(form.cards, cardOptions);
+      const matchingCards = cardRatioLinesToOptions(form.cards, cardOptions);
 
       if (matchingCards.length > 0) {
         setForm((previous) => ({
@@ -796,6 +937,7 @@ function DeckCard({
       setEditing(true);
       setForm(createForm({}));
       setImgError(false);
+      setCardsError("");
       return;
     }
 
@@ -806,10 +948,11 @@ function DeckCard({
 
     setForm({
       ...initialForm,
-      cardsSelected: cardLinesToOptions(deck.cards ?? "", cardOptions),
+      cardsSelected: cardRatioLinesToOptions(deck.cards ?? "", cardOptions),
     });
 
     setImgError(false);
+    setCardsError("");
 
     if (!deckKey) {
       return;
@@ -858,10 +1001,11 @@ function DeckCard({
 
     setForm({
       ...initialForm,
-      cardsSelected: cardLinesToOptions(deck.cards ?? "", cardOptions),
+      cardsSelected: cardRatioLinesToOptions(deck.cards ?? "", cardOptions),
     });
 
     setImgError(false);
+    setCardsError("");
     setEditing(true);
   };
 
@@ -879,11 +1023,12 @@ function DeckCard({
 
     setForm({
       ...initialForm,
-      cardsSelected: cardLinesToOptions(deck.cards ?? "", cardOptions),
+      cardsSelected: cardRatioLinesToOptions(deck.cards ?? "", cardOptions),
     });
 
     setEditing(false);
     setImgError(false);
+    setCardsError("");
   };
 
   const handleChange = (field, value) => {
@@ -906,6 +1051,8 @@ function DeckCard({
       cardsSelected: [],
       cards: "",
     }));
+
+    setCardsError("");
   };
 
   const handleSideChange = (selected) => {
@@ -918,13 +1065,71 @@ function DeckCard({
       cardsSelected: [],
       cards: "",
     }));
+
+    setCardsError("");
   };
 
   const handleCardsChange = (selected) => {
-    setForm((previous) => ({
-      ...previous,
-      cardsSelected: selected || [],
-    }));
+    setForm((previous) => {
+      const previousCounts = new Map(
+        (previous.cardsSelected || []).map((option) => [
+          String(option.value).toLowerCase(),
+          option.count,
+        ]),
+      );
+
+      const nextSelected = (selected || []).map((option) => ({
+        ...option,
+        count: previousCounts.get(String(option.value).toLowerCase()) ?? 1,
+      }));
+
+      return {
+        ...previous,
+        cardsSelected: nextSelected,
+      };
+    });
+
+    setCardsError("");
+  };
+
+  const handleCardRatioChange = (cardValue, delta) => {
+    setForm((previous) => {
+      const cardsSelected = previous.cardsSelected || [];
+
+      const index = cardsSelected.findIndex(
+        (option) =>
+          String(option.value).toLowerCase() ===
+          String(cardValue).toLowerCase(),
+      );
+
+      if (index === -1) {
+        return previous;
+      }
+
+      const currentCount = cardsSelected[index].count ?? 1;
+      const nextCount = currentCount + delta;
+
+      if (nextCount < 1) {
+        return {
+          ...previous,
+          cardsSelected: cardsSelected.filter((_, i) => i !== index),
+        };
+      }
+
+      if (nextCount > MAX_CARD_RATIO) {
+        return previous;
+      }
+
+      const nextSelected = [...cardsSelected];
+      nextSelected[index] = { ...nextSelected[index], count: nextCount };
+
+      return {
+        ...previous,
+        cardsSelected: nextSelected,
+      };
+    });
+
+    setCardsError("");
   };
 
   const handleCategoryChange = (selected) => {
@@ -997,9 +1202,20 @@ function DeckCard({
     }
 
     if (!form.cardsSelected || form.cardsSelected.length === 0) {
-      alert("Please select at least one card.");
+      setCardsError("Please select at least one card.");
       return;
     }
+
+    const ratioTotal = sumCardRatios(form.cardsSelected);
+
+    if (ratioTotal !== TARGET_CARD_RATIO_TOTAL) {
+      setCardsError(
+        `Card ratios must add up to ${TARGET_CARD_RATIO_TOTAL} (currently ${ratioTotal}).`,
+      );
+      return;
+    }
+
+    setCardsError("");
 
     try {
       setSaving(true);
@@ -1031,7 +1247,7 @@ function DeckCard({
         suggested_date: form.suggested_date ?? "",
         updated_date: form.updated_date ?? "",
         deck_doc: form.deck_doc ?? "",
-        cards: cardOptionsToLines(validCards),
+        cards: cardOptionsToRatioLines(validCards),
       };
 
       const result = addMode
@@ -1046,7 +1262,7 @@ function DeckCard({
 
       setForm({
         ...resultForm,
-        cardsSelected: cardLinesToOptions(
+        cardsSelected: cardRatioLinesToOptions(
           result.cards ?? payload.cards ?? "",
           cardOptions,
         ),
@@ -1054,10 +1270,16 @@ function DeckCard({
 
       setEditing(false);
       setImgError(false);
+      setCardsError("");
     } catch (error) {
       console.error(
         addMode ? "Failed to add deck:" : "Failed to save deck:",
         error,
+      );
+
+      setCardsError(
+        error?.message ||
+          (addMode ? "Failed to add deck." : "Failed to save deck."),
       );
     } finally {
       setSaving(false);
@@ -1375,6 +1597,15 @@ function DeckCard({
                       isDisabled={!normalizedFormSide || !form.hero}
                     />
                   </div>
+
+                  <CardRatioEditor
+                    options={form.cardsSelected}
+                    onChange={handleCardRatioChange}
+                    disabled={isSaving}
+                    total={totalCardRatio}
+                  />
+
+                  <CardsErrorMessage message={cardsError} />
                 </section>
               </div>
             </div>
@@ -1826,6 +2057,15 @@ function DeckCard({
                             isDisabled={!normalizedFormSide || !form.hero}
                           />
                         </div>
+
+                        <CardRatioEditor
+                          options={form.cardsSelected}
+                          onChange={handleCardRatioChange}
+                          disabled={isSaving}
+                          total={totalCardRatio}
+                        />
+
+                        <CardsErrorMessage message={cardsError} />
                       </>
                     ) : (
                       <>
@@ -1876,7 +2116,9 @@ function DeckCard({
                       <h3>Cards</h3>
 
                       <div className="admin-cards-value">
-                        {hasValue(deck.cards) ? deck.cards : "No cards listed."}
+                        {hasValue(deck.cards)
+                          ? formatCardsDisplay(deck.cards) || deck.cards
+                          : "No cards listed."}
                       </div>
                     </section>
                   )}

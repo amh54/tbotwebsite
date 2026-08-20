@@ -374,20 +374,11 @@ def validate_deck_cards(side, hero, selected_cards):
     hero_name = str(hero or "").strip()
 
     if not hero_name:
-        return {
-            "error": "A hero is required."
-        }
-
-    # --------------------------------------------------------
-    # HERO
-    # --------------------------------------------------------
+        return {"error": "A hero is required."}
 
     hero_card = (
         WebCards.objects
-        .filter(
-            card_name__iexact=hero_name,
-            side__iexact=side,
-        )
+        .filter(card_name__iexact=hero_name, side__iexact=side)
         .first()
     )
 
@@ -398,25 +389,14 @@ def validate_deck_cards(side, hero, selected_cards):
             "hero": hero_name,
         }
 
-    hero_rarity = str(
-        getattr(hero_card, "set_rarity", "") or ""
-    ).strip().lower()
+    hero_rarity = str(getattr(hero_card, "set_rarity", "") or "").strip().lower()
 
     if "hero" not in hero_rarity:
-        return {
-            "error": "The selected card is not a valid hero.",
-            "hero": hero_name,
-        }
-
-    # --------------------------------------------------------
-    # HERO CARD TYPES
-    # --------------------------------------------------------
+        return {"error": "The selected card is not a valid hero.", "hero": hero_name}
 
     hero_card_types = {
         value.strip().lower()
-        for value in str(
-            getattr(hero_card, "card_type", "") or ""
-        ).split(",")
+        for value in str(getattr(hero_card, "card_type", "") or "").split(",")
         if value.strip()
     }
 
@@ -427,114 +407,61 @@ def validate_deck_cards(side, hero, selected_cards):
         }
 
     # --------------------------------------------------------
-    # NORMALIZE SELECTED CARDS
+    # PARSE NAME|COUNT
     # --------------------------------------------------------
 
-    normalized_cards = normalize_card_list(
-        selected_cards
-    )
+    parsed_cards = normalize_card_ratio_list(selected_cards)
 
-    if not normalized_cards:
-        return {
-            "cards": ""
-        }
-
-    # --------------------------------------------------------
-    # LOAD ALL POSSIBLE CARDS
-    # --------------------------------------------------------
+    if not parsed_cards:
+        return {"error": "Please select at least one card."}
 
     side_cards = list(
         WebCards.objects
-        .filter(
-            side__iexact=side,
-        )
-        .exclude(
-            set_rarity__iexact="Token"
-        )
+        .filter(side__iexact=side)
+        .exclude(set_rarity__iexact="Token")
     )
-
-    # --------------------------------------------------------
-    # BUILD NORMALIZED LOOKUP
-    # --------------------------------------------------------
 
     card_lookup = {}
 
     for card in side_cards:
+        card_name = str(getattr(card, "card_name", "") or "").strip()
 
-        card_name = str(
-            getattr(card, "card_name", "") or ""
-        ).strip()
-
-        if not card_name:
-            continue
-
-        card_lookup.setdefault(
-            card_name.lower(),
-            card,
-        )
-
-    # --------------------------------------------------------
-    # VALIDATE
-    # --------------------------------------------------------
+        if card_name:
+            card_lookup.setdefault(card_name.lower(), card)
 
     invalid_cards = []
     incompatible_cards = []
-
     valid_cards = []
 
-    for selected_card in normalized_cards:
-
-        cleaned_name = str(
-            selected_card or ""
-        ).strip()
-
+    for entry in parsed_cards:
+        cleaned_name = entry["name"]
         lookup_key = cleaned_name.lower()
-
-        card = card_lookup.get(
-            lookup_key
-        )
+        card = card_lookup.get(lookup_key)
 
         if not card:
-            invalid_cards.append(
-                cleaned_name
-            )
+            invalid_cards.append(cleaned_name)
             continue
 
-        card_rarity = str(
-            getattr(card, "set_rarity", "") or ""
-        ).strip().lower()
+        card_rarity = str(getattr(card, "set_rarity", "") or "").strip().lower()
 
         if card_rarity == "token":
-            incompatible_cards.append(
-                cleaned_name
-            )
+            incompatible_cards.append(cleaned_name)
             continue
 
         card_types = {
             value.strip().lower()
-            for value in str(
-                getattr(card, "card_type", "") or ""
-            ).split(",")
+            for value in str(getattr(card, "card_type", "") or "").split(",")
             if value.strip()
         }
 
-        if not card_types.intersection(
-            hero_card_types
-        ):
-            incompatible_cards.append(
-                cleaned_name
-            )
+        if not card_types.intersection(hero_card_types):
+            incompatible_cards.append(cleaned_name)
             continue
 
-        valid_cards.append(
-            str(
-                getattr(card, "card_name", "")
-            ).strip()
-        )
-
-    # --------------------------------------------------------
-    # ERRORS
-    # --------------------------------------------------------
+        valid_cards.append({
+            "name": str(getattr(card, "card_name", "")).strip(),
+            "count": entry["count"],
+        })
 
     if invalid_cards:
         return {
@@ -557,13 +484,17 @@ def validate_deck_cards(side, hero, selected_cards):
             "invalid_cards": incompatible_cards,
         }
 
-    # --------------------------------------------------------
-    # SUCCESS
-    # --------------------------------------------------------
+    ratio_total = sum(card["count"] for card in valid_cards)
 
-    return {
-        "cards": ", ".join(valid_cards)
-    }
+    if ratio_total != TARGET_CARD_RATIO_TOTAL:
+        return {
+            "error": (
+                f"Card ratios must add up to {TARGET_CARD_RATIO_TOTAL} "
+                f"(currently {ratio_total})."
+            ),
+        }
+
+    return {"cards": cards_to_storage_string(valid_cards)}
 @api_view(["GET", "POST"])
 @ensure_csrf_cookie
 @owner_required
@@ -736,65 +667,78 @@ def admin_legacy_decklists(request):
 
         data["side"] = deck_side
 
-        # ========================================================
+                # ========================================================
         # CARDS
         # ========================================================
 
         if "cards" in data:
-            selected_cards = normalize_card_list(
+            parsed_cards = normalize_card_ratio_list(
                 data.get("cards")
+            )
+
+            print("PARSED CARDS:", parsed_cards)
+
+            if not parsed_cards:
+                return Response(
+                    {
+                        "error": "Please select at least one card.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-            print(
-                        "SELECTED CARDS:",
-                        selected_cards,
-                    )
-        
+
+            selected_names = [card["name"] for card in parsed_cards]
+
             existing_cards = set(
-                        WebCards.objects
-                        .filter(
-                            card_name__in=selected_cards,
-                            side__iexact=deck_side,
-                        )
-                        .values_list(
-                            "card_name",
-                            flat=True,
-                        )
-                    )
-        
-            print(
-                        "EXISTING CARDS:",
-                        existing_cards,
-                    )
-        
+                WebCards.objects
+                .filter(
+                    card_name__in=selected_names,
+                    side__iexact=deck_side,
+                )
+                .values_list(
+                    "card_name",
+                    flat=True,
+                )
+            )
+
+            print("EXISTING CARDS:", existing_cards)
+
             invalid_cards = [
-                        card
-                        for card in selected_cards
-                        if card not in existing_cards
-                    ]
-        
-            print(
-                        "INVALID CARDS:",
-                        invalid_cards,
-                    )
-        
+                card["name"]
+                for card in parsed_cards
+                if card["name"] not in existing_cards
+            ]
+
+            print("INVALID CARDS:", invalid_cards)
+
             if invalid_cards:
-        
-                        return Response(
-                            {
-                                "error": (
-                                    "One or more selected cards "
-                                    "do not belong to the selected "
-                                    "deck side."
-                                ),
-                                "side": deck_side,
-                                "invalid_cards": invalid_cards,
-                            },
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-        
-            data["cards"] = ", ".join(
-                        selected_cards
-                    )
+                return Response(
+                    {
+                        "error": (
+                            "One or more selected cards "
+                            "do not belong to the selected "
+                            "deck side."
+                        ),
+                        "side": deck_side,
+                        "invalid_cards": invalid_cards,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            ratio_total = sum(card["count"] for card in parsed_cards)
+
+            if ratio_total != TARGET_CARD_RATIO_TOTAL:
+                return Response(
+                    {
+                        "error": (
+                            f"Card ratios must add up to "
+                            f"{TARGET_CARD_RATIO_TOTAL} "
+                            f"(currently {ratio_total})."
+                        ),
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            data["cards"] = cards_to_storage_string(parsed_cards)
 
         # ========================================================
         # CLOUDINARY IMAGE UPLOAD
@@ -1525,6 +1469,109 @@ def admin_legacy_decklist_delete(
             "deleted": deckid,
         },
         status=status.HTTP_200_OK,
+    )
+    # ============================================================
+# NORMALIZE CARD+RATIO INPUT
+# ============================================================
+
+MAX_CARD_RATIO = 4
+TARGET_CARD_RATIO_TOTAL = 40
+
+
+def normalize_card_ratio_list(value):
+    """
+    Parse 'Card Name|count' lines (as sent by the frontend) into
+    a list of {"name": str, "count": int} dicts.
+
+    Falls back to count=1 for legacy lines with no '|count' suffix.
+    """
+
+    if value is None:
+        return []
+
+    if isinstance(value, str):
+        value = value.strip()
+
+        if not value:
+            return []
+
+        try:
+            parsed = json.loads(value)
+
+            if isinstance(parsed, list):
+                value = parsed
+
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    if isinstance(value, list):
+        raw_lines = []
+
+        for item in value:
+            if isinstance(item, dict):
+                name = item.get("card_name") or item.get("name") or ""
+                count = item.get("count")
+
+                if count is not None:
+                    raw_lines.append(f"{name}|{count}")
+                    continue
+
+                item = name
+
+            for line in str(item).splitlines():
+                raw_lines.append(line)
+
+    else:
+        raw_lines = str(value).splitlines()
+
+    parsed_cards = []
+    seen = set()
+
+    for line in raw_lines:
+        line = line.strip()
+
+        if not line:
+            continue
+
+        name_part, _, count_part = line.partition("|")
+
+        name = name_part.strip()
+
+        if not name:
+            continue
+
+        try:
+            count = int(str(count_part).strip())
+        except (TypeError, ValueError):
+            count = 1
+
+        if count < 1:
+            count = 1
+        elif count > MAX_CARD_RATIO:
+            count = MAX_CARD_RATIO
+
+        key = name.lower()
+
+        if key in seen:
+            continue
+
+        seen.add(key)
+
+        parsed_cards.append({
+            "name": name,
+            "count": count,
+        })
+
+    return parsed_cards
+
+
+def cards_to_storage_string(parsed_cards):
+    """Serialize [{"name": ..., "count": ...}] back to 'Name|count' lines."""
+
+    return "\n".join(
+        f"{card['name']}|{card['count']}"
+        for card in parsed_cards
+        if card.get("name")
     )
 # ============================================================
 # NORMALIZE CARD INPUT
