@@ -97,11 +97,10 @@ function Navbar() {
             const profileData = await profileResponse.json();
 
             console.log("PROFILE FROM API:", profileData);
-
-            console.log("PROFILE SLUG:", profileData?.profile_slug);
+            console.log("PROFILE SLUG:", profileData?.profile?.profile_slug);
 
             if (!cancelled) {
-              setProfile(profileData);
+              setProfile(profileData.profile);
             }
           } catch (profileError) {
             console.error("Unable to load user profile:", profileError);
