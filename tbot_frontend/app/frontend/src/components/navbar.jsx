@@ -53,7 +53,7 @@ function Navbar() {
 
     const loadUser = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/discord/me/`, {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/auth/discord/me/`, {
           method: "GET",
           credentials: "include",
         });
@@ -174,7 +174,7 @@ function Navbar() {
     setLoggingOut(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/discord/logout/`, {
+      const response = await fetch(`${API_BASE_URL}/tbotapp/auth/discord/logout/`, {
         method: "POST",
         credentials: "include",
       });
@@ -349,7 +349,7 @@ function Navbar() {
             </div>
           ) : (
             <a
-              href={`${API_BASE_URL}/auth/discord/login/`}
+              href={`${API_BASE_URL}/tbotapp/auth/discord/login/`}
               className="navbar-discord-login"
             >
               Login with Discord
@@ -485,7 +485,7 @@ function Navbar() {
               </>
             ) : (
               <a
-                href={`${API_BASE_URL}/auth/discord/login/`}
+                href={`${API_BASE_URL}/tbotapp/auth/discord/login/`}
                 className="navbar-discord-login navbar-discord-login-mobile"
               >
                 Login with Discord
