@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Decklist, WebCards, KeepOrScrap, UserDeck, LegacyDecklist
+from .models import Decklist, WebCards, KeepOrScrap, UserDeck, LegacyDecklist, UserProfile
 
 
 class PublicDeckSerializer(serializers.ModelSerializer):
@@ -59,6 +59,7 @@ class PublicLegacyDeckSerializer(serializers.ModelSerializer):
             "updated_date",
             "deck_doc",
         ]
+        
 # ============================================================
 # ADMIN DECKLIST SERIALIZER
 # ============================================================
@@ -146,7 +147,20 @@ class UserDeckSerializer(serializers.ModelSerializer):
             "created_at",
             "modified_at",
         ]
-
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = [
+            "id",
+            "discord_id",
+            "profile_slug",
+            "display_name",
+            "bio",
+            "avatar",
+            "is_public",
+            "created_at",
+            "updated_at",
+        ]
 # ============================================================
 # WEB CARDS
 # ============================================================

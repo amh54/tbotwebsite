@@ -34,6 +34,7 @@ from .serializers import (
     PublicDeckSerializer,
     AdminLegacyDeckSerializer,
     AdminDeckSerializer,
+    UserProfileSerializer,
     PublicLegacyDeckSerializer,
     WebCardSerializer,
     KeepOrScrapSerializer,
