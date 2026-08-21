@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
 import Footer from "../components/footer";
+import "../css/adminDecklists.css"
 
 import "../css/decklists.css";
 import "../css/loading.css";

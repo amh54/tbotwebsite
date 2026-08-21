@@ -1,198 +1,566 @@
 /* ============================================================
-   ADMIN DECKLIST HEADER
+   ADMIN DECKLISTS
    ============================================================ */
 
-.admin-decklists-header {
+.admin-decklists-topbar {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 20px;
   margin-bottom: 24px;
 }
 
-.admin-back-link {
-  display: inline-block;
-  margin-bottom: 10px;
-  color: #8f969a;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  transition: color 0.15s ease;
-}
-
-.admin-back-link:hover {
-  color: #8fe38b;
-}
-
-.admin-decklists-header h1 {
+.admin-decklists-topbar h1 {
   margin: 0;
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 800;
 }
 
-.admin-decklists-header p {
-  margin: 8px 0 0;
+.admin-decklists-subtitle {
+  margin: 6px 0 0;
   color: #92999d;
+  font-size: 0.95rem;
 }
 
-.admin-add-deck-button {
+.admin-decklists-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.admin-back-button,
+.admin-add-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 42px;
-  padding: 0 18px;
+  padding: 9px 16px;
   border-radius: 7px;
-  background: #8fe38b;
-  color: #101416;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 0.9rem;
   font-weight: 700;
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease;
-}
-
-.admin-add-deck-button:hover {
-  background: #a4ef9f;
-  transform: translateY(-1px);
-}
-
-
-/* ============================================================
-   ADMIN DECK GRID
-   ============================================================ */
-
-.admin-deck-grid {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(520px, 1fr)
-  );
-  gap: 20px;
-}
-
-
-/* ============================================================
-   DECK WRAPPER
-   ============================================================ */
-
-.admin-deck-wrapper {
-  min-width: 0;
-}
-
-
-/*
- * The actual deck card is still the exact same DeckCard
- * used by the public Decklists page.
- */
-
-.admin-deck-wrapper .deck-listing-card {
-  height: 100%;
-}
-
-
-/* ============================================================
-   ADMIN ACTIONS
-   ============================================================ */
-
-.admin-deck-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.admin-edit-button,
-.admin-delete-button {
-  flex: 1;
-  min-height: 38px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 14px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-
-.admin-edit-button {
-  background: #202427;
-  border: 1px solid #292d30;
-  color: #ffffff;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.admin-edit-button:hover {
-  background: #292e31;
-  border-color: #8fe38b;
-  color: #8fe38b;
-}
-
-.admin-delete-button {
-  background: #202427;
-  border: 1px solid #292d30;
-  color: #d5d5d5;
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 
-.admin-delete-button:hover {
-  background: #2b2020;
-  border-color: #d95c5c;
-  color: #ff7b7b;
+.admin-back-button {
+  background: #202020;
+  color: #ffffff;
+  border: 1px solid #444;
 }
 
-.admin-delete-button:disabled {
-  opacity: 0.5;
-  cursor: wait;
+.admin-back-button:hover {
+  color: #8fe38b;
+  border-color: #8fe38b;
+  background: #242824;
 }
 
+.admin-add-button {
+  background: #18251b;
+  color: #8fe38b;
+  border: 1px solid #47734a;
+}
+
+.admin-add-button:hover {
+  background: #213324;
+  color: #a6efa2;
+  border-color: #8fe38b;
+  transform: translateY(-1px);
+}
 
 /* ============================================================
-   DELETE ERROR
+   ADMIN ERRORS
    ============================================================ */
 
-.admin-delete-error {
-  margin: 16px 0;
+.admin-error {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 16px;
   padding: 12px 14px;
-  border: 1px solid #633636;
-  border-radius: 6px;
-  background: #211719;
-  color: #ff8a8a;
-  font-size: 14px;
+  border: 1px solid #754349;
+  border-radius: 8px;
+  background: #281b1d;
+  color: #ff9b9b;
+  line-height: 1.45;
 }
 
+/* ============================================================
+   ADMIN DELETE OVERLAY
+   ============================================================ */
+
+.admin-delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.admin-delete-dialog {
+  min-width: min(320px, calc(100vw - 40px));
+  padding: 22px 26px;
+  box-sizing: border-box;
+  border: 1px solid #333;
+  border-radius: 10px;
+  background: #15181b;
+  color: #ffffff;
+  text-align: center;
+  font-weight: 700;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+/* ============================================================
+   ADMIN MODAL ACTIONS
+   ============================================================ */
+
+.admin-modal-actions {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #333;
+}
+
+.admin-modal-edit,
+.admin-modal-delete {
+  min-height: 42px;
+  padding: 9px 14px;
+  border-radius: 7px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.admin-modal-edit {
+  background: #18251b;
+  color: #8fe38b;
+  border: 1px solid #47734a;
+}
+
+.admin-modal-edit:hover:not(:disabled) {
+  background: #213324;
+  color: #a6efa2;
+  border-color: #8fe38b;
+  transform: translateY(-1px);
+}
+
+.admin-modal-delete {
+  background: #281b1d;
+  color: #ff8c8c;
+  border: 1px solid #754349;
+}
+
+.admin-modal-delete:hover:not(:disabled) {
+  background: #382125;
+  color: #ffaaaa;
+  border-color: #ff7070;
+  transform: translateY(-1px);
+}
+
+.admin-modal-edit:disabled,
+.admin-modal-delete:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   ADMIN EDITABLE FIELDS
+   ============================================================ */
+
+.admin-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-modal-field span {
+  color: #8fe38b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-modal-field input,
+.admin-modal-textarea,
+.admin-modal-field select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border: 1px solid #444;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.admin-modal-field input:focus,
+.admin-modal-textarea:focus,
+.admin-modal-field select:focus {
+  border-color: #8fe38b;
+  background: rgba(143, 227, 139, 0.06);
+  box-shadow: 0 0 0 2px rgba(143, 227, 139, 0.12);
+}
+
+.admin-modal-textarea {
+  resize: vertical;
+  min-height: 150px;
+  line-height: 1.55;
+}
+
+.admin-modal-field select {
+  cursor: pointer;
+}
+
+/* ============================================================
+   ADMIN SAVE
+   ============================================================ */
+
+.admin-modal-save {
+  min-height: 42px;
+  padding: 9px 14px;
+  border-radius: 7px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #18251b;
+  color: #8fe38b;
+  border: 1px solid #47734a;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.admin-modal-save:hover:not(:disabled) {
+  background: #213324;
+  color: #a6efa2;
+  border-color: #8fe38b;
+  transform: translateY(-1px);
+}
+
+.admin-modal-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   EDIT MODE METADATA
+   ============================================================ */
+
+.modal-metadata .admin-modal-field {
+  min-width: 0;
+  min-height: 80px;
+  padding: 14px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #333;
+  border-radius: 10px;
+}
+
+.modal-metadata .admin-modal-field input {
+  margin-top: auto;
+}
+
+/* ============================================================
+   ADMIN CARD SELECT
+   ============================================================ */
+
+.admin-modal-cards-field {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #333;
+  border-radius: 10px;
+}
+
+/* Main React Select control */
+
+.admin-modal-cards-field .deck-cards-select__control {
+  width: 100%;
+  min-height: 150px;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+/* Selected cards container */
+
+.admin-modal-cards-field .deck-cards-select__value-container {
+  min-height: 125px;
+  max-height: 280px;
+  overflow-y: auto;
+  align-content: flex-start;
+  align-items: flex-start;
+  padding: 10px;
+  gap: 7px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.admin-modal-cards-field
+  .deck-cards-select__value-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-modal-cards-field
+  .deck-cards-select__value-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-modal-cards-field
+  .deck-cards-select__value-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+/* Selected card pills */
+
+.admin-modal-cards-field .deck-cards-select__multi-value {
+  max-width: 100%;
+  flex-shrink: 0;
+  margin: 0;
+  border-radius: 8px;
+  background: #2a3d2b;
+  border: 1px solid #47734a;
+  overflow: hidden;
+}
+
+/* Card names */
+
+.admin-modal-cards-field .deck-cards-select__multi-value__label {
+  max-width: none;
+  color: #a6efa2;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  padding: 5px 6px 5px 10px;
+}
+
+/* Remove selected card */
+
+.admin-modal-cards-field .deck-cards-select__multi-value__remove {
+  color: #a6efa2;
+  padding: 0 8px;
+  border-radius: 0 7px 7px 0;
+}
+
+.admin-modal-cards-field .deck-cards-select__multi-value__remove:hover {
+  background: #3a523c;
+  color: #ffffff;
+}
+
+/* Search input */
+
+.admin-modal-cards-field .deck-cards-select__input-container {
+  margin: 0;
+  padding: 4px;
+  color: #ffffff;
+}
+
+/* Dropdown */
+
+.admin-modal-cards-field .deck-cards-select__menu {
+  width: 100%;
+  margin-top: 4px;
+  background: #202020;
+  border: 1px solid #444;
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 100000;
+}
+
+/* Dropdown list */
+
+.admin-modal-cards-field .deck-cards-select__menu-list {
+  max-height: 280px;
+  padding: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.admin-modal-cards-field .deck-cards-select__menu-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-modal-cards-field
+  .deck-cards-select__menu-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-modal-cards-field
+  .deck-cards-select__menu-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+/* Options */
+
+.admin-modal-cards-field .deck-cards-select__option {
+  padding: 10px 12px;
+  color: #ffffff;
+  background: #202020;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.admin-modal-cards-field .deck-cards-select__option--is-focused {
+  background: #333333;
+  color: #ffffff;
+}
+
+.admin-modal-cards-field .deck-cards-select__option--is-selected {
+  background: #2a3d2b;
+  color: #a6efa2;
+}
+
+/* Notices */
+
+.admin-modal-cards-field .deck-cards-select__menu-notice {
+  color: #999999;
+  padding: 12px;
+}
+
+.admin-modal-field-hint {
+  margin: 8px 0 0;
+  color: #888;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* ============================================================
+   EDIT MODE IMAGE
+   ============================================================ */
+
+.modal-image > .admin-modal-field {
+  margin-top: 12px;
+}
+
+.modal-image > .admin-modal-field input {
+  width: 100%;
+}
+
+/* ============================================================
+   EDIT MODE HEADER
+   ============================================================ */
+
+.modal-title-content > .admin-modal-field {
+  margin-bottom: 4px;
+}
+
+.modal-title-content > .admin-modal-field input {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* ============================================================
+   ADMIN DECK GRID
+   IMPORTANT:
+   Do not change the normal deck-grid/card dimensions here.
+   DeckCard controls its own appearance.
+   ============================================================ */
+
+.admin-decklists-page .deck-grid {
+  width: 100%;
+}
 
 /* ============================================================
    MOBILE
    ============================================================ */
 
-@media (max-width: 800px) {
-  .admin-decklists-header {
+@media (max-width: 700px) {
+  .admin-decklists-topbar {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .admin-add-deck-button {
+  .admin-decklists-actions {
     width: 100%;
   }
 
-  .admin-deck-grid {
-    grid-template-columns: 1fr;
+  .admin-back-button,
+  .admin-add-button {
+    flex: 1;
   }
 }
 
-@media (max-width: 600px) {
-  .admin-deck-actions {
-    flex-direction: column;
+@media (max-width: 560px) {
+  .admin-modal-actions {
+    grid-template-columns: 1fr;
   }
 
-  .admin-edit-button,
-  .admin-delete-button {
-    width: 100%;
+  .admin-modal-field input,
+  .admin-modal-textarea,
+  .admin-modal-field select {
+    font-size: 0.9rem;
+    padding: 9px 10px;
+  }
+
+  .modal-metadata .admin-modal-field {
+    min-height: auto;
+  }
+
+  .admin-modal-textarea {
+    min-height: 130px;
+  }
+
+  .admin-modal-cards-field {
+    padding: 10px;
+  }
+
+  .admin-modal-cards-field .deck-cards-select__control {
+    min-height: 130px;
+  }
+
+  .admin-modal-cards-field .deck-cards-select__value-container {
+    min-height: 105px;
+    max-height: 220px;
+    padding: 8px;
+  }
+
+  .admin-modal-cards-field .deck-cards-select__multi-value__label {
+    font-size: 0.82rem;
+    line-height: 1.3;
+  }
+
+  .admin-modal-cards-field .deck-cards-select__menu-list {
+    max-height: 220px;
   }
 }

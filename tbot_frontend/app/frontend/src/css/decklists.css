@@ -274,128 +274,6 @@
   color: #8fe38b;
 }
 
-.admin-decklists-topbar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 30px;
-  margin-bottom: 30px;
-}
-
-.admin-decklists-topbar h1 {
-  margin-top: 0;
-  margin-bottom: 8px;
-}
-
-.admin-decklists-subtitle {
-  margin: 0;
-  color: #aaa;
-  font-size: 15px;
-  line-height: 1.5;
-}
-
-.admin-decklists-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.admin-back-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  padding: 0 18px;
-  box-sizing: border-box;
-  background: #202020;
-  color: #ffffff;
-  border: 1px solid #444;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.admin-back-button:hover {
-  background: #333;
-  border-color: #8fe38b;
-  color: #8fe38b;
-}
-
-.admin-add-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  padding: 0 18px;
-  box-sizing: border-box;
-  background: #8fe38b;
-  color: #101416;
-  border: 1px solid #8fe38b;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.admin-add-button:hover {
-  background: #b0f2ac;
-  border-color: #b0f2ac;
-  color: #101416;
-}
-
-.admin-error {
-  width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 20px;
-  padding: 14px 16px;
-  background: #241719;
-  color: #ff8585;
-  border: 1px solid #51272a;
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.admin-delete-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-}
-
-.admin-delete-dialog {
-  padding: 20px 28px;
-  background: #15181b;
-  color: #ffffff;
-  border: 1px solid #333;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-}
-
-.admin-deck-grid {
-  position: relative;
-}
-
-.admin-deck-grid .deck-card {
-  width: 100%;
-}
-
 @media (max-width: 1100px) {
   .deck-content {
     padding: 30px;
@@ -426,24 +304,6 @@
 @media (max-width: 900px) {
   .deck-content {
     padding: 20px;
-  }
-
-  .deck-content h1 {
-    font-size: 38px;
-  }
-
-  .admin-decklists-topbar {
-    flex-direction: column;
-    gap: 18px;
-  }
-
-  .admin-decklists-actions {
-    width: 100%;
-  }
-
-  .admin-back-button,
-  .admin-add-button {
-    flex: 1;
   }
 
   .filters {
@@ -543,25 +403,6 @@
   .deck-card-info .card-text-content {
     font-size: 13px;
   }
-
-  .admin-decklists-topbar {
-    margin-bottom: 20px;
-  }
-
-  .admin-decklists-subtitle {
-    font-size: 14px;
-  }
-
-  .admin-decklists-actions {
-    gap: 8px;
-  }
-
-  .admin-back-button,
-  .admin-add-button {
-    min-height: 44px;
-    padding: 0 12px;
-    font-size: 13px;
-  }
 }
 
 @media (max-width: 400px) {
@@ -573,16 +414,5 @@
   .tab-icon {
     width: 18px;
     height: 18px;
-  }
-
-  .admin-decklists-actions {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .admin-back-button,
-  .admin-add-button {
-    width: 100%;
-    flex: none;
   }
 }

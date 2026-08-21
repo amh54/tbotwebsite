@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import Select from "react-select";
-import CreatableSelect from "react-select/creatable";
+
+import AddDeckModal from "./AddDeckModal";
+import EditDeckModal from "./EditDeckModal";
+
 import "../css/deckmodal.css";
 
 const HERO_COLORS = {
@@ -29,35 +31,6 @@ const HERO_COLORS = {
   "Z-mech": ["orange", "purple"],
 };
 
-const HERO_CLASSES = {
-  "Beta-Carrotina": ["Guardian", "Smarty"],
-  Citron: ["Guardian", "Smarty"],
-  "Captain Combustible": ["Kabloom", "Mega-Grow"],
-  Chompzilla: ["Mega-Grow", "Solar"],
-  "Grass Knuckles": ["Guardian", "Mega-Grow"],
-  "Green Shadow": ["Mega-Grow", "Smarty"],
-  "Night Cap": ["Kabloom", "Smarty"],
-  Rose: ["Smarty", "Solar"],
-  "Solar Flare": ["Kabloom", "Solar"],
-  Spudow: ["Guardian", "Kabloom"],
-  "Wall-Knight": ["Guardian", "Solar"],
-  "Brain Freeze": ["Beastly", "Sneaky"],
-  "Electric Boogaloo": ["Crazy", "Hearty"],
-  "Huge-Gigantacus": ["Brainy", "Sneaky"],
-  "Super Brainz": ["Brainy", "Fighting"],
-  Immorticia: ["Brainy", "Beastly"],
-  Impfinity: ["Crazy", "Sneaky"],
-  Neptuna: ["Hearty", "Sneaky"],
-  "Professor Brainstorm": ["Brainy", "Crazy"],
-  Rustbolt: ["Hearty", "Brainy"],
-  "The Smash": ["Beastly", "Hearty"],
-  "Z-mech": ["Crazy", "Hearty"],
-};
-
-const CATEGORY_OPTIONS = ["Budget", "Competitive", "Ladder", "Meme"];
-
-const ARCHETYPE_OPTIONS = ["Aggro", "Combo", "Control", "Midrange", "Tempo"];
-
 const normalizeHeroName = (hero) =>
   String(hero || "")
     .trim()
@@ -73,53 +46,6 @@ const getHeroColors = (hero) => {
 
   return entry?.[1] || ["default", "default"];
 };
-
-const getHeroClasses = (hero) => {
-  const normalizedHero = normalizeHeroName(hero);
-
-  const entry = Object.entries(HERO_CLASSES).find(
-    ([name]) => normalizeHeroName(name) === normalizedHero,
-  );
-
-  return entry?.[1] || [];
-};
-
-const normalizeSide = (side) => {
-  const value = String(side || "")
-    .trim()
-    .toLowerCase();
-
-  if (value === "plant" || value === "plants") {
-    return "Plants";
-  }
-
-  if (value === "zombie" || value === "zombies") {
-    return "Zombies";
-  }
-
-  return "";
-};
-
-const getCardSide = (card) => {
-  const side = String(card?.side ?? "")
-    .trim()
-    .toLowerCase();
-
-  if (side === "plant" || side === "plants") {
-    return "Plants";
-  }
-
-  if (side === "zombie" || side === "zombies") {
-    return "Zombies";
-  }
-
-  return "";
-};
-
-const normalizeCardType = (value) =>
-  String(value || "")
-    .trim()
-    .toLowerCase();
 
 const getApiBaseUrl = () => {
   const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
@@ -172,31 +98,52 @@ const getImageUrl = (value) => {
   return `${API_BASE_URL}/${image}`;
 };
 
-const parseMultiValues = (value) =>
-  String(value ?? "")
-    .split(/[,\n]+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
+const hasValue = (value) => {
+  if (value === null || value === undefined) {
+    return false;
+  }
 
-const valuesToOptions = (value) =>
-  parseMultiValues(value).map((item) => ({
-    value: item,
-    label: item,
-  }));
+  return String(value).trim() !== "";
+};
 
-const optionsToCombinedValue = (options) =>
-  (options || [])
-    .map((option) => String(option?.value || "").trim())
-    .filter(Boolean)
-    .join(" ");
+const toExternalUrl = (value) => {
+  const raw = String(value || "").trim();
 
-// ---- Card ratio helpers -----------------------------------------------
-// Cards are stored in the same `cards` text field as before, one per line,
-// but each line is now `Card Name|count` so no backend/model changes are
-// needed — it's still just a text field.
+  if (!raw) {
+    return "";
+  }
 
-const MAX_CARD_RATIO = 4;
-const TARGET_CARD_RATIO_TOTAL = 40;
+  const markdownMatch = /\((https?:\/\/[^)]+)\)/i.exec(raw);
+  const inlineUrlMatch = /https?:\/\/\S+/i.exec(raw);
+
+  let candidate = (markdownMatch?.[1] || inlineUrlMatch?.[0] || raw)
+    .trim()
+    .replace(/\s+/g, "");
+
+  const trimChars = "'\"<>[]";
+
+  while (candidate && trimChars.includes(candidate[0])) {
+    candidate = candidate.slice(1);
+  }
+
+  while (candidate && trimChars.includes(candidate.at(-1))) {
+    candidate = candidate.slice(0, -1);
+  }
+
+  if (!candidate) {
+    return "";
+  }
+
+  if (!/^https?:\/\//i.test(candidate)) {
+    candidate = `https://${candidate}`;
+  }
+
+  try {
+    return new URL(candidate).toString();
+  } catch {
+    return "";
+  }
+};
 
 const parseCardRatioLines = (value) =>
   String(value ?? "")
@@ -205,53 +152,22 @@ const parseCardRatioLines = (value) =>
     .filter(Boolean)
     .map((line) => {
       const [namePart, countPart] = line.split("|");
+
       const name = String(namePart || "").trim();
+
       const parsedCount = Number(countPart);
 
       const count =
         Number.isFinite(parsedCount) && parsedCount > 0
-          ? Math.min(parsedCount, MAX_CARD_RATIO)
+          ? Math.min(parsedCount, 4)
           : 1;
 
-      return { name, count };
+      return {
+        name,
+        count,
+      };
     })
     .filter((entry) => entry.name);
-
-const cardRatioLinesToOptions = (value, options = []) => {
-  const optionMap = new Map(
-    options.map((option) => [
-      String(option.value).trim().toLowerCase(),
-      option,
-    ]),
-  );
-
-  return parseCardRatioLines(value)
-    .map((entry) => {
-      const matched = optionMap.get(entry.name.toLowerCase());
-
-      if (!matched) {
-        return null;
-      }
-
-      return { ...matched, count: entry.count };
-    })
-    .filter(Boolean);
-};
-
-const cardOptionsToRatioLines = (options) =>
-  (options || [])
-    .map((option) => {
-      const name = String(option?.value || "").trim();
-      const count = Number(option?.count) || 0;
-
-      if (!name || count <= 0) {
-        return "";
-      }
-
-      return `${name}|${count}`;
-    })
-    .filter(Boolean)
-    .join("\n");
 
 const formatCardsDisplay = (value) => {
   const entries = parseCardRatioLines(value);
@@ -262,308 +178,6 @@ const formatCardsDisplay = (value) => {
 
   return entries.map((entry) => `${entry.name} x${entry.count}`).join(", ");
 };
-
-const sumCardRatios = (options) =>
-  (options || []).reduce(
-    (sum, option) => sum + (Number(option?.count) || 0),
-    0,
-  );
-
-// -------------------------------------------------------------------------
-
-const selectStyles = {
-  control: (base, state) => ({
-    ...base,
-    backgroundColor: "#202020",
-    borderColor: state.isFocused ? "#8fe38b" : "#444",
-    minHeight: "45px",
-    boxShadow: "none",
-    "&:hover": {
-      borderColor: "#8fe38b",
-    },
-  }),
-
-  menu: (base) => ({
-    ...base,
-    backgroundColor: "#202020",
-  }),
-
-  menuList: (base) => ({
-    ...base,
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
-    "::-webkit-scrollbar": {
-      display: "none",
-    },
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isFocused ? "#333" : "#202020",
-    color: "white",
-    cursor: "pointer",
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    gap: "6px",
-    padding: "6px 8px",
-  }),
-
-  multiValue: (base) => ({
-    ...base,
-    backgroundColor: "#2a3d2b",
-    border: "1px solid #47734a",
-    borderRadius: "999px",
-    overflow: "hidden",
-    margin: 0,
-  }),
-
-  multiValueLabel: (base) => ({
-    ...base,
-    color: "#a6efa2",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    padding: "3px 4px 3px 10px",
-  }),
-
-  multiValueRemove: (base) => ({
-    ...base,
-    color: "#a6efa2",
-    borderRadius: "0 999px 999px 0",
-    paddingRight: "8px",
-    ":hover": {
-      backgroundColor: "#3a523c",
-      color: "#ffffff",
-    },
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    color: "#888",
-  }),
-
-  input: (base) => ({
-    ...base,
-    color: "white",
-    margin: 0,
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    color: "#666",
-    ":hover": {
-      color: "#8fe38b",
-    },
-  }),
-
-  clearIndicator: (base) => ({
-    ...base,
-    color: "#666",
-    ":hover": {
-      color: "#ff8c8c",
-    },
-  }),
-};
-
-const categoryOptions = CATEGORY_OPTIONS.map((value) => ({
-  value,
-  label: value,
-}));
-
-const archetypeOptions = ARCHETYPE_OPTIONS.map((value) => ({
-  value,
-  label: value,
-}));
-const singleValueStyles = {
-  control: (base, state) => ({
-    ...base,
-    backgroundColor: "#202020",
-    borderColor: state.isFocused ? "#8fe38b" : "#444",
-    minHeight: "45px",
-    boxShadow: "none",
-    "&:hover": {
-      borderColor: "#8fe38b",
-    },
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    gap: "6px",
-    padding: "6px 8px",
-    minWidth: 0,
-    overflow: "visible",
-    flex: "1 1 auto",
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    position: "static",
-    transform: "none",
-
-    maxWidth: "none",
-    overflow: "visible",
-    textOverflow: "clip",
-    whiteSpace: "nowrap",
-
-    backgroundColor: "#2a3d2b",
-    border: "1px solid #47734a",
-    borderRadius: "999px",
-
-    color: "#a6efa2",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-
-    padding: "3px 10px",
-    margin: 0,
-
-    width: "fit-content",
-    flexShrink: 0,
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    color: "#888",
-  }),
-
-  input: (base) => ({
-    ...base,
-    color: "white",
-    margin: 0,
-    padding: 0,
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    flexShrink: 0,
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    color: "#666",
-    flexShrink: 0,
-    ":hover": {
-      color: "#8fe38b",
-    },
-  }),
-
-  clearIndicator: (base) => ({
-    ...base,
-    color: "#666",
-    flexShrink: 0,
-    padding: "8px",
-    ":hover": {
-      color: "#ff8c8c",
-    },
-  }),
-
-  menu: (base) => ({
-    ...base,
-    backgroundColor: "#202020",
-    zIndex: 100,
-  }),
-
-  menuList: (base) => ({
-    ...base,
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
-    "::-webkit-scrollbar": {
-      display: "none",
-    },
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isFocused ? "#333" : "#202020",
-    color: "white",
-    cursor: "pointer",
-  }),
-};
-
-// Renders the per-card +/- ratio steppers plus the running total.
-// Purely additive UI — doesn't touch any existing styling/classes.
-function CardRatioEditor({ options, onChange, disabled, total }) {
-  if (!options || options.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="admin-modal-field admin-modal-cards-ratio">
-      <span>Card Ratios (must total {TARGET_CARD_RATIO_TOTAL})</span>
-
-      {options.map((option) => {
-        const count = option.count ?? 1;
-
-        return (
-          <div
-            key={option.value}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              margin: "4px 0",
-            }}
-          >
-            <span style={{ flex: 1 }}>{option.label}</span>
-
-            <button
-              type="button"
-              onClick={() => onChange(option.value, -1)}
-              disabled={disabled}
-              aria-label={`Decrease ${option.label} count`}
-            >
-              −
-            </button>
-
-            <span style={{ minWidth: "20px", textAlign: "center" }}>
-              {count}
-            </span>
-
-            <button
-              type="button"
-              onClick={() => onChange(option.value, 1)}
-              disabled={disabled || count >= MAX_CARD_RATIO}
-              aria-label={`Increase ${option.label} count`}
-            >
-              +
-            </button>
-          </div>
-        );
-      })}
-
-      <div
-        style={{
-          marginTop: "6px",
-          fontWeight: 600,
-          color: total === TARGET_CARD_RATIO_TOTAL ? "#8fe38b" : "#ff8c8c",
-        }}
-      >
-        Total: {total} / {TARGET_CARD_RATIO_TOTAL}
-      </div>
-    </div>
-  );
-}
-
-// Inline, in-modal error message (replaces alert() for cards-related errors).
-function CardsErrorMessage({ message }) {
-  if (!message) {
-    return null;
-  }
-
-  return (
-    <div style={{ color: "#ff8c8c", fontSize: "0.85rem", marginTop: "4px" }}>
-      {message}
-    </div>
-  );
-}
 
 function DeckCard({
   decklist,
@@ -577,268 +191,42 @@ function DeckCard({
   allCards = [],
 }) {
   const deck = decklist ?? {};
+
   const isAdmin = admin || adminMode;
 
   const [heroColor1, heroColor2] = getHeroColors(deck.hero);
 
   const deckId = deck.deckid ?? deck.deckID ?? deck.id ?? "";
+
   const deckKey = String(deckId || deck.name || "");
 
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [open, setOpen] = useState(addMode);
-  const [editing, setEditing] = useState(addMode);
-  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [form, setForm] = useState({});
-  const [cardsError, setCardsError] = useState("");
+
+  // Image state for the edit flow lives here, in the left-hand image
+  // column, matching the original layout. EditDeckModal (right column)
+  // receives the current file/URL as props and includes them in the
+  // save payload.
+  const [editImageFile, setEditImageFile] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState("");
+  const [editImgError, setEditImgError] = useState(false);
+  const [editSavingLocal, setEditSavingLocal] = useState(false);
+
+  const editModalRef = useRef(null);
 
   const deckImage = getImageUrl(deck.image);
-
-  const hasValue = (value) => {
-    if (value === null || value === undefined) {
-      return false;
-    }
-
-    return String(value).trim() !== "";
-  };
 
   const description = hasValue(deck.description)
     ? deck.description
     : "No description available.";
 
-  const normalizedFormSide = normalizeSide(form.side);
-
-  const heroOptions = useMemo(() => {
-    const seen = new Set();
-    const options = [];
-
-    (Array.isArray(allCards) ? allCards : []).forEach((card) => {
-      const rarity = String(
-        card?.set_rarity ?? card?.setRarity ?? card?.rarity ?? "",
-      )
-        .trim()
-        .toLowerCase();
-
-      if (rarity !== "premium - hero") {
-        return;
-      }
-
-      const cardSide = getCardSide(card);
-
-      if (normalizedFormSide === "Plants" || normalizedFormSide === "Zombies") {
-        if (cardSide !== normalizedFormSide) {
-          return;
-        }
-      }
-
-      const name = String(
-        card?.card_name ?? card?.title ?? card?.name ?? "",
-      ).trim();
-
-      if (!name) {
-        return;
-      }
-
-      const key = name.toLowerCase();
-
-      if (seen.has(key)) {
-        return;
-      }
-
-      seen.add(key);
-
-      options.push({
-        value: name,
-        label: name,
-      });
-    });
-
-    return options.sort((a, b) => a.label.localeCompare(b.label));
-  }, [allCards, normalizedFormSide]);
-
-  const selectedHeroClasses = useMemo(
-    () => getHeroClasses(form.hero),
-    [form.hero],
-  );
-
-  const cardOptions = useMemo(() => {
-    const seen = new Set();
-    const options = [];
-
-    if (normalizedFormSide !== "Plants" && normalizedFormSide !== "Zombies") {
-      return options;
-    }
-
-    if (!form.hero) {
-      return options;
-    }
-
-    const heroClasses = selectedHeroClasses.map((className) =>
-      normalizeCardType(className),
-    );
-
-    if (heroClasses.length === 0) {
-      return options;
-    }
-
-    (Array.isArray(allCards) ? allCards : []).forEach((card) => {
-      const name = String(
-        card?.card_name ?? card?.title ?? card?.name ?? "",
-      ).trim();
-
-      if (!name) {
-        return;
-      }
-
-      const rarity = String(
-        card?.set_rarity ?? card?.setRarity ?? card?.rarity ?? "",
-      )
-        .trim()
-        .toLowerCase();
-
-      if (rarity === "premium - hero") {
-        return;
-      }
-
-      if (rarity.includes("token")) {
-        return;
-      }
-
-      const cardDescription = String(card?.description ?? "")
-        .trim()
-        .toLowerCase();
-
-      if (cardDescription.includes("superpower")) {
-        return;
-      }
-
-      const cardSide = getCardSide(card);
-
-      if (cardSide !== normalizedFormSide) {
-        return;
-      }
-
-      const cardTypes = String(
-        card?.card_type ?? card?.cardType ?? card?.type ?? "",
-      )
-        .split(/[,&/|]+/)
-        .map((type) => normalizeCardType(type))
-        .filter(Boolean);
-
-      const belongsToHeroClass = cardTypes.some((type) =>
-        heroClasses.includes(type),
-      );
-
-      if (!belongsToHeroClass) {
-        return;
-      }
-
-      const key = name.toLowerCase();
-
-      if (seen.has(key)) {
-        return;
-      }
-
-      seen.add(key);
-
-      options.push({
-        value: name,
-        label: name,
-      });
-    });
-
-    return options.sort((a, b) => a.label.localeCompare(b.label));
-  }, [allCards, normalizedFormSide, form.hero, selectedHeroClasses]);
-
-  const totalCardRatio = useMemo(
-    () => sumCardRatios(form.cardsSelected),
-    [form.cardsSelected],
-  );
-
-  const createForm = (source = {}) => ({
-    name: source.name ?? "",
-    hero: source.hero ?? "",
-    side: normalizeSide(source.side ?? ""),
-    category: source.category ?? "",
-    archetype: source.archetype ?? "",
-    description: source.description ?? "",
-    image: source.image ?? "",
-    image_file: null,
-    creator: source.creator ?? "",
-    cost: source.cost ?? "",
-    inspiration: source.inspiration ?? "",
-    optimization: source.optimization ?? "",
-    suggested_date: source.suggested_date ?? "",
-    updated_date: source.updated_date ?? "",
-    deck_doc: source.deck_doc ?? "",
-    cards: source.cards ?? "",
-    categorySelected: valuesToOptions(source.category ?? ""),
-    archetypeSelected: valuesToOptions(source.archetype ?? ""),
-    cardsSelected: [],
-  });
-
-  const toExternalUrl = (value) => {
-    const raw = String(value || "").trim();
-
-    if (!raw) {
-      return "";
-    }
-
-    const markdownMatch = /\((https?:\/\/[^)]+)\)/i.exec(raw);
-    const inlineUrlMatch = /https?:\/\/\S+/i.exec(raw);
-
-    let candidate = (markdownMatch?.[1] || inlineUrlMatch?.[0] || raw)
-      .trim()
-      .replace(/\s+/g, "");
-
-    const trimChars = "'\"<>[]";
-
-    while (candidate && trimChars.includes(candidate[0])) {
-      candidate = candidate.slice(1);
-    }
-
-    while (candidate && trimChars.includes(candidate.at(-1))) {
-      candidate = candidate.slice(0, -1);
-    }
-
-    if (!candidate) {
-      return "";
-    }
-
-    if (!/^https?:\/\//i.test(candidate)) {
-      candidate = `https://${candidate}`;
-    }
-
-    try {
-      return new URL(candidate).toString();
-    } catch {
-      return "";
-    }
-  };
-
-  const deckDocUrl = toExternalUrl(editing ? form.deck_doc : deck.deck_doc);
-
-  const selectedHero =
-    heroOptions.find(
-      (option) =>
-        option.value.toLowerCase() ===
-        String(form.hero || "")
-          .trim()
-          .toLowerCase(),
-    ) || null;
-
-  const selectedCategoryOptions = form.categorySelected || [];
-  const selectedArchetypeOptions = form.archetypeSelected || [];
-
   useEffect(() => {
     if (addMode) {
       setOpen(true);
-      setEditing(true);
-      setForm(createForm({}));
-      setImgError(false);
-      setCardsError("");
       return;
     }
 
@@ -848,9 +236,6 @@ function DeckCard({
 
     if (searchParams.get("deck") === deckKey) {
       setOpen(true);
-    } else if (open) {
-      setOpen(false);
-      setEditing(false);
     }
   }, [searchParams, deckKey, addMode]);
 
@@ -873,7 +258,7 @@ function DeckCard({
     }
 
     const handleKeyDown = (event) => {
-      if (event.key === "Escape" && !saving && !editSaving) {
+      if (event.key === "Escape" && !editSavingLocal && !editSaving) {
         closeModal();
       }
     };
@@ -883,93 +268,36 @@ function DeckCard({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, saving, editSaving]);
-
-  useEffect(() => {
-    if (!editing) {
-      return;
-    }
-
-    setForm((previous) => {
-      const currentCards = Array.isArray(previous.cardsSelected)
-        ? previous.cardsSelected
-        : [];
-
-      const validCards = currentCards.filter((option) =>
-        cardOptions.some(
-          (cardOption) =>
-            cardOption.value.toLowerCase() ===
-            String(option?.value || "").toLowerCase(),
-        ),
-      );
-
-      if (validCards.length === currentCards.length) {
-        return previous;
-      }
-
-      return {
-        ...previous,
-        cardsSelected: validCards,
-      };
-    });
-  }, [cardOptions, editing]);
-
-  useEffect(() => {
-    if (!editing || !form.cards) {
-      return;
-    }
-
-    if (!Array.isArray(form.cardsSelected) || form.cardsSelected.length === 0) {
-      const matchingCards = cardRatioLinesToOptions(form.cards, cardOptions);
-
-      if (matchingCards.length > 0) {
-        setForm((previous) => ({
-          ...previous,
-          cardsSelected: matchingCards,
-        }));
-      }
-    }
-  }, [cardOptions, editing]);
+  }, [open, editSavingLocal, editSaving]);
 
   const openModal = () => {
     if (addMode) {
       setOpen(true);
-      setEditing(true);
-      setForm(createForm({}));
-      setImgError(false);
-      setCardsError("");
       return;
     }
 
     setOpen(true);
     setEditing(false);
 
-    const initialForm = createForm(deck);
-
-    setForm({
-      ...initialForm,
-      cardsSelected: cardRatioLinesToOptions(deck.cards ?? "", cardOptions),
-    });
-
-    setImgError(false);
-    setCardsError("");
-
     if (!deckKey) {
       return;
     }
 
     const next = new URLSearchParams(searchParams);
+
     next.set("deck", deckKey);
 
     setSearchParams(next);
   };
 
   const closeModal = () => {
-    if (saving || editSaving) {
+    if (editSavingLocal || editSaving) {
       return;
     }
 
     if (addMode) {
+      setOpen(false);
+
       if (typeof window !== "undefined") {
         window.history.back();
       }
@@ -992,298 +320,49 @@ function DeckCard({
     }
   };
 
+  const resetEditImageState = () => {
+    setEditImageFile(null);
+    setEditImagePreview(deck.image ?? "");
+    setEditImgError(false);
+  };
+
   const startEditing = () => {
     if (!isAdmin) {
       return;
     }
 
-    const initialForm = createForm(deck);
-
-    setForm({
-      ...initialForm,
-      cardsSelected: cardRatioLinesToOptions(deck.cards ?? "", cardOptions),
-    });
-
-    setImgError(false);
-    setCardsError("");
+    resetEditImageState();
     setEditing(true);
   };
 
   const cancelEditing = () => {
-    if (saving || editSaving) {
+    if (editSavingLocal || editSaving) {
       return;
     }
 
-    if (addMode) {
-      closeModal();
-      return;
-    }
-
-    const initialForm = createForm(deck);
-
-    setForm({
-      ...initialForm,
-      cardsSelected: cardRatioLinesToOptions(deck.cards ?? "", cardOptions),
-    });
-
+    resetEditImageState();
     setEditing(false);
-    setImgError(false);
-    setCardsError("");
   };
 
-  const handleChange = (field, value) => {
-    const nextValue = field === "side" ? normalizeSide(value) : value;
-
-    setForm((previous) => ({
-      ...previous,
-      [field]: nextValue,
-    }));
-
-    if (field === "image_file") {
-      setImgError(false);
-    }
-  };
-
-  const handleHeroChange = (selected) => {
-    setForm((previous) => ({
-      ...previous,
-      hero: selected?.value || "",
-      cardsSelected: [],
-      cards: "",
-    }));
-
-    setCardsError("");
-  };
-
-  const handleSideChange = (selected) => {
-    const value = normalizeSide(selected?.value || "");
-
-    setForm((previous) => ({
-      ...previous,
-      side: value,
-      hero: "",
-      cardsSelected: [],
-      cards: "",
-    }));
-
-    setCardsError("");
-  };
-
-  const handleCardsChange = (selected) => {
-    setForm((previous) => {
-      const previousCounts = new Map(
-        (previous.cardsSelected || []).map((option) => [
-          String(option.value).toLowerCase(),
-          option.count,
-        ]),
-      );
-
-      const nextSelected = (selected || []).map((option) => ({
-        ...option,
-        count: previousCounts.get(String(option.value).toLowerCase()) ?? 1,
-      }));
-
-      return {
-        ...previous,
-        cardsSelected: nextSelected,
-      };
-    });
-
-    setCardsError("");
-  };
-
-  const handleCardRatioChange = (cardValue, delta) => {
-    setForm((previous) => {
-      const cardsSelected = previous.cardsSelected || [];
-
-      const index = cardsSelected.findIndex(
-        (option) =>
-          String(option.value).toLowerCase() ===
-          String(cardValue).toLowerCase(),
-      );
-
-      if (index === -1) {
-        return previous;
-      }
-
-      const currentCount = cardsSelected[index].count ?? 1;
-      const nextCount = currentCount + delta;
-
-      if (nextCount < 1) {
-        return {
-          ...previous,
-          cardsSelected: cardsSelected.filter((_, i) => i !== index),
-        };
-      }
-
-      if (nextCount > MAX_CARD_RATIO) {
-        return previous;
-      }
-
-      const nextSelected = [...cardsSelected];
-      nextSelected[index] = { ...nextSelected[index], count: nextCount };
-
-      return {
-        ...previous,
-        cardsSelected: nextSelected,
-      };
-    });
-
-    setCardsError("");
-  };
-
-  const handleCategoryChange = (selected) => {
-    const options = selected || [];
-
-    setForm((previous) => ({
-      ...previous,
-      categorySelected: options,
-      category: optionsToCombinedValue(options),
-    }));
-  };
-
-  const handleArchetypeChange = (selected) => {
-    const options = selected || [];
-
-    setForm((previous) => ({
-      ...previous,
-      archetypeSelected: options,
-      archetype: optionsToCombinedValue(options),
-    }));
-  };
-
-  const handleImageFileChange = (event) => {
+  const handleEditImageFileChange = (event) => {
     const file = event.target.files?.[0] || null;
 
-    setImgError(false);
+    setEditImgError(false);
 
     if (!file) {
-      setForm((previous) => ({
-        ...previous,
-        image_file: null,
-        image: addMode ? "" : (deck.image ?? ""),
-      }));
-
+      setEditImageFile(null);
+      setEditImagePreview(deck.image ?? "");
       return;
     }
 
     const previewUrl = URL.createObjectURL(file);
 
-    setForm((previous) => ({
-      ...previous,
-      image_file: file,
-      image: previewUrl,
-    }));
+    setEditImageFile(file);
+    setEditImagePreview(previewUrl);
   };
 
-  const handleSave = async () => {
-    if (addMode) {
-      if (typeof onAdd !== "function") {
-        console.error("onAdd was not provided.");
-        return;
-      }
-    } else if (typeof onSave !== "function") {
-      return;
-    }
-
-    if (!addMode && !deckId) {
-      console.error("Cannot save deck: missing deck ID.", deck);
-      return;
-    }
-
-    if (!normalizedFormSide) {
-      alert("Please select Plants or Zombies.");
-      return;
-    }
-
-    if (!form.hero) {
-      alert("Please select a hero.");
-      return;
-    }
-
-    if (!form.cardsSelected || form.cardsSelected.length === 0) {
-      setCardsError("Please select at least one card.");
-      return;
-    }
-
-    const ratioTotal = sumCardRatios(form.cardsSelected);
-
-    if (ratioTotal !== TARGET_CARD_RATIO_TOTAL) {
-      setCardsError(
-        `Card ratios must add up to ${TARGET_CARD_RATIO_TOTAL} (currently ${ratioTotal}).`,
-      );
-      return;
-    }
-
-    setCardsError("");
-
-    try {
-      setSaving(true);
-
-      const hasNewImage = form.image_file instanceof File;
-      const normalizedSide = normalizeSide(form.side);
-
-      const validCards = (form.cardsSelected || []).filter((option) =>
-        cardOptions.some(
-          (cardOption) =>
-            cardOption.value.toLowerCase() ===
-            String(option?.value || "").toLowerCase(),
-        ),
-      );
-
-      const payload = {
-        name: form.name ?? "",
-        hero: form.hero ?? "",
-        side: normalizedSide,
-        category: optionsToCombinedValue(form.categorySelected),
-        archetype: optionsToCombinedValue(form.archetypeSelected),
-        description: form.description ?? "",
-        image: hasNewImage ? "" : String(form.image ?? "").trim(),
-        image_file: hasNewImage ? form.image_file : null,
-        creator: form.creator ?? "",
-        cost: form.cost ?? "",
-        inspiration: form.inspiration ?? "",
-        optimization: form.optimization ?? "",
-        suggested_date: form.suggested_date ?? "",
-        updated_date: form.updated_date ?? "",
-        deck_doc: form.deck_doc ?? "",
-        cards: cardOptionsToRatioLines(validCards),
-      };
-
-      const result = addMode
-        ? await onAdd(payload)
-        : await onSave(deck, payload);
-
-      if (!result) {
-        return;
-      }
-
-      const resultForm = createForm(result);
-
-      setForm({
-        ...resultForm,
-        cardsSelected: cardRatioLinesToOptions(
-          result.cards ?? payload.cards ?? "",
-          cardOptions,
-        ),
-      });
-
-      setEditing(false);
-      setImgError(false);
-      setCardsError("");
-    } catch (error) {
-      console.error(
-        addMode ? "Failed to add deck:" : "Failed to save deck:",
-        error,
-      );
-
-      setCardsError(
-        error?.message ||
-          (addMode ? "Failed to add deck." : "Failed to save deck."),
-      );
-    } finally {
-      setSaving(false);
-    }
+  const handleEditSave = () => {
+    editModalRef.current?.save();
   };
 
   const handleDelete = () => {
@@ -1298,6 +377,7 @@ function DeckCard({
     }
 
     const url = new URL(window.location.href);
+
     url.searchParams.set("deck", deckKey);
 
     try {
@@ -1330,15 +410,19 @@ function DeckCard({
       }
 
       const blob = await response.blob();
+
       const blobUrl = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
 
       link.href = blobUrl;
+
       link.download = `${deck.name || "decklist"}.png`.replace(/\s+/g, "_");
 
       document.body.appendChild(link);
+
       link.click();
+
       link.remove();
 
       URL.revokeObjectURL(blobUrl);
@@ -1349,8 +433,32 @@ function DeckCard({
     }
   };
 
-  const isSaving = saving || editSaving;
-  const editImage = getImageUrl(form.image);
+  const handleAddComplete = (result) => {
+    if (!result) {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  const handleEditComplete = (result) => {
+    if (!result) {
+      return;
+    }
+
+    resetEditImageState();
+    setEditing(false);
+  };
+
+  /*
+   * ============================================================
+   * ADD MODE
+   * ============================================================
+   *
+   * AddDeckModal remains its own modal.
+   * This is only used when this DeckCard is specifically
+   * rendered in addMode.
+   */
 
   if (addMode) {
     if (!open) {
@@ -1358,262 +466,18 @@ function DeckCard({
     }
 
     return (
-      <div
-        className="modal-overlay"
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget && !isSaving) {
-            closeModal();
-          }
-        }}
-      >
-        <dialog
-          open
-          className="modal"
-          aria-label="Add Legacy Deck"
-          onMouseDown={(event) => event.stopPropagation()}
-        >
-          <button
-            type="button"
-            className="modal-close"
-            onClick={closeModal}
-            aria-label="Close add deck"
-            disabled={isSaving}
-          >
-            ×
-          </button>
-
-          <div className="modal-scroll-content">
-            <div className="modal-content">
-              <div className="modal-image">
-                {editImage && !imgError ? (
-                  <img
-                    src={editImage}
-                    alt={form.name || "Deck image"}
-                    onError={() => setImgError(true)}
-                  />
-                ) : (
-                  <div className="deck-image-placeholder">No image</div>
-                )}
-
-                <label className="admin-modal-field">
-                  <span>Upload Image</span>
-
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={handleImageFileChange}
-                  />
-                </label>
-
-                <div className="admin-modal-actions">
-                  <button
-                    type="button"
-                    className="admin-modal-edit"
-                    onClick={closeModal}
-                    disabled={isSaving}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="button"
-                    className="admin-modal-save"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? "Adding..." : "Add Deck"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="modal-info">
-                <div className="modal-header">
-                  <div className="modal-title-content">
-                    <AdminModalField
-                      label="Deck Name"
-                      value={form.name}
-                      onChange={(value) => handleChange("name", value)}
-                    />
-                  </div>
-                </div>
-
-                <section className="modal-section">
-                  <h3>Deck Setup</h3>
-
-                  <div className="modal-metadata">
-                    <div className="admin-modal-field">
-                      <span>Side</span>
-
-                      <Select
-                        options={[
-                          { value: "Plants", label: "Plants" },
-                          { value: "Zombies", label: "Zombies" },
-                        ]}
-                        value={
-                          normalizedFormSide
-                            ? {
-                                value: normalizedFormSide,
-                                label: normalizedFormSide,
-                              }
-                            : null
-                        }
-                        onChange={handleSideChange}
-                        placeholder="Select side..."
-                        isClearable
-                        styles={singleValueStyles}
-                        classNamePrefix="deck-side-select"
-                      />
-                    </div>
-
-                    <div className="admin-modal-field">
-                      <span>Hero</span>
-
-                      <Select
-                        options={heroOptions}
-                        value={selectedHero}
-                        onChange={handleHeroChange}
-                        placeholder={
-                          normalizedFormSide
-                            ? "Select hero..."
-                            : "Select side first..."
-                        }
-                        isClearable
-                        isDisabled={!normalizedFormSide}
-                        styles={singleValueStyles}
-                        classNamePrefix="deck-hero-select"
-                      />
-                    </div>
-
-                    <div className="admin-modal-field">
-                      <span>Category</span>
-
-                      <CreatableSelect
-                        isMulti
-                        options={categoryOptions}
-                        value={selectedCategoryOptions}
-                        onChange={handleCategoryChange}
-                        placeholder="Select categories..."
-                        styles={selectStyles}
-                        classNamePrefix="deck-category-select"
-                        closeMenuOnSelect={false}
-                        isSearchable
-                      />
-                    </div>
-
-                    <div className="admin-modal-field">
-                      <span>Archetype</span>
-
-                      <CreatableSelect
-                        isMulti
-                        options={archetypeOptions}
-                        value={selectedArchetypeOptions}
-                        onChange={handleArchetypeChange}
-                        placeholder="Select archetypes..."
-                        styles={selectStyles}
-                        classNamePrefix="deck-archetype-select"
-                        closeMenuOnSelect={false}
-                        isSearchable
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                <section className="modal-section description-section">
-                  <h3>Description</h3>
-
-                  <AdminModalTextArea
-                    value={form.description}
-                    onChange={(value) => handleChange("description", value)}
-                  />
-                </section>
-
-                <section className="modal-metadata">
-                  <AdminModalField
-                    label="Cost"
-                    value={form.cost}
-                    onChange={(value) => handleChange("cost", value)}
-                  />
-
-                  <AdminModalField
-                    label="Creator"
-                    value={form.creator}
-                    onChange={(value) => handleChange("creator", value)}
-                  />
-
-                  <AdminModalField
-                    label="Optimization"
-                    value={form.optimization}
-                    onChange={(value) => handleChange("optimization", value)}
-                  />
-
-                  <AdminModalField
-                    label="Inspiration"
-                    value={form.inspiration}
-                    onChange={(value) => handleChange("inspiration", value)}
-                  />
-
-                  <AdminModalField
-                    label="Suggested Date"
-                    value={form.suggested_date}
-                    onChange={(value) => handleChange("suggested_date", value)}
-                  />
-
-                  <AdminModalField
-                    label="Updated Date"
-                    value={form.updated_date}
-                    onChange={(value) => handleChange("updated_date", value)}
-                  />
-
-                  <AdminModalField
-                    label="Deck Tutorial URL"
-                    value={form.deck_doc}
-                    onChange={(value) => handleChange("deck_doc", value)}
-                  />
-
-                  <div className="admin-modal-field admin-modal-cards-field">
-                    <span>
-                      Cards
-                      {form.hero && selectedHeroClasses.length > 0
-                        ? ` — ${selectedHeroClasses.join(" / ")}`
-                        : ""}
-                    </span>
-
-                    <Select
-                      isMulti
-                      options={cardOptions}
-                      value={form.cardsSelected || []}
-                      onChange={handleCardsChange}
-                      placeholder={
-                        !normalizedFormSide
-                          ? "Select side first..."
-                          : !form.hero
-                            ? "Select hero first..."
-                            : "Search cards..."
-                      }
-                      classNamePrefix="deck-cards-select"
-                      styles={selectStyles}
-                      closeMenuOnSelect={false}
-                      isSearchable
-                      isDisabled={!normalizedFormSide || !form.hero}
-                    />
-                  </div>
-
-                  <CardRatioEditor
-                    options={form.cardsSelected}
-                    onChange={handleCardRatioChange}
-                    disabled={isSaving}
-                    total={totalCardRatio}
-                  />
-
-                  <CardsErrorMessage message={cardsError} />
-                </section>
-              </div>
-            </div>
-          </div>
-        </dialog>
-      </div>
+      <AddDeckModal
+        open={open}
+        allCards={allCards}
+        onAdd={onAdd}
+        onClose={closeModal}
+        onComplete={handleAddComplete}
+      />
     );
   }
+
+  const isSaving = editSavingLocal || editSaving;
+  const editImage = getImageUrl(editImagePreview);
 
   return (
     <>
@@ -1716,14 +580,18 @@ function DeckCard({
 
             <div className="modal-scroll-content">
               <div className="modal-content">
+                {/* =====================================================
+                    LEFT SIDE
+                    ===================================================== */}
+
                 <div className="modal-image">
                   {editing ? (
                     <>
-                      {editImage && !imgError ? (
+                      {editImage && !editImgError ? (
                         <img
                           src={editImage}
-                          alt={form.name || "Deck image"}
-                          onError={() => setImgError(true)}
+                          alt={deck.name || "Deck image"}
+                          onError={() => setEditImgError(true)}
                         />
                       ) : (
                         <div className="deck-image-placeholder">No image</div>
@@ -1735,7 +603,8 @@ function DeckCard({
                         <input
                           type="file"
                           accept="image/jpeg,image/png,image/webp,image/gif"
-                          onChange={handleImageFileChange}
+                          onChange={handleEditImageFileChange}
+                          disabled={isSaving}
                         />
                       </label>
                     </>
@@ -1817,6 +686,9 @@ function DeckCard({
                     </div>
                   )}
 
+                  {/* ADMIN BUTTONS — Edit Deck / Delete Deck in view mode,
+                      Cancel / Save Changes while editing. */}
+
                   {isAdmin && (
                     <div className="admin-modal-actions">
                       {!editing ? (
@@ -1853,7 +725,7 @@ function DeckCard({
                           <button
                             type="button"
                             className="admin-modal-save"
-                            onClick={handleSave}
+                            onClick={handleEditSave}
                             disabled={isSaving}
                           >
                             {isSaving ? "Saving..." : "Save Changes"}
@@ -1864,62 +736,37 @@ function DeckCard({
                   )}
                 </div>
 
+                {/* =====================================================
+                    RIGHT SIDE
+                    ===================================================== */}
+
                 <div className="modal-info">
-                  <div className="modal-header">
-                    <div className="modal-title-content">
-                      {editing ? (
-                        <>
-                          <AdminModalField
-                            label="Deck Name"
-                            value={form.name}
-                            onChange={(value) => handleChange("name", value)}
-                          />
+                  {editing ? (
+                    /*
+                     * IMPORTANT:
+                     *
+                     * EditDeckModal is NOT a modal here.
+                     *
+                     * It is rendered directly inside the existing
+                     * .modal-info container, and only owns the
+                     * right-column fields. Image state and the
+                     * Cancel/Save buttons are driven from here.
+                     */
 
-                          <div className="admin-modal-field">
-                            <span>Side</span>
-
-                            <Select
-                              options={[
-                                { value: "Plants", label: "Plants" },
-                                { value: "Zombies", label: "Zombies" },
-                              ]}
-                              value={
-                                normalizedFormSide
-                                  ? {
-                                      value: normalizedFormSide,
-                                      label: normalizedFormSide,
-                                    }
-                                  : null
-                              }
-                              onChange={handleSideChange}
-                              placeholder="Select side..."
-                              isClearable
-                              styles={singleValueStyles}
-                              classNamePrefix="deck-side-select"
-                            />
-                          </div>
-
-                          <div className="admin-modal-field">
-                            <span>Hero</span>
-
-                            <Select
-                              options={heroOptions}
-                              value={selectedHero}
-                              onChange={handleHeroChange}
-                              placeholder={
-                                normalizedFormSide
-                                  ? "Select hero..."
-                                  : "Select side first..."
-                              }
-                              isClearable
-                              isDisabled={!normalizedFormSide}
-                              styles={singleValueStyles}
-                              classNamePrefix="deck-hero-select"
-                            />
-                          </div>
-                        </>
-                      ) : (
-                        <>
+                    <EditDeckModal
+                      ref={editModalRef}
+                      deck={deck}
+                      allCards={allCards}
+                      onSave={onSave}
+                      onComplete={handleEditComplete}
+                      imageFile={editImageFile}
+                      imageUrl={editImagePreview}
+                      onSavingChange={setEditSavingLocal}
+                    />
+                  ) : (
+                    <>
+                      <div className="modal-header">
+                        <div className="modal-title-content">
                           <h2 className="modal-title">
                             {deck.name || "Untitled Deck"}
                           </h2>
@@ -1927,154 +774,22 @@ function DeckCard({
                           <span className="deck-hero">
                             {deck.hero || "Unknown Hero"}
                           </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <section className="modal-section description-section">
-                    <h3>Description</h3>
-
-                    {editing ? (
-                      <AdminModalTextArea
-                        value={form.description}
-                        onChange={(value) => handleChange("description", value)}
-                      />
-                    ) : (
-                      <p className="description">{description}</p>
-                    )}
-                  </section>
-
-                  <section className="modal-metadata">
-                    {editing ? (
-                      <>
-                        <div className="admin-modal-field">
-                          <span>Category</span>
-
-                          <CreatableSelect
-                            isMulti
-                            options={categoryOptions}
-                            value={selectedCategoryOptions}
-                            onChange={handleCategoryChange}
-                            placeholder="Select categories..."
-                            styles={selectStyles}
-                            classNamePrefix="deck-category-select"
-                            closeMenuOnSelect={false}
-                            isSearchable
-                          />
                         </div>
+                      </div>
 
-                        <div className="admin-modal-field">
-                          <span>Archetype</span>
+                      <section className="modal-section description-section">
+                        <h3>Description</h3>
 
-                          <CreatableSelect
-                            isMulti
-                            options={archetypeOptions}
-                            value={selectedArchetypeOptions}
-                            onChange={handleArchetypeChange}
-                            placeholder="Select archetypes..."
-                            styles={selectStyles}
-                            classNamePrefix="deck-archetype-select"
-                            closeMenuOnSelect={false}
-                            isSearchable
-                          />
-                        </div>
+                        <p className="description">{description}</p>
+                      </section>
 
-                        <AdminModalField
-                          label="Cost"
-                          value={form.cost}
-                          onChange={(value) => handleChange("cost", value)}
-                        />
-
-                        <AdminModalField
-                          label="Creator"
-                          value={form.creator}
-                          onChange={(value) => handleChange("creator", value)}
-                        />
-
-                        <AdminModalField
-                          label="Optimization"
-                          value={form.optimization}
-                          onChange={(value) =>
-                            handleChange("optimization", value)
-                          }
-                        />
-
-                        <AdminModalField
-                          label="Inspiration"
-                          value={form.inspiration}
-                          onChange={(value) =>
-                            handleChange("inspiration", value)
-                          }
-                        />
-
-                        <AdminModalField
-                          label="Suggested Date"
-                          value={form.suggested_date}
-                          onChange={(value) =>
-                            handleChange("suggested_date", value)
-                          }
-                        />
-
-                        <AdminModalField
-                          label="Updated Date"
-                          value={form.updated_date}
-                          onChange={(value) =>
-                            handleChange("updated_date", value)
-                          }
-                        />
-
-                        <AdminModalField
-                          label="Deck Tutorial URL"
-                          value={form.deck_doc}
-                          onChange={(value) => handleChange("deck_doc", value)}
-                        />
-
-                        <div className="admin-modal-field admin-modal-cards-field">
-                          <span>
-                            Cards
-                            {form.hero && selectedHeroClasses.length > 0
-                              ? ` — ${selectedHeroClasses.join(" / ")}`
-                              : ""}
-                          </span>
-
-                          <Select
-                            isMulti
-                            options={cardOptions}
-                            value={form.cardsSelected || []}
-                            onChange={handleCardsChange}
-                            placeholder={
-                              !normalizedFormSide
-                                ? "Select side first..."
-                                : !form.hero
-                                  ? "Select hero first..."
-                                  : "Search cards..."
-                            }
-                            classNamePrefix="deck-cards-select"
-                            styles={selectStyles}
-                            closeMenuOnSelect={false}
-                            isSearchable
-                            isDisabled={!normalizedFormSide || !form.hero}
-                          />
-                        </div>
-
-                        <CardRatioEditor
-                          options={form.cardsSelected}
-                          onChange={handleCardRatioChange}
-                          disabled={isSaving}
-                          total={totalCardRatio}
-                        />
-
-                        <CardsErrorMessage message={cardsError} />
-                      </>
-                    ) : (
-                      <>
-                        {hasValue(deckDocUrl) && (
+                      <section className="modal-metadata">
+                        {hasValue(toExternalUrl(deck.deck_doc)) && (
                           <div className="metadata-item">
                             <span className="label">Deck Tutorial</span>
 
                             <a
-                              href={deckDocUrl}
+                              href={toExternalUrl(deck.deck_doc)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="deck-doc-link"
@@ -2086,11 +801,13 @@ function DeckCard({
 
                         <div className="metadata-item">
                           <span className="label">Category</span>
+
                           <span className="value">{deck.category || "-"}</span>
                         </div>
 
                         <div className="metadata-item">
                           <span className="label">Archetype</span>
+
                           <span className="value">{deck.archetype || "-"}</span>
                         </div>
 
@@ -2107,20 +824,20 @@ function DeckCard({
                             />
                           </span>
                         </div>
-                      </>
-                    )}
-                  </section>
+                      </section>
 
-                  {isAdmin && !editing && (
-                    <section className="modal-section admin-cards-section">
-                      <h3>Cards</h3>
+                      {isAdmin && (
+                        <section className="modal-section admin-cards-section">
+                          <h3>Cards</h3>
 
-                      <div className="admin-cards-value">
-                        {hasValue(deck.cards)
-                          ? formatCardsDisplay(deck.cards) || deck.cards
-                          : "No cards listed."}
-                      </div>
-                    </section>
+                          <div className="admin-cards-value">
+                            {hasValue(deck.cards)
+                              ? formatCardsDisplay(deck.cards) || deck.cards
+                              : "No cards listed."}
+                          </div>
+                        </section>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -2129,35 +846,6 @@ function DeckCard({
         </div>
       )}
     </>
-  );
-}
-
-function AdminModalField({ label, value, onChange }) {
-  return (
-    <label className="admin-modal-field">
-      <span>{label}</span>
-
-      <input
-        type="text"
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
-  );
-}
-
-function AdminModalTextArea({ label, value, onChange }) {
-  return (
-    <label className="admin-modal-field admin-modal-textarea-field">
-      {label && <span>{label}</span>}
-
-      <textarea
-        className="admin-modal-textarea"
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value)}
-        rows={7}
-      />
-    </label>
   );
 }
 
