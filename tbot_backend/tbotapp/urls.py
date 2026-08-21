@@ -127,33 +127,33 @@ urlpatterns = [
         name="keep_or_scrap",
     ),
 
-    # ========================================================
-    # COUNTS
-    # ========================================================
+   # ============================================================
+# COUNTS
+# ============================================================
 
-    path(
-        "decklists/count/",
-        decklist_count,
-        name="decklist_count",
-    ),
+path(
+    "decklist-count/",
+    decklist_count,
+    name="decklist-count",
+),
 
-    path(
-        "cards/count/",
-        card_count,
-        name="card_count",
-    ),
+path(
+    "card-count/",
+    card_count,
+    name="card-count",
+),
 
-    path(
-        "heroinfo/count/",
-        hero_count,
-        name="hero_count",
-    ),
+path(
+    "hero-count/",
+    hero_count,
+    name="hero-count",
+),
 
-    path(
-        "keeporscrap/count/",
-        keep_or_scrap_count,
-        name="keep_or_scrap_count",
-    ),
+path(
+    "keeporscrap/count/",
+    keep_or_scrap_count,
+    name="keep-or-scrap-count",
+),
 
     # ========================================================
     # CSRF

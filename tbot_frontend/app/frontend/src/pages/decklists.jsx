@@ -1,8 +1,11 @@
+
 import { useEffect, useMemo, useState } from "react";
+
 import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
+
 import "../css/decklists.css";
 import "../css/navbar.css";
 import "../css/loading.css";
@@ -106,29 +109,11 @@ function normalizeKey(value) {
   return normalizeText(value).toLowerCase();
 }
 
-/*
- * Converts the cards field into individual card names.
- *
- * Supports:
- *
- * Forget-Me-Nuts
- * Galacta-Cactus
- * Garlic
- *
- * Actual newline characters:
- * "\n"
- *
- * Escaped newline characters:
- * "\\n"
- *
- * Comma-separated cards:
- * "Garlic, Lima-Pleurodon, Brainana"
- */
 function parseDeckCards(value) {
   return String(value ?? "")
-    .replace(/\\r\\n/g, "\n")
-    .replace(/\\n/g, "\n")
-    .replace(/\\r/g, "\r")
+    .replace(/\\\r\n/g, "\n")
+    .replace(/\\\n/g, "\n")
+    .replace(/\\\r/g, "\r")
     .split(/\r?\n|,/)
     .map((card) => card.trim())
     .filter(Boolean);
@@ -136,23 +121,15 @@ function parseDeckCards(value) {
 
 function DecklistsPage() {
   const [decks, setDecks] = useState([]);
-  const [totalDecks, setTotalDecks] = useState(0);
-
+  const [totalDecks, setTotalDecks] = useState(null);
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
-
   const [hero, setHero] = useState([]);
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
-
   const [allCards, setAllCards] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // ============================================================
-  // PAGE TITLE
-  // ============================================================
 
   useEffect(() => {
     document.title = "Decklists";
@@ -162,10 +139,6 @@ function DecklistsPage() {
     };
   }, []);
 
-  // ============================================================
-  // LOAD DECK COUNT
-  // ============================================================
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -174,6 +147,10 @@ function DecklistsPage() {
         const response = await fetch(
           `${API_BASE_URL}/tbotapp/decklist-count/`,
           {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
             signal: controller.signal,
           },
         );
@@ -185,8 +162,11 @@ function DecklistsPage() {
         }
 
         const data = await response.json();
+        const count = Number(data?.count);
 
-        setTotalDecks(Number(data?.count) || 0);
+        if (Number.isFinite(count)) {
+          setTotalDecks(count);
+        }
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to load deck count:", err);
@@ -199,16 +179,16 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
-  // ============================================================
-  // LOAD CARDS
-  // ============================================================
-
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchCards = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
           signal: controller.signal,
         });
 
@@ -231,22 +211,26 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
-  // ============================================================
-  // LOAD DECKS
-  // ============================================================
-
   useEffect(() => {
     const controller = new AbortController();
+    const loadingStartTime = Date.now();
+    const minimumLoadingTime = 1200;
 
     const fetchDecks = async () => {
       try {
         setLoading(true);
+        setError("");
 
-        const endpoint = `${API_BASE_URL}/tbotapp/decklists/`;
-
-        const response = await fetch(endpoint, {
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/decklists/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
+          },
+        );
 
         if (!response.ok) {
           let message = `Request failed with status ${response.status}`;
@@ -259,7 +243,8 @@ function DecklistsPage() {
             } else if (payload?.error) {
               message += `: ${payload.error}`;
             }
-          } catch (_error) {}
+          } catch {
+          }
 
           throw new Error(message);
         }
@@ -282,24 +267,37 @@ function DecklistsPage() {
             ? data.results
             : [];
 
-        console.log("DECKS FROM API:", results);
-
         setDecks(results);
-        setError("");
 
-        if (!totalDecks && results.length) {
-          setTotalDecks(results.length);
-        }
+        setTotalDecks((currentCount) => {
+          if (currentCount !== null && currentCount > 0) {
+            return currentCount;
+          }
+
+          return results.length;
+        });
+
+        const elapsed = Date.now() - loadingStartTime;
+        const remaining = Math.max(
+          minimumLoadingTime - elapsed,
+          0,
+        );
+
+        window.setTimeout(() => {
+          if (!controller.signal.aborted) {
+            setLoading(false);
+          }
+        }, remaining);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to load decklists:", err);
 
           setError(
-            `Unable to load decklists right now. ${err.message || ""}`.trim(),
+            `Unable to load decklists right now. ${
+              err.message || ""
+            }`.trim(),
           );
-        }
-      } finally {
-        if (!controller.signal.aborted) {
+
           setLoading(false);
         }
       }
@@ -310,10 +308,6 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
-  // ============================================================
-  // SIDE FILTER
-  // ============================================================
-
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
@@ -321,12 +315,10 @@ function DecklistsPage() {
 
     const selectedSide = normalizeKey(side);
 
-    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
+    return decks.filter(
+      (deck) => normalizeKey(deck.side) === selectedSide,
+    );
   }, [decks, side]);
-
-  // ============================================================
-  // HERO OPTIONS
-  // ============================================================
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
@@ -355,7 +347,8 @@ function DecklistsPage() {
     return Array.from(heroMap.values())
       .map((option) => {
         const matchedCard = allCards.find(
-          (card) => normalizeKey(card.card_name) === normalizeKey(option.label),
+          (card) =>
+            normalizeKey(card.card_name) === normalizeKey(option.label),
         );
 
         return {
@@ -370,10 +363,6 @@ function DecklistsPage() {
         }),
       );
   }, [sideFilteredDecks, allCards]);
-
-  // ============================================================
-  // CATEGORY OPTIONS
-  // ============================================================
 
   const categoryOptions = useMemo(() => {
     const categoryMap = new Map();
@@ -390,7 +379,9 @@ function DecklistsPage() {
       if (!categoryMap.has(key)) {
         categoryMap.set(key, {
           value: categoryName,
-          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
+          label:
+            categoryName.charAt(0).toUpperCase() +
+            categoryName.slice(1),
           count: 0,
           ...CATEGORY_META[key],
         });
@@ -405,10 +396,6 @@ function DecklistsPage() {
       }),
     );
   }, [sideFilteredDecks]);
-
-  // ============================================================
-  // ARCHETYPE OPTIONS
-  // ============================================================
 
   const archetypeOptions = useMemo(() => {
     const counts = {};
@@ -441,10 +428,6 @@ function DecklistsPage() {
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
 
-  // ============================================================
-  // SORT DECKS
-  // ============================================================
-
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
       const sideOrder = {
@@ -455,7 +438,8 @@ function DecklistsPage() {
       const sideA = normalizeKey(a.side);
       const sideB = normalizeKey(b.side);
 
-      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
+      const sideCompare =
+        (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
 
       if (sideCompare !== 0) {
         return sideCompare;
@@ -483,10 +467,6 @@ function DecklistsPage() {
     });
   }, [decks]);
 
-  // ============================================================
-  // FILTER / SEARCH DECKS
-  // ============================================================
-
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
 
@@ -495,33 +475,11 @@ function DecklistsPage() {
       : "";
 
     return sortedDecks.filter((deck) => {
-      // --------------------------------------------------------
-      // CARDS
-      //
-      // Turn the database cards field into individual card names.
-      //
-      // Example:
-      //
-      // Forget-Me-Nuts
-      // Galacta-Cactus
-      // Garlic
-      //
-      // becomes:
-      //
-      // [
-      //   "Forget-Me-Nuts",
-      //   "Galacta-Cactus",
-      //   "Garlic"
-      // ]
-      // --------------------------------------------------------
-
       const deckCards = parseDeckCards(deck.cards);
 
-      const searchableCardValues = deckCards.map((card) => normalizeKey(card));
-
-      // --------------------------------------------------------
-      // OTHER SEARCHABLE VALUES
-      // --------------------------------------------------------
+      const searchableCardValues = deckCards.map((card) =>
+        normalizeKey(card),
+      );
 
       const searchableValues = [
         deck.name,
@@ -533,10 +491,6 @@ function DecklistsPage() {
       ]
         .filter(Boolean)
         .map((value) => normalizeKey(value));
-
-      // --------------------------------------------------------
-      // SEARCH
-      // --------------------------------------------------------
 
       let searchMatch = true;
 
@@ -556,28 +510,18 @@ function DecklistsPage() {
         }
       }
 
-      // --------------------------------------------------------
-      // SIDE
-      // --------------------------------------------------------
-
       const deckSide = normalizeKey(deck.side);
 
-      const sideMatch = side === "All" || deckSide === normalizeKey(side);
-
-      // --------------------------------------------------------
-      // HERO
-      // --------------------------------------------------------
+      const sideMatch =
+        side === "All" || deckSide === normalizeKey(side);
 
       const heroMatch =
         hero.length === 0 ||
         hero.some(
           (selectedHero) =>
-            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
+            normalizeKey(deck.hero) ===
+            normalizeKey(selectedHero.value),
         );
-
-      // --------------------------------------------------------
-      // CATEGORY
-      // --------------------------------------------------------
 
       const categoryMatch =
         category.length === 0 ||
@@ -587,27 +531,25 @@ function DecklistsPage() {
             normalizeKey(selectedCategory.value),
         );
 
-      // --------------------------------------------------------
-      // ARCHETYPE
-      // --------------------------------------------------------
-
       const deckArchetype = normalizeKey(deck.archetype);
 
       const archetypeMatch =
         archetype.length === 0 ||
         archetype.every((selectedArchetype) =>
-          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
+          deckArchetype.includes(
+            normalizeKey(selectedArchetype.value),
+          ),
         );
 
       return (
-        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
+        searchMatch &&
+        sideMatch &&
+        heroMatch &&
+        categoryMatch &&
+        archetypeMatch
       );
     });
   }, [sortedDecks, search, side, hero, category, archetype]);
-
-  // ============================================================
-  // CLEAR FILTERS
-  // ============================================================
 
   const clearFilters = () => {
     setSearch("");
@@ -621,10 +563,6 @@ function DecklistsPage() {
     clearFilters();
   };
 
-  // ============================================================
-  // LOADING
-  // ============================================================
-
   if (loading) {
     return (
       <div className="loading-page">
@@ -633,23 +571,23 @@ function DecklistsPage() {
 
           <h2>Loading decklists</h2>
 
-          <p>Preparing the deck browser and loading available decks.</p>
+          <p>
+            Preparing the deck browser and loading available decks.
+          </p>
 
           <div className="loading-status">
             <span>Loading deck data</span>
 
             <strong>
-              {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
+              {totalDecks !== null
+                ? `${totalDecks} decks`
+                : "Loading..."}
             </strong>
           </div>
         </div>
       </div>
     );
   }
-
-  // ============================================================
-  // RENDER
-  // ============================================================
 
   return (
     <div className="deck-page">
@@ -664,10 +602,6 @@ function DecklistsPage() {
             src="https://i.ibb.co/8nBNRL66/deckbannerbyairheadz.webp"
             alt="Deck Banner"
           />
-
-          {/* ================================================== */}
-          {/* SIDE TABS */}
-          {/* ================================================== */}
 
           <div className="tabs">
             <button
@@ -705,10 +639,6 @@ function DecklistsPage() {
             </button>
           </div>
 
-          {/* ================================================== */}
-          {/* SEARCH */}
-          {/* ================================================== */}
-
           <div className="search-container">
             <input
               className="search"
@@ -717,10 +647,6 @@ function DecklistsPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-
-          {/* ================================================== */}
-          {/* FILTERS */}
-          {/* ================================================== */}
 
           <div className="filters">
             <div className="select-wrapper">
@@ -763,15 +689,12 @@ function DecklistsPage() {
           </div>
         </div>
 
-        {/* ================================================== */}
-        {/* RESULTS */}
-        {/* ================================================== */}
-
         {error ? (
           <p className="error-message">{error}</p>
         ) : (
           <p className="results-count">
-            Showing {filteredDecks.length} of {totalDecks || decks.length} decks
+            Showing {filteredDecks.length} of{" "}
+            {totalDecks !== null ? totalDecks : decks.length} decks
           </p>
         )}
 
@@ -783,7 +706,10 @@ function DecklistsPage() {
               {filteredDecks.map((deck) => (
                 <DeckCard
                   key={`${deck.side}-${
-                    deck.deckid || deck.deckID || deck.id || deck.name
+                    deck.deckid ||
+                    deck.deckID ||
+                    deck.id ||
+                    deck.name
                   }`}
                   decklist={deck}
                 />
@@ -793,9 +719,10 @@ function DecklistsPage() {
         )}
       </main>
 
-      <Footer credits="Special thanks to rip for uploading all of the deck images, and to everyone in the PVZH community who continues to contribute great decks and help grow the Tbot website and Discord bot. Credit to AirheadZ for designing the deck banner used on this page." />
+      <Footer
+        credits="Special thanks to rip for uploading all of the deck images, and to everyone in the PVZH community who continues to contribute great decks and help grow the Tbot website and Discord bot. Credit to AirheadZ for designing the deck banner used on this page."
+      />
     </div>
   );
 }
-
 export default DecklistsPage;

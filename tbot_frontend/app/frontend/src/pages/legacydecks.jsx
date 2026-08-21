@@ -1,4 +1,6 @@
+
 import { useEffect, useMemo, useState } from "react";
+
 import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar";
@@ -28,35 +30,27 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-/* ============================================================
-   ARCHETYPE META
-============================================================ */
-
 const ARCHETYPE_META = {
   aggro: {
     icon: "⚡",
     description:
       "Attempts to kill the opponent as soon as possible, usually winning the game by turn 4-7.",
   },
-
   combo: {
     icon: "🧩",
     description:
       "Uses a specific card synergy to do massive damage to the opponent (OTK or One Turn Kill decks).",
   },
-
   midrange: {
     icon: "⚖️",
     description:
       "Slower than aggro, usually likes to set up earlygame boards into mid-cost cards to win the game.",
   },
-
   control: {
     icon: "🛡️",
     description:
       "Focuses on removal and card advantage, winning in the late game.",
   },
-
   tempo: {
     icon: "🏃",
     description:
@@ -64,35 +58,24 @@ const ARCHETYPE_META = {
   },
 };
 
-/* ============================================================
-   CATEGORY META
-============================================================ */
-
 const CATEGORY_META = {
   budget: {
     icon: "💵",
     description: "Decks that are cheap for new players",
   },
-
   competitive: {
     icon: "🏆",
     description: "Some of the best decks in the game",
   },
-
   ladder: {
     icon: "🪜",
     description: "Decks that are mostly only good for ranked games",
   },
-
   meme: {
     icon: "😂",
     description: "Decks built for fun or unusual combos",
   },
 };
-
-/* ============================================================
-   HERO ALIASES
-============================================================ */
 
 const HERO_ALIAS = {
   bc: "beta-carrotina",
@@ -105,7 +88,6 @@ const HERO_ALIAS = {
   nc: "night cap",
   ro: "rose",
   cc: "captain combustible",
-
   sb: "super brainz",
   sm: "the smash",
   if: "impfinity",
@@ -118,10 +100,6 @@ const HERO_ALIAS = {
   nt: "neptuna",
   hg: "huge-giganticus",
 };
-
-/* ============================================================
-   HELPERS
-============================================================ */
 
 function normalizeText(value) {
   return String(value ?? "").trim();
@@ -138,9 +116,9 @@ function parseCardNames(value) {
 
   let cards = String(value);
 
-  cards = cards.replace(/\\r\\n/g, "\n");
-  cards = cards.replace(/\\n/g, "\n");
-  cards = cards.replace(/\\r/g, "\n");
+  cards = cards.replace(/\\\r\\\n/g, "\n");
+  cards = cards.replace(/\\\n/g, "\n");
+  cards = cards.replace(/\\\r/g, "\n");
 
   return cards
     .split(/\r?\n|,/)
@@ -154,29 +132,19 @@ function normalizeCardSearchValue(value) {
     .filter(Boolean);
 }
 
-/* ============================================================
-   PAGE
-============================================================ */
-
 function LegacyDecksPage() {
   const [decks, setDecks] = useState([]);
   const [totalDecks, setTotalDecks] = useState(0);
-
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
-
   const [hero, setHero] = useState([]);
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
-
   const [allCards, setAllCards] = useState([]);
-
   const [loading, setLoading] = useState(true);
+  const [countLoaded, setCountLoaded] = useState(false);
+  const [decksLoaded, setDecksLoaded] = useState(false);
   const [error, setError] = useState("");
-
-  /* ============================================================
-     PAGE TITLE
-  ============================================================ */
 
   useEffect(() => {
     document.title = "Legacy Decks";
@@ -186,45 +154,73 @@ function LegacyDecksPage() {
     };
   }, []);
 
-  /* ============================================================
-     LOAD LEGACY DATA
-     
-     One effect instead of three separate effects.
-============================================================ */
+  useEffect(() => {
+    const controller = new AbortController();
+    let mounted = true;
+
+    const fetchLegacyCount = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/legacy-decklist-count/`,
+          {
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Legacy deck count request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+
+        if (mounted) {
+          const count = Number(data?.count);
+
+          if (Number.isFinite(count) && count >= 0) {
+            setTotalDecks(count);
+          }
+
+          setCountLoaded(true);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load legacy deck count:", err);
+
+          if (mounted) {
+            setCountLoaded(true);
+          }
+        }
+      }
+    };
+
+    fetchLegacyCount();
+
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
     let mounted = true;
 
-    const loadLegacyData = async () => {
+    const fetchLegacyDecks = async () => {
       try {
-        setLoading(true);
-        setError("");
-
-        /*
-         * Load the count and legacy decks together.
-         */
-        const [countResponse, decksResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/tbotapp/legacy-decklist-count/`, {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/legacy-decklists/`,
+          {
             signal: controller.signal,
-          }),
+          },
+        );
 
-          fetch(`${API_BASE_URL}/tbotapp/legacy-decklists/`, {
-            signal: controller.signal,
-          }),
-        ]);
-
-        if (!countResponse.ok) {
-          throw new Error(
-            `Legacy deck count request failed with status ${countResponse.status}`,
-          );
-        }
-
-        if (!decksResponse.ok) {
-          let message = `Legacy deck request failed with status ${decksResponse.status}`;
+        if (!response.ok) {
+          let message = `Legacy deck request failed with status ${response.status}`;
 
           try {
-            const payload = await decksResponse.json();
+            const payload = await response.json();
 
             if (payload?.detail) {
               message += `: ${payload.detail}`;
@@ -232,16 +228,14 @@ function LegacyDecksPage() {
               message += `: ${payload.error}`;
             }
           } catch {
-            // Ignore JSON parsing errors.
+            // Ignore invalid JSON.
           }
 
           throw new Error(message);
         }
 
-        const countData = await countResponse.json();
-
         const contentType = (
-          decksResponse.headers.get("content-type") || ""
+          response.headers.get("content-type") || ""
         ).toLowerCase();
 
         if (!contentType.includes("application/json")) {
@@ -250,12 +244,12 @@ function LegacyDecksPage() {
           );
         }
 
-        const deckData = await decksResponse.json();
+        const data = await response.json();
 
-        const results = Array.isArray(deckData)
-          ? deckData
-          : Array.isArray(deckData?.results)
-            ? deckData.results
+        const results = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+            ? data.results
             : [];
 
         const normalizedResults = results.map((deck) => ({
@@ -268,10 +262,12 @@ function LegacyDecksPage() {
         }
 
         setDecks(normalizedResults);
+        setError("");
+        setDecksLoaded(true);
 
-        setTotalDecks(
-          Number(countData?.count) || normalizedResults.length,
-        );
+        if (totalDecks === 0 && normalizedResults.length > 0) {
+          setTotalDecks(normalizedResults.length);
+        }
       } catch (err) {
         if (err.name === "AbortError") {
           return;
@@ -285,31 +281,19 @@ function LegacyDecksPage() {
               err.message || ""
             }`.trim(),
           );
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
+
+          setDecksLoaded(true);
         }
       }
     };
 
-    loadLegacyData();
+    fetchLegacyDecks();
 
     return () => {
       mounted = false;
       controller.abort();
     };
-  }, []);
-
-  /* ============================================================
-     LOAD CARD INFORMATION
-
-     This is kept separate because it is only needed for
-     hero dropdown information.
-
-     If you don't need hero images/descriptions in the
-     dropdown, this entire effect can be removed.
-============================================================ */
+  }, [totalDecks]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -351,9 +335,15 @@ function LegacyDecksPage() {
     };
   }, []);
 
-  /* ============================================================
-     SIDE FILTER
-============================================================ */
+  useEffect(() => {
+    if (countLoaded && decksLoaded) {
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [countLoaded, decksLoaded]);
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -366,10 +356,6 @@ function LegacyDecksPage() {
       (deck) => normalizeKey(deck.side) === selectedSide,
     );
   }, [decks, side]);
-
-  /* ============================================================
-     HERO OPTIONS
-============================================================ */
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
@@ -416,10 +402,6 @@ function LegacyDecksPage() {
       );
   }, [sideFilteredDecks, allCards]);
 
-  /* ============================================================
-     CATEGORY OPTIONS
-============================================================ */
-
   const categoryOptions = useMemo(() => {
     const categoryMap = new Map();
 
@@ -453,10 +435,6 @@ function LegacyDecksPage() {
     );
   }, [sideFilteredDecks]);
 
-  /* ============================================================
-     ARCHETYPE OPTIONS
-============================================================ */
-
   const archetypeOptions = useMemo(() => {
     const counts = {};
 
@@ -487,10 +465,6 @@ function LegacyDecksPage() {
       }))
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
-
-  /* ============================================================
-     SORT
-============================================================ */
 
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
@@ -531,10 +505,6 @@ function LegacyDecksPage() {
       );
     });
   }, [decks]);
-
-  /* ============================================================
-     FILTER
-============================================================ */
 
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
@@ -616,10 +586,6 @@ function LegacyDecksPage() {
     archetype,
   ]);
 
-  /* ============================================================
-     CLEAR FILTERS
-============================================================ */
-
   const clearFilters = () => {
     setSearch("");
     setHero([]);
@@ -631,10 +597,6 @@ function LegacyDecksPage() {
     setSide(newSide);
     clearFilters();
   };
-
-  /* ============================================================
-     LOADING
-============================================================ */
 
   if (loading) {
     return (
@@ -650,10 +612,10 @@ function LegacyDecksPage() {
           </p>
 
           <div className="loading-status">
-            <span>Loading legacy deck data</span>
+            <span>Legacy decks available</span>
 
             <strong>
-              {totalDecks > 0
+              {countLoaded
                 ? `${totalDecks} decks`
                 : "Loading..."}
             </strong>
@@ -663,10 +625,6 @@ function LegacyDecksPage() {
     );
   }
 
-  /* ============================================================
-     RENDER
-============================================================ */
-
   return (
     <div className="deck-page">
       <Navbar />
@@ -675,7 +633,6 @@ function LegacyDecksPage() {
         <h1>Legacy Decks</h1>
 
         <div className="deck-browser">
-
           <div className="tabs">
             <button
               type="button"
@@ -695,7 +652,6 @@ function LegacyDecksPage() {
                 alt="Plants"
                 className="tab-icon"
               />
-
               Plants
             </button>
 
@@ -709,7 +665,6 @@ function LegacyDecksPage() {
                 alt="Zombies"
                 className="tab-icon"
               />
-
               Zombies
             </button>
           </div>
