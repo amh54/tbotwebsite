@@ -361,8 +361,13 @@ function DeckCard({
     setEditImagePreview(previewUrl);
   };
 
-  const handleEditSave = () => {
-    editModalRef.current?.save();
+  const handleEditSave = async () => {
+    if (!editModalRef.current?.save) {
+      console.error("EditDeckModal save method is unavailable.");
+      return;
+    }
+
+    await editModalRef.current.save();
   };
 
   const handleDelete = () => {

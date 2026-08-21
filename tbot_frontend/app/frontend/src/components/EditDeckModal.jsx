@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -608,18 +609,25 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   }, [allCards, normalizedFormSide, form.hero, selectedHeroClasses]);
 
   useEffect(() => {
-    if (!deck || !cardOptions.length) {
-      return;
-    }
+  if (!deck || !cardOptions.length) {
+    return;
+  }
 
-    const loadedCards = cardRatioLinesToOptions(deck.cards ?? "", cardOptions);
+  const loadedCards = cardRatioLinesToOptions(
+    deck.cards ?? "",
+    cardOptions,
+  );
 
-    setForm((previous) => ({
+  setForm((previous) => {
+    const cardsValue = cardOptionsToRatioLines(loadedCards);
+
+    return {
       ...previous,
       cardsSelected: loadedCards,
-      cards: cardOptionsToRatioLines(loadedCards),
-    }));
-  }, [deck, cardOptions]);
+      cards: cardsValue,
+    };
+  });
+}, [deck, cardOptions]);
 
   const totalCardRatio = useMemo(
     () => sumCardRatios(form.cardsSelected),
@@ -766,92 +774,115 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     setCardsError("");
   };
 
-  const handleSave = async () => {
-    if (typeof onSave !== "function") {
-      return;
+  const handleSave = useCallback(async () => {
+  if (typeof onSave !== "function") {
+    setCardsError("Save handler is unavailable.");
+    return null;
+  }
+
+  if (!normalizedFormSide) {
+    setCardsError("Please select Plants or Zombies.");
+    return null;
+  }
+
+  if (!form.hero) {
+    setCardsError("Please select a hero.");
+    return null;
+  }
+
+  if (!form.cardsSelected?.length) {
+    setCardsError("Please select at least one card.");
+    return null;
+  }
+
+  const ratioTotal = sumCardRatios(form.cardsSelected);
+
+  if (ratioTotal !== TARGET_CARD_RATIO_TOTAL) {
+    setCardsError(
+      `Card ratios must add up to ${TARGET_CARD_RATIO_TOTAL} (currently ${ratioTotal}).`,
+    );
+    return null;
+  }
+
+  setCardsError("");
+
+  try {
+    onSavingChange?.(true);
+
+    const hasNewImage = imageFile instanceof File;
+
+    const validCards = form.cardsSelected.filter((option) =>
+      cardOptions.some(
+        (cardOption) =>
+          String(cardOption.value).toLowerCase() ===
+          String(option?.value || "").toLowerCase(),
+      ),
+    );
+
+    const cardsValue = cardOptionsToRatioLines(validCards);
+
+    const payload = {
+      name: form.name ?? "",
+      hero: form.hero ?? "",
+      side: normalizedFormSide,
+      category: optionsToCombinedValue(form.categorySelected),
+      archetype: optionsToCombinedValue(form.archetypeSelected),
+      description: form.description ?? "",
+      image: hasNewImage
+        ? ""
+        : String(imageUrl ?? form.image ?? "").trim(),
+      image_file: hasNewImage ? imageFile : null,
+      creator: form.creator ?? "",
+      cost: form.cost ?? "",
+      inspiration: form.inspiration ?? "",
+      optimization: form.optimization ?? "",
+      suggested_date: form.suggested_date ?? "",
+      updated_date: form.updated_date ?? "",
+      deck_doc: form.deck_doc ?? "",
+      cards: cardsValue,
+    };
+
+    console.log("Saving legacy deck:", deck);
+    console.log("Save payload:", payload);
+
+    const result = await onSave(deck, payload);
+
+    if (!result) {
+      setCardsError("The server did not return an updated deck.");
+      return null;
     }
 
-    if (!normalizedFormSide) {
-      setCardsError("Please select Plants or Zombies.");
-      return;
+    if (typeof onComplete === "function") {
+      onComplete(result);
     }
 
-    if (!form.hero) {
-      setCardsError("Please select a hero.");
-      return;
-    }
+    return result;
+  } catch (error) {
+    console.error("Failed to save deck:", error);
+    setCardsError(error?.message || "Failed to save deck.");
+    return null;
+  } finally {
+    onSavingChange?.(false);
+  }
+}, [
+  onSave,
+  onComplete,
+  onSavingChange,
+  deck,
+  imageFile,
+  imageUrl,
+  form,
+  cardOptions,
+  normalizedFormSide,
+]);
 
-    if (!form.cardsSelected?.length) {
-      setCardsError("Please select at least one card.");
-      return;
-    }
-
-    const ratioTotal = sumCardRatios(form.cardsSelected);
-
-    if (ratioTotal !== TARGET_CARD_RATIO_TOTAL) {
-      setCardsError(
-        `Card ratios must add up to ${TARGET_CARD_RATIO_TOTAL} (currently ${ratioTotal}).`,
-      );
-      return;
-    }
-
-    setCardsError("");
-
-    try {
-      onSavingChange?.(true);
-
-      const hasNewImage = imageFile instanceof File;
-
-      const validCards = form.cardsSelected.filter((option) =>
-        cardOptions.some(
-          (cardOption) =>
-            cardOption.value.toLowerCase() ===
-            String(option?.value || "").toLowerCase(),
-        ),
-      );
-
-      const cardsValue = cardOptionsToRatioLines(validCards);
-
-      const payload = {
-        name: form.name ?? "",
-        hero: form.hero ?? "",
-        side: normalizedFormSide,
-        category: optionsToCombinedValue(form.categorySelected),
-        archetype: optionsToCombinedValue(form.archetypeSelected),
-        description: form.description ?? "",
-        image: hasNewImage ? "" : String(imageUrl ?? form.image ?? "").trim(),
-        image_file: hasNewImage ? imageFile : null,
-        creator: form.creator ?? "",
-        cost: form.cost ?? "",
-        inspiration: form.inspiration ?? "",
-        optimization: form.optimization ?? "",
-        suggested_date: form.suggested_date ?? "",
-        updated_date: form.updated_date ?? "",
-        deck_doc: form.deck_doc ?? "",
-        cards: cardsValue,
-      };
-
-      const result = await onSave(deck, payload);
-
-      if (!result) {
-        return;
-      }
-
-      if (typeof onComplete === "function") {
-        onComplete(result);
-      }
-    } catch (error) {
-      console.error("Failed to save deck:", error);
-
-      setCardsError(error?.message || "Failed to save deck.");
-    } finally {
-      onSavingChange?.(false);
-    }
-  };
-
-  useImperativeHandle(ref, () => ({
+  useImperativeHandle(
+  ref,
+  () => ({
     save: handleSave,
-  }));
+  }),
+  [handleSave],
+);
 
   if (!deck) {
     return null;

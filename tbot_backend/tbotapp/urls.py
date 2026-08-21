@@ -1,204 +1,277 @@
 from django.urls import path
 
-from . import views
+from django.urls import path
+
+# ============================================================
+# PUBLIC DECKLIST VIEWS
+# ============================================================
+
+from .views.decklists import (
+    decklists,
+    legacy_decklists,
+    legacy_decklist_count,
+    decklist_count,
+)
+
+# ============================================================
+# CARD / HERO VIEWS
+# ============================================================
+
+from .views.cards import (
+    card_info,
+    card_count,
+    heroinfo,
+    hero_count,
+)
+
+# ============================================================
+# KEEP OR SCRAP VIEWS
+# ============================================================
+
+from .views.keep_or_scrap import (
+    keep_or_scrap,
+    keep_or_scrap_count,
+)
+
+# ============================================================
+# AUTH VIEWS
+# ============================================================
+
+from .views.auth import (
+    csrf_token,
+    discord_login,
+    discord_callback,
+    discord_me,
+    discord_logout,
+)
+
+# ============================================================
+# PERMISSIONS / OWNER VIEWS
+# ============================================================
+
+from .views.permissions import (
+    admin_check,
+    owner_action,
+)
+
+# ============================================================
+# ADMIN DECK VIEWS
+# ============================================================
+
+from .views.admin_decks import (
+    admin_decklists,
+    admin_decklist_create,
+    admin_decklist_update,
+    admin_decklist_delete,
+)
+
+# ============================================================
+# ADMIN LEGACY DECK VIEWS
+# ============================================================
+
+from .views.admin_legacy_decks import (
+    admin_legacy_decklists,
+    admin_legacy_decklist_update,
+    admin_legacy_decklist_delete,
+)
+
+# ============================================================
+# PROFILE VIEWS
+# ============================================================
+
+from .views.profile import (
+    profile_me,
+    profile_detail,
+)
 
 
 urlpatterns = [
-    # ============================================================
+
+    # ========================================================
     # PUBLIC API
-    # ============================================================
+    # ========================================================
 
     path(
         "decklists/",
-        views.decklists,
+        decklists,
         name="decklists",
     ),
 
     path(
         "legacy-decklists/",
-        views.legacy_decklists,
+        legacy_decklists,
         name="legacy-decklists",
     ),
 
     path(
         "legacy-decklist-count/",
-        views.legacy_decklist_count,
+        legacy_decklist_count,
         name="legacy-decklist-count",
     ),
 
     path(
         "cardinfo/",
-        views.card_info,
+        card_info,
         name="card_info",
     ),
 
     path(
         "heroinfo/",
-        views.heroinfo,
+        heroinfo,
         name="heroinfo",
     ),
 
     path(
         "keeporscrap/",
-        views.keep_or_scrap,
+        keep_or_scrap,
         name="keep_or_scrap",
     ),
 
-    # ============================================================
+    # ========================================================
     # COUNTS
-    # ============================================================
+    # ========================================================
 
     path(
         "decklists/count/",
-        views.decklist_count,
+        decklist_count,
         name="decklist_count",
     ),
 
     path(
         "cards/count/",
-        views.card_count,
+        card_count,
         name="card_count",
     ),
 
     path(
         "heroinfo/count/",
-        views.hero_count,
+        hero_count,
         name="hero_count",
     ),
 
     path(
         "keeporscrap/count/",
-        views.keeporscrap_count,
-        name="keeporscrap_count",
+        keep_or_scrap_count,
+        name="keep_or_scrap_count",
     ),
 
-    # ============================================================
+    # ========================================================
     # CSRF
-    # ============================================================
+    # ========================================================
 
     path(
         "csrf/",
-        views.csrf_token,
+        csrf_token,
         name="csrf_token",
     ),
 
-    # ============================================================
+    # ========================================================
     # ADMIN / OWNER
-    # ============================================================
+    # ========================================================
 
     path(
         "admin/check/",
-        views.admin_check,
+        admin_check,
         name="admin_check",
     ),
 
     path(
         "admin/action/",
-        views.owner_action,
+        owner_action,
         name="owner_action",
     ),
 
-    # ------------------------------------------------------------
-    # Current decklists
-    # ------------------------------------------------------------
+    # ========================================================
+    # ADMIN CURRENT DECKS
+    # ========================================================
 
     path(
         "admin/decklists/",
-        views.admin_decklists,
+        admin_decklists,
         name="admin_decklists",
     ),
 
     path(
+        "admin/decklists/create/",
+        admin_decklist_create,
+        name="admin_decklist_create",
+    ),
+
+    path(
         "admin/decklists/<str:deckid>/",
-        views.admin_decklist_update,
+        admin_decklist_update,
         name="admin_decklist_update",
     ),
 
     path(
         "admin/decklists/<str:deckid>/delete/",
-        views.admin_decklist_delete,
+        admin_decklist_delete,
         name="admin_decklist_delete",
     ),
 
-    # ------------------------------------------------------------
-    # Legacy decklists
-    # ------------------------------------------------------------
+    # ========================================================
+    # ADMIN / LEGACY DECKLISTS
+    # ========================================================
 
     path(
         "admin/legacy-decklists/",
-        views.admin_legacy_decklists,
+        admin_legacy_decklists,
         name="admin_legacy_decklists",
     ),
 
     path(
         "admin/legacy-decklists/<str:deckid>/",
-        views.admin_legacy_decklist_update,
+        admin_legacy_decklist_update,
         name="admin_legacy_decklist_update",
     ),
 
     path(
         "admin/legacy-decklists/<str:deckid>/delete/",
-        views.admin_legacy_decklist_delete,
+        admin_legacy_decklist_delete,
         name="admin_legacy_decklist_delete",
     ),
 
-    # ============================================================
+    # ========================================================
     # DISCORD AUTH
-    # ============================================================
+    # ========================================================
 
     path(
         "auth/discord/login/",
-        views.discord_login,
+        discord_login,
         name="discord_login",
     ),
 
     path(
         "auth/discord/callback/",
-        views.discord_callback,
+        discord_callback,
         name="discord_callback",
     ),
 
     path(
         "auth/discord/me/",
-        views.discord_me,
+        discord_me,
         name="discord_me",
     ),
 
     path(
         "auth/discord/logout/",
-        views.discord_logout,
+        discord_logout,
         name="discord_logout",
     ),
 
-    # ============================================================
+    # ========================================================
     # PROFILES
-    # ============================================================
+    # ========================================================
 
     path(
         "profile/me/",
-        views.profile_me,
+        profile_me,
         name="profile_me",
     ),
 
     path(
         "profile/<str:profile_slug>/",
-        views.profile_by_slug,
+        profile_detail,
         name="profile_by_slug",
-    ),
-
-    # ============================================================
-    # USER DECKS
-    # ============================================================
-
-    path(
-        "user-decks/",
-        views.user_decks,
-        name="user_decks",
-    ),
-
-    path(
-        "user-decks/<int:deck_id>/",
-        views.user_deck_detail,
-        name="user_deck_detail",
     ),
 ]

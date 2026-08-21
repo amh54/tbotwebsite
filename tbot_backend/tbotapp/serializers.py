@@ -118,7 +118,6 @@ class AdminLegacyDeckSerializer(serializers.ModelSerializer):
 class UserDeckSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserDeck
-
         fields = [
             "id",
             "profile_id",
@@ -140,13 +139,94 @@ class UserDeckSerializer(serializers.ModelSerializer):
             "created_at",
             "modified_at",
         ]
-
         read_only_fields = [
             "id",
             "profile_id",
             "created_at",
             "modified_at",
         ]
+
+    def validate(self, attrs):
+        cards = attrs.get("cards")
+
+        if cards is None:
+            return attrs
+
+        if isinstance(cards, str):
+            lines = cards.splitlines()
+        elif isinstance(cards, list):
+            lines = cards
+        else:
+            raise serializers.ValidationError({
+                "cards": "Cards must be a valid card ratio list."
+            })
+
+        total = 0
+
+        for line in lines:
+            if not line:
+                continue
+
+            if isinstance(line, str):
+                parts = line.split("|", 1)
+
+                if len(parts) != 2:
+                    raise serializers.ValidationError({
+                        "cards": f"Invalid card ratio: {line}"
+                    })
+
+                card_name = parts[0].strip()
+
+                try:
+                    ratio = int(parts[1].strip())
+                except (TypeError, ValueError):
+                    raise serializers.ValidationError({
+                        "cards": f"Invalid ratio for {card_name}."
+                    })
+
+            elif isinstance(line, dict):
+                card_name = str(
+                    line.get("name")
+                    or line.get("card_name")
+                    or ""
+                ).strip()
+
+                try:
+                    ratio = int(line.get("count", 0))
+                except (TypeError, ValueError):
+                    raise serializers.ValidationError({
+                        "cards": f"Invalid ratio for {card_name}."
+                    })
+
+            else:
+                raise serializers.ValidationError({
+                    "cards": "Invalid card ratio format."
+                })
+
+            if not card_name:
+                raise serializers.ValidationError({
+                    "cards": "Every card must have a name."
+                })
+
+            if ratio < 1 or ratio > 4:
+                raise serializers.ValidationError({
+                    "cards": (
+                        f"{card_name} must have a ratio between "
+                        "1 and 4."
+                    )
+                })
+
+            total += ratio
+
+        if total != 40:
+            raise serializers.ValidationError({
+                "cards": (
+                    f"Card ratios must add up to 40. "
+                    f"Currently they add up to {total}."
+                )
+            })
+
+        return attrs
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
