@@ -30,7 +30,7 @@ from .helpers import (
     normalize_card_ratio_list,
     cards_to_storage_string,
     save_deck_image,
-    TARGET_CARD_RATIO_TOTAL,
+    TARGET_CARD_RATIO_TOTAL
 )
 
 logger = logging.getLogger(__name__)
@@ -866,7 +866,6 @@ def admin_legacy_decklist_update(
 # ADMIN LEGACY DECKLIST DELETE
 # ============================================================
 
-@csrf_exempt
 @api_view(["DELETE"])
 @owner_required
 def admin_legacy_decklist_delete(

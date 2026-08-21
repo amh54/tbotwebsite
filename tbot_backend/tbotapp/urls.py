@@ -39,7 +39,6 @@ from .views.admin_decks import (
     admin_decklist_delete,
 )
 
-
 from .views.admin_legacy_decks import (
     admin_legacy_decklists,
     admin_legacy_decklist_update,

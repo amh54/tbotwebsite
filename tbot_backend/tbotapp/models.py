@@ -71,7 +71,7 @@ class LegacyDecklist(models.Model):
     inspiration = models.CharField(max_length=60, blank=True)
     cost = models.CharField(max_length=10, blank=True)
     aliases = models.CharField(max_length=300, blank=True)
-    cards = models.CharField(max_length=400, blank=True)
+    cards = models.CharField(max_length=1000, blank=True)
     suggested_date = models.CharField(max_length=20, blank=True)
     updated_date = models.CharField(max_length=20, blank=True)
 
