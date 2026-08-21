@@ -16,6 +16,7 @@ const HERO_CLASSES = {
   "Solar Flare": ["Kabloom", "Solar"],
   Spudow: ["Guardian", "Kabloom"],
   "Wall-Knight": ["Guardian", "Solar"],
+
   "Brain Freeze": ["Beastly", "Sneaky"],
   "Electric Boogaloo": ["Crazy", "Hearty"],
   "Huge-Gigantacus": ["Brainy", "Sneaky"],
@@ -121,9 +122,7 @@ const selectStyles = {
     borderColor: state.isFocused ? "#8b949e" : "#3b4148",
     borderRadius: "8px",
     minHeight: "45px",
-    boxShadow: state.isFocused
-      ? "0 0 0 2px rgba(139, 148, 158, 0.12)"
-      : "none",
+    boxShadow: state.isFocused ? "0 0 0 2px rgba(139, 148, 158, 0.12)" : "none",
     cursor: "pointer",
     "&:hover": {
       borderColor: "#646d76",
@@ -271,6 +270,7 @@ function AdminModalField({ label, value, onChange }) {
   return (
     <label className="admin-modal-field">
       <span className="admin-modal-label">{label}</span>
+
       <input
         type="text"
         value={value ?? ""}
@@ -284,6 +284,7 @@ function AdminModalTextArea({ label, value, onChange }) {
   return (
     <label className="admin-modal-field admin-modal-textarea-field">
       {label && <span className="admin-modal-label">{label}</span>}
+
       <textarea
         className="admin-modal-textarea"
         value={value ?? ""}
@@ -439,10 +440,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
   );
 
   const cardOptions = useMemo(() => {
-    if (
-      normalizedFormSide !== "Plants" &&
-      normalizedFormSide !== "Zombies"
-    ) {
+    if (normalizedFormSide !== "Plants" && normalizedFormSide !== "Zombies") {
       return [];
     }
 
@@ -606,8 +604,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
 
       const nextSelected = (selected || []).map((option) => ({
         ...option,
-        count:
-          previousCounts.get(String(option.value).toLowerCase()) ?? 1,
+        count: previousCounts.get(String(option.value).toLowerCase()) ?? 1,
       }));
 
       return {
@@ -634,6 +631,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       }
 
       const currentCount = cardsSelected[index].count ?? 1;
+
       const nextCount = currentCount + delta;
 
       if (nextCount < 1) {
@@ -748,6 +746,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       }
     } catch (error) {
       console.error("Failed to add deck:", error);
+
       setCardsError(error?.message || "Failed to add deck.");
     } finally {
       setSaving(false);
@@ -958,17 +957,13 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                 <AdminModalField
                   label="Suggested Date"
                   value={form.suggested_date}
-                  onChange={(value) =>
-                    handleChange("suggested_date", value)
-                  }
+                  onChange={(value) => handleChange("suggested_date", value)}
                 />
 
                 <AdminModalField
                   label="Updated Date"
                   value={form.updated_date}
-                  onChange={(value) =>
-                    handleChange("updated_date", value)
-                  }
+                  onChange={(value) => handleChange("updated_date", value)}
                 />
 
                 <AdminModalField

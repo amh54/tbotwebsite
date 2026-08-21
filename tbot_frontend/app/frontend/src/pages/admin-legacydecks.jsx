@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+
+import { Link } from "react-router-dom";
 
 import DeckCard from "../components/deckcomponent";
+
 import FilterDropdown from "../components/filterdropdown";
+
 import Footer from "../components/footer";
-import "../css/adminDecklists.css"
+
+import "../css/adminDecklists.css";
 
 import "../css/decklists.css";
+
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
@@ -160,40 +165,43 @@ const normalizeText = (value) => String(value ?? "").trim();
 const normalizeKey = (value) => normalizeText(value).toLowerCase();
 
 function AdminLegacyDecks() {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const isAddPage =
-    location.pathname.replace(/\/+$/, "") === "/admin/legacy-decks/add";
-
   const [decks, setDecks] = useState([]);
+
   const [allCards, setAllCards] = useState([]);
 
   const [search, setSearch] = useState("");
+
   const [side, setSide] = useState("All");
+
   const [hero, setHero] = useState([]);
+
   const [category, setCategory] = useState([]);
+
   const [archetype, setArchetype] = useState([]);
 
-  const [loading, setLoading] = useState(!isAddPage);
+  const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
+
   const [cardsError, setCardsError] = useState("");
 
   const [editError, setEditError] = useState("");
+
   const [editSaving, setEditSaving] = useState(false);
 
   const [deleteLoading, setDeleteLoading] = useState(false);
+
   const [deleteError, setDeleteError] = useState("");
 
+  const [addModalOpen, setAddModalOpen] = useState(false);
+
   useEffect(() => {
-    document.title = isAddPage
-      ? "Admin - Add Legacy Deck"
-      : "Admin - Legacy Decks";
+    document.title = "Admin - Legacy Decks";
 
     return () => {
       document.title = "Tbot";
     };
-  }, [isAddPage]);
+  }, []);
 
   useEffect(() => {
     ensureCsrfToken().catch((err) => {
@@ -238,6 +246,7 @@ function AdminLegacyDecks() {
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error(err);
+
           setCardsError(err.message || "Unable to load card information.");
         }
       }
@@ -248,76 +257,64 @@ function AdminLegacyDecks() {
     return () => controller.abort();
   }, []);
 
-  useEffect(() => {
-    if (isAddPage) {
-      return;
-    }
+  const loadDecks = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-    const controller = new AbortController();
-
-    const loadDecks = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/admin/legacy-decklists/`,
-          {
-            method: "GET",
-            credentials: "include",
-            signal: controller.signal,
-            headers: {
-              Accept: "application/json",
-            },
+      const response = await fetch(
+        `${API_BASE_URL}/tbotapp/admin/legacy-decklists/`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
           },
-        );
+        },
+      );
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error(
-              "You must be logged in with Discord to access the admin page.",
-            );
-          }
-
-          if (response.status === 403) {
-            throw new Error(
-              "Owner permissions are required to access legacy decks.",
-            );
-          }
-
+      if (!response.ok) {
+        if (response.status === 401) {
           throw new Error(
-            await getApiErrorMessage(
-              response,
-              `Request failed with status ${response.status}`,
-            ),
+            "You must be logged in with Discord to access the admin page.",
           );
         }
 
-        const data = await response.json();
-
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
-
-        setDecks(results);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load legacy decks:", err);
-          setError(err.message || "Unable to load legacy decks.");
+        if (response.status === 403) {
+          throw new Error(
+            "Owner permissions are required to access legacy decks.",
+          );
         }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
+
+        throw new Error(
+          await getApiErrorMessage(
+            response,
+            `Request failed with status ${response.status}`,
+          ),
+        );
       }
-    };
 
+      const data = await response.json();
+
+      const results = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.results)
+          ? data.results
+          : [];
+
+      setDecks(results);
+    } catch (err) {
+      console.error("Unable to load legacy decks:", err);
+
+      setError(err.message || "Unable to load legacy decks.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadDecks();
-
-    return () => controller.abort();
-  }, [isAddPage]);
+  }, []);
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -589,7 +586,10 @@ function AdminLegacyDecks() {
           const itemId = item.deckid ?? item.deckID ?? item.id;
 
           return String(itemId) === String(deckId)
-            ? { ...item, ...updatedDeck }
+            ? {
+                ...item,
+                ...updatedDeck,
+              }
             : item;
         }),
       );
@@ -597,6 +597,7 @@ function AdminLegacyDecks() {
       return updatedDeck;
     } catch (err) {
       setEditError(err.message || "Unable to update legacy deck.");
+
       throw err;
     } finally {
       setEditSaving(false);
@@ -661,11 +662,14 @@ function AdminLegacyDecks() {
 
       const createdDeck = await response.json();
 
-      navigate("/admin/legacy-decks");
+      setDecks((current) => [...current, createdDeck]);
+
+      setAddModalOpen(false);
 
       return createdDeck;
     } catch (err) {
       setEditError(err.message || "Unable to add legacy deck.");
+
       throw err;
     } finally {
       setEditSaving(false);
@@ -732,73 +736,23 @@ function AdminLegacyDecks() {
     }
   };
 
-  if (isAddPage) {
-    const blankDeck = {
-      name: "",
-      hero: "",
-      side: "",
-      category: "",
-      archetype: "",
-      description: "",
-      image: "",
-      creator: "",
-      cost: "",
-      cards: "",
-      inspiration: "",
-      optimization: "",
-      suggested_date: "",
-      updated_date: "",
-      deck_doc: "",
-    };
-
-    return (
-      <div className="deck-page">
-        <main className="deck-content">
-          <div className="admin-decklists-topbar">
-            <div>
-              <h1>Add Legacy Deck</h1>
-
-              <p className="admin-decklists-subtitle">
-                Create a new legacy decklist.
-              </p>
-            </div>
-
-            <div className="admin-decklists-actions">
-              <Link to="/admin/legacy-decks" className="admin-back-button">
-                ← Legacy Decks
-              </Link>
-            </div>
-          </div>
-
-          {editError && <div className="admin-error">{editError}</div>}
-
-          {cardsError && (
-            <div className="admin-error">Card list: {cardsError}</div>
-          )}
-
-          <div className="deck-grid">
-            <DeckCard
-              decklist={blankDeck}
-              admin
-              adminMode
-              addMode
-              allCards={allCards}
-              onAdd={handleAdd}
-              editSaving={editSaving}
-            />
-          </div>
-        </main>
-
-        <Footer credits />
-
-        {deleteLoading && (
-          <div className="admin-delete-overlay">
-            <div className="admin-delete-dialog">Deleting legacy deck...</div>
-          </div>
-        )}
-      </div>
-    );
-  }
+  const blankDeck = {
+    name: "",
+    hero: "",
+    side: "",
+    category: "",
+    archetype: "",
+    description: "",
+    image: "",
+    creator: "",
+    cost: "",
+    cards: "",
+    inspiration: "",
+    optimization: "",
+    suggested_date: "",
+    updated_date: "",
+    deck_doc: "",
+  };
 
   if (loading) {
     return (
@@ -812,6 +766,7 @@ function AdminLegacyDecks() {
 
           <div className="loading-status">
             <span>Loading legacy deck data</span>
+
             <strong>
               {decks.length > 0 ? `${decks.length} decks` : "Loading..."}
             </strong>
@@ -838,9 +793,16 @@ function AdminLegacyDecks() {
               ← Admin
             </Link>
 
-            <Link to="/admin/legacy-decks/add" className="admin-add-button">
+            <button
+              type="button"
+              className="admin-add-button"
+              onClick={() => {
+                setEditError("");
+                setAddModalOpen(true);
+              }}
+            >
               + Add Legacy Deck
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -974,6 +936,54 @@ function AdminLegacyDecks() {
       </main>
 
       <Footer credits />
+
+      {addModalOpen && (
+        <div
+          className="admin-deck-modal-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !editSaving) {
+              setAddModalOpen(false);
+              setEditError("");
+            }
+          }}
+        >
+          <div className="admin-deck-modal">
+            <div className="admin-deck-modal-header">
+              <div>
+                <h2>Add Legacy Deck</h2>
+
+                <p>Create a new legacy decklist.</p>
+              </div>
+
+              <button
+                type="button"
+                className="admin-deck-modal-close"
+                disabled={editSaving}
+                onClick={() => {
+                  setAddModalOpen(false);
+                  setEditError("");
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {editError && <div className="admin-error">{editError}</div>}
+
+            <div className="admin-deck-modal-body">
+              <DeckCard
+                decklist={blankDeck}
+                admin
+                adminMode
+                addMode
+                allCards={allCards}
+                onAdd={handleAdd}
+                editSaving={editSaving}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {deleteLoading && (
         <div className="admin-delete-overlay">

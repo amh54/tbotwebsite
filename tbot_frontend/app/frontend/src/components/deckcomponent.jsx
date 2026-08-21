@@ -187,6 +187,7 @@ function DeckCard({
   onDelete,
   onSave,
   onAdd,
+  onComplete,
   editSaving = false,
   allCards = [],
 }) {
@@ -297,10 +298,6 @@ function DeckCard({
 
     if (addMode) {
       setOpen(false);
-
-      if (typeof window !== "undefined") {
-        window.history.back();
-      }
 
       return;
     }
@@ -439,12 +436,12 @@ function DeckCard({
   };
 
   const handleAddComplete = (result) => {
-    if (!result) {
-      return;
-    }
+  setOpen(false);
 
-    setOpen(false);
-  };
+  if (typeof onComplete === "function") {
+    onComplete(result);
+  }
+};
 
   const handleEditComplete = (result) => {
     if (!result) {
@@ -454,16 +451,6 @@ function DeckCard({
     resetEditImageState();
     setEditing(false);
   };
-
-  /*
-   * ============================================================
-   * ADD MODE
-   * ============================================================
-   *
-   * AddDeckModal remains its own modal.
-   * This is only used when this DeckCard is specifically
-   * rendered in addMode.
-   */
 
   if (addMode) {
     if (!open) {

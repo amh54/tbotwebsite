@@ -4,6 +4,7 @@ import {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -191,7 +192,6 @@ const selectStyles = {
       borderColor: "#646d76",
     },
   }),
-
   menu: (base) => ({
     ...base,
     backgroundColor: "#1b1f23",
@@ -200,7 +200,6 @@ const selectStyles = {
     overflow: "hidden",
     zIndex: 100000,
   }),
-
   menuList: (base) => ({
     ...base,
     scrollbarWidth: "none",
@@ -209,7 +208,6 @@ const selectStyles = {
       display: "none",
     },
   }),
-
   option: (base, state) => ({
     ...base,
     backgroundColor: state.isSelected
@@ -221,7 +219,6 @@ const selectStyles = {
     cursor: "pointer",
     padding: "10px 12px",
   }),
-
   valueContainer: (base) => ({
     ...base,
     gap: "6px",
@@ -229,7 +226,6 @@ const selectStyles = {
     minWidth: 0,
     overflow: "hidden",
   }),
-
   multiValue: (base) => ({
     ...base,
     backgroundColor: "#303740",
@@ -240,7 +236,6 @@ const selectStyles = {
     maxWidth: "100%",
     flexShrink: 0,
   }),
-
   multiValueLabel: (base) => ({
     ...base,
     color: "#d7dce1",
@@ -250,7 +245,6 @@ const selectStyles = {
     whiteSpace: "nowrap",
     overflow: "visible",
   }),
-
   multiValueRemove: (base) => ({
     ...base,
     color: "#aeb5bc",
@@ -262,7 +256,6 @@ const selectStyles = {
       color: "#ffffff",
     },
   }),
-
   singleValue: (base) => ({
     ...base,
     position: "static",
@@ -283,24 +276,20 @@ const selectStyles = {
     margin: 0,
     flexShrink: 1,
   }),
-
   placeholder: (base) => ({
     ...base,
     color: "#7d858e",
     fontSize: "0.9rem",
   }),
-
   input: (base) => ({
     ...base,
     color: "#ffffff",
     margin: 0,
     padding: 0,
   }),
-
   indicatorSeparator: () => ({
     display: "none",
   }),
-
   dropdownIndicator: (base) => ({
     ...base,
     color: "#737b84",
@@ -310,7 +299,6 @@ const selectStyles = {
       color: "#c7cbd1",
     },
   }),
-
   clearIndicator: (base) => ({
     ...base,
     color: "#aeb5bc",
@@ -423,6 +411,8 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   const [imgError, setImgError] = useState(false);
   const [cardsError, setCardsError] = useState("");
 
+  const cardsInitializedRef = useRef(false);
+
   const [form, setForm] = useState({
     name: "",
     hero: "",
@@ -445,6 +435,8 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   });
 
   useEffect(() => {
+    cardsInitializedRef.current = false;
+
     if (!deck) {
       return;
     }
@@ -459,7 +451,7 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       category: deck?.category ?? "",
       archetype: deck?.archetype ?? "",
       description: deck?.description ?? "",
-      image: deck?.image ?? imageUrl ?? "",
+      image: deck?.image ?? "",
       creator: deck?.creator ?? "",
       cost: deck?.cost ?? "",
       inspiration: deck?.inspiration ?? "",
@@ -472,7 +464,18 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       archetypeSelected: valuesToOptions(deck?.archetype ?? ""),
       cardsSelected: [],
     });
-  }, [deck, imageUrl]);
+  }, [deck]);
+
+  useEffect(() => {
+    if (!imageUrl) {
+      return;
+    }
+
+    setForm((previous) => ({
+      ...previous,
+      image: imageUrl,
+    }));
+  }, [imageUrl]);
 
   const normalizedFormSide = normalizeSide(form.side);
 
@@ -609,25 +612,26 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   }, [allCards, normalizedFormSide, form.hero, selectedHeroClasses]);
 
   useEffect(() => {
-  if (!deck || !cardOptions.length) {
-    return;
-  }
+    if (!deck || !cardOptions.length) {
+      return;
+    }
 
-  const loadedCards = cardRatioLinesToOptions(
-    deck.cards ?? "",
-    cardOptions,
-  );
+    if (cardsInitializedRef.current) {
+      return;
+    }
 
-  setForm((previous) => {
+    const loadedCards = cardRatioLinesToOptions(deck.cards ?? "", cardOptions);
+
     const cardsValue = cardOptionsToRatioLines(loadedCards);
 
-    return {
+    setForm((previous) => ({
       ...previous,
       cardsSelected: loadedCards,
       cards: cardsValue,
-    };
-  });
-}, [deck, cardOptions]);
+    }));
+
+    cardsInitializedRef.current = true;
+  }, [deck, cardOptions]);
 
   const totalCardRatio = useMemo(
     () => sumCardRatios(form.cardsSelected),
@@ -660,6 +664,8 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   const handleSideChange = (selected) => {
     const value = normalizeSide(selected?.value || "");
 
+    cardsInitializedRef.current = false;
+
     setForm((previous) => ({
       ...previous,
       side: value,
@@ -672,6 +678,8 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   };
 
   const handleHeroChange = (selected) => {
+    cardsInitializedRef.current = true;
+
     setForm((previous) => ({
       ...previous,
       hero: selected?.value || "",
@@ -725,6 +733,7 @@ const EditDeckModal = forwardRef(function EditDeckModal(
 
     setCardsError("");
   };
+
   const handleCardRatioChange = (cardValue, delta) => {
     setForm((previous) => {
       const cardsSelected = previous.cardsSelected || [];
@@ -740,7 +749,6 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       }
 
       const currentCount = Number(cardsSelected[index].count) || 1;
-
       const nextCount = currentCount + delta;
 
       if (nextCount < 1) {
@@ -775,114 +783,112 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   };
 
   const handleSave = useCallback(async () => {
-  if (typeof onSave !== "function") {
-    setCardsError("Save handler is unavailable.");
-    return null;
-  }
-
-  if (!normalizedFormSide) {
-    setCardsError("Please select Plants or Zombies.");
-    return null;
-  }
-
-  if (!form.hero) {
-    setCardsError("Please select a hero.");
-    return null;
-  }
-
-  if (!form.cardsSelected?.length) {
-    setCardsError("Please select at least one card.");
-    return null;
-  }
-
-  const ratioTotal = sumCardRatios(form.cardsSelected);
-
-  if (ratioTotal !== TARGET_CARD_RATIO_TOTAL) {
-    setCardsError(
-      `Card ratios must add up to ${TARGET_CARD_RATIO_TOTAL} (currently ${ratioTotal}).`,
-    );
-    return null;
-  }
-
-  setCardsError("");
-
-  try {
-    onSavingChange?.(true);
-
-    const hasNewImage = imageFile instanceof File;
-
-    const validCards = form.cardsSelected.filter((option) =>
-      cardOptions.some(
-        (cardOption) =>
-          String(cardOption.value).toLowerCase() ===
-          String(option?.value || "").toLowerCase(),
-      ),
-    );
-
-    const cardsValue = cardOptionsToRatioLines(validCards);
-
-    const payload = {
-      name: form.name ?? "",
-      hero: form.hero ?? "",
-      side: normalizedFormSide,
-      category: optionsToCombinedValue(form.categorySelected),
-      archetype: optionsToCombinedValue(form.archetypeSelected),
-      description: form.description ?? "",
-      image: hasNewImage
-        ? ""
-        : String(imageUrl ?? form.image ?? "").trim(),
-      image_file: hasNewImage ? imageFile : null,
-      creator: form.creator ?? "",
-      cost: form.cost ?? "",
-      inspiration: form.inspiration ?? "",
-      optimization: form.optimization ?? "",
-      suggested_date: form.suggested_date ?? "",
-      updated_date: form.updated_date ?? "",
-      deck_doc: form.deck_doc ?? "",
-      cards: cardsValue,
-    };
-
-    console.log("Saving legacy deck:", deck);
-    console.log("Save payload:", payload);
-
-    const result = await onSave(deck, payload);
-
-    if (!result) {
-      setCardsError("The server did not return an updated deck.");
+    if (typeof onSave !== "function") {
+      setCardsError("Save handler is unavailable.");
       return null;
     }
 
-    if (typeof onComplete === "function") {
-      onComplete(result);
+    if (!normalizedFormSide) {
+      setCardsError("Please select Plants or Zombies.");
+      return null;
     }
 
-    return result;
-  } catch (error) {
-    console.error("Failed to save deck:", error);
-    setCardsError(error?.message || "Failed to save deck.");
-    return null;
-  } finally {
-    onSavingChange?.(false);
-  }
-}, [
-  onSave,
-  onComplete,
-  onSavingChange,
-  deck,
-  imageFile,
-  imageUrl,
-  form,
-  cardOptions,
-  normalizedFormSide,
-]);
+    if (!form.hero) {
+      setCardsError("Please select a hero.");
+      return null;
+    }
+
+    if (!form.cardsSelected?.length) {
+      setCardsError("Please select at least one card.");
+      return null;
+    }
+
+    const ratioTotal = sumCardRatios(form.cardsSelected);
+
+    if (ratioTotal !== TARGET_CARD_RATIO_TOTAL) {
+      setCardsError(
+        `Card ratios must add up to ${TARGET_CARD_RATIO_TOTAL} (currently ${ratioTotal}).`,
+      );
+      return null;
+    }
+
+    setCardsError("");
+
+    try {
+      onSavingChange?.(true);
+
+      const hasNewImage = imageFile instanceof File;
+
+      const validCards = form.cardsSelected.filter((option) =>
+        cardOptions.some(
+          (cardOption) =>
+            String(cardOption.value).toLowerCase() ===
+            String(option?.value || "").toLowerCase(),
+        ),
+      );
+
+      const cardsValue = cardOptionsToRatioLines(validCards);
+
+      const payload = {
+        name: form.name ?? "",
+        hero: form.hero ?? "",
+        side: normalizedFormSide,
+        category: optionsToCombinedValue(form.categorySelected),
+        archetype: optionsToCombinedValue(form.archetypeSelected),
+        description: form.description ?? "",
+        image: hasNewImage ? "" : String(imageUrl ?? form.image ?? "").trim(),
+        image_file: hasNewImage ? imageFile : null,
+        creator: form.creator ?? "",
+        cost: form.cost ?? "",
+        inspiration: form.inspiration ?? "",
+        optimization: form.optimization ?? "",
+        suggested_date: form.suggested_date ?? "",
+        updated_date: form.updated_date ?? "",
+        deck_doc: form.deck_doc ?? "",
+        cards: cardsValue,
+      };
+
+      console.log("Saving legacy deck:", deck);
+      console.log("Save payload:", payload);
+
+      const result = await onSave(deck, payload);
+
+      if (!result) {
+        setCardsError("The server did not return an updated deck.");
+        return null;
+      }
+
+      if (typeof onComplete === "function") {
+        onComplete(result);
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Failed to save deck:", error);
+      setCardsError(error?.message || "Failed to save deck.");
+      return null;
+    } finally {
+      onSavingChange?.(false);
+    }
+  }, [
+    onSave,
+    onComplete,
+    onSavingChange,
+    deck,
+    imageFile,
+    imageUrl,
+    form,
+    cardOptions,
+    normalizedFormSide,
+  ]);
 
   useImperativeHandle(
-  ref,
-  () => ({
-    save: handleSave,
-  }),
-  [handleSave],
-);
+    ref,
+    () => ({
+      save: handleSave,
+    }),
+    [handleSave],
+  );
 
   if (!deck) {
     return null;
