@@ -20,6 +20,7 @@ import Profile from "./pages/profile.jsx";
 
 import LegacyDecksPage from "./pages/legacydecks.jsx";
 import AdminLegacyDecks from "./pages/admin-legacydecks.jsx";
+
 function HomePage() {
   return (
     <div className="home">
@@ -211,6 +212,7 @@ function App() {
 
       <Route path="/admin" element={<Admin />} />
       <Route path="/admin/decklists" element={<AdminDecklists />} />
+      <Route path="/admin/decklist/add" element={<AdminDecklists />} />
       <Route path="/admin/decklists/add" element={<AdminDecklists />} />
       <Route path="/admin/legacy-decks/*" element={<AdminLegacyDecks />} />
       <Route path="/profile/:profile_slug" element={<Profile />} />
