@@ -298,7 +298,9 @@ function DeckCard({
 
     if (addMode) {
       setOpen(false);
-
+      if (typeof onComplete === "function") {
+        onComplete(null);
+      }
       return;
     }
 
