@@ -1,5 +1,6 @@
 import logging
 import os
+
 from urllib.parse import urlencode
 
 import requests
@@ -10,7 +11,11 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.csrf import (
+    csrf_exempt,
+    ensure_csrf_cookie,
+    get_token,
+)
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -20,6 +25,8 @@ from .permissions import is_discord_owner
 
 
 logger = logging.getLogger(__name__)
+
+
 # ============================================================
 # CSRF TOKEN
 # ============================================================
@@ -29,9 +36,11 @@ logger = logging.getLogger(__name__)
 def csrf_token(request):
     token = get_token(request)
 
-    return Response({
-        "csrfToken": token,
-    })
+    return Response(
+        {
+            "csrfToken": token,
+        }
+    )
 
 # ============================================================
 # DISCORD LOGIN
