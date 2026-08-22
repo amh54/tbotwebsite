@@ -160,7 +160,6 @@ const normalizeText = (value) => String(value ?? "").trim();
 const normalizeKey = (value) => normalizeText(value).toLowerCase();
 
 function AdminLegacyDecks() {
-  const navigate = useNavigate();
 
   const [decks, setDecks] = useState([]);
   const [allCards, setAllCards] = useState([]);

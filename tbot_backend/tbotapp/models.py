@@ -1,5 +1,7 @@
 from django.db import models
 from django.db.models.functions import Now
+
+
 class Decklist(models.Model):
     deckid = models.IntegerField(primary_key=True)
     side = models.CharField(max_length=30)
@@ -53,6 +55,8 @@ class WebCards(models.Model):
     class Meta:
         db_table = "web_cards"
         managed = False
+
+
 class LegacyDecklist(models.Model):
     deckid = models.IntegerField(primary_key=True)
     side = models.CharField(max_length=30)
@@ -79,6 +83,7 @@ class LegacyDecklist(models.Model):
         db_table = "web_legacy_decks"
         managed = False
 
+
 class KeepOrScrap(models.Model):
     tierid = models.IntegerField(primary_key=True)
     side = models.CharField(max_length=40)
@@ -93,7 +98,8 @@ class KeepOrScrap(models.Model):
     class Meta:
         db_table = "web_keep_or_scrap"
         managed = False
-        
+
+
 class UserProfile(models.Model):
     id = models.BigAutoField(primary_key=True)
 
@@ -131,7 +137,6 @@ class UserProfile(models.Model):
     )
 
     created_at = models.DateTimeField()
-
     updated_at = models.DateTimeField()
 
     class Meta:
@@ -144,16 +149,34 @@ class UserDeck(models.Model):
 
     profile_id = models.BigIntegerField()
 
-    name = models.CharField(max_length=255)
-    hero = models.CharField(max_length=255)
-    side = models.CharField(max_length=255)
-    category = models.CharField(max_length=255)
-    archetype = models.CharField(max_length=255)
+    name = models.CharField(
+        max_length=255,
+    )
 
-    description = models.TextField(
+    hero = models.CharField(
+        max_length=255,
+    )
+
+    side = models.CharField(
+        max_length=255,
+    )
+
+    category = models.CharField(
+        max_length=255,
+    )
+
+    archetype = models.CharField(
+        max_length=255,
+    )
+    creator = models.CharField(
+    max_length=255,
     blank=True,
     default="",
-)
+    )
+    description = models.TextField(
+        blank=True,
+        default="",
+    )
 
     image = models.CharField(
         max_length=500,
@@ -174,9 +197,9 @@ class UserDeck(models.Model):
     )
 
     cards = models.TextField(
-    blank=True,
-    null=True,
-)
+        blank=True,
+        null=True,
+    )
 
     inspiration = models.CharField(
         max_length=255,
@@ -209,12 +232,12 @@ class UserDeck(models.Model):
     )
 
     created_at = models.DateTimeField(
-    db_default=Now(),
-)
+        db_default=Now(),
+    )
 
     modified_at = models.DateTimeField(
-    db_default=Now(),
-)
+        db_default=Now(),
+    )
 
     class Meta:
         db_table = "user_decks"

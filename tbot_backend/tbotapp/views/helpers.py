@@ -7,7 +7,6 @@ import cloudinary.uploader
 
 from django.conf import settings
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -23,22 +22,11 @@ def include_error_detail():
 
 
 def get_discord_user(request):
-    """
-    Return the Discord identity stored in the authenticated
-    Django session.
-
-    Returns:
-        dict | None
-    """
-
-    if not request.user.is_authenticated:
-        return None
-
     discord_id = request.session.get("discord_id")
 
     if not discord_id:
         username = str(
-            request.user.username or ""
+            getattr(request.user, "username", "") or ""
         ).strip()
 
         if username.startswith("discord_"):
@@ -52,23 +40,31 @@ def get_discord_user(request):
     )
 
     if not discord_username:
-        discord_username = str(
-            request.user.username or ""
-        ).strip()
+        if request.user.is_authenticated:
+            discord_username = str(
+                request.user.username or ""
+            ).strip()
 
-        if discord_username.startswith("discord_"):
-            discord_username = discord_username[
-                len("discord_"):
-            ]
+            if discord_username.startswith("discord_"):
+                discord_username = discord_username[
+                    len("discord_"):
+                ]
 
     discord_global_name = request.session.get(
         "discord_global_name"
     )
 
     if not discord_global_name:
+        if request.user.is_authenticated:
+            discord_global_name = (
+                request.user.first_name
+                or discord_username
+            )
+
+    if not discord_global_name:
         discord_global_name = (
-            request.user.first_name
-            or discord_username
+            discord_username
+            or f"discord_{discord_id}"
         )
 
     avatar = request.session.get(
@@ -77,8 +73,12 @@ def get_discord_user(request):
 
     return {
         "id": str(discord_id),
-        "username": discord_username,
-        "global_name": discord_global_name,
+        "username": str(
+            discord_username or ""
+        ),
+        "global_name": str(
+            discord_global_name or ""
+        ),
         "avatar": avatar,
     }
 

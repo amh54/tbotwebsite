@@ -1,0 +1,332 @@
+.users-page {
+  min-height: 100vh;
+  background: #101416;
+  color: #ffffff;
+}
+
+.users-content {
+  width: min(1400px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 50px 0 70px;
+}
+
+.users-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.users-header h1 {
+  margin: 0;
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.users-header p {
+  margin: 8px 0 0;
+  color: #aeb6ba;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.users-search-container {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.users-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 15px 18px;
+  border: 1px solid #30373b;
+  border-radius: 10px;
+  outline: none;
+  background: #15191c;
+  color: #ffffff;
+  font-size: 15px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.users-search::placeholder {
+  color: #737c81;
+}
+
+.users-search:focus {
+  border-color: #8fe38b;
+  background: #181d20;
+  box-shadow: 0 0 0 3px rgba(143, 227, 139, 0.1);
+}
+
+.users-results-bar {
+  margin-bottom: 22px;
+}
+
+.users-results-bar p {
+  margin: 0;
+  color: #899296;
+  font-size: 14px;
+}
+
+.users-results-bar strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(300px, 1fr)
+  );
+  gap: 20px;
+}
+
+.user-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #2b3236;
+  border-radius: 14px;
+  background: #15191c;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.user-card:hover {
+  transform: translateY(-3px);
+  border-color: #3d484d;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+
+.user-card-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid #252b2f;
+}
+
+.user-avatar {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border: 2px solid #343d41;
+  border-radius: 50%;
+  background: #20262a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.user-avatar span {
+  color: #8fe38b;
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.user-card-info {
+  min-width: 0;
+}
+
+.user-card-info h2 {
+  margin: 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-card-slug {
+  margin: 5px 0 0;
+  overflow: hidden;
+  color: #7f8a8f;
+  font-size: 14px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-card-body {
+  flex: 1;
+  min-height: 90px;
+  padding: 18px 22px;
+}
+
+.user-card-bio {
+  margin: 0;
+  color: #b5bdc0;
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.user-card-no-bio {
+  color: #687277;
+  font-style: italic;
+}
+
+.user-card-actions {
+  display: flex;
+  gap: 10px;
+  padding: 0 22px 22px;
+}
+
+.user-profile-button,
+.user-decklists-button {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 14px;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.user-profile-button {
+  border: 1px solid #363e42;
+  background: #202529;
+  color: #d5dbdd;
+}
+
+.user-profile-button:hover {
+  border-color: #4a555a;
+  background: #292f33;
+  color: #ffffff;
+}
+
+.user-decklists-button {
+  border: 1px solid #8fe38b;
+  background: #8fe38b;
+  color: #101416;
+}
+
+.user-decklists-button:hover {
+  background: #a3eb9f;
+  border-color: #a3eb9f;
+  color: #101416;
+  transform: translateY(-1px);
+}
+
+.user-card-unavailable {
+  width: 100%;
+  padding: 11px 14px;
+  box-sizing: border-box;
+  border: 1px solid #30373b;
+  border-radius: 8px;
+  color: #737d81;
+  font-size: 13px;
+  text-align: center;
+}
+
+.users-empty,
+.users-error {
+  padding: 55px 25px;
+  border: 1px solid #2b3236;
+  border-radius: 14px;
+  background: #15191c;
+  text-align: center;
+}
+
+.users-empty h2,
+.users-error h2 {
+  margin: 0 0 10px;
+  color: #ffffff;
+  font-size: 24px;
+}
+
+.users-empty p,
+.users-error p {
+  margin: 0;
+  color: #899296;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.users-error {
+  border-color: #633737;
+}
+
+.users-error h2 {
+  color: #ff9d9d;
+}
+
+@media (max-width: 700px) {
+  .users-content {
+    width: min(100% - 24px, 1400px);
+    padding: 35px 0 50px;
+  }
+
+  .users-header h1 {
+    font-size: 34px;
+  }
+
+  .users-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-card-actions {
+    flex-direction: column;
+  }
+
+  .user-profile-button,
+  .user-decklists-button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 450px) {
+  .users-content {
+    width: calc(100% - 18px);
+  }
+
+  .users-header h1 {
+    font-size: 30px;
+  }
+
+  .user-card-top {
+    padding: 18px;
+  }
+
+  .user-card-body {
+    padding: 16px 18px;
+  }
+
+  .user-card-actions {
+    padding: 0 18px 18px;
+  }
+
+  .user-avatar {
+    flex-basis: 56px;
+    width: 56px;
+    height: 56px;
+  }
+}

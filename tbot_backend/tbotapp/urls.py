@@ -48,6 +48,17 @@ from .views.admin_legacy_decks import (
 from .views.profile import (
     profile_me,
     profile_detail,
+    public_profiles,
+    public_profile_decks,
+    profile_update,
+)
+
+from .views.user_decks import (
+    user_decks,
+    user_deck_create,
+    user_deck_update,
+    user_deck_delete,
+    shared_user_deck,
 )
 
 
@@ -178,8 +189,48 @@ urlpatterns = [
         name="profile_me",
     ),
     path(
+        "profile/update/",
+        profile_update,
+        name="profile_update",
+    ),
+    path(
+        "profiles/",
+        public_profiles,
+        name="public_profiles",
+    ),
+    path(
         "profile/<str:profile_slug>/",
         profile_detail,
         name="profile_by_slug",
+    ),
+    path(
+        "profile/<str:profile_slug>/decks/",
+        public_profile_decks,
+        name="public_profile_decks",
+    ),
+    path(
+        "user-decks/",
+        user_decks,
+        name="user_decks",
+    ),
+    path(
+        "user-decks/create/",
+        user_deck_create,
+        name="user_deck_create",
+    ),
+    path(
+        "user-decks/<int:deck_id>/",
+        user_deck_update,
+        name="user_deck_update",
+    ),
+    path(
+        "user-decks/<int:deck_id>/delete/",
+        user_deck_delete,
+        name="user_deck_delete",
+    ),
+    path(
+        "user-decks/shared/<int:deck_id>/",
+        shared_user_deck,
+        name="shared_user_deck",
     ),
 ]

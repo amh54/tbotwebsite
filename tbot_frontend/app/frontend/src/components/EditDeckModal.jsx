@@ -25,10 +25,10 @@ const HERO_CLASSES = {
   "Solar Flare": ["Kabloom", "Solar"],
   Spudow: ["Guardian", "Kabloom"],
   "Wall-Knight": ["Guardian", "Solar"],
-  "Brain Freeze": ["Beastly", "Sneaky"],
-  "Electric Boogaloo": ["Crazy", "Hearty"],
+  "Brain Freeze": ["Sneaky", "Beastly"],
+  "Electric Boogaloo": ["Crazy", "Beastly"],
   "Huge-Gigantacus": ["Brainy", "Sneaky"],
-  "Super Brainz": ["Brainy", "Fighting"],
+  "Super Brainz": ["Brainy", "Sneaky"],
   Immorticia: ["Brainy", "Beastly"],
   Impfinity: ["Crazy", "Sneaky"],
   Neptuna: ["Hearty", "Sneaky"],
@@ -179,6 +179,16 @@ const sumCardRatios = (options) =>
     0,
   );
 
+const getDeckIdentity = (deck) =>
+  String(
+    deck?.deckid ??
+      deck?.deckID ??
+      deck?.id ??
+      deck?.deck_id ??
+      deck?.name ??
+      "",
+  );
+
 const selectStyles = {
   control: (base, state) => ({
     ...base,
@@ -192,6 +202,7 @@ const selectStyles = {
       borderColor: "#646d76",
     },
   }),
+
   menu: (base) => ({
     ...base,
     backgroundColor: "#1b1f23",
@@ -200,6 +211,7 @@ const selectStyles = {
     overflow: "hidden",
     zIndex: 100000,
   }),
+
   menuList: (base) => ({
     ...base,
     scrollbarWidth: "none",
@@ -208,6 +220,7 @@ const selectStyles = {
       display: "none",
     },
   }),
+
   option: (base, state) => ({
     ...base,
     backgroundColor: state.isSelected
@@ -219,6 +232,7 @@ const selectStyles = {
     cursor: "pointer",
     padding: "10px 12px",
   }),
+
   valueContainer: (base) => ({
     ...base,
     gap: "6px",
@@ -226,6 +240,7 @@ const selectStyles = {
     minWidth: 0,
     overflow: "hidden",
   }),
+
   multiValue: (base) => ({
     ...base,
     backgroundColor: "#303740",
@@ -236,6 +251,7 @@ const selectStyles = {
     maxWidth: "100%",
     flexShrink: 0,
   }),
+
   multiValueLabel: (base) => ({
     ...base,
     color: "#d7dce1",
@@ -245,6 +261,7 @@ const selectStyles = {
     whiteSpace: "nowrap",
     overflow: "visible",
   }),
+
   multiValueRemove: (base) => ({
     ...base,
     color: "#aeb5bc",
@@ -256,6 +273,7 @@ const selectStyles = {
       color: "#ffffff",
     },
   }),
+
   singleValue: (base) => ({
     ...base,
     position: "static",
@@ -276,20 +294,24 @@ const selectStyles = {
     margin: 0,
     flexShrink: 1,
   }),
+
   placeholder: (base) => ({
     ...base,
     color: "#7d858e",
     fontSize: "0.9rem",
   }),
+
   input: (base) => ({
     ...base,
     color: "#ffffff",
     margin: 0,
     padding: 0,
   }),
+
   indicatorSeparator: () => ({
     display: "none",
   }),
+
   dropdownIndicator: (base) => ({
     ...base,
     color: "#737b84",
@@ -299,6 +321,7 @@ const selectStyles = {
       color: "#c7cbd1",
     },
   }),
+
   clearIndicator: (base) => ({
     ...base,
     color: "#aeb5bc",
@@ -321,6 +344,7 @@ function AdminModalField({ label, value, onChange }) {
   return (
     <label className="admin-modal-field">
       <span className="admin-modal-label">{label}</span>
+
       <input
         type="text"
         value={value ?? ""}
@@ -334,6 +358,7 @@ function AdminModalTextArea({ label, value, onChange }) {
   return (
     <label className="admin-modal-field admin-modal-textarea-field">
       {label && <span className="admin-modal-label">{label}</span>}
+
       <textarea
         className="admin-modal-textarea"
         value={value ?? ""}
@@ -408,10 +433,10 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   },
   ref,
 ) {
-  const [imgError, setImgError] = useState(false);
   const [cardsError, setCardsError] = useState("");
 
   const cardsInitializedRef = useRef(false);
+  const initializedDeckRef = useRef("");
 
   const [form, setForm] = useState({
     name: "",
@@ -434,14 +459,22 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     cardsSelected: [],
   });
 
-  useEffect(() => {
-    cardsInitializedRef.current = false;
+  const deckIdentity = getDeckIdentity(deck);
 
+  useEffect(() => {
     if (!deck) {
+      initializedDeckRef.current = "";
+      cardsInitializedRef.current = false;
       return;
     }
 
-    setImgError(false);
+    if (initializedDeckRef.current === deckIdentity && deckIdentity !== "") {
+      return;
+    }
+
+    initializedDeckRef.current = deckIdentity;
+    cardsInitializedRef.current = false;
+
     setCardsError("");
 
     setForm({
@@ -464,17 +497,23 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       archetypeSelected: valuesToOptions(deck?.archetype ?? ""),
       cardsSelected: [],
     });
-  }, [deck]);
+  }, [deck, deckIdentity]);
 
   useEffect(() => {
     if (!imageUrl) {
       return;
     }
 
-    setForm((previous) => ({
-      ...previous,
-      image: imageUrl,
-    }));
+    setForm((previous) => {
+      if (previous.image === imageUrl) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        image: imageUrl,
+      };
+    });
   }, [imageUrl]);
 
   const normalizedFormSide = normalizeSide(form.side);
@@ -654,17 +693,17 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       }
     : null;
 
-  const handleChange = (field, value) => {
+  const handleChange = useCallback((field, value) => {
     setForm((previous) => ({
       ...previous,
       [field]: field === "side" ? normalizeSide(value) : value,
     }));
-  };
+  }, []);
 
-  const handleSideChange = (selected) => {
+  const handleSideChange = useCallback((selected) => {
     const value = normalizeSide(selected?.value || "");
 
-    cardsInitializedRef.current = false;
+    cardsInitializedRef.current = true;
 
     setForm((previous) => ({
       ...previous,
@@ -675,9 +714,9 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     }));
 
     setCardsError("");
-  };
+  }, []);
 
-  const handleHeroChange = (selected) => {
+  const handleHeroChange = useCallback((selected) => {
     cardsInitializedRef.current = true;
 
     setForm((previous) => ({
@@ -688,9 +727,9 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     }));
 
     setCardsError("");
-  };
+  }, []);
 
-  const handleCategoryChange = (selected) => {
+  const handleCategoryChange = useCallback((selected) => {
     const options = selected || [];
 
     setForm((previous) => ({
@@ -698,9 +737,9 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       categorySelected: options,
       category: optionsToCombinedValue(options),
     }));
-  };
+  }, []);
 
-  const handleArchetypeChange = (selected) => {
+  const handleArchetypeChange = useCallback((selected) => {
     const options = selected || [];
 
     setForm((previous) => ({
@@ -708,9 +747,9 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       archetypeSelected: options,
       archetype: optionsToCombinedValue(options),
     }));
-  };
+  }, []);
 
-  const handleCardsChange = (selected) => {
+  const handleCardsChange = useCallback((selected) => {
     setForm((previous) => {
       const previousCounts = new Map(
         (previous.cardsSelected || []).map((option) => [
@@ -732,9 +771,9 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     });
 
     setCardsError("");
-  };
+  }, []);
 
-  const handleCardRatioChange = (cardValue, delta) => {
+  const handleCardRatioChange = useCallback((cardValue, delta) => {
     setForm((previous) => {
       const cardsSelected = previous.cardsSelected || [];
 
@@ -780,7 +819,7 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     });
 
     setCardsError("");
-  };
+  }, []);
 
   const handleSave = useCallback(async () => {
     if (typeof onSave !== "function") {
@@ -809,6 +848,7 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       setCardsError(
         `Card ratios must add up to ${TARGET_CARD_RATIO_TOTAL} (currently ${ratioTotal}).`,
       );
+
       return null;
     }
 
@@ -848,9 +888,6 @@ const EditDeckModal = forwardRef(function EditDeckModal(
         cards: cardsValue,
       };
 
-      console.log("Saving legacy deck:", deck);
-      console.log("Save payload:", payload);
-
       const result = await onSave(deck, payload);
 
       if (!result) {
@@ -865,7 +902,9 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       return result;
     } catch (error) {
       console.error("Failed to save deck:", error);
+
       setCardsError(error?.message || "Failed to save deck.");
+
       return null;
     } finally {
       onSavingChange?.(false);

@@ -1,91 +1,56 @@
-
-/* ============================================================
-   PROFILE PAGE
-   ============================================================ */
-
 .profile-page {
   min-height: calc(100vh - 80px);
   padding: 48px 24px 80px;
-
   background: #101416;
   color: #f2f2f2;
 }
-
-/* ============================================================
-   PROFILE CONTAINER
-   ============================================================ */
 
 .profile-page > section {
   width: min(1100px, 100%);
   margin: 0 auto;
 }
 
-/* ============================================================
-   PROFILE HEADER
-   ============================================================ */
-
 .profile-header {
   position: relative;
-
   display: flex;
   align-items: center;
   gap: 28px;
-
   padding: 32px;
-
   background: #15181b;
   border: 1px solid #292e32;
   border-radius: 14px;
-
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
 }
 
-/* ============================================================
-   AVATAR
-   ============================================================ */
-
 .profile-avatar {
   flex: 0 0 auto;
-
   width: 120px;
   height: 120px;
-
   border-radius: 50%;
   overflow: hidden;
-
   background: #202428;
   border: 3px solid #8fe38b;
-
   box-shadow: 0 0 0 4px rgba(143, 227, 139, 0.08);
 }
 
 .profile-avatar img {
   display: block;
-
   width: 100%;
   height: 100%;
-
   object-fit: cover;
 }
 
 .profile-avatar-placeholder {
   width: 100%;
   height: 100%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   font-size: 42px;
   font-weight: 700;
-
   color: #8fe38b;
   background: #202428;
 }
-
-/* ============================================================
-   PROFILE INFORMATION
-   ============================================================ */
 
 .profile-info {
   min-width: 0;
@@ -94,63 +59,58 @@
 
 .profile-info h1 {
   margin: 0;
-
   font-size: 34px;
   line-height: 1.15;
   font-weight: 700;
-
   color: #f2f2f2;
 }
 
 .profile-username {
   margin-top: 6px;
-
   font-size: 16px;
   color: #9ca3a7;
 }
 
 .profile-bio {
   max-width: 700px;
-
   margin: 16px 0 0;
-
   font-size: 16px;
   line-height: 1.6;
-
   color: #d1d5d8;
-
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .profile-meta {
   margin-top: 14px;
-
   font-size: 13px;
   font-weight: 600;
-
   color: #8fe38b;
 }
 
-/* ============================================================
-   PROFILE BUTTONS
-   ============================================================ */
+.profile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
 
 .profile-edit-button,
-.profile-create-deck-button {
+.profile-share-button,
+.profile-decklists-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 16px;
   border: 1px solid #3a4146;
   border-radius: 8px;
-
   background: #202428;
   color: #f2f2f2;
-
-  padding: 10px 16px;
-
   font-size: 14px;
   font-weight: 600;
-
+  text-decoration: none;
   cursor: pointer;
-
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
@@ -159,20 +119,30 @@
 }
 
 .profile-edit-button:hover,
-.profile-create-deck-button:hover {
+.profile-share-button:hover,
+.profile-decklists-button:hover {
   background: #272d31;
   border-color: #8fe38b;
   color: #8fe38b;
 }
 
 .profile-edit-button:active,
-.profile-create-deck-button:active {
+.profile-share-button:active,
+.profile-decklists-button:active {
   transform: translateY(1px);
 }
 
-/* ============================================================
-   DECKLIST SECTION
-   ============================================================ */
+.profile-share-button {
+  border-color: #8fe38b;
+  background: #8fe38b;
+  color: #101416;
+}
+
+.profile-share-button:hover {
+  background: #a4ed9f;
+  border-color: #a4ed9f;
+  color: #101416;
+}
 
 .profile-decks {
   margin-top: 32px;
@@ -183,59 +153,43 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-
   margin-bottom: 18px;
 }
 
 .profile-decks-header h2 {
   margin: 0;
-
   font-size: 26px;
   line-height: 1.2;
-
   color: #f2f2f2;
 }
 
-/* ============================================================
-   NO DECKS
-   ============================================================ */
+.profile-decks-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
 .profile-no-decks {
   padding: 36px 24px;
-
   text-align: center;
-
   background: #15181b;
   border: 1px solid #292e32;
   border-radius: 12px;
-
   color: #9ca3a7;
   font-size: 15px;
 }
 
-/* ============================================================
-   DECK GRID
-   ============================================================ */
-
 .profile-deck-grid {
   display: grid;
-
   grid-template-columns: repeat(3, minmax(0, 1fr));
-
   gap: 20px;
 }
 
-/* ============================================================
-   DECK CARD
-   ============================================================ */
-
 .profile-deck-card {
   overflow: hidden;
-
   background: #15181b;
   border: 1px solid #292e32;
   border-radius: 12px;
-
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
@@ -244,30 +198,17 @@
 
 .profile-deck-card:hover {
   transform: translateY(-3px);
-
   border-color: #3b454b;
-
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
 }
 
-/* ============================================================
-   DECK IMAGE
-   ============================================================ */
-
 .profile-deck-image {
   display: block;
-
   width: 100%;
   height: 190px;
-
   object-fit: cover;
-
   background: #202428;
 }
-
-/* ============================================================
-   DECK CONTENT
-   ============================================================ */
 
 .profile-deck-content {
   padding: 18px;
@@ -275,21 +216,16 @@
 
 .profile-deck-content h3 {
   margin: 0 0 12px;
-
   font-size: 19px;
   line-height: 1.3;
-
   color: #f2f2f2;
-
   overflow-wrap: anywhere;
 }
 
 .profile-deck-content p {
   margin: 5px 0;
-
   font-size: 14px;
   line-height: 1.45;
-
   color: #9ca3a7;
 }
 
@@ -298,44 +234,251 @@
   font-weight: 600;
 }
 
-/* ============================================================
-   LOADING
-   ============================================================ */
-
 .profile-loading {
   width: min(1100px, 100%);
   margin: 0 auto;
-
   padding: 80px 24px;
-
   text-align: center;
-
   color: #9ca3a7;
   font-size: 16px;
 }
 
-/* ============================================================
-   ERROR
-   ============================================================ */
-
 .profile-error {
   width: min(1100px, 100%);
   margin: 0 auto;
-
   padding: 80px 24px;
-
   text-align: center;
-
   color: #f2f2f2;
-
   background: #15181b;
   border: 1px solid #292e32;
   border-radius: 12px;
 }
 
-/* ============================================================
-   TABLET
-   ============================================================ */
+.profile-share-message {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 1000;
+  transform: translateX(-50%);
+  padding: 12px 18px;
+  border: 1px solid #8fe38b;
+  border-radius: 8px;
+  background: #15181b;
+  color: #8fe38b;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.profile-edit-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.profile-edit-modal {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 28px;
+  background: #15181b;
+  border: 1px solid #292e32;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.profile-edit-modal h2 {
+  margin: 0 0 24px;
+  color: #f2f2f2;
+  font-size: 25px;
+}
+
+.profile-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.profile-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.profile-edit-field label {
+  color: #f2f2f2;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-edit-field input,
+.profile-edit-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #343b40;
+  border-radius: 8px;
+  outline: none;
+  background: #202428;
+  color: #f2f2f2;
+  font-family: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.profile-edit-field input {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.profile-edit-field textarea {
+  min-height: 120px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.profile-edit-field input:focus,
+.profile-edit-field textarea:focus {
+  border-color: #8fe38b;
+  box-shadow: 0 0 0 3px rgba(143, 227, 139, 0.08);
+}
+
+.profile-edit-field small {
+  color: #858c90;
+  font-size: 12px;
+}
+
+.profile-public-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 15px;
+  border: 1px solid #292e32;
+  border-radius: 9px;
+  background: #101416;
+}
+
+.profile-public-toggle-info {
+  min-width: 0;
+}
+
+.profile-public-toggle-title {
+  margin: 0 0 4px;
+  color: #f2f2f2;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-public-toggle-description {
+  margin: 0;
+  color: #8f969a;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.profile-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 26px;
+}
+
+.profile-switch input {
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.profile-switch-slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  background: #343b40;
+  transition: background 0.2s ease;
+}
+
+.profile-switch-slider::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.2s ease;
+}
+
+.profile-switch input:checked + .profile-switch-slider {
+  background: #8fe38b;
+}
+
+.profile-switch input:checked + .profile-switch-slider::before {
+  transform: translateX(22px);
+}
+
+.profile-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.profile-edit-cancel,
+.profile-edit-save {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-edit-cancel {
+  border: 1px solid #343b40;
+  background: #202428;
+  color: #f2f2f2;
+}
+
+.profile-edit-cancel:hover {
+  background: #292e32;
+}
+
+.profile-edit-save {
+  border: 1px solid #8fe38b;
+  background: #8fe38b;
+  color: #101416;
+}
+
+.profile-edit-save:hover {
+  background: #a4ed9f;
+  border-color: #a4ed9f;
+}
+
+.profile-edit-save:disabled,
+.profile-edit-cancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.profile-edit-error {
+  padding: 11px 13px;
+  border: 1px solid #713d3d;
+  border-radius: 8px;
+  background: rgba(113, 61, 61, 0.15);
+  color: #ff9d9d;
+  font-size: 13px;
+  line-height: 1.45;
+}
 
 @media (max-width: 900px) {
   .profile-page {
@@ -355,23 +498,16 @@
   }
 }
 
-/* ============================================================
-   MOBILE
-   ============================================================ */
-
 @media (max-width: 650px) {
   .profile-page {
     min-height: calc(100vh - 70px);
-
     padding: 24px 14px 50px;
   }
 
   .profile-header {
     flex-direction: column;
     align-items: center;
-
     padding: 28px 20px;
-
     text-align: center;
   }
 
@@ -400,7 +536,13 @@
     font-size: 15px;
   }
 
-  .profile-edit-button {
+  .profile-header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .profile-edit-button,
+  .profile-share-button {
     width: 100%;
   }
 
@@ -418,7 +560,12 @@
     font-size: 23px;
   }
 
-  .profile-create-deck-button {
+  .profile-decks-header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .profile-decklists-button {
     width: 100%;
   }
 
@@ -430,11 +577,32 @@
   .profile-deck-image {
     height: 200px;
   }
-}
 
-/* ============================================================
-   SMALL MOBILE
-   ============================================================ */
+  .profile-edit-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .profile-edit-modal {
+    width: 100%;
+    max-height: 90vh;
+    padding: 24px 18px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .profile-edit-actions {
+    flex-direction: column-reverse;
+  }
+
+  .profile-edit-cancel,
+  .profile-edit-save {
+    width: 100%;
+  }
+
+  .profile-public-toggle {
+    align-items: flex-start;
+  }
+}
 
 @media (max-width: 420px) {
   .profile-page {
@@ -457,5 +625,9 @@
 
   .profile-deck-image {
     height: 180px;
+  }
+
+  .profile-edit-modal {
+    padding: 22px 14px;
   }
 }

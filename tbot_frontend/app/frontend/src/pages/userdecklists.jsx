@@ -1,13 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { useParams } from "react-router-dom";
+
 import DeckCard from "../components/deckcomponent";
+
 import FilterDropdown from "../components/filterdropdown";
+
 import Navbar from "../components/navbar";
+
 import Footer from "../components/footer";
 
 import "../css/decklists.css";
+
 import "../css/navbar.css";
+
 import "../css/loading.css";
+
+import "../css/userdecklists.css";
 
 const getApiBaseUrl = () => {
   const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
@@ -100,15 +109,11 @@ const HERO_ALIAS = {
   hg: "huge-giganticus",
 };
 
-function normalizeText(value) {
-  return String(value ?? "").trim();
-}
+const normalizeText = (value) => String(value ?? "").trim();
 
-function normalizeKey(value) {
-  return normalizeText(value).toLowerCase();
-}
+const normalizeKey = (value) => normalizeText(value).toLowerCase();
 
-function parseDeckCards(value) {
+const parseDeckCards = (value) => {
   return String(value ?? "")
     .replace(/\\\r\n/g, "\n")
     .replace(/\\\n/g, "\n")
@@ -116,22 +121,58 @@ function parseDeckCards(value) {
     .split(/\r?\n|,/)
     .map((card) => card.trim())
     .filter(Boolean);
-}
+};
 
-function DecklistsPage() {
+const getAvatarUrl = (profile) => {
+  if (!profile) {
+    return "";
+  }
+
+  const avatar = normalizeText(profile.avatar);
+  const discordId = normalizeText(profile.discord_id);
+
+  if (!avatar) {
+    return "";
+  }
+
+  if (
+    avatar.startsWith("http://") ||
+    avatar.startsWith("https://") ||
+    avatar.startsWith("//")
+  ) {
+    return avatar;
+  }
+
+  if (!discordId) {
+    return "";
+  }
+
+  const extension = avatar.startsWith("a_") ? "gif" : "png";
+
+  return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=256`;
+};
+
+function UserDecklists() {
+  const { profile_slug } = useParams();
+
+  const [profile, setProfile] = useState(null);
   const [decks, setDecks] = useState([]);
-  const [totalDecks, setTotalDecks] = useState(null);
+  const [allCards, setAllCards] = useState([]);
+
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
   const [hero, setHero] = useState([]);
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
-  const [allCards, setAllCards] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [avatarError, setAvatarError] = useState(false);
+  const [profileLinkCopied, setProfileLinkCopied] = useState(false);
+
   useEffect(() => {
-    document.title = "Decklists";
+    document.title = "User Decklists";
 
     return () => {
       document.title = "Tbot";
@@ -141,10 +182,73 @@ function DecklistsPage() {
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchDeckCount = async () => {
+    const loadUserDecklists = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        setAvatarError(false);
+
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(
+            profile_slug,
+          )}/decks/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+            signal: controller.signal,
+          },
+        );
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(
+            data?.error || "Unable to load this user's decklists.",
+          );
+        }
+
+        setProfile({
+          ...(data?.profile || {}),
+          is_owner: data?.is_owner === true,
+        });
+
+        setDecks(Array.isArray(data?.decks) ? data.decks : []);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load user decklists:", err);
+
+          setError(
+            err.message || "Unable to load this user's decklists.",
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (profile_slug) {
+      loadUserDecklists();
+    }
+
+    return () => controller.abort();
+  }, [profile_slug]);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [profile?.avatar, profile?.discord_id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchCards = async () => {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/tbotapp/decklist-count/`,
+          `${API_BASE_URL}/tbotapp/cardinfo/`,
           {
             method: "GET",
             headers: {
@@ -155,52 +259,24 @@ function DecklistsPage() {
         );
 
         if (!response.ok) {
-          throw new Error(
-            `Deck count request failed with status ${response.status}`,
-          );
-        }
-
-        const data = await response.json();
-        const count = Number(data?.count);
-
-        if (Number.isFinite(count)) {
-          setTotalDecks(count);
-        }
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load deck count:", err);
-        }
-      }
-    };
-
-    fetchDeckCount();
-
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchCards = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
           return;
         }
 
         const data = await response.json();
 
-        setAllCards(Array.isArray(data) ? data : []);
+        setAllCards(
+          Array.isArray(data)
+            ? data
+            : Array.isArray(data?.results)
+              ? data.results
+              : [],
+        );
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Unable to load card information:", err);
+          console.error(
+            "Unable to load card information:",
+            err,
+          );
         }
       }
     };
@@ -210,102 +286,36 @@ function DecklistsPage() {
     return () => controller.abort();
   }, []);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const loadingStartTime = Date.now();
-    const minimumLoadingTime = 1200;
+  const handleShareProfile = async () => {
+    const slug =
+      normalizeText(profile?.profile_slug) || profile_slug;
 
-    const fetchDecks = async () => {
-      try {
-        setLoading(true);
-        setError("");
+    if (!slug) {
+      return;
+    }
 
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/decklists/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
-          },
-        );
+    const shareUrl = new URL(
+      `/profile/${encodeURIComponent(slug)}/decklists`,
+      window.location.origin,
+    );
 
-        if (!response.ok) {
-          let message = `Request failed with status ${response.status}`;
+    try {
+      await navigator.clipboard.writeText(
+        shareUrl.toString(),
+      );
 
-          try {
-            const payload = await response.json();
+      setProfileLinkCopied(true);
 
-            if (payload?.detail) {
-              message += `: ${payload.detail}`;
-            } else if (payload?.error) {
-              message += `: ${payload.error}`;
-            }
-          } catch {
-          }
-
-          throw new Error(message);
-        }
-
-        const contentType = (
-          response.headers.get("content-type") || ""
-        ).toLowerCase();
-
-        const text = await response.text();
-
-        if (!contentType.includes("application/json")) {
-          throw new Error("The decklist endpoint did not return JSON.");
-        }
-
-        const data = JSON.parse(text);
-
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
-
-        setDecks(results);
-
-        setTotalDecks((currentCount) => {
-          if (currentCount !== null && currentCount > 0) {
-            return currentCount;
-          }
-
-          return results.length;
-        });
-
-        const elapsed = Date.now() - loadingStartTime;
-        const remaining = Math.max(
-          minimumLoadingTime - elapsed,
-          0,
-        );
-
-        window.setTimeout(() => {
-          if (!controller.signal.aborted) {
-            setLoading(false);
-          }
-        }, remaining);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load decklists:", err);
-
-          setError(
-            `Unable to load decklists right now. ${
-              err.message || ""
-            }`.trim(),
-          );
-
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchDecks();
-
-    return () => controller.abort();
-  }, []);
+      window.setTimeout(() => {
+        setProfileLinkCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error(
+        "Failed to copy profile link:",
+        error,
+      );
+    }
+  };
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -347,7 +357,8 @@ function DecklistsPage() {
       .map((option) => {
         const matchedCard = allCards.find(
           (card) =>
-            normalizeKey(card.card_name) === normalizeKey(option.label),
+            normalizeKey(card.card_name) ===
+            normalizeKey(option.label),
         );
 
         return {
@@ -357,9 +368,13 @@ function DecklistsPage() {
         };
       })
       .sort((a, b) =>
-        a.label.localeCompare(b.label, undefined, {
-          sensitivity: "base",
-        }),
+        a.label.localeCompare(
+          b.label,
+          undefined,
+          {
+            sensitivity: "base",
+          },
+        ),
       );
   }, [sideFilteredDecks, allCards]);
 
@@ -382,7 +397,7 @@ function DecklistsPage() {
             categoryName.charAt(0).toUpperCase() +
             categoryName.slice(1),
           count: 0,
-          ...CATEGORY_META[key],
+          ...(CATEGORY_META[key] || {}),
         });
       }
 
@@ -390,9 +405,13 @@ function DecklistsPage() {
     });
 
     return Array.from(categoryMap.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, undefined, {
-        sensitivity: "base",
-      }),
+      a.label.localeCompare(
+        b.label,
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      ),
     );
   }, [sideFilteredDecks]);
 
@@ -410,17 +429,21 @@ function DecklistsPage() {
         return;
       }
 
-      Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
-        if (deckArchetype.includes(archetypeName)) {
-          counts[archetypeName] += 1;
-        }
-      });
+      Object.keys(ARCHETYPE_META).forEach(
+        (archetypeName) => {
+          if (deckArchetype.includes(archetypeName)) {
+            counts[archetypeName] += 1;
+          }
+        },
+      );
     });
 
     return Object.entries(ARCHETYPE_META)
       .map(([value, meta]) => ({
         value,
-        label: value.charAt(0).toUpperCase() + value.slice(1),
+        label:
+          value.charAt(0).toUpperCase() +
+          value.slice(1),
         count: counts[value] || 0,
         ...meta,
       }))
@@ -438,13 +461,16 @@ function DecklistsPage() {
       const sideB = normalizeKey(b.side);
 
       const sideCompare =
-        (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
+        (sideOrder[sideA] ?? 99) -
+        (sideOrder[sideB] ?? 99);
 
       if (sideCompare !== 0) {
         return sideCompare;
       }
 
-      const heroCompare = normalizeText(a.hero).localeCompare(
+      const heroCompare = normalizeText(
+        a.hero,
+      ).localeCompare(
         normalizeText(b.hero),
         undefined,
         {
@@ -476,8 +502,8 @@ function DecklistsPage() {
     return sortedDecks.filter((deck) => {
       const deckCards = parseDeckCards(deck.cards);
 
-      const searchableCardValues = deckCards.map((card) =>
-        normalizeKey(card),
+      const searchableCardValues = deckCards.map(
+        (card) => normalizeKey(card),
       );
 
       const searchableValues = [
@@ -495,24 +521,30 @@ function DecklistsPage() {
 
       if (searchValue) {
         if (alias) {
-          searchMatch = normalizeKey(deck.hero).includes(alias);
+          searchMatch = normalizeKey(deck.hero).includes(
+            alias,
+          );
         } else {
-          const normalFieldMatch = searchableValues.some((value) =>
-            value.includes(searchValue),
-          );
+          const normalFieldMatch =
+            searchableValues.some((value) =>
+              value.includes(searchValue),
+            );
 
-          const cardMatch = searchableCardValues.some((card) =>
-            card.includes(searchValue),
-          );
+          const cardMatch =
+            searchableCardValues.some((card) =>
+              card.includes(searchValue),
+            );
 
-          searchMatch = normalFieldMatch || cardMatch;
+          searchMatch =
+            normalFieldMatch || cardMatch;
         }
       }
 
       const deckSide = normalizeKey(deck.side);
 
       const sideMatch =
-        side === "All" || deckSide === normalizeKey(side);
+        side === "All" ||
+        deckSide === normalizeKey(side);
 
       const heroMatch =
         hero.length === 0 ||
@@ -530,7 +562,9 @@ function DecklistsPage() {
             normalizeKey(selectedCategory.value),
         );
 
-      const deckArchetype = normalizeKey(deck.archetype);
+      const deckArchetype = normalizeKey(
+        deck.archetype,
+      );
 
       const archetypeMatch =
         archetype.length === 0 ||
@@ -548,7 +582,14 @@ function DecklistsPage() {
         archetypeMatch
       );
     });
-  }, [sortedDecks, search, side, hero, category, archetype]);
+  }, [
+    sortedDecks,
+    search,
+    side,
+    hero,
+    category,
+    archetype,
+  ]);
 
   const clearFilters = () => {
     setSearch("");
@@ -571,69 +612,135 @@ function DecklistsPage() {
           <h2>Loading decklists</h2>
 
           <p>
-            Preparing the deck browser and loading available decks.
+            Preparing this user's decklists.
           </p>
-
-          <div className="loading-status">
-            <span>Loading deck data</span>
-
-            <strong>
-              {totalDecks !== null
-                ? `${totalDecks} decks`
-                : "Loading..."}
-            </strong>
-          </div>
         </div>
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="deck-page">
+        <Navbar />
+
+        <main className="deck-content">
+          <div className="user-decklists-empty">
+            <h2>Unable to load decklists</h2>
+
+            <p>{error}</p>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
+  const profileName =
+    profile?.display_name ||
+    profile?.username ||
+    "User";
+
+  const avatarUrl = getAvatarUrl(profile);
 
   return (
     <div className="deck-page">
       <Navbar />
 
       <main className="deck-content">
-        <h1>Decklists</h1>
+        <div className="user-decklists-header">
+          <div className="user-decklists-profile">
+            <div className="user-decklists-avatar">
+              {avatarUrl && !avatarError ? (
+                <img
+                  src={avatarUrl}
+                  alt={`${profileName} avatar`}
+                  className="user-decklists-avatar-image"
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <div className="user-decklists-avatar-placeholder">
+                  {profileName
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            <div className="user-decklists-profile-info">
+              <h1>{profileName} Decklists</h1>
+
+              <p>
+                Browse this user's Tbot decklists.
+              </p>
+
+              {profile?.bio && (
+                <p className="user-decklists-profile-bio">
+                  {profile.bio}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="user-decklists-header-actions">
+            <button
+              type="button"
+              className="user-decklists-share"
+              onClick={handleShareProfile}
+            >
+              {profileLinkCopied
+                ? "Link Copied!"
+                : "Share Deck Profile"}
+            </button>
+          </div>
+        </div>
 
         <div className="deck-browser">
-          <img
-            className="deck-banner"
-            src="https://i.ibb.co/8nBNRL66/deckbannerbyairheadz.webp"
-            alt="Deck Banner"
-          />
-
           <div className="tabs">
             <button
               type="button"
               className={side === "All" ? "active" : ""}
-              onClick={() => handleSideChange("All")}
+              onClick={() =>
+                handleSideChange("All")
+              }
             >
               All
             </button>
 
             <button
               type="button"
-              className={side === "Plants" ? "active" : ""}
-              onClick={() => handleSideChange("Plants")}
+              className={
+                side === "Plants" ? "active" : ""
+              }
+              onClick={() =>
+                handleSideChange("Plants")
+              }
             >
               <img
                 src="https://i.ibb.co/fYHsRqP0/plants.png"
                 alt="Plants"
                 className="tab-icon"
               />
+
               Plants
             </button>
 
             <button
               type="button"
-              className={side === "Zombies" ? "active" : ""}
-              onClick={() => handleSideChange("Zombies")}
+              className={
+                side === "Zombies" ? "active" : ""
+              }
+              onClick={() =>
+                handleSideChange("Zombies")
+              }
             >
               <img
                 src="https://i.ibb.co/pvT38Y1n/zombies.png"
                 alt="Zombies"
                 className="tab-icon"
               />
+
               Zombies
             </button>
           </div>
@@ -643,7 +750,9 @@ function DecklistsPage() {
               className="search"
               placeholder="Search decks, creators, heroes, cards..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
             />
           </div>
 
@@ -688,40 +797,43 @@ function DecklistsPage() {
           </div>
         </div>
 
-        {error ? (
-          <p className="error-message">{error}</p>
-        ) : (
+        <div className="user-decklists-results-bar">
           <p className="results-count">
             Showing {filteredDecks.length} of{" "}
-            {totalDecks !== null ? totalDecks : decks.length} decks
+            {decks.length} decks
           </p>
-        )}
+        </div>
 
-        {!error && filteredDecks.length === 0 ? (
-          <p className="no-results">No decklists found.</p>
+        {filteredDecks.length === 0 ? (
+          <div className="user-decklists-empty">
+            <h2>No decks found</h2>
+
+            <p>
+              This user hasn't added any decks
+              matching these filters.
+            </p>
+          </div>
         ) : (
-          !error && (
-            <div className="deck-grid">
-              {filteredDecks.map((deck) => (
-                <DeckCard
-                  key={`${deck.side}-${
-                    deck.deckid ||
-                    deck.deckID ||
-                    deck.id ||
-                    deck.name
-                  }`}
-                  decklist={deck}
-                />
-              ))}
-            </div>
-          )
+          <div className="deck-grid">
+            {filteredDecks.map((deck) => (
+              <DeckCard
+                key={
+                  deck.deckid ||
+                  deck.deckID ||
+                  deck.id ||
+                  `${deck.side}-${deck.name}`
+                }
+                decklist={deck}
+                allCards={allCards}
+              />
+            ))}
+          </div>
         )}
       </main>
 
-      <Footer
-        credits="Special thanks to rip for uploading all of the deck images, and to everyone in the PVZH community who continues to contribute great decks and help grow the Tbot website and Discord bot. Credit to AirheadZ for designing the deck banner used on this page."
-      />
+      <Footer/>
     </div>
   );
 }
-export default DecklistsPage;
+
+export default UserDecklists;

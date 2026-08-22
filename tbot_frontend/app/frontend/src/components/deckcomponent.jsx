@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+
 import { useSearchParams } from "react-router-dom";
 
 import AddDeckModal from "./AddDeckModal";
@@ -116,7 +123,11 @@ const toExternalUrl = (value) => {
   const markdownMatch = /\((https?:\/\/[^)]+)\)/i.exec(raw);
   const inlineUrlMatch = /https?:\/\/\S+/i.exec(raw);
 
-  let candidate = (markdownMatch?.[1] || inlineUrlMatch?.[0] || raw)
+  let candidate = (
+    markdownMatch?.[1] ||
+    inlineUrlMatch?.[0] ||
+    raw
+  )
     .trim()
     .replace(/\s+/g, "");
 
@@ -176,7 +187,9 @@ const formatCardsDisplay = (value) => {
     return "";
   }
 
-  return entries.map((entry) => `${entry.name} x${entry.count}`).join(", ");
+  return entries
+    .map((entry) => `${entry.name} x${entry.count}`)
+    .join(", ");
 };
 
 function DeckCard({
@@ -197,7 +210,12 @@ function DeckCard({
 
   const [heroColor1, heroColor2] = getHeroColors(deck.hero);
 
-  const deckId = deck.deckid ?? deck.deckID ?? deck.id ?? "";
+  const deckId =
+    deck.deckid ??
+    deck.deckID ??
+    deck.deckId ??
+    deck.id ??
+    "";
 
   const deckKey = String(deckId || deck.name || "");
 
@@ -205,16 +223,14 @@ function DeckCard({
 
   const [open, setOpen] = useState(addMode);
   const [editing, setEditing] = useState(false);
+
   const [imgError, setImgError] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Image state for the edit flow lives here, in the left-hand image
-  // column, matching the original layout. EditDeckModal (right column)
-  // receives the current file/URL as props and includes them in the
-  // save payload.
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState("");
   const [editImgError, setEditImgError] = useState(false);
+
   const [editSavingLocal, setEditSavingLocal] = useState(false);
 
   const editModalRef = useRef(null);
@@ -259,7 +275,11 @@ function DeckCard({
     }
 
     const handleKeyDown = (event) => {
-      if (event.key === "Escape" && !editSavingLocal && !editSaving) {
+      if (
+        event.key === "Escape" &&
+        !editSavingLocal &&
+        !editSaving
+      ) {
         closeModal();
       }
     };
@@ -270,6 +290,22 @@ function DeckCard({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open, editSavingLocal, editSaving]);
+
+  useEffect(() => {
+    if (!editing) {
+      return;
+    }
+
+    setEditImgError(false);
+
+    if (!editImageFile) {
+      setEditImagePreview(deck.image ?? "");
+    }
+  }, [
+    editing,
+    deck.image,
+    editImageFile,
+  ]);
 
   const openModal = () => {
     if (addMode) {
@@ -298,14 +334,20 @@ function DeckCard({
 
     if (addMode) {
       setOpen(false);
+
       if (typeof onComplete === "function") {
         onComplete(null);
       }
+
       return;
     }
 
     setOpen(false);
     setEditing(false);
+
+    setEditImageFile(null);
+    setEditImagePreview("");
+    setEditImgError(false);
 
     if (!deckKey) {
       return;
@@ -326,11 +368,13 @@ function DeckCard({
   };
 
   const startEditing = () => {
-    if (!isAdmin) {
+    if (!isAdmin || isSaving) {
       return;
     }
 
-    resetEditImageState();
+    setEditImageFile(null);
+    setEditImagePreview(deck.image ?? "");
+    setEditImgError(false);
     setEditing(true);
   };
 
@@ -354,6 +398,13 @@ function DeckCard({
       return;
     }
 
+    if (!file.type.startsWith("image/")) {
+      event.target.value = "";
+      setEditImageFile(null);
+      setEditImagePreview(deck.image ?? "");
+      return;
+    }
+
     const previewUrl = URL.createObjectURL(file);
 
     setEditImageFile(file);
@@ -362,11 +413,17 @@ function DeckCard({
 
   const handleEditSave = async () => {
     if (!editModalRef.current?.save) {
-      console.error("EditDeckModal save method is unavailable.");
+      console.error(
+        "EditDeckModal save method is unavailable.",
+      );
       return;
     }
 
-    await editModalRef.current.save();
+    try {
+      await editModalRef.current.save();
+    } catch (error) {
+      console.error("Unable to save deck:", error);
+    }
   };
 
   const handleDelete = () => {
@@ -420,8 +477,10 @@ function DeckCard({
       const link = document.createElement("a");
 
       link.href = blobUrl;
-
-      link.download = `${deck.name || "decklist"}.png`.replace(/\s+/g, "_");
+      link.download = `${deck.name || "decklist"}.png`.replace(
+        /\s+/g,
+        "_",
+      );
 
       document.body.appendChild(link);
 
@@ -431,19 +490,26 @@ function DeckCard({
 
       URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      console.error("Direct download blocked, opening image instead", error);
+      console.error(
+        "Direct download blocked, opening image instead",
+        error,
+      );
 
-      window.open(imageUrl, "_blank", "noopener,noreferrer");
+      window.open(
+        imageUrl,
+        "_blank",
+        "noopener,noreferrer",
+      );
     }
   };
 
   const handleAddComplete = (result) => {
-  setOpen(false);
+    setOpen(false);
 
-  if (typeof onComplete === "function") {
-    onComplete(result);
-  }
-};
+    if (typeof onComplete === "function") {
+      onComplete(result);
+    }
+  };
 
   const handleEditComplete = (result) => {
     if (!result) {
@@ -471,11 +537,14 @@ function DeckCard({
   }
 
   const isSaving = editSavingLocal || editSaving;
+
   const editImage = getImageUrl(editImagePreview);
 
   return (
     <>
-      <div className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}>
+      <div
+        className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}
+      >
         <div
           className="deck-card-image-only"
           onClick={openModal}
@@ -488,7 +557,9 @@ function DeckCard({
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="deck-image-placeholder">No image</div>
+            <div className="deck-image-placeholder">
+              No image
+            </div>
           )}
 
           <button
@@ -498,7 +569,9 @@ function DeckCard({
               event.stopPropagation();
               openModal();
             }}
-            aria-label={`View details for ${deck.name || "deck"}`}
+            aria-label={`View details for ${
+              deck.name || "deck"
+            }`}
           >
             View Details
           </button>
@@ -530,14 +603,20 @@ function DeckCard({
 
           {hasValue(deck.creator) && (
             <p className="creator-field">
-              <span className="field-label">Creator:</span>
-              <span className="creator-value">{deck.creator}</span>
+              <span className="field-label">
+                Creator:
+              </span>
+
+              <span className="creator-value">
+                {deck.creator}
+              </span>
             </p>
           )}
 
           {hasValue(deck.optimization) && (
             <p>
-              <span>Optimized by:</span> {deck.optimization}
+              <span>Optimized by:</span>{" "}
+              {deck.optimization}
             </p>
           )}
         </div>
@@ -547,7 +626,10 @@ function DeckCard({
         <div
           className="modal-overlay"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !isSaving) {
+            if (
+              event.target === event.currentTarget &&
+              !isSaving
+            ) {
               closeModal();
             }
           }}
@@ -560,7 +642,9 @@ function DeckCard({
                 ? `Edit ${deck.name || "deck"}`
                 : `Details for ${deck.name || "deck"}`
             }
-            onMouseDown={(event) => event.stopPropagation()}
+            onMouseDown={(event) =>
+              event.stopPropagation()
+            }
           >
             <button
               type="button"
@@ -574,30 +658,37 @@ function DeckCard({
 
             <div className="modal-scroll-content">
               <div className="modal-content">
-                {/* =====================================================
-                    LEFT SIDE
-                    ===================================================== */}
-
                 <div className="modal-image">
                   {editing ? (
                     <>
                       {editImage && !editImgError ? (
                         <img
                           src={editImage}
-                          alt={deck.name || "Deck image"}
-                          onError={() => setEditImgError(true)}
+                          alt={
+                            deck.name ||
+                            "Deck image"
+                          }
+                          onError={() =>
+                            setEditImgError(true)
+                          }
                         />
                       ) : (
-                        <div className="deck-image-placeholder">No image</div>
+                        <div className="deck-image-placeholder">
+                          No image
+                        </div>
                       )}
 
                       <label className="admin-modal-field">
-                        <span>Upload Image</span>
+                        <span>
+                          Upload Image
+                        </span>
 
                         <input
                           type="file"
                           accept="image/jpeg,image/png,image/webp,image/gif"
-                          onChange={handleEditImageFileChange}
+                          onChange={
+                            handleEditImageFileChange
+                          }
                           disabled={isSaving}
                         />
                       </label>
@@ -605,55 +696,107 @@ function DeckCard({
                   ) : deckImage && !imgError ? (
                     <img
                       src={deckImage}
-                      alt={deck.name || "Deck image"}
-                      onError={() => setImgError(true)}
+                      alt={
+                        deck.name ||
+                        "Deck image"
+                      }
+                      onError={() =>
+                        setImgError(true)
+                      }
                     />
                   ) : (
-                    <div className="deck-image-placeholder">No image</div>
+                    <div className="deck-image-placeholder">
+                      No image
+                    </div>
                   )}
 
                   {!editing &&
                     (hasValue(deck.creator) ||
                       hasValue(deck.optimization) ||
                       hasValue(deck.inspiration) ||
-                      hasValue(deck.suggested_date) ||
-                      hasValue(deck.updated_date)) && (
+                      hasValue(
+                        deck.suggested_date,
+                      ) ||
+                      hasValue(
+                        deck.updated_date,
+                      )) && (
                       <div className="image-meta">
                         {(hasValue(deck.creator) ||
-                          hasValue(deck.optimization) ||
-                          hasValue(deck.inspiration)) && (
+                          hasValue(
+                            deck.optimization,
+                          ) ||
+                          hasValue(
+                            deck.inspiration,
+                          )) && (
                           <p>
-                            {hasValue(deck.creator) && (
+                            {hasValue(
+                              deck.creator,
+                            ) && (
                               <>
-                                Created by <span>{deck.creator}</span>
+                                Created by{" "}
+                                <span>
+                                  {deck.creator}
+                                </span>
                               </>
                             )}
 
-                            {hasValue(deck.optimization) && (
+                            {hasValue(
+                              deck.optimization,
+                            ) && (
                               <>
-                                {hasValue(deck.creator) ? ", " : ""}
-                                Optimized by <span>{deck.optimization}</span>
-                              </>
-                            )}
-
-                            {hasValue(deck.inspiration) && (
-                              <>
-                                {hasValue(deck.creator) ||
-                                hasValue(deck.optimization)
+                                {hasValue(
+                                  deck.creator,
+                                )
                                   ? ", "
                                   : ""}
-                                Inspired by <span>{deck.inspiration}</span>
+                                Optimized by{" "}
+                                <span>
+                                  {
+                                    deck.optimization
+                                  }
+                                </span>
+                              </>
+                            )}
+
+                            {hasValue(
+                              deck.inspiration,
+                            ) && (
+                              <>
+                                {hasValue(
+                                  deck.creator,
+                                ) ||
+                                hasValue(
+                                  deck.optimization,
+                                )
+                                  ? ", "
+                                  : ""}
+                                Inspired by{" "}
+                                <span>
+                                  {
+                                    deck.inspiration
+                                  }
+                                </span>
                               </>
                             )}
                           </p>
                         )}
 
-                        {hasValue(deck.suggested_date) && (
-                          <p>Suggested on {deck.suggested_date}</p>
+                        {hasValue(
+                          deck.suggested_date,
+                        ) && (
+                          <p>
+                            Suggested on{" "}
+                            {deck.suggested_date}
+                          </p>
                         )}
 
-                        {hasValue(deck.updated_date) && (
-                          <p>Updated on {deck.updated_date}</p>
+                        {hasValue(
+                          deck.updated_date,
+                        ) && (
+                          <p>
+                            Updated on{" "}
+                            {deck.updated_date}
+                          </p>
                         )}
                       </div>
                     )}
@@ -665,23 +808,24 @@ function DeckCard({
                         className="share-btn"
                         onClick={handleShare}
                       >
-                        {copied ? "Link Copied!" : "Share Deck"}
+                        {copied
+                          ? "Link Copied!"
+                          : "Share Deck"}
                       </button>
 
                       {hasValue(deck.image) && (
                         <button
                           type="button"
                           className="download-btn"
-                          onClick={handleDownload}
+                          onClick={
+                            handleDownload
+                          }
                         >
                           Download Decklist
                         </button>
                       )}
                     </div>
                   )}
-
-                  {/* ADMIN BUTTONS — Edit Deck / Delete Deck in view mode,
-                      Cancel / Save Changes while editing. */}
 
                   {isAdmin && (
                     <div className="admin-modal-actions">
@@ -690,7 +834,9 @@ function DeckCard({
                           <button
                             type="button"
                             className="admin-modal-edit"
-                            onClick={startEditing}
+                            onClick={
+                              startEditing
+                            }
                             disabled={isSaving}
                           >
                             Edit Deck
@@ -699,7 +845,9 @@ function DeckCard({
                           <button
                             type="button"
                             className="admin-modal-delete"
-                            onClick={handleDelete}
+                            onClick={
+                              handleDelete
+                            }
                             disabled={isSaving}
                           >
                             Delete Deck
@@ -710,7 +858,9 @@ function DeckCard({
                           <button
                             type="button"
                             className="admin-modal-edit"
-                            onClick={cancelEditing}
+                            onClick={
+                              cancelEditing
+                            }
                             disabled={isSaving}
                           >
                             Cancel
@@ -719,10 +869,14 @@ function DeckCard({
                           <button
                             type="button"
                             className="admin-modal-save"
-                            onClick={handleEditSave}
+                            onClick={
+                              handleEditSave
+                            }
                             disabled={isSaving}
                           >
-                            {isSaving ? "Saving..." : "Save Changes"}
+                            {isSaving
+                              ? "Saving..."
+                              : "Save Changes"}
                           </button>
                         </>
                       )}
@@ -730,23 +884,8 @@ function DeckCard({
                   )}
                 </div>
 
-                {/* =====================================================
-                    RIGHT SIDE
-                    ===================================================== */}
-
                 <div className="modal-info">
                   {editing ? (
-                    /*
-                     * IMPORTANT:
-                     *
-                     * EditDeckModal is NOT a modal here.
-                     *
-                     * It is rendered directly inside the existing
-                     * .modal-info container, and only owns the
-                     * right-column fields. Image state and the
-                     * Cancel/Save buttons are driven from here.
-                     */
-
                     <EditDeckModal
                       ref={editModalRef}
                       deck={deck}
@@ -755,35 +894,51 @@ function DeckCard({
                       onComplete={handleEditComplete}
                       imageFile={editImageFile}
                       imageUrl={editImagePreview}
-                      onSavingChange={setEditSavingLocal}
+                      onSavingChange={
+                        setEditSavingLocal
+                      }
                     />
                   ) : (
                     <>
                       <div className="modal-header">
                         <div className="modal-title-content">
                           <h2 className="modal-title">
-                            {deck.name || "Untitled Deck"}
+                            {deck.name ||
+                              "Untitled Deck"}
                           </h2>
 
                           <span className="deck-hero">
-                            {deck.hero || "Unknown Hero"}
+                            {deck.hero ||
+                              "Unknown Hero"}
                           </span>
                         </div>
                       </div>
 
                       <section className="modal-section description-section">
-                        <h3>Description</h3>
+                        <h3>
+                          Description
+                        </h3>
 
-                        <p className="description">{description}</p>
+                        <p className="description">
+                          {description}
+                        </p>
                       </section>
 
                       <section className="modal-metadata">
-                        {hasValue(toExternalUrl(deck.deck_doc)) && (
+                        {hasValue(
+                          toExternalUrl(
+                            deck.deck_doc,
+                          ),
+                        ) && (
                           <div className="metadata-item">
-                            <span className="label">Deck Tutorial</span>
+                            <span className="label">
+                              Deck Tutorial
+                            </span>
 
                             <a
-                              href={toExternalUrl(deck.deck_doc)}
+                              href={toExternalUrl(
+                                deck.deck_doc,
+                              )}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="deck-doc-link"
@@ -794,19 +949,31 @@ function DeckCard({
                         )}
 
                         <div className="metadata-item">
-                          <span className="label">Category</span>
+                          <span className="label">
+                            Category
+                          </span>
 
-                          <span className="value">{deck.category || "-"}</span>
+                          <span className="value">
+                            {deck.category ||
+                              "-"}
+                          </span>
                         </div>
 
                         <div className="metadata-item">
-                          <span className="label">Archetype</span>
+                          <span className="label">
+                            Archetype
+                          </span>
 
-                          <span className="value">{deck.archetype || "-"}</span>
+                          <span className="value">
+                            {deck.archetype ||
+                              "-"}
+                          </span>
                         </div>
 
                         <div className="metadata-item cost-item">
-                          <span className="label">Cost</span>
+                          <span className="label">
+                            Cost
+                          </span>
 
                           <span className="cost-value">
                             {deck.cost || "-"}
@@ -822,11 +989,18 @@ function DeckCard({
 
                       {isAdmin && (
                         <section className="modal-section admin-cards-section">
-                          <h3>Cards</h3>
+                          <h3>
+                            Cards
+                          </h3>
 
                           <div className="admin-cards-value">
-                            {hasValue(deck.cards)
-                              ? formatCardsDisplay(deck.cards) || deck.cards
+                            {hasValue(
+                              deck.cards,
+                            )
+                              ? formatCardsDisplay(
+                                  deck.cards,
+                                ) ||
+                                deck.cards
                               : "No cards listed."}
                           </div>
                         </section>

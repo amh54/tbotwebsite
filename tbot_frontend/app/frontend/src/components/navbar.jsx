@@ -7,6 +7,7 @@ const NAVIGATION = [
     label: "Website Info",
     links: [
       { label: "Home", path: "/" },
+      { label: "Users", path: "/users" },
       { label: "Terms of Service", path: "/termsofservice" },
       { label: "Privacy Policy", path: "/privacypolicy" },
     ],
@@ -31,22 +32,18 @@ const NAVIGATION = [
   },
 ];
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = String(
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+).replace(/\/+$/, "");
 
 function Navbar() {
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileOpenSection, setMobileOpenSection] = useState(null);
-
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
-
-  // ============================================================
-  // GET CURRENT DISCORD USER + PROFILE
-  // ============================================================
 
   useEffect(() => {
     let cancelled = false;
@@ -71,10 +68,6 @@ function Navbar() {
         if (data.authenticated && data.user) {
           setUser(data.user);
 
-          // ======================================================
-          // GET USER PROFILE
-          // ======================================================
-
           try {
             const profileResponse = await fetch(
               `${API_BASE_URL}/tbotapp/profile/me/`,
@@ -96,11 +89,8 @@ function Navbar() {
 
             const profileData = await profileResponse.json();
 
-            console.log("PROFILE FROM API:", profileData);
-            console.log("PROFILE SLUG:", profileData?.profile?.profile_slug);
-
             if (!cancelled) {
-              setProfile(profileData.profile);
+              setProfile(profileData.profile || null);
             }
           } catch (profileError) {
             console.error("Unable to load user profile:", profileError);
@@ -134,10 +124,6 @@ function Navbar() {
     };
   }, []);
 
-  // ============================================================
-  // NAVIGATION
-  // ============================================================
-
   const toggleMenu = (label) => {
     setOpenMenu((current) => (current === label ? null : label));
   };
@@ -160,10 +146,6 @@ function Navbar() {
     setMobileOpen(false);
     setMobileOpenSection(null);
   };
-
-  // ============================================================
-  // LOGOUT
-  // ============================================================
 
   const logoutFromDiscord = async () => {
     if (loggingOut) {
@@ -192,10 +174,6 @@ function Navbar() {
     }
   };
 
-  // ============================================================
-  // USER DISPLAY
-  // ============================================================
-
   const getUserName = () => {
     if (!user) {
       return "";
@@ -208,27 +186,15 @@ function Navbar() {
     return getUserName().charAt(0).toUpperCase();
   };
 
-  // ============================================================
-  // PROFILE PATH
-  // ============================================================
-
   const profileSlug = profile?.profile_slug || user?.username || null;
 
   const profilePath = profileSlug
     ? `/profile/${encodeURIComponent(profileSlug)}`
     : null;
 
-  // ============================================================
-  // RENDER
-  // ============================================================
-
   return (
     <header className="site-navbar">
       <div className="navbar-inner">
-        {/* ================================================== */}
-        {/* LOGO */}
-        {/* ================================================== */}
-
         <Link to="/" className="navbar-logo" onClick={closeMenus}>
           <img
             src="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
@@ -238,10 +204,6 @@ function Navbar() {
 
           <span className="navbar-logo-main">TBOT</span>
         </Link>
-
-        {/* ================================================== */}
-        {/* MOBILE BUTTON */}
-        {/* ================================================== */}
 
         <button
           type="button"
@@ -254,10 +216,6 @@ function Navbar() {
           <span />
           <span />
         </button>
-
-        {/* ================================================== */}
-        {/* DESKTOP NAVIGATION */}
-        {/* ================================================== */}
 
         <nav className="navbar-links">
           {NAVIGATION.map((menu) => (
@@ -273,7 +231,6 @@ function Navbar() {
                 onClick={() => toggleMenu(menu.label)}
               >
                 <span>{menu.label}</span>
-
                 <span className="navbar-arrow" />
               </button>
 
@@ -288,63 +245,73 @@ function Navbar() {
           ))}
         </nav>
 
-        {/* ================================================== */}
-        {/* DESKTOP ACCOUNT */}
-        {/* ================================================== */}
-
         <div className="navbar-account">
           {loadingUser ? null : user ? (
             <div className="navbar-user">
-              {/* MY PROFILE */}
-
-              {user && profilePath && (
-                <Link
-                  to={profilePath}
-                  className="navbar-my-profile-link"
-                  onClick={closeMenus}
-                >
-                  My Profile
-                </Link>
-              )}
-
-              {/* OWNER ADMIN LINK */}
-
-              {user.is_owner && (
-                <Link
-                  to="/admin"
-                  className="navbar-admin-link"
-                  onClick={closeMenus}
-                >
-                  Admin
-                </Link>
-              )}
-
-              {/* USER */}
-
-              {user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={`${getUserName()}'s Discord avatar`}
-                  className="navbar-user-avatar"
-                />
-              ) : (
-                <div className="navbar-user-avatar navbar-user-avatar-fallback">
-                  {getUserInitial()}
-                </div>
-              )}
-
-              <span className="navbar-user-name">{getUserName()}</span>
-
-              {/* LOGOUT */}
-
-              <button
-                type="button"
-                className="navbar-logout-button"
-                onClick={logoutFromDiscord}
-                disabled={loggingOut}
+              <div
+                className={`navbar-dropdown navbar-profile-dropdown ${
+                  openMenu === "profile" ? "open" : ""
+                }`}
               >
-                {loggingOut ? "Logging out..." : "Logout"}
-              </button>
+                <button
+                  type="button"
+                  className="navbar-profile-button"
+                  onClick={() => toggleMenu("profile")}
+                  aria-expanded={openMenu === "profile"}
+                >
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={`${getUserName()}'s Discord avatar`}
+                      className="navbar-user-avatar"
+                    />
+                  ) : (
+                    <div className="navbar-user-avatar navbar-user-avatar-fallback">
+                      {getUserInitial()}
+                    </div>
+                  )}
+
+                  <span className="navbar-user-name">{getUserName()}</span>
+
+                  <span className="navbar-arrow" />
+                </button>
+
+                <div className="navbar-dropdown-menu navbar-profile-menu">
+                  {profilePath && (
+                    <Link to={profilePath} onClick={closeMenus}>
+                      My Profile
+                    </Link>
+                  )}
+
+                  <Link to="/dashboard" onClick={closeMenus}>
+                    User Dashboard
+                  </Link>
+
+                  {profileSlug && (
+                    <Link
+                      to={`/users/${encodeURIComponent(profileSlug)}/decklists`}
+                      onClick={closeMenus}
+                    >
+                      My Decklists
+                    </Link>
+                  )}
+
+                  {user.is_owner && (
+                    <Link to="/admin" onClick={closeMenus}>
+                      Admin
+                    </Link>
+                  )}
+
+                  <button
+                    type="button"
+                    className="navbar-profile-logout"
+                    onClick={logoutFromDiscord}
+                    disabled={loggingOut}
+                  >
+                    {loggingOut ? "Logging out..." : "Logout"}
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <a
@@ -357,15 +324,7 @@ function Navbar() {
         </div>
       </div>
 
-      {/* ====================================================== */}
-      {/* MOBILE MENU */}
-      {/* ====================================================== */}
-
       <div className={`navbar-mobile-overlay ${mobileOpen ? "open" : ""}`}>
-        {/* ================================================== */}
-        {/* MOBILE HEADER */}
-        {/* ================================================== */}
-
         <div className="navbar-mobile-header">
           <Link to="/" className="navbar-logo" onClick={closeMenus}>
             <img
@@ -386,10 +345,6 @@ function Navbar() {
             &times;
           </button>
         </div>
-
-        {/* ================================================== */}
-        {/* MOBILE USER */}
-        {/* ================================================== */}
 
         {!loadingUser && (
           <div className="navbar-mobile-account">
@@ -447,31 +402,32 @@ function Navbar() {
                   )}
                 </div>
 
-                {/* MY PROFILE */}
+                <div className="navbar-mobile-account-links">
+                  {profilePath && (
+                    <Link to={profilePath} onClick={closeMenus}>
+                      My Profile
+                    </Link>
+                  )}
 
-                {user && profilePath && (
-                  <Link
-                    to={profilePath}
-                    className="navbar-mobile-profile-link"
-                    onClick={closeMenus}
-                  >
-                    My Profile
+                  <Link to="/dashboard" onClick={closeMenus}>
+                    User Dashboard
                   </Link>
-                )}
 
-                {/* OWNER ADMIN LINK */}
+                  {profileSlug && (
+                    <Link
+                      to={`/users/${encodeURIComponent(profileSlug)}/decklists`}
+                      onClick={closeMenus}
+                    >
+                      My Decklists
+                    </Link>
+                  )}
 
-                {user.is_owner && (
-                  <Link
-                    to="/admin"
-                    className="navbar-admin-link navbar-admin-link-mobile"
-                    onClick={closeMenus}
-                  >
-                    Admin
-                  </Link>
-                )}
-
-                {/* LOGOUT */}
+                  {user.is_owner && (
+                    <Link to="/admin" onClick={closeMenus}>
+                      Admin
+                    </Link>
+                  )}
+                </div>
 
                 <button
                   type="button"
@@ -493,10 +449,6 @@ function Navbar() {
           </div>
         )}
 
-        {/* ================================================== */}
-        {/* MOBILE NAVIGATION */}
-        {/* ================================================== */}
-
         <nav className="navbar-mobile-links">
           {NAVIGATION.map((menu) => (
             <div
@@ -511,7 +463,6 @@ function Navbar() {
                 onClick={() => toggleMobileSection(menu.label)}
               >
                 <span>{menu.label}</span>
-
                 <span className="navbar-arrow" />
               </button>
 

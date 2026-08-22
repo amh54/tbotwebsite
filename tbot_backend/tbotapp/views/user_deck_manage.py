@@ -77,6 +77,7 @@ def user_deck_create(request):
         "archetype",
         "description",
         "image",
+        "creator",
         "cost",
         "aliases",
         "cards",

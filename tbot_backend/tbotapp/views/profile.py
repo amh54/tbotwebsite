@@ -2,7 +2,11 @@ from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 from rest_framework.response import Response
 
 from ..models import UserProfile, UserDeck
@@ -10,12 +14,8 @@ from ..serializers import (
     UserProfileSerializer,
     UserDeckSerializer,
 )
+
 from .helpers import get_discord_user
-
-
-# ============================================================
-# CURRENT PROFILE HELPER
-# ============================================================
 
 def get_current_profile(request):
     discord_user = get_discord_user(request)
@@ -29,15 +29,11 @@ def get_current_profile(request):
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
-    discord_id = str(
-        discord_user["id"]
-    )
+    discord_id = str(discord_user["id"])
 
     profile = (
         UserProfile.objects
-        .filter(
-            discord_id=discord_id
-        )
+        .filter(discord_id=discord_id)
         .first()
     )
 
@@ -53,10 +49,6 @@ def get_current_profile(request):
 
     return profile, None
 
-
-# ============================================================
-# MY PROFILE
-# ============================================================
 
 @api_view(["GET"])
 def profile_me(request):
@@ -77,10 +69,6 @@ def profile_me(request):
     )
 
 
-# ============================================================
-# PROFILE BY SLUG
-# ============================================================
-
 @api_view(["GET"])
 def profile_detail(request, profile_slug):
     profile = get_object_or_404(
@@ -92,13 +80,8 @@ def profile_detail(request, profile_slug):
 
     is_owner = (
         discord_user is not None
-        and str(discord_user["id"])
-        == str(profile.discord_id)
+        and str(discord_user["id"]) == str(profile.discord_id)
     )
-
-    # --------------------------------------------------------
-    # PRIVATE PROFILE
-    # --------------------------------------------------------
 
     if not profile.is_public and not is_owner:
         return Response(
@@ -107,31 +90,6 @@ def profile_detail(request, profile_slug):
             },
             status=status.HTTP_403_FORBIDDEN,
         )
-
-    # --------------------------------------------------------
-    # PROFILE DECKS
-    # --------------------------------------------------------
-
-    decks = (
-        UserDeck.objects
-        .filter(
-            profile_id=profile.id
-        )
-        .order_by("-created_at")
-    )
-
-    profile_serializer = UserProfileSerializer(
-        profile
-    )
-
-    deck_serializer = UserDeckSerializer(
-        decks,
-        many=True,
-    )
-
-    # --------------------------------------------------------
-    # SITE OWNER
-    # --------------------------------------------------------
 
     is_site_owner = False
 
@@ -144,16 +102,15 @@ def profile_detail(request, profile_slug):
         )
 
         is_site_owner = (
-            discord_username
-            == f"discord_{profile.discord_id}"
-            and str(discord_user["id"])
-            == str(profile.discord_id)
+            discord_username == f"discord_{profile.discord_id}"
+            and str(discord_user["id"]) == str(profile.discord_id)
         )
+
+    serializer = UserProfileSerializer(profile)
 
     return Response(
         {
-            "profile": profile_serializer.data,
-            "decks": deck_serializer.data,
+            "profile": serializer.data,
             "is_owner": is_owner,
             "is_site_owner": is_site_owner,
         },
@@ -161,11 +118,83 @@ def profile_detail(request, profile_slug):
     )
 
 
-# ============================================================
-# UPDATE MY PROFILE
-# ============================================================
+@api_view(["GET"])
+def public_profiles(request):
+    profiles = (
+        UserProfile.objects
+        .filter(is_public=True)
+        .order_by(
+            "display_name",
+            "id",
+        )
+    )
+
+    serializer = UserProfileSerializer(
+        profiles,
+        many=True,
+    )
+
+    return Response(
+        {
+            "success": True,
+            "profiles": serializer.data,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+def public_profile_decks(request, profile_slug):
+    profile = get_object_or_404(
+        UserProfile,
+        profile_slug=profile_slug,
+    )
+
+    discord_user = get_discord_user(request)
+
+    is_owner = (
+        discord_user is not None
+        and str(discord_user["id"]) == str(profile.discord_id)
+    )
+
+    if not profile.is_public and not is_owner:
+        return Response(
+            {
+                "error": "This profile is private.",
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    decks = (
+        UserDeck.objects
+        .filter(profile_id=profile.id)
+        .order_by(
+            "-created_at",
+            "-id",
+        )
+    )
+
+    profile_serializer = UserProfileSerializer(profile)
+
+    deck_serializer = UserDeckSerializer(
+        decks,
+        many=True,
+    )
+
+    return Response(
+        {
+            "success": True,
+            "profile": profile_serializer.data,
+            "decks": deck_serializer.data,
+            "is_owner": is_owner,
+        },
+        status=status.HTTP_200_OK,
+    )
+
 
 @api_view(["PATCH"])
+@authentication_classes([])
+@permission_classes([])
 def profile_update(request):
     profile, error = get_current_profile(request)
 
@@ -190,16 +219,11 @@ def profile_update(request):
         return Response(
             {
                 "error": (
-                    "No valid profile fields "
-                    "were provided."
+                    "No valid profile fields were provided."
                 ),
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-
-    # --------------------------------------------------------
-    # DISPLAY NAME
-    # --------------------------------------------------------
 
     if "display_name" in update_data:
         display_name = str(
@@ -209,9 +233,7 @@ def profile_update(request):
         if not display_name:
             return Response(
                 {
-                    "error": (
-                        "Display name cannot be empty."
-                    ),
+                    "error": "Display name cannot be empty.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -229,10 +251,6 @@ def profile_update(request):
 
         update_data["display_name"] = display_name
 
-    # --------------------------------------------------------
-    # PROFILE SLUG
-    # --------------------------------------------------------
-
     if "profile_slug" in update_data:
         profile_slug = str(
             update_data["profile_slug"]
@@ -241,9 +259,7 @@ def profile_update(request):
         if not profile_slug:
             return Response(
                 {
-                    "error": (
-                        "Profile slug cannot be empty."
-                    ),
+                    "error": "Profile slug cannot be empty.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -262,10 +278,10 @@ def profile_update(request):
         existing_profile = (
             UserProfile.objects
             .filter(
-                profile_slug=profile_slug
+                profile_slug=profile_slug,
             )
             .exclude(
-                id=profile.id
+                id=profile.id,
             )
             .exists()
         )
@@ -283,16 +299,11 @@ def profile_update(request):
 
         update_data["profile_slug"] = profile_slug
 
-    # --------------------------------------------------------
-    # AVATAR
-    # --------------------------------------------------------
-
     if "avatar" in update_data:
         avatar = update_data["avatar"]
 
         if avatar is None:
             update_data["avatar"] = ""
-
         else:
             avatar = str(avatar).strip()
 
@@ -308,10 +319,6 @@ def profile_update(request):
                 )
 
             update_data["avatar"] = avatar
-
-    # --------------------------------------------------------
-    # BIO
-    # --------------------------------------------------------
 
     if "bio" in update_data:
         bio = update_data["bio"]
@@ -334,10 +341,6 @@ def profile_update(request):
 
         update_data["bio"] = bio
 
-    # --------------------------------------------------------
-    # PUBLIC / PRIVATE
-    # --------------------------------------------------------
-
     if "is_public" in update_data:
         value = update_data["is_public"]
 
@@ -351,6 +354,7 @@ def profile_update(request):
                 "true",
                 "1",
                 "yes",
+                "public",
             }:
                 update_data["is_public"] = True
 
@@ -358,6 +362,7 @@ def profile_update(request):
                 "false",
                 "0",
                 "no",
+                "private",
             }:
                 update_data["is_public"] = False
 
@@ -382,10 +387,6 @@ def profile_update(request):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-    # --------------------------------------------------------
-    # SAVE
-    # --------------------------------------------------------
 
     for field, value in update_data.items():
         setattr(

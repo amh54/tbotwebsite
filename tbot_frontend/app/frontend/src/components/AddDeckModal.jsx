@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+
 import Select from "react-select";
 
-import "../css/adminmodal.css";
 import "../css/deckmodal.css";
 
 const HERO_CLASSES = {
@@ -16,11 +16,10 @@ const HERO_CLASSES = {
   "Solar Flare": ["Kabloom", "Solar"],
   Spudow: ["Guardian", "Kabloom"],
   "Wall-Knight": ["Guardian", "Solar"],
-
-  "Brain Freeze": ["Beastly", "Sneaky"],
-  "Electric Boogaloo": ["Crazy", "Hearty"],
+  "Brain Freeze": ["Sneaky", "Beastly"],
+  "Electric Boogaloo": ["Crazy", "Beastly"],
   "Huge-Gigantacus": ["Brainy", "Sneaky"],
-  "Super Brainz": ["Brainy", "Fighting"],
+  "Super Brainz": ["Brainy", "Sneaky"],
   Immorticia: ["Brainy", "Beastly"],
   Impfinity: ["Crazy", "Sneaky"],
   Neptuna: ["Hearty", "Sneaky"],
@@ -266,24 +265,70 @@ const selectStyles = {
   }),
 };
 
-function AdminModalField({ label, value, onChange }) {
+const validationErrorStyle = {
+  color: "#ff4d4d",
+  fontSize: "0.82rem",
+  fontWeight: 600,
+  marginTop: "6px",
+};
+
+const requiredLabelStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+};
+
+const requiredStarStyle = {
+  color: "#8b949e",
+};
+
+function RequiredLabel({ children }) {
+  return (
+    <span style={requiredLabelStyle}>
+      {children}
+      <span style={requiredStarStyle}>*</span>
+    </span>
+  );
+}
+
+function TextField({
+  label,
+  value,
+  onChange,
+  required = false,
+  error = "",
+}) {
   return (
     <label className="admin-modal-field">
-      <span className="admin-modal-label">{label}</span>
+      <span className="admin-modal-label">
+        {required ? <RequiredLabel>{label}</RequiredLabel> : label}
+      </span>
 
       <input
         type="text"
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value)}
       />
+
+      {error && <span style={validationErrorStyle}>{error}</span>}
     </label>
   );
 }
 
-function AdminModalTextArea({ label, value, onChange }) {
+function TextArea({
+  label,
+  value,
+  onChange,
+  required = false,
+  error = "",
+}) {
   return (
     <label className="admin-modal-field admin-modal-textarea-field">
-      {label && <span className="admin-modal-label">{label}</span>}
+      {label && (
+        <span className="admin-modal-label">
+          {required ? <RequiredLabel>{label}</RequiredLabel> : label}
+        </span>
+      )}
 
       <textarea
         className="admin-modal-textarea"
@@ -291,11 +336,13 @@ function AdminModalTextArea({ label, value, onChange }) {
         onChange={(event) => onChange(event.target.value)}
         rows={7}
       />
+
+      {error && <span style={validationErrorStyle}>{error}</span>}
     </label>
   );
 }
 
-function CardRatioEditor({ options, onChange, disabled, total }) {
+function CardRatioEditor({ options, onChange, disabled, total, error }) {
   if (!options?.length) {
     return null;
   }
@@ -303,7 +350,9 @@ function CardRatioEditor({ options, onChange, disabled, total }) {
   return (
     <div className="admin-modal-field admin-modal-cards-ratio">
       <span className="admin-modal-label">
-        Card Ratios (must total {TARGET_CARD_RATIO_TOTAL})
+        <RequiredLabel>
+          Card Ratios (must total {TARGET_CARD_RATIO_TOTAL})
+        </RequiredLabel>
       </span>
 
       {options.map((option) => {
@@ -343,6 +392,8 @@ function CardRatioEditor({ options, onChange, disabled, total }) {
       >
         Total: {total} / {TARGET_CARD_RATIO_TOTAL}
       </div>
+
+      {error && <div style={validationErrorStyle}>{error}</div>}
     </div>
   );
 }
@@ -350,7 +401,7 @@ function CardRatioEditor({ options, onChange, disabled, total }) {
 function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
   const [saving, setSaving] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const [cardsError, setCardsError] = useState("");
+  const [validationError, setValidationError] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -384,6 +435,15 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
     return () => {
       document.body.style.overflow = "";
     };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setValidationError(null);
+    setImgError(false);
   }, [open]);
 
   const normalizedFormSide = normalizeSide(form.side);
@@ -546,6 +606,10 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       ...previous,
       [field]: field === "side" ? normalizeSide(value) : value,
     }));
+
+    setValidationError((current) =>
+      current?.field === field ? null : current,
+    );
   };
 
   const handleSideChange = (selected) => {
@@ -559,7 +623,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       cards: "",
     }));
 
-    setCardsError("");
+    setValidationError(null);
   };
 
   const handleHeroChange = (selected) => {
@@ -570,7 +634,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       cards: "",
     }));
 
-    setCardsError("");
+    setValidationError(null);
   };
 
   const handleCategoryChange = (selected) => {
@@ -581,6 +645,8 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       categorySelected: options,
       category: optionsToCombinedValue(options),
     }));
+
+    setValidationError(null);
   };
 
   const handleArchetypeChange = (selected) => {
@@ -591,6 +657,8 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       archetypeSelected: options,
       archetype: optionsToCombinedValue(options),
     }));
+
+    setValidationError(null);
   };
 
   const handleCardsChange = (selected) => {
@@ -613,7 +681,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       };
     });
 
-    setCardsError("");
+    setValidationError(null);
   };
 
   const handleCardRatioChange = (cardValue, delta) => {
@@ -658,7 +726,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       };
     });
 
-    setCardsError("");
+    setValidationError(null);
   };
 
   const handleImageFileChange = (event) => {
@@ -677,39 +745,118 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       image_file: file,
       image: previewUrl,
     }));
+
+    setValidationError((current) =>
+      current?.field === "image" ? null : current,
+    );
   };
 
-  const handleSave = async () => {
-    if (typeof onAdd !== "function") {
-      console.error("onAdd was not provided.");
-      return;
+  const validateForm = () => {
+    if (!String(form.name || "").trim()) {
+      return {
+        field: "name",
+        message: "Deck name is required.",
+      };
+    }
+
+    if (
+      !(form.image_file instanceof File) &&
+      !String(form.image || "").trim()
+    ) {
+      return {
+        field: "image",
+        message: "Deck image is required.",
+      };
     }
 
     if (!normalizedFormSide) {
-      setCardsError("Please select Plants or Zombies.");
-      return;
+      return {
+        field: "side",
+        message: "Please select Plants or Zombies.",
+      };
     }
 
     if (!form.hero) {
-      setCardsError("Please select a hero.");
-      return;
+      return {
+        field: "hero",
+        message: "Please select a hero.",
+      };
+    }
+
+    if (!form.categorySelected?.length) {
+      return {
+        field: "category",
+        message: "Please select at least one category.",
+      };
+    }
+
+    if (!form.archetypeSelected?.length) {
+      return {
+        field: "archetype",
+        message: "Please select at least one archetype.",
+      };
+    }
+
+    if (!String(form.description || "").trim()) {
+      return {
+        field: "description",
+        message: "Deck description is required.",
+      };
+    }
+
+    if (!String(form.cost || "").trim()) {
+      return {
+        field: "cost",
+        message: "Deck cost is required.",
+      };
+    }
+
+    if (!String(form.creator || "").trim()) {
+      return {
+        field: "creator",
+        message: "Creator is required.",
+      };
     }
 
     if (!form.cardsSelected?.length) {
-      setCardsError("Please select at least one card.");
-      return;
+      return {
+        field: "cards",
+        message: "Please select at least one card.",
+      };
     }
 
     const ratioTotal = sumCardRatios(form.cardsSelected);
 
     if (ratioTotal !== TARGET_CARD_RATIO_TOTAL) {
-      setCardsError(
-        `Card ratios must add up to ${TARGET_CARD_RATIO_TOTAL} (currently ${ratioTotal}).`,
-      );
+      return {
+        field: "cards",
+        message: `Card ratios must total ${TARGET_CARD_RATIO_TOTAL}. Currently ${ratioTotal}.`,
+      };
+    }
+
+    return null;
+  };
+
+  const handleSave = async () => {
+    if (typeof onAdd !== "function") {
+      console.error("onAdd was not provided.");
+
+      setValidationError({
+        field: "save",
+        message: "Unable to add deck.",
+      });
+
       return;
     }
 
-    setCardsError("");
+    const error = validateForm();
+
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+
+    setValidationError(null);
 
     try {
       setSaving(true);
@@ -747,7 +894,10 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
     } catch (error) {
       console.error("Failed to add deck:", error);
 
-      setCardsError(error?.message || "Failed to add deck.");
+      setValidationError({
+        field: "save",
+        message: error?.message || "Failed to add deck.",
+      });
     } finally {
       setSaving(false);
     }
@@ -756,6 +906,9 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
   if (!open) {
     return null;
   }
+
+  const fieldError = (field) =>
+    validationError?.field === field ? validationError.message : "";
 
   return (
     <div
@@ -769,7 +922,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       <dialog
         open
         className="modal"
-        aria-label="Add Legacy Deck"
+        aria-label="Add Deck"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <button
@@ -796,13 +949,21 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
               )}
 
               <label className="admin-modal-field">
-                <span className="admin-modal-label">Upload Image</span>
+                <span className="admin-modal-label">
+                  <RequiredLabel>Upload Image</RequiredLabel>
+                </span>
 
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   onChange={handleImageFileChange}
                 />
+
+                {fieldError("image") && (
+                  <span style={validationErrorStyle}>
+                    {fieldError("image")}
+                  </span>
+                )}
               </label>
 
               <div className="admin-modal-actions">
@@ -824,15 +985,29 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                   {saving ? "Adding..." : "Add Deck"}
                 </button>
               </div>
+
+              {fieldError("save") && (
+                <div
+                  style={{
+                    ...validationErrorStyle,
+                    textAlign: "center",
+                    marginTop: "10px",
+                  }}
+                >
+                  {fieldError("save")}
+                </div>
+              )}
             </div>
 
             <div className="modal-info">
               <div className="modal-header">
                 <div className="modal-title-content">
-                  <AdminModalField
+                  <TextField
                     label="Deck Name"
                     value={form.name}
                     onChange={(value) => handleChange("name", value)}
+                    required
+                    error={fieldError("name")}
                   />
                 </div>
               </div>
@@ -842,7 +1017,9 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
 
                 <div className="modal-metadata">
                   <div className="admin-modal-field">
-                    <span className="admin-modal-label">Side</span>
+                    <span className="admin-modal-label">
+                      <RequiredLabel>Side</RequiredLabel>
+                    </span>
 
                     <Select
                       className="admin-modal-single-select"
@@ -863,10 +1040,18 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                       isClearable
                       styles={selectStyles}
                     />
+
+                    {fieldError("side") && (
+                      <span style={validationErrorStyle}>
+                        {fieldError("side")}
+                      </span>
+                    )}
                   </div>
 
                   <div className="admin-modal-field">
-                    <span className="admin-modal-label">Hero</span>
+                    <span className="admin-modal-label">
+                      <RequiredLabel>Hero</RequiredLabel>
+                    </span>
 
                     <Select
                       className="admin-modal-single-select"
@@ -884,10 +1069,18 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                       isSearchable
                       styles={selectStyles}
                     />
+
+                    {fieldError("hero") && (
+                      <span style={validationErrorStyle}>
+                        {fieldError("hero")}
+                      </span>
+                    )}
                   </div>
 
                   <div className="admin-modal-field">
-                    <span className="admin-modal-label">Category</span>
+                    <span className="admin-modal-label">
+                      <RequiredLabel>Category</RequiredLabel>
+                    </span>
 
                     <Select
                       classNamePrefix="admin-select"
@@ -900,10 +1093,18 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                       closeMenuOnSelect={false}
                       isSearchable
                     />
+
+                    {fieldError("category") && (
+                      <span style={validationErrorStyle}>
+                        {fieldError("category")}
+                      </span>
+                    )}
                   </div>
 
                   <div className="admin-modal-field">
-                    <span className="admin-modal-label">Archetype</span>
+                    <span className="admin-modal-label">
+                      <RequiredLabel>Archetype</RequiredLabel>
+                    </span>
 
                     <Select
                       classNamePrefix="admin-select"
@@ -916,57 +1117,74 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                       closeMenuOnSelect={false}
                       isSearchable
                     />
+
+                    {fieldError("archetype") && (
+                      <span style={validationErrorStyle}>
+                        {fieldError("archetype")}
+                      </span>
+                    )}
                   </div>
                 </div>
               </section>
 
               <section className="modal-section description-section">
-                <h3>Description</h3>
-
-                <AdminModalTextArea
-                  value={form.description}
-                  onChange={(value) => handleChange("description", value)}
-                />
+                <section className="modal-section description-section">
+                  <TextArea
+                    label="Description"
+                    value={form.description}
+                    onChange={(value) => handleChange("description", value)}
+                    required
+                    error={
+                      validationError?.field === "description"
+                        ? validationError.message
+                        : ""
+                    }
+                  />
+                </section>
               </section>
 
               <section className="modal-metadata">
-                <AdminModalField
+                <TextField
                   label="Cost"
                   value={form.cost}
                   onChange={(value) => handleChange("cost", value)}
+                  required
+                  error={fieldError("cost")}
                 />
 
-                <AdminModalField
+                <TextField
                   label="Creator"
                   value={form.creator}
                   onChange={(value) => handleChange("creator", value)}
+                  required
+                  error={fieldError("creator")}
                 />
 
-                <AdminModalField
+                <TextField
                   label="Optimization"
                   value={form.optimization}
                   onChange={(value) => handleChange("optimization", value)}
                 />
 
-                <AdminModalField
+                <TextField
                   label="Inspiration"
                   value={form.inspiration}
                   onChange={(value) => handleChange("inspiration", value)}
                 />
 
-                <AdminModalField
+                <TextField
                   label="Suggested Date"
                   value={form.suggested_date}
                   onChange={(value) => handleChange("suggested_date", value)}
                 />
 
-                <AdminModalField
+                <TextField
                   label="Updated Date"
                   value={form.updated_date}
                   onChange={(value) => handleChange("updated_date", value)}
                 />
 
-                <AdminModalField
+                <TextField
                   label="Deck Tutorial URL"
                   value={form.deck_doc}
                   onChange={(value) => handleChange("deck_doc", value)}
@@ -974,10 +1192,12 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
 
                 <div className="admin-modal-field admin-modal-cards-field">
                   <span className="admin-modal-label">
-                    Cards
-                    {form.hero && selectedHeroClasses.length > 0
-                      ? ` — ${selectedHeroClasses.join(" / ")}`
-                      : ""}
+                    <RequiredLabel>
+                      Cards
+                      {form.hero && selectedHeroClasses.length > 0
+                        ? ` — ${selectedHeroClasses.join(" / ")}`
+                        : ""}
+                    </RequiredLabel>
                   </span>
 
                   <Select
@@ -998,17 +1218,22 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                     isSearchable
                     isDisabled={!normalizedFormSide || !form.hero}
                   />
+
+                  {!form.cardsSelected?.length && fieldError("cards") && (
+                    <div style={validationErrorStyle}>
+                      {fieldError("cards")}
+                    </div>
+                  )}
                 </div>
 
-                <CardRatioEditor
-                  options={form.cardsSelected}
-                  onChange={handleCardRatioChange}
-                  disabled={saving}
-                  total={totalCardRatio}
-                />
-
-                {cardsError && (
-                  <div className="admin-modal-error">{cardsError}</div>
+                {form.cardsSelected?.length > 0 && (
+                  <CardRatioEditor
+                    options={form.cardsSelected}
+                    onChange={handleCardRatioChange}
+                    disabled={saving}
+                    total={totalCardRatio}
+                    error={fieldError("cards")}
+                  />
                 )}
               </section>
             </div>

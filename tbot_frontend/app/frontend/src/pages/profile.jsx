@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+
+import { Link, useParams } from "react-router-dom";
+
 import Navbar from "../components/navbar.jsx";
+
 import Footer from "../components/footer.jsx";
+
 import "../css/profile.css";
 
 const getApiBaseUrl = () => {
@@ -35,75 +39,210 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
+  const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState("");
 
-    const loadProfile = async () => {
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editProfileSlug, setEditProfileSlug] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editIsPublic, setEditIsPublic] = useState(false);
+
+  const [shareMessage, setShareMessage] = useState("");
+
+  const loadProfile = async (slug = profile_slug) => {
+    if (!slug) {
+      setLoading(false);
+      setError("Profile not found.");
+      return;
+    }
+
+    try {
       setLoading(true);
       setError("");
 
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(
-            profile_slug,
-          )}/`,
-          {
-            method: "GET",
-            credentials: "include",
+      const response = await fetch(
+        `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(slug)}/`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
           },
-        );
+          credentials: "include",
+        },
+      );
 
-        let data = {};
+      let data = {};
 
-        try {
-          data = await response.json();
-        } catch {
-          data = {};
-        }
-
-        if (!response.ok) {
-          throw new Error(data?.error || "Unable to load profile.");
-        }
-
-        if (!cancelled) {
-          setProfile(data.profile || null);
-          setDecks(Array.isArray(data.decks) ? data.decks : []);
-          setIsOwner(Boolean(data.is_owner));
-          setIsSiteOwner(Boolean(data.is_site_owner));
-        }
-      } catch (err) {
-        if (!cancelled) {
-          console.error("Unable to load profile:", err);
-
-          setProfile(null);
-          setDecks([]);
-          setIsOwner(false);
-          setIsSiteOwner(false);
-
-          setError(err.message || "Unable to load profile.");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
       }
-    };
 
-    if (profile_slug) {
-      loadProfile();
-    } else {
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to load profile.");
+      }
+
+      setProfile(data.profile || null);
+      setDecks(Array.isArray(data.decks) ? data.decks : []);
+      setIsOwner(Boolean(data.is_owner));
+      setIsSiteOwner(Boolean(data.is_site_owner));
+    } catch (err) {
+      console.error("Unable to load profile:", err);
+
+      setProfile(null);
+      setDecks([]);
+      setIsOwner(false);
+      setIsSiteOwner(false);
+      setError(err.message || "Unable to load profile.");
+    } finally {
       setLoading(false);
-      setError("Profile not found.");
     }
+  };
 
-    return () => {
-      cancelled = true;
-    };
+  useEffect(() => {
+    loadProfile();
   }, [profile_slug]);
 
-  // ============================================================
-  // LOADING
-  // ============================================================
+  const openEditProfile = () => {
+    if (!profile) {
+      return;
+    }
+
+    setEditDisplayName(profile.display_name || "");
+    setEditProfileSlug(profile.profile_slug || "");
+    setEditBio(profile.bio || "");
+    setEditIsPublic(Boolean(profile.is_public));
+    setEditError("");
+    setEditOpen(true);
+  };
+
+  const closeEditProfile = () => {
+    if (saving) {
+      return;
+    }
+
+    setEditOpen(false);
+    setEditError("");
+  };
+
+  const handleSaveProfile = async (event) => {
+    event.preventDefault();
+
+    if (!editDisplayName.trim()) {
+      setEditError("Display name cannot be empty.");
+      return;
+    }
+
+    if (!editProfileSlug.trim()) {
+      setEditError("Profile URL cannot be empty.");
+      return;
+    }
+
+    setSaving(true);
+    setEditError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/tbotapp/profile/update/`, {
+        method: "PATCH",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          display_name: editDisplayName.trim(),
+          profile_slug: editProfileSlug.trim().toLowerCase(),
+          bio: editBio,
+          is_public: editIsPublic,
+        }),
+      });
+
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to update profile.");
+      }
+
+      const updatedProfile = data.profile;
+
+      if (!updatedProfile) {
+        throw new Error(
+          "Profile was updated, but no profile data was returned.",
+        );
+      }
+
+      setProfile(updatedProfile);
+      setEditOpen(false);
+      setEditError("");
+
+      const newSlug = updatedProfile.profile_slug;
+
+      if (newSlug && newSlug !== profile_slug) {
+        window.history.replaceState(
+          {},
+          "",
+          `/profile/${encodeURIComponent(newSlug)}`,
+        );
+      }
+    } catch (err) {
+      console.error("Unable to update profile:", err);
+      setEditError(err.message || "Unable to update profile.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleShareProfile = async () => {
+    const currentSlug = profile?.profile_slug || profile_slug;
+
+    if (!currentSlug) {
+      setShareMessage("Unable to create profile link.");
+      return;
+    }
+
+    const profileUrl = `${window.location.origin}/profile/${encodeURIComponent(
+      currentSlug,
+    )}`;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(profileUrl);
+      } else {
+        const textArea = document.createElement("textarea");
+
+        textArea.value = profileUrl;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+
+        document.body.appendChild(textArea);
+
+        textArea.focus();
+        textArea.select();
+
+        document.execCommand("copy");
+
+        document.body.removeChild(textArea);
+      }
+
+      setShareMessage("Profile link copied!");
+    } catch (err) {
+      console.error("Unable to copy profile link:", err);
+      setShareMessage("Unable to copy profile link.");
+    }
+
+    window.setTimeout(() => {
+      setShareMessage("");
+    }, 2500);
+  };
 
   if (loading) {
     return (
@@ -119,10 +258,6 @@ function Profile() {
     );
   }
 
-  // ============================================================
-  // ERROR
-  // ============================================================
-
   if (error) {
     return (
       <div>
@@ -136,10 +271,6 @@ function Profile() {
       </div>
     );
   }
-
-  // ============================================================
-  // NO PROFILE
-  // ============================================================
 
   if (!profile) {
     return (
@@ -155,27 +286,21 @@ function Profile() {
     );
   }
 
-  // ============================================================
-  // DISCORD AVATAR
-  // ============================================================
-
   const avatarUrl = profile.avatar
-    ? `https://cdn.discordapp.com/avatars/${profile.discord_id}/${profile.avatar}.png?size=256`
+    ? `https://cdn.discordapp.com/avatars/${profile.discord_id}/${profile.avatar}.${
+        String(profile.avatar).startsWith("a_") ? "gif" : "png"
+      }?size=256`
     : null;
 
-  // ============================================================
-  // RENDER
-  // ============================================================
+  const decklistsPath = `/profile/${encodeURIComponent(
+    profile.profile_slug,
+  )}/decklists`;
 
   return (
     <div>
       <Navbar />
 
       <main className="profile-page">
-        {/* ====================================================== */}
-        {/* PROFILE HEADER */}
-        {/* ====================================================== */}
-
         <section className="profile-header">
           <div className="profile-avatar">
             {avatarUrl ? (
@@ -190,7 +315,12 @@ function Profile() {
           <div className="profile-info">
             <h1>{profile.display_name}</h1>
 
-            <div className="profile-username">@{profile.username}</div>
+            <div className="profile-username">
+              @
+              {profile.username ||
+                profile.discord_username ||
+                profile.display_name}
+            </div>
 
             {profile.bio && <p className="profile-bio">{profile.bio}</p>}
 
@@ -199,26 +329,36 @@ function Profile() {
             </div>
           </div>
 
-          {isOwner && (
-            <button type="button" className="profile-edit-button">
-              Edit Profile
+          <div className="profile-header-actions">
+            <button
+              type="button"
+              className="profile-share-button"
+              onClick={handleShareProfile}
+            >
+              Share Profile
             </button>
-          )}
-        </section>
 
-        {/* ====================================================== */}
-        {/* DECKLISTS */}
-        {/* ====================================================== */}
+            {isOwner && (
+              <button
+                type="button"
+                className="profile-edit-button"
+                onClick={openEditProfile}
+              >
+                Edit Profile
+              </button>
+            )}
+          </div>
+        </section>
 
         <section className="profile-decks">
           <div className="profile-decks-header">
             <h2>Decklists</h2>
 
-            {isOwner && (
-              <button type="button" className="profile-create-deck-button">
-                Create Deck
-              </button>
-            )}
+            <div className="profile-decks-header-actions">
+              <Link to={decklistsPath} className="profile-decklists-button">
+                View Decklists
+              </Link>
+            </div>
           </div>
 
           {decks.length === 0 ? (
@@ -226,7 +366,10 @@ function Profile() {
           ) : (
             <div className="profile-deck-grid">
               {decks.map((deck) => (
-                <article key={deck.id} className="profile-deck-card">
+                <article
+                  key={deck.id || deck.deckid}
+                  className="profile-deck-card"
+                >
                   {deck.image && (
                     <img
                       src={deck.image}
@@ -250,10 +393,6 @@ function Profile() {
           )}
         </section>
 
-        {/* ====================================================== */}
-        {/* SITE OWNER */}
-        {/* ====================================================== */}
-
         {isSiteOwner && (
           <div style={{ display: "none" }}>
             Site owner profile access enabled.
@@ -261,7 +400,125 @@ function Profile() {
         )}
       </main>
 
-      <Footer credits="Special thanks to the many pvzh community members who took time out of their day to give me helpful feedback and critiques before publishing this site" />
+      {shareMessage && (
+        <div className="profile-share-message">{shareMessage}</div>
+      )}
+
+      {editOpen && (
+        <div
+          className="profile-edit-modal-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeEditProfile();
+            }
+          }}
+        >
+          <div className="profile-edit-modal">
+            <h2>Edit Profile</h2>
+
+            <form className="profile-edit-form" onSubmit={handleSaveProfile}>
+              {editError && (
+                <div className="profile-edit-error">{editError}</div>
+              )}
+
+              <div className="profile-edit-field">
+                <label htmlFor="profile-display-name">Display Name</label>
+
+                <input
+                  id="profile-display-name"
+                  type="text"
+                  value={editDisplayName}
+                  maxLength={100}
+                  onChange={(event) => setEditDisplayName(event.target.value)}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="profile-edit-field">
+                <label htmlFor="profile-slug">Profile URL</label>
+
+                <input
+                  id="profile-slug"
+                  type="text"
+                  value={editProfileSlug}
+                  maxLength={100}
+                  onChange={(event) =>
+                    setEditProfileSlug(
+                      event.target.value.toLowerCase().replace(/\s+/g, "-"),
+                    )
+                  }
+                  disabled={saving}
+                />
+
+                <small>
+                  Your profile will be available at
+                  {" /profile/"}
+                  {editProfileSlug || "your-name"}
+                </small>
+              </div>
+
+              <div className="profile-edit-field">
+                <label htmlFor="profile-bio">Bio</label>
+
+                <textarea
+                  id="profile-bio"
+                  value={editBio}
+                  maxLength={2000}
+                  onChange={(event) => setEditBio(event.target.value)}
+                  placeholder="Tell people a little about yourself..."
+                  disabled={saving}
+                />
+
+                <small>{editBio.length}/2000 characters</small>
+              </div>
+
+              <div className="profile-public-toggle">
+                <div className="profile-public-toggle-info">
+                  <p className="profile-public-toggle-title">Public Profile</p>
+
+                  <p className="profile-public-toggle-description">
+                    Public profiles can be discovered by other users. Private
+                    profiles can still be shared directly with someone using the
+                    profile link.
+                  </p>
+                </div>
+
+                <label className="profile-switch">
+                  <input
+                    type="checkbox"
+                    checked={editIsPublic}
+                    onChange={(event) => setEditIsPublic(event.target.checked)}
+                    disabled={saving}
+                  />
+
+                  <span className="profile-switch-slider" />
+                </label>
+              </div>
+
+              <div className="profile-edit-actions">
+                <button
+                  type="button"
+                  className="profile-edit-cancel"
+                  onClick={closeEditProfile}
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="profile-edit-save"
+                  disabled={saving}
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <Footer />
     </div>
   );
 }

@@ -1,0 +1,186 @@
+.user-decklists-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.user-decklists-profile {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.user-decklists-avatar {
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #202020;
+  border: 2px solid #8fe38b;
+  box-shadow: 0 0 0 3px rgba(143, 227, 139, 0.08);
+}
+
+.user-decklists-avatar-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.user-decklists-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #202020;
+  color: #8fe38b;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.user-decklists-profile-info {
+  min-width: 0;
+}
+
+.user-decklists-profile-info h1 {
+  margin: 0;
+  color: #ffffff;
+}
+
+.user-decklists-profile-info > p {
+  margin: 6px 0 0;
+}
+
+.user-decklists-profile-bio {
+  max-width: 700px;
+  margin-top: 8px !important;
+  color: #b7b7b7;
+  line-height: 1.5;
+}
+
+.user-decklists-profile-private {
+  color: #8fe38b;
+  font-weight: 600;
+}
+
+.user-decklists-header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.user-decklists-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #8fe38b;
+  border-radius: 8px;
+  background: #8fe38b;
+  color: #101416;
+  text-decoration: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    filter 0.15s ease;
+}
+
+.user-decklists-share:hover {
+  background: #a2ed9e;
+  border-color: #a2ed9e;
+  color: #101416;
+  filter: brightness(1.03);
+}
+
+.user-decklists-share:active {
+  filter: brightness(0.96);
+}
+
+.user-decklists-share:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.user-decklists-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0;
+}
+
+.user-decklists-empty {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 42px 24px;
+  margin-top: 24px;
+  text-align: center;
+  border: 1px solid #292d30;
+  border-radius: 10px;
+  background: #15181b;
+}
+
+.user-decklists-empty h2 {
+  margin: 0 0 10px;
+  color: #ffffff;
+}
+
+.user-decklists-empty p {
+  margin: 0;
+  color: #a9abad;
+}
+
+.user-decklists-empty-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #8fe38b;
+  color: #101416;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.user-decklists-empty-button:hover {
+  filter: brightness(1.05);
+}
+
+@media (max-width: 700px) {
+  .user-decklists-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .user-decklists-profile {
+    width: 100%;
+  }
+
+  .user-decklists-avatar {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+  }
+
+  .user-decklists-avatar-placeholder {
+    font-size: 24px;
+  }
+
+  .user-decklists-header-actions {
+    width: 100%;
+  }
+
+  .user-decklists-share {
+    width: 100%;
+  }
+}

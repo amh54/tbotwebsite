@@ -27,9 +27,6 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-/* ============================================================
-   HELPERS
-   ============================================================ */
 
 function normalizeText(value) {
   return String(value ?? "").trim();
@@ -38,10 +35,6 @@ function normalizeText(value) {
 function normalizeKey(value) {
   return normalizeText(value).toLowerCase();
 }
-
-/* ============================================================
-   CSRF
-   ============================================================ */
 
 const getCookie = (name) => {
   const cookies = document.cookie.split(";");
@@ -185,9 +178,6 @@ const CATEGORY_META = {
   },
 };
 
-/* ============================================================
-   COMPONENT
-   ============================================================ */
 
 function AdminDecklists() {
   const [decks, setDecks] = useState([]);
@@ -212,10 +202,6 @@ function AdminDecklists() {
 
   const [addingDeck, setAddingDeck] = useState(false);
 
-  /* ==========================================================
-     TITLE
-     ========================================================== */
-
   useEffect(() => {
     document.title = "Admin - Decklists";
 
@@ -224,20 +210,12 @@ function AdminDecklists() {
     };
   }, []);
 
-  /* ==========================================================
-     INITIALIZE CSRF
-     ========================================================== */
 
   useEffect(() => {
     ensureCsrfToken().catch((err) => {
       console.error("Unable to initialize CSRF:", err);
     });
   }, []);
-
-  /* ==========================================================
-     FETCH DECKS
-     GET /admin/decklists/
-     ========================================================== */
 
   const fetchDecks = async () => {
     try {
@@ -294,11 +272,6 @@ function AdminDecklists() {
   useEffect(() => {
     fetchDecks();
   }, []);
-
-  /* ==========================================================
-     FETCH CARDS
-     ========================================================== */
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -349,9 +322,6 @@ function AdminDecklists() {
     return () => controller.abort();
   }, []);
 
-  /* ==========================================================
-     SIDE FILTER
-     ========================================================== */
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -362,11 +332,6 @@ function AdminDecklists() {
 
     return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
   }, [decks, side]);
-
-  /* ==========================================================
-     HERO OPTIONS
-     ========================================================== */
-
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
 
@@ -509,11 +474,6 @@ function AdminDecklists() {
       );
     });
   }, [decks]);
-
-  /* ==========================================================
-     FILTER
-     ========================================================== */
-
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
 
@@ -567,10 +527,6 @@ function AdminDecklists() {
     });
   }, [sortedDecks, search, side, hero, category, archetype]);
 
-  /* ==========================================================
-     FILTER CONTROLS
-     ========================================================== */
-
   const clearFilters = () => {
     setSearch("");
     setHero([]);
@@ -582,12 +538,6 @@ function AdminDecklists() {
     setSide(newSide);
     clearFilters();
   };
-
-  /* ==========================================================
-     EDIT DECK
-     PATCH /admin/decklists/<id>/
-     ========================================================== */
-
   const handleEdit = async (deck, form) => {
     const deckId = deck?.deckid ?? deck?.deckID ?? deck?.id;
 
@@ -608,10 +558,6 @@ function AdminDecklists() {
       const hasImageFile = form?.image_file instanceof File;
 
       let response;
-
-      /* --------------------------------------------------------
-         IMAGE UPLOAD
-         -------------------------------------------------------- */
 
       if (hasImageFile) {
         const formData = new FormData();
@@ -656,9 +602,6 @@ function AdminDecklists() {
           body: formData,
         });
       } else {
-        /* ------------------------------------------------------
-           JSON UPDATE
-           ------------------------------------------------------ */
 
         response = await fetch(url, {
           method: "PATCH",
@@ -750,10 +693,6 @@ function AdminDecklists() {
 
       let response;
 
-      /* --------------------------------------------------------
-         IMAGE UPLOAD
-         -------------------------------------------------------- */
-
       if (hasImageFile) {
         const formData = new FormData();
 
@@ -797,9 +736,6 @@ function AdminDecklists() {
           body: formData,
         });
       } else {
-        /* ------------------------------------------------------
-           JSON CREATE
-           ------------------------------------------------------ */
 
         response = await fetch(createUrl, {
           method: "POST",
@@ -938,11 +874,6 @@ function AdminDecklists() {
       setDeleteLoading(false);
     }
   };
-
-  /* ==========================================================
-     LOADING
-     ========================================================== */
-
   if (loading) {
     return (
       <div className="loading-page">
@@ -963,17 +894,9 @@ function AdminDecklists() {
     );
   }
 
-  /* ==========================================================
-     RENDER
-     ========================================================== */
-
   return (
     <div className="deck-page">
       <main className="deck-content">
-        {/* ======================================================
-            TOP BAR
-            ====================================================== */}
-
         <div className="admin-decklists-topbar">
           <div>
             <h1>Decklists</h1>
@@ -1008,10 +931,6 @@ function AdminDecklists() {
           </div>
         </div>
 
-        {/* ======================================================
-            ERRORS
-            ====================================================== */}
-
         {deleteError && <div className="admin-error">{deleteError}</div>}
 
         {editError && <div className="admin-error">{editError}</div>}
@@ -1021,10 +940,6 @@ function AdminDecklists() {
         )}
 
         {error && <div className="admin-error">{error}</div>}
-
-        {/* ======================================================
-            ADD DECK
-            ====================================================== */}
 
         {addingDeck && (
           <DeckCard
@@ -1038,15 +953,8 @@ function AdminDecklists() {
           />
         )}
 
-        {/* ======================================================
-            BROWSER
-            ====================================================== */}
 
         <div className="deck-browser">
-          {/* ====================================================
-              SIDE TABS
-              ==================================================== */}
-
           <div className="tabs">
             <button
               type="button"
@@ -1083,10 +991,6 @@ function AdminDecklists() {
             </button>
           </div>
 
-          {/* ====================================================
-              SEARCH
-              ==================================================== */}
-
           <div className="search-container">
             <input
               className="search"
@@ -1095,11 +999,6 @@ function AdminDecklists() {
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
-
-          {/* ====================================================
-              FILTERS
-              ==================================================== */}
-
           <div className="filters">
             <div className="select-wrapper">
               <FilterDropdown
@@ -1140,21 +1039,11 @@ function AdminDecklists() {
             </button>
           </div>
         </div>
-
-        {/* ======================================================
-            RESULTS COUNT
-            ====================================================== */}
-
         {!error && (
           <p className="results-count">
             Showing {filteredDecks.length} of {decks.length} decks
           </p>
         )}
-
-        {/* ======================================================
-            RESULTS
-            ====================================================== */}
-
         {!error && filteredDecks.length === 0 ? (
           <p className="no-results">No decklists found.</p>
         ) : (
@@ -1180,11 +1069,6 @@ function AdminDecklists() {
       </main>
 
       <Footer credits />
-
-      {/* ========================================================
-          DELETE OVERLAY
-          ======================================================== */}
-
       {deleteLoading && (
         <div className="admin-delete-overlay">
           <div className="admin-delete-dialog">Deleting deck...</div>

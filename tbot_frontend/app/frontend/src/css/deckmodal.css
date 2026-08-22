@@ -224,12 +224,6 @@
   object-position: center;
   border-radius: 8px;
 }
-
-
-/* ============================================================
-   VIEW DETAILS
-   ============================================================ */
-
 .view-details-btn {
   margin-top: 8px;
   padding: 8px 12px;
@@ -445,22 +439,22 @@
   width: min(430px, 42%);
   max-width: 430px;
   min-width: 0;
+
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+  height: fit-content;
+  z-index: 5;
 }
 
 .modal-image > img {
   display: block;
-
   width: 100%;
   height: auto;
-
   max-height: 68vh;
-
   object-fit: contain;
-
   border-radius: 8px;
-
   border: 2px solid transparent;
-
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -468,13 +462,11 @@
 
 .modal-image > img:hover {
   border-color: #8fe38b;
-
   box-shadow:
     0 0 10px rgba(143, 227, 139, 0.45),
     0 0 24px rgba(143, 227, 139, 0.3),
     0 0 40px rgba(143, 227, 139, 0.18);
 }
-
 
 /* ============================================================
    IMAGE META
