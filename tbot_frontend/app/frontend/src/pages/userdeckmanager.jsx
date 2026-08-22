@@ -1083,69 +1083,6 @@ function UserDeckManager() {
     }
   };
 
-  const handleShare = async (deck) => {
-    const deckId =
-      deck?.deckid ??
-      deck?.deckID ??
-      deck?.id;
-
-    if (!deckId) {
-      return;
-    }
-
-    try {
-      const response =
-        await fetch(
-          `${API_BASE_URL}/tbotapp/user-decks/shared/${deckId}/`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-            },
-          },
-        );
-
-      const data =
-        await response
-          .json()
-          .catch(() => null);
-
-      if (
-        !response.ok ||
-        !data?.deck
-      ) {
-        throw new Error(
-          data?.error ||
-            "Unable to create deck share link.",
-        );
-      }
-
-      const shareUrl =
-        `${window.location.origin}/shared-deck/${deckId}`;
-
-      await navigator.clipboard.writeText(
-        shareUrl,
-      );
-
-      setError("");
-
-      window.alert(
-        "Deck share link copied to your clipboard.",
-      );
-    } catch (err) {
-      console.error(
-        "Unable to share deck:",
-        err,
-      );
-
-      setError(
-        err.message ||
-          "Unable to create deck share link.",
-      );
-    }
-  };
-
   if (loading) {
     return (
       <div className="loading-page">
@@ -1399,7 +1336,6 @@ function UserDeckManager() {
                   allCards={allCards}
                   onDelete={handleDelete}
                   onSave={handleSave}
-                  onShare={handleShare}
                   editSaving={editSaving}
                 />
               </div>

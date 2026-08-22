@@ -220,9 +220,7 @@ function UserDecklists() {
         if (err.name !== "AbortError") {
           console.error("Unable to load user decklists:", err);
 
-          setError(
-            err.message || "Unable to load this user's decklists.",
-          );
+          setError(err.message || "Unable to load this user's decklists.");
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -247,16 +245,13 @@ function UserDecklists() {
 
     const fetchCards = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/cardinfo/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
+        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
           },
-        );
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           return;
@@ -273,10 +268,7 @@ function UserDecklists() {
         );
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error(
-            "Unable to load card information:",
-            err,
-          );
+          console.error("Unable to load card information:", err);
         }
       }
     };
@@ -287,8 +279,7 @@ function UserDecklists() {
   }, []);
 
   const handleShareProfile = async () => {
-    const slug =
-      normalizeText(profile?.profile_slug) || profile_slug;
+    const slug = normalizeText(profile?.profile_slug) || profile_slug;
 
     if (!slug) {
       return;
@@ -300,9 +291,7 @@ function UserDecklists() {
     );
 
     try {
-      await navigator.clipboard.writeText(
-        shareUrl.toString(),
-      );
+      await navigator.clipboard.writeText(shareUrl.toString());
 
       setProfileLinkCopied(true);
 
@@ -310,10 +299,7 @@ function UserDecklists() {
         setProfileLinkCopied(false);
       }, 2000);
     } catch (error) {
-      console.error(
-        "Failed to copy profile link:",
-        error,
-      );
+      console.error("Failed to copy profile link:", error);
     }
   };
 
@@ -324,9 +310,7 @@ function UserDecklists() {
 
     const selectedSide = normalizeKey(side);
 
-    return decks.filter(
-      (deck) => normalizeKey(deck.side) === selectedSide,
-    );
+    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
   }, [decks, side]);
 
   const heroOptions = useMemo(() => {
@@ -356,9 +340,7 @@ function UserDecklists() {
     return Array.from(heroMap.values())
       .map((option) => {
         const matchedCard = allCards.find(
-          (card) =>
-            normalizeKey(card.card_name) ===
-            normalizeKey(option.label),
+          (card) => normalizeKey(card.card_name) === normalizeKey(option.label),
         );
 
         return {
@@ -368,13 +350,9 @@ function UserDecklists() {
         };
       })
       .sort((a, b) =>
-        a.label.localeCompare(
-          b.label,
-          undefined,
-          {
-            sensitivity: "base",
-          },
-        ),
+        a.label.localeCompare(b.label, undefined, {
+          sensitivity: "base",
+        }),
       );
   }, [sideFilteredDecks, allCards]);
 
@@ -393,9 +371,7 @@ function UserDecklists() {
       if (!categoryMap.has(key)) {
         categoryMap.set(key, {
           value: categoryName,
-          label:
-            categoryName.charAt(0).toUpperCase() +
-            categoryName.slice(1),
+          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
           count: 0,
           ...(CATEGORY_META[key] || {}),
         });
@@ -405,13 +381,9 @@ function UserDecklists() {
     });
 
     return Array.from(categoryMap.values()).sort((a, b) =>
-      a.label.localeCompare(
-        b.label,
-        undefined,
-        {
-          sensitivity: "base",
-        },
-      ),
+      a.label.localeCompare(b.label, undefined, {
+        sensitivity: "base",
+      }),
     );
   }, [sideFilteredDecks]);
 
@@ -429,21 +401,17 @@ function UserDecklists() {
         return;
       }
 
-      Object.keys(ARCHETYPE_META).forEach(
-        (archetypeName) => {
-          if (deckArchetype.includes(archetypeName)) {
-            counts[archetypeName] += 1;
-          }
-        },
-      );
+      Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
+        if (deckArchetype.includes(archetypeName)) {
+          counts[archetypeName] += 1;
+        }
+      });
     });
 
     return Object.entries(ARCHETYPE_META)
       .map(([value, meta]) => ({
         value,
-        label:
-          value.charAt(0).toUpperCase() +
-          value.slice(1),
+        label: value.charAt(0).toUpperCase() + value.slice(1),
         count: counts[value] || 0,
         ...meta,
       }))
@@ -460,17 +428,13 @@ function UserDecklists() {
       const sideA = normalizeKey(a.side);
       const sideB = normalizeKey(b.side);
 
-      const sideCompare =
-        (sideOrder[sideA] ?? 99) -
-        (sideOrder[sideB] ?? 99);
+      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
 
       if (sideCompare !== 0) {
         return sideCompare;
       }
 
-      const heroCompare = normalizeText(
-        a.hero,
-      ).localeCompare(
+      const heroCompare = normalizeText(a.hero).localeCompare(
         normalizeText(b.hero),
         undefined,
         {
@@ -502,9 +466,7 @@ function UserDecklists() {
     return sortedDecks.filter((deck) => {
       const deckCards = parseDeckCards(deck.cards);
 
-      const searchableCardValues = deckCards.map(
-        (card) => normalizeKey(card),
-      );
+      const searchableCardValues = deckCards.map((card) => normalizeKey(card));
 
       const searchableValues = [
         deck.name,
@@ -521,37 +483,29 @@ function UserDecklists() {
 
       if (searchValue) {
         if (alias) {
-          searchMatch = normalizeKey(deck.hero).includes(
-            alias,
-          );
+          searchMatch = normalizeKey(deck.hero).includes(alias);
         } else {
-          const normalFieldMatch =
-            searchableValues.some((value) =>
-              value.includes(searchValue),
-            );
+          const normalFieldMatch = searchableValues.some((value) =>
+            value.includes(searchValue),
+          );
 
-          const cardMatch =
-            searchableCardValues.some((card) =>
-              card.includes(searchValue),
-            );
+          const cardMatch = searchableCardValues.some((card) =>
+            card.includes(searchValue),
+          );
 
-          searchMatch =
-            normalFieldMatch || cardMatch;
+          searchMatch = normalFieldMatch || cardMatch;
         }
       }
 
       const deckSide = normalizeKey(deck.side);
 
-      const sideMatch =
-        side === "All" ||
-        deckSide === normalizeKey(side);
+      const sideMatch = side === "All" || deckSide === normalizeKey(side);
 
       const heroMatch =
         hero.length === 0 ||
         hero.some(
           (selectedHero) =>
-            normalizeKey(deck.hero) ===
-            normalizeKey(selectedHero.value),
+            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
         );
 
       const categoryMatch =
@@ -562,34 +516,19 @@ function UserDecklists() {
             normalizeKey(selectedCategory.value),
         );
 
-      const deckArchetype = normalizeKey(
-        deck.archetype,
-      );
+      const deckArchetype = normalizeKey(deck.archetype);
 
       const archetypeMatch =
         archetype.length === 0 ||
         archetype.every((selectedArchetype) =>
-          deckArchetype.includes(
-            normalizeKey(selectedArchetype.value),
-          ),
+          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
         );
 
       return (
-        searchMatch &&
-        sideMatch &&
-        heroMatch &&
-        categoryMatch &&
-        archetypeMatch
+        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
       );
     });
-  }, [
-    sortedDecks,
-    search,
-    side,
-    hero,
-    category,
-    archetype,
-  ]);
+  }, [sortedDecks, search, side, hero, category, archetype]);
 
   const clearFilters = () => {
     setSearch("");
@@ -611,9 +550,7 @@ function UserDecklists() {
 
           <h2>Loading decklists</h2>
 
-          <p>
-            Preparing this user's decklists.
-          </p>
+          <p>Preparing this user's decklists.</p>
         </div>
       </div>
     );
@@ -637,10 +574,7 @@ function UserDecklists() {
     );
   }
 
-  const profileName =
-    profile?.display_name ||
-    profile?.username ||
-    "User";
+  const profileName = profile?.display_name || profile?.username || "User";
 
   const avatarUrl = getAvatarUrl(profile);
 
@@ -661,9 +595,7 @@ function UserDecklists() {
                 />
               ) : (
                 <div className="user-decklists-avatar-placeholder">
-                  {profileName
-                    .charAt(0)
-                    .toUpperCase()}
+                  {profileName.charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
@@ -671,14 +603,10 @@ function UserDecklists() {
             <div className="user-decklists-profile-info">
               <h1>{profileName} Decklists</h1>
 
-              <p>
-                Browse this user's Tbot decklists.
-              </p>
+              <p>Browse this user's Tbot decklists.</p>
 
               {profile?.bio && (
-                <p className="user-decklists-profile-bio">
-                  {profile.bio}
-                </p>
+                <p className="user-decklists-profile-bio">{profile.bio}</p>
               )}
             </div>
           </div>
@@ -689,9 +617,7 @@ function UserDecklists() {
               className="user-decklists-share"
               onClick={handleShareProfile}
             >
-              {profileLinkCopied
-                ? "Link Copied!"
-                : "Share Deck Profile"}
+              {profileLinkCopied ? "Link Copied!" : "Share Deck Profile"}
             </button>
           </div>
         </div>
@@ -701,46 +627,34 @@ function UserDecklists() {
             <button
               type="button"
               className={side === "All" ? "active" : ""}
-              onClick={() =>
-                handleSideChange("All")
-              }
+              onClick={() => handleSideChange("All")}
             >
               All
             </button>
 
             <button
               type="button"
-              className={
-                side === "Plants" ? "active" : ""
-              }
-              onClick={() =>
-                handleSideChange("Plants")
-              }
+              className={side === "Plants" ? "active" : ""}
+              onClick={() => handleSideChange("Plants")}
             >
               <img
                 src="https://i.ibb.co/fYHsRqP0/plants.png"
                 alt="Plants"
                 className="tab-icon"
               />
-
               Plants
             </button>
 
             <button
               type="button"
-              className={
-                side === "Zombies" ? "active" : ""
-              }
-              onClick={() =>
-                handleSideChange("Zombies")
-              }
+              className={side === "Zombies" ? "active" : ""}
+              onClick={() => handleSideChange("Zombies")}
             >
               <img
                 src="https://i.ibb.co/pvT38Y1n/zombies.png"
                 alt="Zombies"
                 className="tab-icon"
               />
-
               Zombies
             </button>
           </div>
@@ -750,9 +664,7 @@ function UserDecklists() {
               className="search"
               placeholder="Search decks, creators, heroes, cards..."
               value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
@@ -799,8 +711,7 @@ function UserDecklists() {
 
         <div className="user-decklists-results-bar">
           <p className="results-count">
-            Showing {filteredDecks.length} of{" "}
-            {decks.length} decks
+            Showing {filteredDecks.length} of {decks.length} decks
           </p>
         </div>
 
@@ -808,10 +719,7 @@ function UserDecklists() {
           <div className="user-decklists-empty">
             <h2>No decks found</h2>
 
-            <p>
-              This user hasn't added any decks
-              matching these filters.
-            </p>
+            <p>This user hasn't added any decks matching these filters.</p>
           </div>
         ) : (
           <div className="deck-grid">
@@ -825,13 +733,17 @@ function UserDecklists() {
                 }
                 decklist={deck}
                 allCards={allCards}
+                profileSlug={
+                  normalizeText(profile?.profile_slug) || profile_slug
+                }
+                profileIsPublic={profile?.is_public === true}
               />
             ))}
           </div>
         )}
       </main>
 
-      <Footer/>
+      <Footer />
     </div>
   );
 }

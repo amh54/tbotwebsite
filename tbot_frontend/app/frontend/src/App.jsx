@@ -2,7 +2,7 @@ import "./css/App.css";
 import "./css/navbar.css";
 
 import { Link, Route, Routes } from "react-router-dom";
-
+import StandaloneDeckPage from "./pages/standalonedeck.jsx";
 import Admin from "./pages/admin.jsx";
 import DecklistsPage from "./pages/decklists.jsx";
 import CardInfo from "./pages/cardinfo.jsx";
@@ -216,7 +216,10 @@ function App() {
         path="/users/:profile_slug/decklists"
         element={<UserDecklists />}
       />
-
+      <Route
+        path="/deck/:profile_slug/:deckId"
+        element={<StandaloneDeckPage />}
+      />
       <Route path="/profile/:profile_slug" element={<Profile />} />
 
       <Route

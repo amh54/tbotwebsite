@@ -1,7 +1,5 @@
 import {
-  forwardRef,
   useEffect,
-  useImperativeHandle,
   useRef,
   useState,
 } from "react";
@@ -55,7 +53,9 @@ const getHeroColors = (hero) => {
 };
 
 const getApiBaseUrl = () => {
-  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
+  const envBaseUrl = String(
+    import.meta.env.VITE_API_BASE_URL || "",
+  ).trim();
 
   if (envBaseUrl) {
     return envBaseUrl.replace(/\/+$/, "");
@@ -64,7 +64,10 @@ const getApiBaseUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
 
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1"
+    ) {
       return "http://localhost:8000";
     }
   }
@@ -120,8 +123,11 @@ const toExternalUrl = (value) => {
     return "";
   }
 
-  const markdownMatch = /\((https?:\/\/[^)]+)\)/i.exec(raw);
-  const inlineUrlMatch = /https?:\/\/\S+/i.exec(raw);
+  const markdownMatch =
+    /\((https?:\/\/[^)]+)\)/i.exec(raw);
+
+  const inlineUrlMatch =
+    /https?:\/\/\S+/i.exec(raw);
 
   let candidate = (
     markdownMatch?.[1] ||
@@ -133,11 +139,17 @@ const toExternalUrl = (value) => {
 
   const trimChars = "'\"<>[]";
 
-  while (candidate && trimChars.includes(candidate[0])) {
+  while (
+    candidate &&
+    trimChars.includes(candidate[0])
+  ) {
     candidate = candidate.slice(1);
   }
 
-  while (candidate && trimChars.includes(candidate.at(-1))) {
+  while (
+    candidate &&
+    trimChars.includes(candidate.at(-1))
+  ) {
     candidate = candidate.slice(0, -1);
   }
 
@@ -162,14 +174,18 @@ const parseCardRatioLines = (value) =>
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const [namePart, countPart] = line.split("|");
+      const [namePart, countPart] =
+        line.split("|");
 
-      const name = String(namePart || "").trim();
+      const name = String(
+        namePart || "",
+      ).trim();
 
       const parsedCount = Number(countPart);
 
       const count =
-        Number.isFinite(parsedCount) && parsedCount > 0
+        Number.isFinite(parsedCount) &&
+        parsedCount > 0
           ? Math.min(parsedCount, 4)
           : 1;
 
@@ -188,7 +204,10 @@ const formatCardsDisplay = (value) => {
   }
 
   return entries
-    .map((entry) => `${entry.name} x${entry.count}`)
+    .map(
+      (entry) =>
+        `${entry.name} x${entry.count}`,
+    )
     .join(", ");
 };
 
@@ -203,12 +222,15 @@ function DeckCard({
   onComplete,
   editSaving = false,
   allCards = [],
+  profileSlug = "",
+  profileIsPublic = null,
 }) {
   const deck = decklist ?? {};
 
   const isAdmin = admin || adminMode;
 
-  const [heroColor1, heroColor2] = getHeroColors(deck.hero);
+  const [heroColor1, heroColor2] =
+    getHeroColors(deck.hero);
 
   const deckId =
     deck.deckid ??
@@ -217,27 +239,48 @@ function DeckCard({
     deck.id ??
     "";
 
-  const deckKey = String(deckId || deck.name || "");
+  const deckKey = String(
+    deckId || deck.name || "",
+  );
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] =
+    useSearchParams();
 
-  const [open, setOpen] = useState(addMode);
-  const [editing, setEditing] = useState(false);
+  const [open, setOpen] =
+    useState(addMode);
 
-  const [imgError, setImgError] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [editing, setEditing] =
+    useState(false);
 
-  const [editImageFile, setEditImageFile] = useState(null);
-  const [editImagePreview, setEditImagePreview] = useState("");
-  const [editImgError, setEditImgError] = useState(false);
+  const [imgError, setImgError] =
+    useState(false);
 
-  const [editSavingLocal, setEditSavingLocal] = useState(false);
+  const [copied, setCopied] =
+    useState(false);
+
+  const [editImageFile, setEditImageFile] =
+    useState(null);
+
+  const [
+    editImagePreview,
+    setEditImagePreview,
+  ] = useState("");
+
+  const [editImgError, setEditImgError] =
+    useState(false);
+
+  const [
+    editSavingLocal,
+    setEditSavingLocal,
+  ] = useState(false);
 
   const editModalRef = useRef(null);
 
   const deckImage = getImageUrl(deck.image);
 
-  const description = hasValue(deck.description)
+  const description = hasValue(
+    deck.description,
+  )
     ? deck.description
     : "No description available.";
 
@@ -251,10 +294,17 @@ function DeckCard({
       return;
     }
 
-    if (searchParams.get("deck") === deckKey) {
+    if (
+      searchParams.get("deck") ===
+      deckKey
+    ) {
       setOpen(true);
     }
-  }, [searchParams, deckKey, addMode]);
+  }, [
+    searchParams,
+    deckKey,
+    addMode,
+  ]);
 
   useEffect(() => {
     if (!open) {
@@ -262,10 +312,12 @@ function DeckCard({
       return;
     }
 
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow =
+      "hidden";
 
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow =
+        "";
     };
   }, [open]);
 
@@ -284,12 +336,22 @@ function DeckCard({
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener(
+      "keydown",
+      handleKeyDown,
+    );
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown,
+      );
     };
-  }, [open, editSavingLocal, editSaving]);
+  }, [
+    open,
+    editSavingLocal,
+    editSaving,
+  ]);
 
   useEffect(() => {
     if (!editing) {
@@ -299,7 +361,9 @@ function DeckCard({
     setEditImgError(false);
 
     if (!editImageFile) {
-      setEditImagePreview(deck.image ?? "");
+      setEditImagePreview(
+        deck.image ?? "",
+      );
     }
   }, [
     editing,
@@ -320,7 +384,9 @@ function DeckCard({
       return;
     }
 
-    const next = new URLSearchParams(searchParams);
+    const next = new URLSearchParams(
+      searchParams,
+    );
 
     next.set("deck", deckKey);
 
@@ -328,14 +394,20 @@ function DeckCard({
   };
 
   const closeModal = () => {
-    if (editSavingLocal || editSaving) {
+    if (
+      editSavingLocal ||
+      editSaving
+    ) {
       return;
     }
 
     if (addMode) {
       setOpen(false);
 
-      if (typeof onComplete === "function") {
+      if (
+        typeof onComplete ===
+        "function"
+      ) {
         onComplete(null);
       }
 
@@ -344,7 +416,6 @@ function DeckCard({
 
     setOpen(false);
     setEditing(false);
-
     setEditImageFile(null);
     setEditImagePreview("");
     setEditImgError(false);
@@ -353,9 +424,13 @@ function DeckCard({
       return;
     }
 
-    const next = new URLSearchParams(searchParams);
+    const next = new URLSearchParams(
+      searchParams,
+    );
 
-    if (next.get("deck") === deckKey) {
+    if (
+      next.get("deck") === deckKey
+    ) {
       next.delete("deck");
       setSearchParams(next);
     }
@@ -363,7 +438,9 @@ function DeckCard({
 
   const resetEditImageState = () => {
     setEditImageFile(null);
-    setEditImagePreview(deck.image ?? "");
+    setEditImagePreview(
+      deck.image ?? "",
+    );
     setEditImgError(false);
   };
 
@@ -373,13 +450,18 @@ function DeckCard({
     }
 
     setEditImageFile(null);
-    setEditImagePreview(deck.image ?? "");
+    setEditImagePreview(
+      deck.image ?? "",
+    );
     setEditImgError(false);
     setEditing(true);
   };
 
   const cancelEditing = () => {
-    if (editSavingLocal || editSaving) {
+    if (
+      editSavingLocal ||
+      editSaving
+    ) {
       return;
     }
 
@@ -387,32 +469,49 @@ function DeckCard({
     setEditing(false);
   };
 
-  const handleEditImageFileChange = (event) => {
-    const file = event.target.files?.[0] || null;
+  const handleEditImageFileChange = (
+    event,
+  ) => {
+    const file =
+      event.target.files?.[0] ||
+      null;
 
     setEditImgError(false);
 
     if (!file) {
       setEditImageFile(null);
-      setEditImagePreview(deck.image ?? "");
+      setEditImagePreview(
+        deck.image ?? "",
+      );
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
+    if (
+      !file.type.startsWith(
+        "image/",
+      )
+    ) {
       event.target.value = "";
       setEditImageFile(null);
-      setEditImagePreview(deck.image ?? "");
+      setEditImagePreview(
+        deck.image ?? "",
+      );
       return;
     }
 
-    const previewUrl = URL.createObjectURL(file);
+    const previewUrl =
+      URL.createObjectURL(file);
 
     setEditImageFile(file);
-    setEditImagePreview(previewUrl);
+    setEditImagePreview(
+      previewUrl,
+    );
   };
 
   const handleEditSave = async () => {
-    if (!editModalRef.current?.save) {
+    if (
+      !editModalRef.current?.save
+    ) {
       console.error(
         "EditDeckModal save method is unavailable.",
       );
@@ -422,73 +521,139 @@ function DeckCard({
     try {
       await editModalRef.current.save();
     } catch (error) {
-      console.error("Unable to save deck:", error);
+      console.error(
+        "Unable to save deck:",
+        error,
+      );
     }
   };
 
   const handleDelete = () => {
-    if (typeof onDelete === "function") {
+    if (
+      typeof onDelete === "function"
+    ) {
       onDelete(deck);
     }
   };
 
   const handleShare = async () => {
-    if (!deckKey) {
-      return;
-    }
+  if (!deckKey) {
+    return;
+  }
 
-    const url = new URL(window.location.href);
+  const resolvedProfileSlug = String(
+    profileSlug ||
+      deck.profile_slug ||
+      deck.profileSlug ||
+      "",
+  ).trim();
 
-    url.searchParams.set("deck", deckKey);
+  const resolvedProfileIsPublic =
+    profileIsPublic !== null &&
+    profileIsPublic !== undefined
+      ? profileIsPublic === true
+      : deck.is_public === true ||
+        deck.profile_is_public === true ||
+        deck.profileIsPublic === true;
 
-    try {
-      await navigator.clipboard.writeText(url.toString());
+  let shareUrl;
 
-      setCopied(true);
+  if (resolvedProfileIsPublic && resolvedProfileSlug) {
+    // Public profile:
+    // Open the normal user decklists page with the deck modal open.
+    shareUrl = new URL(
+      `/profile/${encodeURIComponent(
+        resolvedProfileSlug,
+      )}/decklists`,
+      window.location.origin,
+    );
 
-      window.setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-    } catch (error) {
-      console.error("Failed to copy link", error);
-    }
-  };
+    shareUrl.searchParams.set("deck", deckKey);
+  } else if (resolvedProfileSlug) {
+    // Private profile:
+    // Open the standalone deck page tied to this user's profile.
+    shareUrl = new URL(
+      `/deck/${encodeURIComponent(
+        resolvedProfileSlug,
+      )}/${encodeURIComponent(deckKey)}`,
+      window.location.origin,
+    );
+  } else {
+    // Safety fallback if the profile slug wasn't supplied.
+    console.error(
+      "Unable to create deck share link: profile slug is missing.",
+    );
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(
+      shareUrl.toString(),
+    );
+
+    setCopied(true);
+
+    window.setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  } catch (error) {
+    console.error(
+      "Failed to copy link",
+      error,
+    );
+  }
+};
 
   const handleDownload = async () => {
-    const imageUrl = getImageUrl(deck.image);
+    const imageUrl = getImageUrl(
+      deck.image,
+    );
 
     if (!imageUrl) {
       return;
     }
 
     try {
-      const response = await fetch(imageUrl, {
-        mode: "cors",
-      });
+      const response = await fetch(
+        imageUrl,
+        {
+          mode: "cors",
+        },
+      );
 
       if (!response.ok) {
-        throw new Error("Image fetch failed");
+        throw new Error(
+          "Image fetch failed",
+        );
       }
 
-      const blob = await response.blob();
+      const blob =
+        await response.blob();
 
-      const blobUrl = URL.createObjectURL(blob);
+      const blobUrl =
+        URL.createObjectURL(blob);
 
-      const link = document.createElement("a");
+      const link =
+        document.createElement("a");
 
       link.href = blobUrl;
+
       link.download = `${deck.name || "decklist"}.png`.replace(
         /\s+/g,
         "_",
       );
 
-      document.body.appendChild(link);
+      document.body.appendChild(
+        link,
+      );
 
       link.click();
 
       link.remove();
 
-      URL.revokeObjectURL(blobUrl);
+      URL.revokeObjectURL(
+        blobUrl,
+      );
     } catch (error) {
       console.error(
         "Direct download blocked, opening image instead",
@@ -503,15 +668,22 @@ function DeckCard({
     }
   };
 
-  const handleAddComplete = (result) => {
+  const handleAddComplete = (
+    result,
+  ) => {
     setOpen(false);
 
-    if (typeof onComplete === "function") {
+    if (
+      typeof onComplete ===
+      "function"
+    ) {
       onComplete(result);
     }
   };
 
-  const handleEditComplete = (result) => {
+  const handleEditComplete = (
+    result,
+  ) => {
     if (!result) {
       return;
     }
@@ -531,14 +703,21 @@ function DeckCard({
         allCards={allCards}
         onAdd={onAdd}
         onClose={closeModal}
-        onComplete={handleAddComplete}
+        onComplete={
+          handleAddComplete
+        }
       />
     );
   }
 
-  const isSaving = editSavingLocal || editSaving;
+  const isSaving =
+    editSavingLocal ||
+    editSaving;
 
-  const editImage = getImageUrl(editImagePreview);
+  const editImage =
+    getImageUrl(
+      editImagePreview,
+    );
 
   return (
     <>
@@ -548,13 +727,21 @@ function DeckCard({
         <div
           className="deck-card-image-only"
           onClick={openModal}
-          style={{ cursor: "pointer" }}
+          style={{
+            cursor: "pointer",
+          }}
         >
-          {deckImage && !imgError ? (
+          {deckImage &&
+          !imgError ? (
             <img
               src={deckImage}
-              alt={deck.name || "Deck image"}
-              onError={() => setImgError(true)}
+              alt={
+                deck.name ||
+                "Deck image"
+              }
+              onError={() =>
+                setImgError(true)
+              }
             />
           ) : (
             <div className="deck-image-placeholder">
@@ -578,22 +765,30 @@ function DeckCard({
         </div>
 
         <div className="deck-listing-info">
-          <h3>{deck.name || "Untitled Deck"}</h3>
+          <h3>
+            {deck.name ||
+              "Untitled Deck"}
+          </h3>
 
           <p>
-            <span>Hero:</span> {deck.hero || "-"}
+            <span>Hero:</span>{" "}
+            {deck.hero || "-"}
           </p>
 
           <p>
-            <span>Category:</span> {deck.category || "-"}
+            <span>Category:</span>{" "}
+            {deck.category || "-"}
           </p>
 
           <p>
-            <span>Archetype:</span> {deck.archetype || "-"}
+            <span>Archetype:</span>{" "}
+            {deck.archetype || "-"}
           </p>
 
           <p>
-            <span>Cost:</span> {deck.cost || "-"}
+            <span>Cost:</span>{" "}
+            {deck.cost || "-"}
+
             <img
               src="https://i.ibb.co/jZkdqf6y/spark.webp"
               alt="Spark icon"
@@ -601,7 +796,9 @@ function DeckCard({
             />
           </p>
 
-          {hasValue(deck.creator) && (
+          {hasValue(
+            deck.creator,
+          ) && (
             <p className="creator-field">
               <span className="field-label">
                 Creator:
@@ -613,9 +810,13 @@ function DeckCard({
             </p>
           )}
 
-          {hasValue(deck.optimization) && (
+          {hasValue(
+            deck.optimization,
+          ) && (
             <p>
-              <span>Optimized by:</span>{" "}
+              <span>
+                Optimized by:
+              </span>{" "}
               {deck.optimization}
             </p>
           )}
@@ -625,9 +826,12 @@ function DeckCard({
       {open && (
         <div
           className="modal-overlay"
-          onMouseDown={(event) => {
+          onMouseDown={(
+            event,
+          ) => {
             if (
-              event.target === event.currentTarget &&
+              event.target ===
+                event.currentTarget &&
               !isSaving
             ) {
               closeModal();
@@ -639,10 +843,18 @@ function DeckCard({
             className="modal"
             aria-label={
               editing
-                ? `Edit ${deck.name || "deck"}`
-                : `Details for ${deck.name || "deck"}`
+                ? `Edit ${
+                    deck.name ||
+                    "deck"
+                  }`
+                : `Details for ${
+                    deck.name ||
+                    "deck"
+                  }`
             }
-            onMouseDown={(event) =>
+            onMouseDown={(
+              event,
+            ) =>
               event.stopPropagation()
             }
           >
@@ -661,7 +873,8 @@ function DeckCard({
                 <div className="modal-image">
                   {editing ? (
                     <>
-                      {editImage && !editImgError ? (
+                      {editImage &&
+                      !editImgError ? (
                         <img
                           src={editImage}
                           alt={
@@ -669,7 +882,9 @@ function DeckCard({
                             "Deck image"
                           }
                           onError={() =>
-                            setEditImgError(true)
+                            setEditImgError(
+                              true,
+                            )
                           }
                         />
                       ) : (
@@ -689,11 +904,14 @@ function DeckCard({
                           onChange={
                             handleEditImageFileChange
                           }
-                          disabled={isSaving}
+                          disabled={
+                            isSaving
+                          }
                         />
                       </label>
                     </>
-                  ) : deckImage && !imgError ? (
+                  ) : deckImage &&
+                    !imgError ? (
                     <img
                       src={deckImage}
                       alt={
@@ -701,7 +919,9 @@ function DeckCard({
                         "Deck image"
                       }
                       onError={() =>
-                        setImgError(true)
+                        setImgError(
+                          true,
+                        )
                       }
                     />
                   ) : (
@@ -711,9 +931,15 @@ function DeckCard({
                   )}
 
                   {!editing &&
-                    (hasValue(deck.creator) ||
-                      hasValue(deck.optimization) ||
-                      hasValue(deck.inspiration) ||
+                    (hasValue(
+                      deck.creator,
+                    ) ||
+                      hasValue(
+                        deck.optimization,
+                      ) ||
+                      hasValue(
+                        deck.inspiration,
+                      ) ||
                       hasValue(
                         deck.suggested_date,
                       ) ||
@@ -721,7 +947,9 @@ function DeckCard({
                         deck.updated_date,
                       )) && (
                       <div className="image-meta">
-                        {(hasValue(deck.creator) ||
+                        {(hasValue(
+                          deck.creator,
+                        ) ||
                           hasValue(
                             deck.optimization,
                           ) ||
@@ -735,7 +963,9 @@ function DeckCard({
                               <>
                                 Created by{" "}
                                 <span>
-                                  {deck.creator}
+                                  {
+                                    deck.creator
+                                  }
                                 </span>
                               </>
                             )}
@@ -786,7 +1016,9 @@ function DeckCard({
                         ) && (
                           <p>
                             Suggested on{" "}
-                            {deck.suggested_date}
+                            {
+                              deck.suggested_date
+                            }
                           </p>
                         )}
 
@@ -795,7 +1027,9 @@ function DeckCard({
                         ) && (
                           <p>
                             Updated on{" "}
-                            {deck.updated_date}
+                            {
+                              deck.updated_date
+                            }
                           </p>
                         )}
                       </div>
@@ -806,14 +1040,18 @@ function DeckCard({
                       <button
                         type="button"
                         className="share-btn"
-                        onClick={handleShare}
+                        onClick={
+                          handleShare
+                        }
                       >
                         {copied
                           ? "Link Copied!"
                           : "Share Deck"}
                       </button>
 
-                      {hasValue(deck.image) && (
+                      {hasValue(
+                        deck.image,
+                      ) && (
                         <button
                           type="button"
                           className="download-btn"
@@ -837,7 +1075,9 @@ function DeckCard({
                             onClick={
                               startEditing
                             }
-                            disabled={isSaving}
+                            disabled={
+                              isSaving
+                            }
                           >
                             Edit Deck
                           </button>
@@ -848,7 +1088,9 @@ function DeckCard({
                             onClick={
                               handleDelete
                             }
-                            disabled={isSaving}
+                            disabled={
+                              isSaving
+                            }
                           >
                             Delete Deck
                           </button>
@@ -861,7 +1103,9 @@ function DeckCard({
                             onClick={
                               cancelEditing
                             }
-                            disabled={isSaving}
+                            disabled={
+                              isSaving
+                            }
                           >
                             Cancel
                           </button>
@@ -872,7 +1116,9 @@ function DeckCard({
                             onClick={
                               handleEditSave
                             }
-                            disabled={isSaving}
+                            disabled={
+                              isSaving
+                            }
                           >
                             {isSaving
                               ? "Saving..."
@@ -891,9 +1137,15 @@ function DeckCard({
                       deck={deck}
                       allCards={allCards}
                       onSave={onSave}
-                      onComplete={handleEditComplete}
-                      imageFile={editImageFile}
-                      imageUrl={editImagePreview}
+                      onComplete={
+                        handleEditComplete
+                      }
+                      imageFile={
+                        editImageFile
+                      }
+                      imageUrl={
+                        editImagePreview
+                      }
                       onSavingChange={
                         setEditSavingLocal
                       }
@@ -920,7 +1172,9 @@ function DeckCard({
                         </h3>
 
                         <p className="description">
-                          {description}
+                          {
+                            description
+                          }
                         </p>
                       </section>
 
@@ -976,7 +1230,8 @@ function DeckCard({
                           </span>
 
                           <span className="cost-value">
-                            {deck.cost || "-"}
+                            {deck.cost ||
+                              "-"}
 
                             <img
                               src="https://i.ibb.co/jZkdqf6y/spark.webp"
