@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useSearchParams } from "react-router-dom";
 
@@ -53,9 +49,7 @@ const getHeroColors = (hero) => {
 };
 
 const getApiBaseUrl = () => {
-  const envBaseUrl = String(
-    import.meta.env.VITE_API_BASE_URL || "",
-  ).trim();
+  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
 
   if (envBaseUrl) {
     return envBaseUrl.replace(/\/+$/, "");
@@ -64,10 +58,7 @@ const getApiBaseUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
 
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1"
-    ) {
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
       return "http://localhost:8000";
     }
   }
@@ -123,33 +114,21 @@ const toExternalUrl = (value) => {
     return "";
   }
 
-  const markdownMatch =
-    /\((https?:\/\/[^)]+)\)/i.exec(raw);
+  const markdownMatch = /\((https?:\/\/[^)]+)\)/i.exec(raw);
 
-  const inlineUrlMatch =
-    /https?:\/\/\S+/i.exec(raw);
+  const inlineUrlMatch = /https?:\/\/\S+/i.exec(raw);
 
-  let candidate = (
-    markdownMatch?.[1] ||
-    inlineUrlMatch?.[0] ||
-    raw
-  )
+  let candidate = (markdownMatch?.[1] || inlineUrlMatch?.[0] || raw)
     .trim()
     .replace(/\s+/g, "");
 
   const trimChars = "'\"<>[]";
 
-  while (
-    candidate &&
-    trimChars.includes(candidate[0])
-  ) {
+  while (candidate && trimChars.includes(candidate[0])) {
     candidate = candidate.slice(1);
   }
 
-  while (
-    candidate &&
-    trimChars.includes(candidate.at(-1))
-  ) {
+  while (candidate && trimChars.includes(candidate.at(-1))) {
     candidate = candidate.slice(0, -1);
   }
 
@@ -174,18 +153,14 @@ const parseCardRatioLines = (value) =>
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const [namePart, countPart] =
-        line.split("|");
+      const [namePart, countPart] = line.split("|");
 
-      const name = String(
-        namePart || "",
-      ).trim();
+      const name = String(namePart || "").trim();
 
       const parsedCount = Number(countPart);
 
       const count =
-        Number.isFinite(parsedCount) &&
-        parsedCount > 0
+        Number.isFinite(parsedCount) && parsedCount > 0
           ? Math.min(parsedCount, 4)
           : 1;
 
@@ -203,12 +178,7 @@ const formatCardsDisplay = (value) => {
     return "";
   }
 
-  return entries
-    .map(
-      (entry) =>
-        `${entry.name} x${entry.count}`,
-    )
-    .join(", ");
+  return entries.map((entry) => `${entry.name} x${entry.count}`).join(", ");
 };
 
 function DeckCard({
@@ -227,60 +197,49 @@ function DeckCard({
 }) {
   const deck = decklist ?? {};
 
+  /*
+   * IMPORTANT:
+   *
+   * isAdmin is also used for the user's own deck dashboard.
+   *
+   * Therefore:
+   * - normal public deck page/list = isAdmin false
+   * - user's deck dashboard = isAdmin true
+   * - admin dashboard = isAdmin true
+   *
+   * Sharing is disabled whenever isAdmin is true.
+   */
   const isAdmin = admin || adminMode;
 
-  const [heroColor1, heroColor2] =
-    getHeroColors(deck.hero);
+  const [heroColor1, heroColor2] = getHeroColors(deck.hero);
 
-  const deckId =
-    deck.deckid ??
-    deck.deckID ??
-    deck.deckId ??
-    deck.id ??
-    "";
+  const deckId = deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? "";
 
-  const deckKey = String(
-    deckId || deck.name || "",
-  );
+  const deckKey = String(deckId || deck.name || "");
 
-  const [searchParams, setSearchParams] =
-    useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [open, setOpen] =
-    useState(addMode);
+  const [open, setOpen] = useState(addMode);
 
-  const [editing, setEditing] =
-    useState(false);
+  const [editing, setEditing] = useState(false);
 
-  const [imgError, setImgError] =
-    useState(false);
+  const [imgError, setImgError] = useState(false);
 
-  const [copied, setCopied] =
-    useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const [editImageFile, setEditImageFile] =
-    useState(null);
+  const [editImageFile, setEditImageFile] = useState(null);
 
-  const [
-    editImagePreview,
-    setEditImagePreview,
-  ] = useState("");
+  const [editImagePreview, setEditImagePreview] = useState("");
 
-  const [editImgError, setEditImgError] =
-    useState(false);
+  const [editImgError, setEditImgError] = useState(false);
 
-  const [
-    editSavingLocal,
-    setEditSavingLocal,
-  ] = useState(false);
+  const [editSavingLocal, setEditSavingLocal] = useState(false);
 
   const editModalRef = useRef(null);
 
   const deckImage = getImageUrl(deck.image);
 
-  const description = hasValue(
-    deck.description,
-  )
+  const description = hasValue(deck.description)
     ? deck.description
     : "No description available.";
 
@@ -294,17 +253,10 @@ function DeckCard({
       return;
     }
 
-    if (
-      searchParams.get("deck") ===
-      deckKey
-    ) {
+    if (searchParams.get("deck") === deckKey) {
       setOpen(true);
     }
-  }, [
-    searchParams,
-    deckKey,
-    addMode,
-  ]);
+  }, [searchParams, deckKey, addMode]);
 
   useEffect(() => {
     if (!open) {
@@ -312,12 +264,10 @@ function DeckCard({
       return;
     }
 
-    document.body.style.overflow =
-      "hidden";
+    document.body.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow =
-        "";
+      document.body.style.overflow = "";
     };
   }, [open]);
 
@@ -327,31 +277,17 @@ function DeckCard({
     }
 
     const handleKeyDown = (event) => {
-      if (
-        event.key === "Escape" &&
-        !editSavingLocal &&
-        !editSaving
-      ) {
+      if (event.key === "Escape" && !editSavingLocal && !editSaving) {
         closeModal();
       }
     };
 
-    document.addEventListener(
-      "keydown",
-      handleKeyDown,
-    );
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener(
-        "keydown",
-        handleKeyDown,
-      );
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [
-    open,
-    editSavingLocal,
-    editSaving,
-  ]);
+  }, [open, editSavingLocal, editSaving]);
 
   useEffect(() => {
     if (!editing) {
@@ -361,15 +297,9 @@ function DeckCard({
     setEditImgError(false);
 
     if (!editImageFile) {
-      setEditImagePreview(
-        deck.image ?? "",
-      );
+      setEditImagePreview(deck.image ?? "");
     }
-  }, [
-    editing,
-    deck.image,
-    editImageFile,
-  ]);
+  }, [editing, deck.image, editImageFile]);
 
   const openModal = () => {
     if (addMode) {
@@ -384,9 +314,7 @@ function DeckCard({
       return;
     }
 
-    const next = new URLSearchParams(
-      searchParams,
-    );
+    const next = new URLSearchParams(searchParams);
 
     next.set("deck", deckKey);
 
@@ -394,20 +322,14 @@ function DeckCard({
   };
 
   const closeModal = () => {
-    if (
-      editSavingLocal ||
-      editSaving
-    ) {
+    if (editSavingLocal || editSaving) {
       return;
     }
 
     if (addMode) {
       setOpen(false);
 
-      if (
-        typeof onComplete ===
-        "function"
-      ) {
+      if (typeof onComplete === "function") {
         onComplete(null);
       }
 
@@ -424,13 +346,9 @@ function DeckCard({
       return;
     }
 
-    const next = new URLSearchParams(
-      searchParams,
-    );
+    const next = new URLSearchParams(searchParams);
 
-    if (
-      next.get("deck") === deckKey
-    ) {
+    if (next.get("deck") === deckKey) {
       next.delete("deck");
       setSearchParams(next);
     }
@@ -438,11 +356,13 @@ function DeckCard({
 
   const resetEditImageState = () => {
     setEditImageFile(null);
-    setEditImagePreview(
-      deck.image ?? "",
-    );
+
+    setEditImagePreview(deck.image ?? "");
+
     setEditImgError(false);
   };
+
+  const isSaving = editSavingLocal || editSaving;
 
   const startEditing = () => {
     if (!isAdmin || isSaving) {
@@ -450,18 +370,15 @@ function DeckCard({
     }
 
     setEditImageFile(null);
-    setEditImagePreview(
-      deck.image ?? "",
-    );
+
+    setEditImagePreview(deck.image ?? "");
+
     setEditImgError(false);
     setEditing(true);
   };
 
   const cancelEditing = () => {
-    if (
-      editSavingLocal ||
-      editSaving
-    ) {
+    if (editSavingLocal || editSaving) {
       return;
     }
 
@@ -469,221 +386,178 @@ function DeckCard({
     setEditing(false);
   };
 
-  const handleEditImageFileChange = (
-    event,
-  ) => {
-    const file =
-      event.target.files?.[0] ||
-      null;
+  const handleEditImageFileChange = (event) => {
+    const file = event.target.files?.[0] || null;
 
     setEditImgError(false);
 
     if (!file) {
       setEditImageFile(null);
-      setEditImagePreview(
-        deck.image ?? "",
-      );
+
+      setEditImagePreview(deck.image ?? "");
+
       return;
     }
 
-    if (
-      !file.type.startsWith(
-        "image/",
-      )
-    ) {
+    if (!file.type.startsWith("image/")) {
       event.target.value = "";
+
       setEditImageFile(null);
-      setEditImagePreview(
-        deck.image ?? "",
-      );
+
+      setEditImagePreview(deck.image ?? "");
+
       return;
     }
 
-    const previewUrl =
-      URL.createObjectURL(file);
+    const previewUrl = URL.createObjectURL(file);
 
     setEditImageFile(file);
-    setEditImagePreview(
-      previewUrl,
-    );
+    setEditImagePreview(previewUrl);
   };
 
   const handleEditSave = async () => {
-    if (
-      !editModalRef.current?.save
-    ) {
-      console.error(
-        "EditDeckModal save method is unavailable.",
-      );
+    if (!editModalRef.current?.save) {
+      console.error("EditDeckModal save method is unavailable.");
+
       return;
     }
 
     try {
       await editModalRef.current.save();
     } catch (error) {
-      console.error(
-        "Unable to save deck:",
-        error,
-      );
+      console.error("Unable to save deck:", error);
     }
   };
 
   const handleDelete = () => {
-    if (
-      typeof onDelete === "function"
-    ) {
+    if (typeof onDelete === "function") {
       onDelete(deck);
     }
   };
 
+  /*
+   * SHARE DECK
+   *
+   * This function can only be reached from
+   * a normal non-dashboard deck card because
+   * the Share Deck button is hidden whenever
+   * isAdmin === true.
+   */
   const handleShare = async () => {
-  if (!deckKey) {
-    return;
-  }
+    if (isAdmin) {
+      return;
+    }
 
-  const resolvedProfileSlug = String(
-    profileSlug ||
-      deck.profile_slug ||
-      deck.profileSlug ||
-      "",
-  ).trim();
+    if (!deckKey) {
+      return;
+    }
 
-  const resolvedProfileIsPublic =
-    profileIsPublic !== null &&
-    profileIsPublic !== undefined
-      ? profileIsPublic === true
-      : deck.is_public === true ||
-        deck.profile_is_public === true ||
-        deck.profileIsPublic === true;
+    const resolvedProfileSlug = String(
+      profileSlug || deck.profile_slug || deck.profileSlug || "",
+    ).trim();
 
-  let shareUrl;
+    const resolvedProfileIsPublic =
+      profileIsPublic !== null && profileIsPublic !== undefined
+        ? profileIsPublic === true
+        : deck.is_public === true ||
+          deck.profile_is_public === true ||
+          deck.profileIsPublic === true;
 
-  if (resolvedProfileIsPublic && resolvedProfileSlug) {
-    // Public profile:
-    // Open the normal user decklists page with the deck modal open.
-    shareUrl = new URL(
-      `/profile/${encodeURIComponent(
-        resolvedProfileSlug,
-      )}/decklists`,
-      window.location.origin,
-    );
+    let shareUrl;
 
-    shareUrl.searchParams.set("deck", deckKey);
-  } else if (resolvedProfileSlug) {
-    // Private profile:
-    // Open the standalone deck page tied to this user's profile.
-    shareUrl = new URL(
-      `/deck/${encodeURIComponent(
-        resolvedProfileSlug,
-      )}/${encodeURIComponent(deckKey)}`,
-      window.location.origin,
-    );
-  } else {
-    // Safety fallback if the profile slug wasn't supplied.
-    console.error(
-      "Unable to create deck share link: profile slug is missing.",
-    );
-    return;
-  }
+    if (resolvedProfileIsPublic && resolvedProfileSlug) {
+      /*
+       * Public profile:
+       * Open the user's normal decklists page
+       * with the selected deck modal open.
+       */
+      shareUrl = new URL(
+        `/profile/${encodeURIComponent(resolvedProfileSlug)}/decklists`,
+        window.location.origin,
+      );
 
-  try {
-    await navigator.clipboard.writeText(
-      shareUrl.toString(),
-    );
+      shareUrl.searchParams.set("deck", deckKey);
+    } else if (resolvedProfileSlug) {
+      /*
+       * Private profile:
+       * Open the standalone deck page.
+       */
+      shareUrl = new URL(
+        `/deck/${encodeURIComponent(resolvedProfileSlug)}/${encodeURIComponent(
+          deckKey,
+        )}`,
+        window.location.origin,
+      );
+    } else {
+      console.error(
+        "Unable to create deck share link: profile slug is missing.",
+      );
 
-    setCopied(true);
+      return;
+    }
 
-    window.setTimeout(() => {
-      setCopied(false);
-    }, 2000);
-  } catch (error) {
-    console.error(
-      "Failed to copy link",
-      error,
-    );
-  }
-};
+    try {
+      await navigator.clipboard.writeText(shareUrl.toString());
+
+      setCopied(true);
+
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to copy link", error);
+    }
+  };
 
   const handleDownload = async () => {
-    const imageUrl = getImageUrl(
-      deck.image,
-    );
+    const imageUrl = getImageUrl(deck.image);
 
     if (!imageUrl) {
       return;
     }
 
     try {
-      const response = await fetch(
-        imageUrl,
-        {
-          mode: "cors",
-        },
-      );
+      const response = await fetch(imageUrl, {
+        mode: "cors",
+      });
 
       if (!response.ok) {
-        throw new Error(
-          "Image fetch failed",
-        );
+        throw new Error("Image fetch failed");
       }
 
-      const blob =
-        await response.blob();
+      const blob = await response.blob();
 
-      const blobUrl =
-        URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
 
-      const link =
-        document.createElement("a");
+      const link = document.createElement("a");
 
       link.href = blobUrl;
 
-      link.download = `${deck.name || "decklist"}.png`.replace(
-        /\s+/g,
-        "_",
-      );
+      link.download = `${deck.name || "decklist"}.png`.replace(/\s+/g, "_");
 
-      document.body.appendChild(
-        link,
-      );
+      document.body.appendChild(link);
 
       link.click();
 
       link.remove();
 
-      URL.revokeObjectURL(
-        blobUrl,
-      );
+      URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      console.error(
-        "Direct download blocked, opening image instead",
-        error,
-      );
+      console.error("Direct download blocked, opening image instead", error);
 
-      window.open(
-        imageUrl,
-        "_blank",
-        "noopener,noreferrer",
-      );
+      window.open(imageUrl, "_blank", "noopener,noreferrer");
     }
   };
 
-  const handleAddComplete = (
-    result,
-  ) => {
+  const handleAddComplete = (result) => {
     setOpen(false);
 
-    if (
-      typeof onComplete ===
-      "function"
-    ) {
+    if (typeof onComplete === "function") {
       onComplete(result);
     }
   };
 
-  const handleEditComplete = (
-    result,
-  ) => {
+  const handleEditComplete = (result) => {
     if (!result) {
       return;
     }
@@ -703,27 +577,16 @@ function DeckCard({
         allCards={allCards}
         onAdd={onAdd}
         onClose={closeModal}
-        onComplete={
-          handleAddComplete
-        }
+        onComplete={handleAddComplete}
       />
     );
   }
 
-  const isSaving =
-    editSavingLocal ||
-    editSaving;
-
-  const editImage =
-    getImageUrl(
-      editImagePreview,
-    );
+  const editImage = getImageUrl(editImagePreview);
 
   return (
     <>
-      <div
-        className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}
-      >
+      <div className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}>
         <div
           className="deck-card-image-only"
           onClick={openModal}
@@ -731,22 +594,14 @@ function DeckCard({
             cursor: "pointer",
           }}
         >
-          {deckImage &&
-          !imgError ? (
+          {deckImage && !imgError ? (
             <img
               src={deckImage}
-              alt={
-                deck.name ||
-                "Deck image"
-              }
-              onError={() =>
-                setImgError(true)
-              }
+              alt={deck.name || "Deck image"}
+              onError={() => setImgError(true)}
             />
           ) : (
-            <div className="deck-image-placeholder">
-              No image
-            </div>
+            <div className="deck-image-placeholder">No image</div>
           )}
 
           <button
@@ -756,39 +611,29 @@ function DeckCard({
               event.stopPropagation();
               openModal();
             }}
-            aria-label={`View details for ${
-              deck.name || "deck"
-            }`}
+            aria-label={`View details for ${deck.name || "deck"}`}
           >
             View Details
           </button>
         </div>
 
         <div className="deck-listing-info">
-          <h3>
-            {deck.name ||
-              "Untitled Deck"}
-          </h3>
+          <h3>{deck.name || "Untitled Deck"}</h3>
 
           <p>
-            <span>Hero:</span>{" "}
-            {deck.hero || "-"}
+            <span>Hero:</span> {deck.hero || "-"}
           </p>
 
           <p>
-            <span>Category:</span>{" "}
-            {deck.category || "-"}
+            <span>Category:</span> {deck.category || "-"}
           </p>
 
           <p>
-            <span>Archetype:</span>{" "}
-            {deck.archetype || "-"}
+            <span>Archetype:</span> {deck.archetype || "-"}
           </p>
 
           <p>
-            <span>Cost:</span>{" "}
-            {deck.cost || "-"}
-
+            <span>Cost:</span> {deck.cost || "-"}
             <img
               src="https://i.ibb.co/jZkdqf6y/spark.webp"
               alt="Spark icon"
@@ -796,28 +641,17 @@ function DeckCard({
             />
           </p>
 
-          {hasValue(
-            deck.creator,
-          ) && (
+          {hasValue(deck.creator) && (
             <p className="creator-field">
-              <span className="field-label">
-                Creator:
-              </span>
+              <span className="field-label">Creator:</span>
 
-              <span className="creator-value">
-                {deck.creator}
-              </span>
+              <span className="creator-value">{deck.creator}</span>
             </p>
           )}
 
-          {hasValue(
-            deck.optimization,
-          ) && (
+          {hasValue(deck.optimization) && (
             <p>
-              <span>
-                Optimized by:
-              </span>{" "}
-              {deck.optimization}
+              <span>Optimized by:</span> {deck.optimization}
             </p>
           )}
         </div>
@@ -826,14 +660,8 @@ function DeckCard({
       {open && (
         <div
           className="modal-overlay"
-          onMouseDown={(
-            event,
-          ) => {
-            if (
-              event.target ===
-                event.currentTarget &&
-              !isSaving
-            ) {
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !isSaving) {
               closeModal();
             }
           }}
@@ -843,20 +671,10 @@ function DeckCard({
             className="modal"
             aria-label={
               editing
-                ? `Edit ${
-                    deck.name ||
-                    "deck"
-                  }`
-                : `Details for ${
-                    deck.name ||
-                    "deck"
-                  }`
+                ? `Edit ${deck.name || "deck"}`
+                : `Details for ${deck.name || "deck"}`
             }
-            onMouseDown={(
-              event,
-            ) =>
-              event.stopPropagation()
-            }
+            onMouseDown={(event) => event.stopPropagation()}
           >
             <button
               type="button"
@@ -873,191 +691,111 @@ function DeckCard({
                 <div className="modal-image">
                   {editing ? (
                     <>
-                      {editImage &&
-                      !editImgError ? (
+                      {editImage && !editImgError ? (
                         <img
                           src={editImage}
-                          alt={
-                            deck.name ||
-                            "Deck image"
-                          }
-                          onError={() =>
-                            setEditImgError(
-                              true,
-                            )
-                          }
+                          alt={deck.name || "Deck image"}
+                          onError={() => setEditImgError(true)}
                         />
                       ) : (
-                        <div className="deck-image-placeholder">
-                          No image
-                        </div>
+                        <div className="deck-image-placeholder">No image</div>
                       )}
 
                       <label className="admin-modal-field">
-                        <span>
-                          Upload Image
-                        </span>
+                        <span>Upload Image</span>
 
                         <input
                           type="file"
                           accept="image/jpeg,image/png,image/webp,image/gif"
-                          onChange={
-                            handleEditImageFileChange
-                          }
-                          disabled={
-                            isSaving
-                          }
+                          onChange={handleEditImageFileChange}
+                          disabled={isSaving}
                         />
                       </label>
                     </>
-                  ) : deckImage &&
-                    !imgError ? (
+                  ) : deckImage && !imgError ? (
                     <img
                       src={deckImage}
-                      alt={
-                        deck.name ||
-                        "Deck image"
-                      }
-                      onError={() =>
-                        setImgError(
-                          true,
-                        )
-                      }
+                      alt={deck.name || "Deck image"}
+                      onError={() => setImgError(true)}
                     />
                   ) : (
-                    <div className="deck-image-placeholder">
-                      No image
-                    </div>
+                    <div className="deck-image-placeholder">No image</div>
                   )}
 
                   {!editing &&
-                    (hasValue(
-                      deck.creator,
-                    ) ||
-                      hasValue(
-                        deck.optimization,
-                      ) ||
-                      hasValue(
-                        deck.inspiration,
-                      ) ||
-                      hasValue(
-                        deck.suggested_date,
-                      ) ||
-                      hasValue(
-                        deck.updated_date,
-                      )) && (
+                    (hasValue(deck.creator) ||
+                      hasValue(deck.optimization) ||
+                      hasValue(deck.inspiration) ||
+                      hasValue(deck.suggested_date) ||
+                      hasValue(deck.updated_date)) && (
                       <div className="image-meta">
-                        {(hasValue(
-                          deck.creator,
-                        ) ||
-                          hasValue(
-                            deck.optimization,
-                          ) ||
-                          hasValue(
-                            deck.inspiration,
-                          )) && (
+                        {(hasValue(deck.creator) ||
+                          hasValue(deck.optimization) ||
+                          hasValue(deck.inspiration)) && (
                           <p>
-                            {hasValue(
-                              deck.creator,
-                            ) && (
+                            {hasValue(deck.creator) && (
                               <>
-                                Created by{" "}
-                                <span>
-                                  {
-                                    deck.creator
-                                  }
-                                </span>
+                                Created by <span>{deck.creator}</span>
                               </>
                             )}
 
-                            {hasValue(
-                              deck.optimization,
-                            ) && (
+                            {hasValue(deck.optimization) && (
                               <>
-                                {hasValue(
-                                  deck.creator,
-                                )
-                                  ? ", "
-                                  : ""}
-                                Optimized by{" "}
-                                <span>
-                                  {
-                                    deck.optimization
-                                  }
-                                </span>
+                                {hasValue(deck.creator) ? ", " : ""}
+                                Optimized by <span>{deck.optimization}</span>
                               </>
                             )}
 
-                            {hasValue(
-                              deck.inspiration,
-                            ) && (
+                            {hasValue(deck.inspiration) && (
                               <>
-                                {hasValue(
-                                  deck.creator,
-                                ) ||
-                                hasValue(
-                                  deck.optimization,
-                                )
+                                {hasValue(deck.creator) ||
+                                hasValue(deck.optimization)
                                   ? ", "
                                   : ""}
-                                Inspired by{" "}
-                                <span>
-                                  {
-                                    deck.inspiration
-                                  }
-                                </span>
+                                Inspired by <span>{deck.inspiration}</span>
                               </>
                             )}
                           </p>
                         )}
 
-                        {hasValue(
-                          deck.suggested_date,
-                        ) && (
-                          <p>
-                            Suggested on{" "}
-                            {
-                              deck.suggested_date
-                            }
-                          </p>
+                        {hasValue(deck.suggested_date) && (
+                          <p>Suggested on {deck.suggested_date}</p>
                         )}
 
-                        {hasValue(
-                          deck.updated_date,
-                        ) && (
-                          <p>
-                            Updated on{" "}
-                            {
-                              deck.updated_date
-                            }
-                          </p>
+                        {hasValue(deck.updated_date) && (
+                          <p>Updated on {deck.updated_date}</p>
                         )}
                       </div>
                     )}
 
                   {!editing && (
                     <div className="modal-actions">
-                      <button
-                        type="button"
-                        className="share-btn"
-                        onClick={
-                          handleShare
-                        }
-                      >
-                        {copied
-                          ? "Link Copied!"
-                          : "Share Deck"}
-                      </button>
+                      {/*
+                       * SHARE IS ONLY AVAILABLE
+                       * OUTSIDE USER/ADMIN DASHBOARDS.
+                       *
+                       * isAdmin is true for both:
+                       * - User deck management dashboard
+                       * - Admin dashboard
+                       *
+                       * Therefore Share Deck will NOT
+                       * render in either dashboard.
+                       */}
+                      {!isAdmin && (
+                        <button
+                          type="button"
+                          className="share-btn"
+                          onClick={handleShare}
+                        >
+                          {copied ? "Link Copied!" : "Share Deck"}
+                        </button>
+                      )}
 
-                      {hasValue(
-                        deck.image,
-                      ) && (
+                      {hasValue(deck.image) && (
                         <button
                           type="button"
                           className="download-btn"
-                          onClick={
-                            handleDownload
-                          }
+                          onClick={handleDownload}
                         >
                           Download Decklist
                         </button>
@@ -1072,12 +810,8 @@ function DeckCard({
                           <button
                             type="button"
                             className="admin-modal-edit"
-                            onClick={
-                              startEditing
-                            }
-                            disabled={
-                              isSaving
-                            }
+                            onClick={startEditing}
+                            disabled={isSaving}
                           >
                             Edit Deck
                           </button>
@@ -1085,12 +819,8 @@ function DeckCard({
                           <button
                             type="button"
                             className="admin-modal-delete"
-                            onClick={
-                              handleDelete
-                            }
-                            disabled={
-                              isSaving
-                            }
+                            onClick={handleDelete}
+                            disabled={isSaving}
                           >
                             Delete Deck
                           </button>
@@ -1100,12 +830,8 @@ function DeckCard({
                           <button
                             type="button"
                             className="admin-modal-edit"
-                            onClick={
-                              cancelEditing
-                            }
-                            disabled={
-                              isSaving
-                            }
+                            onClick={cancelEditing}
+                            disabled={isSaving}
                           >
                             Cancel
                           </button>
@@ -1113,16 +839,10 @@ function DeckCard({
                           <button
                             type="button"
                             className="admin-modal-save"
-                            onClick={
-                              handleEditSave
-                            }
-                            disabled={
-                              isSaving
-                            }
+                            onClick={handleEditSave}
+                            disabled={isSaving}
                           >
-                            {isSaving
-                              ? "Saving..."
-                              : "Save Changes"}
+                            {isSaving ? "Saving..." : "Save Changes"}
                           </button>
                         </>
                       )}
@@ -1137,62 +857,38 @@ function DeckCard({
                       deck={deck}
                       allCards={allCards}
                       onSave={onSave}
-                      onComplete={
-                        handleEditComplete
-                      }
-                      imageFile={
-                        editImageFile
-                      }
-                      imageUrl={
-                        editImagePreview
-                      }
-                      onSavingChange={
-                        setEditSavingLocal
-                      }
+                      onComplete={handleEditComplete}
+                      imageFile={editImageFile}
+                      imageUrl={editImagePreview}
+                      onSavingChange={setEditSavingLocal}
                     />
                   ) : (
                     <>
                       <div className="modal-header">
                         <div className="modal-title-content">
                           <h2 className="modal-title">
-                            {deck.name ||
-                              "Untitled Deck"}
+                            {deck.name || "Untitled Deck"}
                           </h2>
 
                           <span className="deck-hero">
-                            {deck.hero ||
-                              "Unknown Hero"}
+                            {deck.hero || "Unknown Hero"}
                           </span>
                         </div>
                       </div>
 
                       <section className="modal-section description-section">
-                        <h3>
-                          Description
-                        </h3>
+                        <h3>Description</h3>
 
-                        <p className="description">
-                          {
-                            description
-                          }
-                        </p>
+                        <p className="description">{description}</p>
                       </section>
 
                       <section className="modal-metadata">
-                        {hasValue(
-                          toExternalUrl(
-                            deck.deck_doc,
-                          ),
-                        ) && (
+                        {hasValue(toExternalUrl(deck.deck_doc)) && (
                           <div className="metadata-item">
-                            <span className="label">
-                              Deck Tutorial
-                            </span>
+                            <span className="label">Deck Tutorial</span>
 
                             <a
-                              href={toExternalUrl(
-                                deck.deck_doc,
-                              )}
+                              href={toExternalUrl(deck.deck_doc)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="deck-doc-link"
@@ -1203,35 +899,22 @@ function DeckCard({
                         )}
 
                         <div className="metadata-item">
-                          <span className="label">
-                            Category
-                          </span>
+                          <span className="label">Category</span>
 
-                          <span className="value">
-                            {deck.category ||
-                              "-"}
-                          </span>
+                          <span className="value">{deck.category || "-"}</span>
                         </div>
 
                         <div className="metadata-item">
-                          <span className="label">
-                            Archetype
-                          </span>
+                          <span className="label">Archetype</span>
 
-                          <span className="value">
-                            {deck.archetype ||
-                              "-"}
-                          </span>
+                          <span className="value">{deck.archetype || "-"}</span>
                         </div>
 
                         <div className="metadata-item cost-item">
-                          <span className="label">
-                            Cost
-                          </span>
+                          <span className="label">Cost</span>
 
                           <span className="cost-value">
-                            {deck.cost ||
-                              "-"}
+                            {deck.cost || "-"}
 
                             <img
                               src="https://i.ibb.co/jZkdqf6y/spark.webp"
@@ -1244,18 +927,11 @@ function DeckCard({
 
                       {isAdmin && (
                         <section className="modal-section admin-cards-section">
-                          <h3>
-                            Cards
-                          </h3>
+                          <h3>Cards</h3>
 
                           <div className="admin-cards-value">
-                            {hasValue(
-                              deck.cards,
-                            )
-                              ? formatCardsDisplay(
-                                  deck.cards,
-                                ) ||
-                                deck.cards
+                            {hasValue(deck.cards)
+                              ? formatCardsDisplay(deck.cards) || deck.cards
                               : "No cards listed."}
                           </div>
                         </section>
