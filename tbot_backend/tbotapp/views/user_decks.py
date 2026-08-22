@@ -415,12 +415,29 @@ def user_deck_delete(request, deck_id):
 
 
 @api_view(["GET"])
-def shared_user_deck(request, deck_id):
+def shared_user_deck(request, profile_slug, deck_id):
     try:
+        profile = (
+            UserProfile.objects
+            .filter(
+                profile_slug=profile_slug,
+            )
+            .first()
+        )
+
+        if not profile:
+            return Response(
+                {
+                    "error": "Profile not found.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         deck = (
             UserDeck.objects
             .filter(
                 id=deck_id,
+                profile_id=profile.id,
             )
             .first()
         )
@@ -429,22 +446,6 @@ def shared_user_deck(request, deck_id):
             return Response(
                 {
                     "error": "Shared deck not found.",
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        profile = (
-            UserProfile.objects
-            .filter(
-                id=deck.profile_id,
-            )
-            .first()
-        )
-
-        if not profile:
-            return Response(
-                {
-                    "error": "Deck owner profile not found.",
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )

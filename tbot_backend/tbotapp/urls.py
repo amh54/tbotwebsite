@@ -229,8 +229,8 @@ urlpatterns = [
         name="user_deck_delete",
     ),
     path(
-        "user-decks/shared/<int:deck_id>/",
-        shared_user_deck,
-        name="shared_user_deck",
-    ),
+    "user-decks/shared/<str:profile_slug>/<int:deck_id>/",
+    shared_user_deck,
+    name="shared_user_deck",
+),
 ]

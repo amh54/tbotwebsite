@@ -44,15 +44,6 @@ const API_BASE_URL = getApiBaseUrl();
 const normalizeText = (value) =>
   String(value ?? "").trim();
 
-const getDeckId = (deck) =>
-  String(
-    deck?.deckid ??
-      deck?.deckID ??
-      deck?.deckId ??
-      deck?.id ??
-      "",
-  ).trim();
-
 function StandaloneDeckPage() {
   const {
     profile_slug,
@@ -73,14 +64,23 @@ function StandaloneDeckPage() {
     };
   }, []);
 
+  /*
+   * Load ONLY the requested shared deck.
+   *
+   * This endpoint does not use the logged-in user's
+   * profile and does not return the owner's other decks.
+   *
+   * It also works when the owner's profile is private.
+   */
   useEffect(() => {
-    const controller =
-      new AbortController();
+    const controller = new AbortController();
 
     const loadDeck = async () => {
       try {
         setLoading(true);
         setError("");
+        setDeck(null);
+        setProfile(null);
 
         if (!profile_slug || !deckId) {
           throw new Error(
@@ -89,14 +89,21 @@ function StandaloneDeckPage() {
         }
 
         const response = await fetch(
-          `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(
+          `${API_BASE_URL}/tbotapp/user-decks/shared/${encodeURIComponent(
             profile_slug,
-          )}/decks/`,
+          )}/${encodeURIComponent(deckId)}/`,
           {
             method: "GET",
             headers: {
               Accept: "application/json",
             },
+            /*
+             * This endpoint does NOT require authentication.
+             *
+             * credentials are harmless here and can remain
+             * enabled if your project uses session cookies
+             * elsewhere.
+             */
             credentials: "include",
             signal: controller.signal,
           },
@@ -114,34 +121,17 @@ function StandaloneDeckPage() {
           );
         }
 
-        const returnedDecks =
-          Array.isArray(data?.decks)
-            ? data.decks
-            : [];
-
-        const requestedDeckId =
-          String(deckId).trim();
-
-        const matchedDeck =
-          returnedDecks.find(
-            (item) =>
-              getDeckId(item) ===
-              requestedDeckId,
-          );
-
-        if (!matchedDeck) {
+        if (!data?.deck) {
           throw new Error(
             "That deck could not be found.",
           );
         }
 
-        setProfile({
-          ...(data?.profile || {}),
-          is_owner:
-            data?.is_owner === true,
-        });
+        setDeck(data.deck);
 
-        setDeck(matchedDeck);
+        setProfile({
+          ...(data.profile || {}),
+        });
       } catch (err) {
         if (
           err.name !== "AbortError"
@@ -171,9 +161,14 @@ function StandaloneDeckPage() {
       controller.abort();
   }, [profile_slug, deckId]);
 
+  /*
+   * Load card information separately.
+   *
+   * This is public information and is only used so
+   * DeckCard can display the deck properly.
+   */
   useEffect(() => {
-    const controller =
-      new AbortController();
+    const controller = new AbortController();
 
     const fetchCards = async () => {
       try {
