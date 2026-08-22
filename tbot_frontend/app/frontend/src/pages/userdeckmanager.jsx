@@ -90,13 +90,34 @@ const normalizeText = (value) => String(value ?? "").trim();
 const normalizeKey = (value) => normalizeText(value).toLowerCase();
 
 const getCookie = (name) => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
   const cookies = document.cookie.split(";");
 
   for (const cookie of cookies) {
-    const [key, ...valueParts] = cookie.trim().split("=");
+    const trimmed = cookie.trim();
+
+    if (!trimmed) {
+      continue;
+    }
+
+    const separatorIndex = trimmed.indexOf("=");
+
+    if (separatorIndex === -1) {
+      continue;
+    }
+
+    const key = trimmed.slice(0, separatorIndex);
+    const value = trimmed.slice(separatorIndex + 1);
 
     if (key === name) {
-      return decodeURIComponent(valueParts.join("="));
+      try {
+        return decodeURIComponent(value);
+      } catch {
+        return value;
+      }
     }
   }
 
@@ -104,29 +125,44 @@ const getCookie = (name) => {
 };
 
 const ensureCsrfToken = async () => {
-  let csrfToken = getCookie("csrftoken");
+  const existingToken = getCookie("csrftoken");
 
-  if (csrfToken) {
-    return csrfToken;
+  if (existingToken) {
+    return existingToken;
   }
 
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
+  const response = await fetch(
+    `${API_BASE_URL}/tbotapp/csrf/`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
     },
-  });
+  );
+
+  const responseText = await response.text();
+
+  let data = null;
+
+  try {
+    data = responseText
+      ? JSON.parse(responseText)
+      : null;
+  } catch {
+    data = null;
+  }
 
   if (!response.ok) {
     throw new Error(
-      "Unable to initialize CSRF protection. Please refresh the page.",
+      data?.detail ||
+        data?.error ||
+        `Unable to initialize CSRF protection (${response.status}).`,
     );
   }
 
-  const data = await response.json();
-
-  csrfToken =
+  const csrfToken =
     data?.csrfToken ||
     data?.csrf_token ||
     getCookie("csrftoken");
@@ -214,13 +250,6 @@ function UserDeckManager() {
       document.title = "Tbot";
     };
   }, []);
-
-  useEffect(() => {
-    ensureCsrfToken().catch((err) => {
-      console.error("Unable to initialize CSRF:", err);
-    });
-  }, []);
-
   useEffect(() => {
     const controller = new AbortController();
 
