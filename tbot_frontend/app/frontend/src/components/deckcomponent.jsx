@@ -19,6 +19,7 @@ const HERO_COLORS = {
   "Solar Flare": ["red", "yellow"],
   Spudow: ["red", "brown"],
   "Wall-Knight": ["brown", "yellow"],
+
   "Brain Freeze": ["black", "blue"],
   "Electric Boogaloo": ["blue", "purple"],
   "Huge-Gigantacus": ["pink", "black"],
@@ -149,6 +150,7 @@ const toExternalUrl = (value) => {
   }
 
   const markdownMatch = /\((https?:\/\/[^)]+)\)/i.exec(raw);
+
   const inlineUrlMatch = /https?:\/\/\S+/i.exec(raw);
 
   let candidate = (markdownMatch?.[1] || inlineUrlMatch?.[0] || raw)
@@ -187,7 +189,9 @@ const parseCardRatioLines = (value) =>
     .filter(Boolean)
     .map((line) => {
       const [namePart, countPart] = line.split("|");
+
       const name = String(namePart || "").trim();
+
       const parsedCount = Number(countPart);
 
       const count =
@@ -214,17 +218,26 @@ const formatCardsDisplay = (value) => {
 
 function DeckCard({
   decklist,
+
   admin = false,
   adminMode = false,
   addMode = false,
+
   onDelete,
   onSave,
   onAdd,
   onComplete,
+
   editSaving = false,
+
   allCards = [],
+
   profileSlug = "",
   profileIsPublic = null,
+
+  // NEW:
+  // Used by the standalone deck page.
+  autoOpen = false,
 }) {
   const deck = decklist ?? {};
 
@@ -238,13 +251,20 @@ function DeckCard({
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [open, setOpen] = useState(addMode);
+  const [open, setOpen] = useState(addMode || autoOpen);
+
   const [editing, setEditing] = useState(false);
+
   const [imgError, setImgError] = useState(false);
+
   const [copied, setCopied] = useState(false);
+
   const [editImageFile, setEditImageFile] = useState(null);
+
   const [editImagePreview, setEditImagePreview] = useState("");
+
   const [editImgError, setEditImgError] = useState(false);
+
   const [editSavingLocal, setEditSavingLocal] = useState(false);
 
   const editModalRef = useRef(null);
@@ -257,8 +277,15 @@ function DeckCard({
 
   const ownerName = getOwnerName(deck);
 
+  /*
+   * OPEN MODAL FROM:
+   *
+   * 1. addMode
+   * 2. autoOpen
+   * 3. ?deck=123
+   */
   useEffect(() => {
-    if (addMode) {
+    if (addMode || autoOpen) {
       setOpen(true);
       return;
     }
@@ -270,7 +297,7 @@ function DeckCard({
     if (searchParams.get("deck") === deckKey) {
       setOpen(true);
     }
-  }, [searchParams, deckKey, addMode]);
+  }, [searchParams, deckKey, addMode, autoOpen]);
 
   useEffect(() => {
     if (!open) {
@@ -324,12 +351,22 @@ function DeckCard({
     setOpen(true);
     setEditing(false);
 
+    /*
+     * Do NOT modify the URL for standalone
+     * pages.
+     */
+    if (autoOpen) {
+      return;
+    }
+
     if (!deckKey) {
       return;
     }
 
     const next = new URLSearchParams(searchParams);
+
     next.set("deck", deckKey);
+
     setSearchParams(next);
   };
 
@@ -350,9 +387,18 @@ function DeckCard({
 
     setOpen(false);
     setEditing(false);
+
     setEditImageFile(null);
     setEditImagePreview("");
     setEditImgError(false);
+
+    /*
+     * Standalone page:
+     * closing the modal does NOT navigate away.
+     */
+    if (autoOpen) {
+      return;
+    }
 
     if (!deckKey) {
       return;
@@ -362,6 +408,7 @@ function DeckCard({
 
     if (next.get("deck") === deckKey) {
       next.delete("deck");
+
       setSearchParams(next);
     }
   };
@@ -382,6 +429,7 @@ function DeckCard({
     setEditImageFile(null);
     setEditImagePreview(deck.image ?? "");
     setEditImgError(false);
+
     setEditing(true);
   };
 
@@ -468,9 +516,9 @@ function DeckCard({
       shareUrl.searchParams.set("deck", deckKey);
     } else if (resolvedProfileSlug) {
       shareUrl = new URL(
-        `/deck/${encodeURIComponent(
-          resolvedProfileSlug,
-        )}/${encodeURIComponent(deckKey)}`,
+        `/deck/${encodeURIComponent(resolvedProfileSlug)}/${encodeURIComponent(
+          deckKey,
+        )}`,
         window.location.origin,
       );
     } else {
@@ -510,14 +558,19 @@ function DeckCard({
       }
 
       const blob = await response.blob();
+
       const blobUrl = URL.createObjectURL(blob);
+
       const link = document.createElement("a");
 
       link.href = blobUrl;
+
       link.download = `${deck.name || "decklist"}.png`.replace(/\s+/g, "_");
 
       document.body.appendChild(link);
+
       link.click();
+
       link.remove();
 
       URL.revokeObjectURL(blobUrl);
@@ -872,11 +925,13 @@ function DeckCard({
 
                         <div className="metadata-item">
                           <span className="label">Category</span>
+
                           <span className="value">{deck.category || "-"}</span>
                         </div>
 
                         <div className="metadata-item">
                           <span className="label">Archetype</span>
+
                           <span className="value">{deck.archetype || "-"}</span>
                         </div>
 
@@ -897,6 +952,7 @@ function DeckCard({
                         {isAdmin && hasValue(ownerName) && (
                           <div className="metadata-item">
                             <span className="label">Owner</span>
+
                             <span className="value">{ownerName}</span>
                           </div>
                         )}

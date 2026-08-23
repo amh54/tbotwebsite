@@ -5,21 +5,15 @@ import { useParams } from "react-router-dom";
 import DeckCard from "../components/deckcomponent";
 
 import Navbar from "../components/navbar";
-
 import Footer from "../components/footer";
 
 import "../css/decklists.css";
-
 import "../css/navbar.css";
-
 import "../css/loading.css";
-
 import "../css/userdecklists.css";
 
 const getApiBaseUrl = () => {
-  const envBaseUrl = String(
-    import.meta.env.VITE_API_BASE_URL || "",
-  ).trim();
+  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
 
   if (envBaseUrl) {
     return envBaseUrl.replace(/\/+$/, "");
@@ -28,10 +22,7 @@ const getApiBaseUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
 
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1"
-    ) {
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
       return "http://localhost:8000";
     }
   }
@@ -41,19 +32,19 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-const normalizeText = (value) =>
-  String(value ?? "").trim();
+const normalizeText = (value) => String(value ?? "").trim();
 
 function StandaloneDeckPage() {
-  const {
-    profile_slug,
-    deckId,
-  } = useParams();
+  const { profile_slug, deckId } = useParams();
 
   const [profile, setProfile] = useState(null);
+
   const [deck, setDeck] = useState(null);
+
   const [allCards, setAllCards] = useState([]);
+
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -65,12 +56,7 @@ function StandaloneDeckPage() {
   }, []);
 
   /*
-   * Load ONLY the requested shared deck.
-   *
-   * This endpoint does not use the logged-in user's
-   * profile and does not return the owner's other decks.
-   *
-   * It also works when the owner's profile is private.
+   * Load ONLY the requested deck.
    */
   useEffect(() => {
     const controller = new AbortController();
@@ -83,48 +69,33 @@ function StandaloneDeckPage() {
         setProfile(null);
 
         if (!profile_slug || !deckId) {
-          throw new Error(
-            "Invalid deck link.",
-          );
+          throw new Error("Invalid deck link.");
         }
 
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/user-decks/shared/${encodeURIComponent(
-            profile_slug,
-          )}/${encodeURIComponent(deckId)}/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            /*
-             * This endpoint does NOT require authentication.
-             *
-             * credentials are harmless here and can remain
-             * enabled if your project uses session cookies
-             * elsewhere.
-             */
-            credentials: "include",
-            signal: controller.signal,
-          },
-        );
+        const url =
+          `${API_BASE_URL}/tbotapp/user-decks/shared/` +
+          `${encodeURIComponent(profile_slug)}/` +
+          `${encodeURIComponent(deckId)}/`;
 
-        const data =
-          await response.json().catch(
-            () => null,
-          );
+        console.log("Loading shared deck:", url);
+
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          credentials: "include",
+          signal: controller.signal,
+        });
+
+        const data = await response.json().catch(() => null);
 
         if (!response.ok) {
-          throw new Error(
-            data?.error ||
-              "Unable to load this deck.",
-          );
+          throw new Error(data?.error || "Unable to load this deck.");
         }
 
         if (!data?.deck) {
-          throw new Error(
-            "That deck could not be found.",
-          );
+          throw new Error("That deck could not be found.");
         }
 
         setDeck(data.deck);
@@ -133,23 +104,13 @@ function StandaloneDeckPage() {
           ...(data.profile || {}),
         });
       } catch (err) {
-        if (
-          err.name !== "AbortError"
-        ) {
-          console.error(
-            "Unable to load standalone deck:",
-            err,
-          );
+        if (err.name !== "AbortError") {
+          console.error("Unable to load standalone deck:", err);
 
-          setError(
-            err.message ||
-              "Unable to load this deck.",
-          );
+          setError(err.message || "Unable to load this deck.");
         }
       } finally {
-        if (
-          !controller.signal.aborted
-        ) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       }
@@ -157,71 +118,52 @@ function StandaloneDeckPage() {
 
     loadDeck();
 
-    return () =>
-      controller.abort();
+    return () => controller.abort();
   }, [profile_slug, deckId]);
 
   /*
-   * Load card information separately.
-   *
-   * This is public information and is only used so
-   * DeckCard can display the deck properly.
+   * Load card information.
    */
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchCards = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/cardinfo/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
+        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
           },
-        );
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           return;
         }
 
-        const data =
-          await response.json();
+        const data = await response.json();
 
         setAllCards(
           Array.isArray(data)
             ? data
-            : Array.isArray(
-                data?.results,
-              )
-            ? data.results
-            : [],
+            : Array.isArray(data?.results)
+              ? data.results
+              : [],
         );
       } catch (err) {
-        if (
-          err.name !== "AbortError"
-        ) {
-          console.error(
-            "Unable to load card information:",
-            err,
-          );
+        if (err.name !== "AbortError") {
+          console.error("Unable to load card information:", err);
         }
       }
     };
 
     fetchCards();
 
-    return () =>
-      controller.abort();
+    return () => controller.abort();
   }, []);
 
   const profileName = useMemo(
-    () =>
-      profile?.display_name ||
-      profile?.username ||
-      "User",
+    () => profile?.display_name || profile?.username || "User",
     [profile],
   );
 
@@ -231,13 +173,9 @@ function StandaloneDeckPage() {
         <div className="loading-card">
           <div className="loading-spinner" />
 
-          <h2>
-            Loading deck
-          </h2>
+          <h2>Loading deck</h2>
 
-          <p>
-            Preparing this decklist.
-          </p>
+          <p>Preparing this decklist.</p>
         </div>
       </div>
     );
@@ -250,14 +188,9 @@ function StandaloneDeckPage() {
 
         <main className="deck-content">
           <div className="user-decklists-empty">
-            <h2>
-              Unable to load deck
-            </h2>
+            <h2>Unable to load deck</h2>
 
-            <p>
-              {error ||
-                "This deck could not be found."}
-            </p>
+            <p>{error || "This deck could not be found."}</p>
           </div>
         </main>
 
@@ -274,15 +207,9 @@ function StandaloneDeckPage() {
         <div className="user-decklists-header">
           <div className="user-decklists-profile">
             <div className="user-decklists-profile-info">
-              <h1>
-                {deck.name ||
-                  "Untitled Deck"}
-              </h1>
+              <h1>{deck.name || "Untitled Deck"}</h1>
 
-              <p>
-                Shared by{" "}
-                {profileName}
-              </p>
+              <p>Shared by {profileName}</p>
             </div>
           </div>
         </div>
@@ -291,15 +218,9 @@ function StandaloneDeckPage() {
           <DeckCard
             decklist={deck}
             allCards={allCards}
-            profileSlug={
-              normalizeText(
-                profile?.profile_slug,
-              ) ||
-              profile_slug
-            }
-            profileIsPublic={
-              profile?.is_public === true
-            }
+            profileSlug={normalizeText(profile?.profile_slug) || profile_slug}
+            profileIsPublic={profile?.is_public === true}
+            autoOpen={true}
           />
         </div>
       </main>
