@@ -147,7 +147,19 @@ def public_profiles(request):
         status=status.HTTP_200_OK,
     )
 
+@api_view(["GET"])
+def public_profile_count(request):
+    user_count = UserProfile.objects.filter(
+        is_public=True
+    ).count()
 
+    return Response(
+        {
+            "success": True,
+            "count": user_count,
+        },
+        status=status.HTTP_200_OK,
+    )
 @api_view(["GET"])
 def public_profile_decks(request, profile_slug):
     profile = get_object_or_404(

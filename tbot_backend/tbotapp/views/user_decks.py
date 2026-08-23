@@ -3,7 +3,7 @@ import logging
 import cloudinary.uploader
 
 from django.db import DatabaseError
-
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
@@ -116,7 +116,39 @@ def user_decks(request):
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+@api_view(["GET"])
+def public_profile_decks_count(request, profile_slug):
+    profile = get_object_or_404(
+        UserProfile,
+        profile_slug=profile_slug,
+    )
 
+    discord_user = get_discord_user(request)
+
+    is_owner = (
+        discord_user is not None
+        and str(discord_user["id"]) == str(profile.discord_id)
+    )
+
+    if not profile.is_public and not is_owner:
+        return Response(
+            {
+                "error": "This profile is private.",
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    deck_count = UserDeck.objects.filter(
+        profile_id=profile.id
+    ).count()
+
+    return Response(
+        {
+            "success": True,
+            "deck_count": deck_count,
+        },
+        status=status.HTTP_200_OK,
+    )
 
 @api_view(["POST"])
 @parser_classes([

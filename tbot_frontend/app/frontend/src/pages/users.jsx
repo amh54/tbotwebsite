@@ -3,10 +3,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Navbar from "../components/navbar";
+
 import Footer from "../components/footer";
 
 import "../css/users.css";
+
 import "../css/navbar.css";
+
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
@@ -72,6 +75,7 @@ const getDiscordAvatarUrl = (profile) => {
 
 function Users() {
   const [profiles, setProfiles] = useState([]);
+  const [totalUsers, setTotalUsers] = useState(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -84,8 +88,62 @@ function Users() {
     };
   }, []);
 
+  /*
+   * Load the public-user count separately.
+   *
+   * This is intentionally independent from the full profiles request
+   * so the loading screen can show the number of users before all
+   * profile data has finished loading.
+   */
   useEffect(() => {
     const controller = new AbortController();
+
+    const fetchUserCount = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/profiles/count/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `User count request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+
+        const count = Number(data?.count);
+
+        if (Number.isFinite(count)) {
+          setTotalUsers(count);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load public user count:", err);
+        }
+      }
+    };
+
+    fetchUserCount();
+
+    return () => controller.abort();
+  }, []);
+
+  /*
+   * Load the actual public profiles.
+   */
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadingStartTime = Date.now();
+    const minimumLoadingTime = 1200;
 
     const loadProfiles = async () => {
       try {
@@ -129,6 +187,30 @@ function Users() {
               : [];
 
         setProfiles(results);
+
+        /*
+         * The count endpoint is the authoritative count.
+         *
+         * Only use the returned profile length as a fallback if the
+         * separate count endpoint has not returned a valid value.
+         */
+        setTotalUsers((currentCount) => {
+          if (currentCount !== null) {
+            return currentCount;
+          }
+
+          return results.length;
+        });
+
+        const elapsed = Date.now() - loadingStartTime;
+
+        const remaining = Math.max(minimumLoadingTime - elapsed, 0);
+
+        window.setTimeout(() => {
+          if (!controller.signal.aborted) {
+            setLoading(false);
+          }
+        }, remaining);
       } catch (err) {
         if (err.name === "AbortError") {
           return;
@@ -137,10 +219,8 @@ function Users() {
         console.error("Unable to load public profiles:", err);
 
         setError(err.message || "Unable to load users right now.");
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
+
+        setLoading(false);
       }
     };
 
@@ -182,6 +262,7 @@ function Users() {
 
   /*
    * Search the already alphabetically sorted users.
+   *
    * Filtering does not change their alphabetical order.
    */
   const filteredProfiles = useMemo(() => {
@@ -218,6 +299,16 @@ function Users() {
           <h2>Loading users</h2>
 
           <p>Finding public Tbot profiles.</p>
+
+          <div className="loading-status">
+            <span>Loading user data</span>
+
+            <strong>
+              {totalUsers !== null
+                ? `${totalUsers} public users`
+                : "Loading..."}
+            </strong>
+          </div>
         </div>
       </div>
     );
@@ -249,7 +340,10 @@ function Users() {
         <div className="users-results-bar">
           <p>
             Showing <strong>{filteredProfiles.length}</strong> of{" "}
-            <strong>{profiles.length}</strong> public users
+            <strong>
+              {totalUsers !== null ? totalUsers : profiles.length}
+            </strong>{" "}
+            public users
           </p>
         </div>
 

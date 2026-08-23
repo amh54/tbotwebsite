@@ -122,9 +122,9 @@ const normalizeKey = (value) => normalizeText(value).toLowerCase();
 
 const parseDeckCards = (value) => {
   return String(value ?? "")
-    .replace(/\\\r\n/g, "\n")
-    .replace(/\\\n/g, "\n")
-    .replace(/\\\r/g, "\r")
+    .replace(/\\\\\r\n/g, "\n")
+    .replace(/\\\\\n/g, "\n")
+    .replace(/\\\\\r/g, "\r")
     .split(/\r?\n|,/)
     .map((card) => card.trim())
     .filter(Boolean);
@@ -164,7 +164,6 @@ const getAvatarUrl = (profile) => {
   }
 
   const avatar = normalizeText(profile.avatar);
-
   const discordId = normalizeText(profile.discord_id);
 
   if (!avatar) {
@@ -192,27 +191,20 @@ function UserDecklists() {
   const { profile_slug } = useParams();
 
   const [profile, setProfile] = useState(null);
-
   const [decks, setDecks] = useState([]);
-
+  const [deckCount, setDeckCount] = useState(null);
   const [allCards, setAllCards] = useState([]);
 
   const [search, setSearch] = useState("");
-
   const [side, setSide] = useState("All");
-
   const [hero, setHero] = useState([]);
-
   const [category, setCategory] = useState([]);
-
   const [archetype, setArchetype] = useState([]);
 
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
 
   const [avatarError, setAvatarError] = useState(false);
-
   const [profileLinkCopied, setProfileLinkCopied] = useState(false);
 
   useEffect(() => {
@@ -223,15 +215,81 @@ function UserDecklists() {
     };
   }, []);
 
+  /*
+   * Load the deck count separately.
+   *
+   * This request is intentionally separate from the full decklist request.
+   * That allows the loading screen to display:
+   *
+   *     Loading deck data
+   *     42 decks
+   *
+   * while the actual decklist data is still loading.
+   */
   useEffect(() => {
     const controller = new AbortController();
+
+    const loadDeckCount = async () => {
+      if (!profile_slug) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(
+            profile_slug,
+          )}/decks/count/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+            signal: controller.signal,
+          },
+        );
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          console.error(
+            "Unable to load deck count:",
+            data?.error || `Request failed with status ${response.status}`,
+          );
+
+          return;
+        }
+
+        const count = Number(data?.deck_count);
+
+        if (Number.isFinite(count)) {
+          setDeckCount(count);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load deck count:", err);
+        }
+      }
+    };
+
+    loadDeckCount();
+
+    return () => controller.abort();
+  }, [profile_slug]);
+
+  /*
+   * Load the actual profile and decklists.
+   */
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadingStartTime = Date.now();
+    const minimumLoadingTime = 1200;
 
     const loadUserDecklists = async () => {
       try {
         setLoading(true);
-
         setError("");
-
         setAvatarError(false);
 
         const response = await fetch(
@@ -262,14 +320,22 @@ function UserDecklists() {
         });
 
         setDecks(Array.isArray(data?.decks) ? data.decks : []);
+
+        const elapsed = Date.now() - loadingStartTime;
+
+        const remaining = Math.max(minimumLoadingTime - elapsed, 0);
+
+        window.setTimeout(() => {
+          if (!controller.signal.aborted) {
+            setLoading(false);
+          }
+        }, remaining);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to load user decklists:", err);
 
           setError(err.message || "Unable to load this user's decklists.");
-        }
-      } finally {
-        if (!controller.signal.aborted) {
+
           setLoading(false);
         }
       }
@@ -282,10 +348,9 @@ function UserDecklists() {
     return () => controller.abort();
   }, [profile_slug]);
 
-  useEffect(() => {
-    setAvatarError(false);
-  }, [profile?.avatar, profile?.discord_id]);
-
+  /*
+   * Load card information separately.
+   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -323,6 +388,10 @@ function UserDecklists() {
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [profile?.avatar, profile?.discord_id]);
 
   const handleShareProfile = async () => {
     const slug = normalizeText(profile?.profile_slug) || profile_slug;
@@ -468,7 +537,6 @@ function UserDecklists() {
       };
 
       const sideA = normalizeKey(a.side);
-
       const sideB = normalizeKey(b.side);
 
       const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
@@ -575,20 +643,24 @@ function UserDecklists() {
 
   const clearFilters = () => {
     setSearch("");
-
     setHero([]);
-
     setCategory([]);
-
     setArchetype([]);
   };
 
   const handleSideChange = (newSide) => {
     setSide(newSide);
-
     clearFilters();
   };
 
+  /*
+   * Keep this loading screen visually consistent with
+   * the main Decklists page.
+   *
+   * The count is supplied by the separate count endpoint,
+   * so it can appear while the decklist request is still
+   * loading.
+   */
   if (loading) {
     return (
       <div className="loading-page">
@@ -598,6 +670,16 @@ function UserDecklists() {
           <h2>Loading decklists</h2>
 
           <p>Preparing this user's decklists.</p>
+
+          <div className="loading-status">
+            <span>Loading deck data</span>
+
+            <strong>
+              {deckCount !== null
+                ? `${deckCount} ${deckCount === 1 ? "deck" : "decks"}`
+                : "Loading..."}
+            </strong>
+          </div>
         </div>
       </div>
     );
@@ -611,7 +693,6 @@ function UserDecklists() {
         <main className="deck-content">
           <div className="user-decklists-empty">
             <h2>Unable to load decklists</h2>
-
             <p>{error}</p>
           </div>
         </main>
@@ -649,6 +730,7 @@ function UserDecklists() {
 
             <div className="user-decklists-profile-info">
               <h1>{profileName} Decklists</h1>
+
               {profile?.bio && (
                 <p className="user-decklists-profile-bio">{profile.bio}</p>
               )}

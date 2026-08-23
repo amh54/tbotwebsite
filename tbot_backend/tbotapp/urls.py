@@ -54,6 +54,7 @@ from .views.admin_user_decks import (
 from .views.profile import (
     profile_me,
     profile_detail,
+    public_profile_count,
     public_profiles,
     public_profile_decks,
     profile_update,
@@ -61,6 +62,7 @@ from .views.profile import (
 
 from .views.user_decks import (
     user_decks,
+    public_profile_decks_count,
     user_deck_create,
     user_deck_update,
     user_deck_delete,
@@ -269,6 +271,11 @@ urlpatterns = [
         profile_me,
         name="profile_me",
     ),
+    path(
+    "profiles/count/",
+    public_profile_count,
+    name="public-profile-count",
+),
 
     path(
         "profile/update/",
@@ -303,7 +310,11 @@ urlpatterns = [
         user_decks,
         name="user_decks",
     ),
-
+path(
+    "profile/<str:profile_slug>/decks/count/",
+    public_profile_decks_count,
+    name="public-profile-decks-count",
+),
     path(
         "user-decks/create/",
         user_deck_create,
