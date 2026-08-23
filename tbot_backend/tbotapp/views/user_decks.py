@@ -130,6 +130,24 @@ def user_deck_create(request):
     if error:
         return error
 
+    # ---------------------------------------------------------
+    # Explicitly read creator from the request.
+    # This MUST be the value entered in AddDeckModal.
+    # It is NOT replaced with the logged-in user's name.
+    # ---------------------------------------------------------
+    creator = str(
+        request.data.get("creator", "")
+    ).strip()
+
+    if not creator:
+        return Response(
+            {
+                "error": "Creator is required.",
+                "fields": ["creator"],
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     allowed_fields = {
         "name",
         "hero",
@@ -154,29 +172,9 @@ def user_deck_create(request):
         if field in request.data:
             deck_data[field] = request.data[field]
 
-    required_fields = {
-        "name",
-        "hero",
-        "side",
-        "category",
-        "archetype",
-    }
-
-    missing_fields = [
-        field
-        for field in required_fields
-        if not deck_data.get(field)
-    ]
-
-    if missing_fields:
-        return Response(
-            {
-                "error": "Missing required deck fields.",
-                "fields": missing_fields,
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
+    # ---------------------------------------------------------
+    # Image upload
+    # ---------------------------------------------------------
     image_file = request.FILES.get("image_file")
 
     if image_file:
@@ -186,7 +184,10 @@ def user_deck_create(request):
             if not image_url:
                 return Response(
                     {
-                        "error": "Cloudinary did not return an image URL.",
+                        "error": (
+                            "Cloudinary did not return "
+                            "an image URL."
+                        ),
                     },
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
@@ -211,11 +212,43 @@ def user_deck_create(request):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    deck_data["profile_id"] = profile.id
+    # ---------------------------------------------------------
+    # Required deck fields
+    # ---------------------------------------------------------
+    required_fields = {
+        "name",
+        "hero",
+        "side",
+        "category",
+        "archetype",
+    }
 
+    missing_fields = [
+        field
+        for field in required_fields
+        if not str(deck_data.get(field, "")).strip()
+    ]
+
+    if missing_fields:
+        return Response(
+            {
+                "error": "Missing required deck fields.",
+                "fields": missing_fields,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ---------------------------------------------------------
+    # IMPORTANT:
+    #
+    # creator is deliberately NOT put into deck_data.
+    # It is passed explicitly to UserDeck.objects.create().
+    # ---------------------------------------------------------
     try:
         deck = UserDeck.objects.create(
-            **deck_data
+            profile_id=profile.id,
+            creator=creator,
+            **deck_data,
         )
 
         serializer = UserDeckSerializer(deck)
@@ -248,7 +281,6 @@ def user_deck_create(request):
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
 
 @api_view(["PATCH"])
 def user_deck_update(request, deck_id):

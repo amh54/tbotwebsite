@@ -607,140 +607,130 @@ function UserDeckManager() {
     clearFilters();
   };
 
-  /*
-   * ADD DECK
-   *
-   * Creator is intentionally allowed to be empty.
-   */
-  const handleAdd = async (form) => {
-    setError("");
+ const handleAdd = async (form) => {
+  setError("");
+
+  try {
+    const csrfToken = await ensureCsrfToken();
+    const createUrl = `${API_BASE_URL}/tbotapp/user-decks/create/`;
+
+    const creator = normalizeText(form?.creator);
+
+    // Creator must be the value entered into AddDeckModal.
+    if (!creator) {
+      throw new Error("Creator is required.");
+    }
+
+    const hasImageFile = form?.image_file instanceof File;
+
+    let response;
+
+    if (hasImageFile) {
+      const formData = new FormData();
+
+      formData.append("name", form.name ?? "");
+      formData.append("hero", form.hero ?? "");
+      formData.append("side", form.side ?? "");
+      formData.append("category", form.category ?? "");
+      formData.append("archetype", form.archetype ?? "");
+      formData.append("description", form.description ?? "");
+
+      // IMPORTANT
+      formData.append("creator", creator);
+
+      formData.append("cost", form.cost ?? "");
+      formData.append("inspiration", form.inspiration ?? "");
+      formData.append("optimization", form.optimization ?? "");
+      formData.append("suggested_date", form.suggested_date ?? "");
+      formData.append("updated_date", form.updated_date ?? "");
+      formData.append("deck_doc", form.deck_doc ?? "");
+      formData.append("cards", form.cards ?? "");
+      formData.append("image_file", form.image_file);
+
+      response = await fetch(createUrl, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+      });
+    } else {
+      response = await fetch(createUrl, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          name: form.name ?? "",
+          hero: form.hero ?? "",
+          side: form.side ?? "",
+          category: form.category ?? "",
+          archetype: form.archetype ?? "",
+          description: form.description ?? "",
+          image: form.image ?? "",
+
+          // IMPORTANT
+          creator,
+
+          cost: form.cost ?? "",
+          inspiration: form.inspiration ?? "",
+          optimization: form.optimization ?? "",
+          suggested_date: form.suggested_date ?? "",
+          updated_date: form.updated_date ?? "",
+          deck_doc: form.deck_doc ?? "",
+          cards: form.cards ?? "",
+        }),
+      });
+    }
+
+    const responseText = await response.text();
+
+    let data = null;
 
     try {
-      const csrfToken = await ensureCsrfToken();
-
-      const createUrl = `${API_BASE_URL}/tbotapp/user-decks/create/`;
-
-      const hasImageFile = form?.image_file instanceof File;
-
-      let response;
-
-      if (hasImageFile) {
-        const formData = new FormData();
-
-        formData.append("name", form.name ?? "");
-
-        formData.append("hero", form.hero ?? "");
-
-        formData.append("side", form.side ?? "");
-
-        formData.append("category", form.category ?? "");
-
-        formData.append("archetype", form.archetype ?? "");
-
-        formData.append("description", form.description ?? "");
-
-        /*
-         * Creator may be blank.
-         */
-        formData.append("creator", normalizeText(form.creator));
-
-        formData.append("cost", form.cost ?? "");
-
-        formData.append("inspiration", form.inspiration ?? "");
-
-        formData.append("optimization", form.optimization ?? "");
-
-        formData.append("suggested_date", form.suggested_date ?? "");
-
-        formData.append("updated_date", form.updated_date ?? "");
-
-        formData.append("deck_doc", form.deck_doc ?? "");
-
-        formData.append("cards", form.cards ?? "");
-
-        formData.append("image_file", form.image_file);
-
-        response = await fetch(createUrl, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-            "X-CSRFToken": csrfToken,
-          },
-          body: formData,
-        });
-      } else {
-        response = await fetch(createUrl, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken,
-          },
-          body: JSON.stringify({
-            name: form.name ?? "",
-            hero: form.hero ?? "",
-            side: form.side ?? "",
-            category: form.category ?? "",
-            archetype: form.archetype ?? "",
-            description: form.description ?? "",
-            image: form.image ?? "",
-
-            /*
-             * Creator can be empty.
-             */
-            creator: normalizeText(form.creator),
-
-            cost: form.cost ?? "",
-            inspiration: form.inspiration ?? "",
-            optimization: form.optimization ?? "",
-            suggested_date: form.suggested_date ?? "",
-            updated_date: form.updated_date ?? "",
-            deck_doc: form.deck_doc ?? "",
-            cards: form.cards ?? "",
-          }),
-        });
-      }
-
-      const responseText = await response.text();
-
-      let data = null;
-
-      try {
-        data = responseText ? JSON.parse(responseText) : null;
-      } catch {
-        data = null;
-      }
-
-      if (!response.ok) {
-        const message =
-          data?.detail ||
-          data?.error ||
-          `Failed to add deck (${response.status}).`;
-
-        throw new Error(message);
-      }
-
-      const newDeck = data?.deck ?? data?.result ?? data;
-
-      if (newDeck) {
-        setDecks((currentDecks) => [...currentDecks, newDeck]);
-      } else {
-        await loadDecks();
-      }
-
-      setAddingDeck(false);
-
-      return newDeck;
-    } catch (error) {
-      console.error("Unable to add deck:", error);
-
-      setError(error.message || "Unable to add deck.");
-
-      throw error;
+      data = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      data = null;
     }
-  };
+
+    if (!response.ok) {
+      const message =
+        data?.detail ||
+        data?.error ||
+        `Failed to add deck (${response.status}).`;
+
+      throw new Error(message);
+    }
+
+    const newDeck = data?.deck ?? data?.result ?? data;
+
+    if (newDeck) {
+      setDecks((currentDecks) => [
+        ...currentDecks,
+        newDeck,
+      ]);
+    } else {
+      await loadDecks();
+    }
+
+    setAddingDeck(false);
+
+    return newDeck;
+  } catch (error) {
+    console.error("Unable to add deck:", error);
+
+    setError(
+      error.message || "Unable to add deck."
+    );
+
+    throw error;
+  }
+};
 
   /*
    * SAVE DECK
