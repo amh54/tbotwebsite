@@ -68,7 +68,13 @@ from .views.user_decks import (
     user_deck_delete,
     shared_user_deck,
 )
-
+from .views.deckbuilders import (
+    deckbuilders,
+    deckbuilder_count,
+    deckbuilder_detail,
+    deckbuilder_decks,
+    deckbuilder_deck_count,
+)
 
 urlpatterns = [
 
@@ -275,7 +281,7 @@ urlpatterns = [
     "profiles/count/",
     public_profile_count,
     name="public-profile-count",
-),
+    ),
 
     path(
         "profile/update/",
@@ -300,7 +306,39 @@ urlpatterns = [
         public_profile_decks,
         name="public_profile_decks",
     ),
+    # ---------------------------------------------------------
+    # Deckbuilders
+    # ---------------------------------------------------------
 
+    path(
+        "deckbuilders/",
+        deckbuilders,
+        name="deckbuilders",
+    ),
+
+    path(
+        "deckbuilders/count/",
+        deckbuilder_count,
+        name="deckbuilder-count",
+    ),
+
+    path(
+        "deckbuilders/<str:deckbuilder_name>/",
+        deckbuilder_detail,
+        name="deckbuilder-detail",
+    ),
+
+    path(
+        "deckbuilders/<str:deckbuilder_name>/decks/",
+        deckbuilder_decks,
+        name="deckbuilder-decks",
+    ),
+
+    path(
+        "deckbuilders/<str:deckbuilder_name>/decks/count/",
+        deckbuilder_deck_count,
+        name="deckbuilder-deck-count",
+    ),
     # ---------------------------------------------------------
     # User Decks
     # ---------------------------------------------------------
@@ -310,11 +348,11 @@ urlpatterns = [
         user_decks,
         name="user_decks",
     ),
-path(
-    "profile/<str:profile_slug>/decks/count/",
-    public_profile_decks_count,
-    name="public-profile-decks-count",
-),
+    path(
+        "profile/<str:profile_slug>/decks/count/",
+        public_profile_decks_count,
+        name="public-profile-decks-count",
+    ),
     path(
         "user-decks/create/",
         user_deck_create,

@@ -652,15 +652,6 @@ function UserDecklists() {
     setSide(newSide);
     clearFilters();
   };
-
-  /*
-   * Keep this loading screen visually consistent with
-   * the main Decklists page.
-   *
-   * The count is supplied by the separate count endpoint,
-   * so it can appear while the decklist request is still
-   * loading.
-   */
   if (loading) {
     return (
       <div className="loading-page">

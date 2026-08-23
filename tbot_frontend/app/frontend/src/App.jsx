@@ -11,6 +11,8 @@ import KeepOrScrap from "./pages/keeporscrap.jsx";
 import HeroInfo from "./pages/heroinfo.jsx";
 import Navbar from "./components/navbar.jsx";
 import Footer from "./components/footer.jsx";
+import Deckbuilders from "./pages/deckbuilders.jsx";
+import DeckbuilderDecks from "./pages/deckbuilderdecks.jsx";
 import TermsOfService from "./pages/termsofservice.jsx";
 import Privacy from "./pages/privacy.jsx";
 import AdminDecklists from "./pages/admin-decklists.jsx";
@@ -212,7 +214,12 @@ function App() {
       <Route path="/privacypolicy" element={<Privacy />} />
 
       <Route path="/users" element={<Users />} />
+      <Route path="/deckbuilders" element={<Deckbuilders />} />
 
+      <Route
+        path="/deckbuilders/:deckbuilder_name/decks"
+        element={<DeckbuilderDecks />}
+      />
       <Route
         path="/users/:profile_slug/decklists"
         element={<UserDecklists />}

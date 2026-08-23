@@ -7,8 +7,8 @@ from .models import (
     UserDeck,
     LegacyDecklist,
     UserProfile,
+    WebDeckbuilder,
 )
-
 
 class PublicDeckSerializer(serializers.ModelSerializer):
     class Meta:
@@ -299,7 +299,110 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
+class WebDeckbuilderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WebDeckbuilder
+        fields = [
+            "id",
+            "deckbuilder_name",
+            "color",
+            "user_id",
+            "aliases",
+            "numb_of_decks",
+        ]
+class PublicDeckbuilderSerializer(serializers.ModelSerializer):
+    profile = serializers.SerializerMethodField()
+    display_name = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+    profile_slug = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
+    bio = serializers.SerializerMethodField()
+    discord_id = serializers.SerializerMethodField()
 
+    class Meta:
+        model = WebDeckbuilder
+        fields = [
+            "user_id",
+            "deckbuilder_name",
+            "numb_of_decks",
+            "profile",
+            "display_name",
+            "username",
+            "profile_slug",
+            "avatar",
+            "bio",
+            "discord_id",
+        ]
+
+    def _get_profile(self, obj):
+        try:
+            return (
+                UserProfile.objects
+                .filter(discord_id=str(obj.user_id))
+                .first()
+            )
+        except Exception:
+            return None
+
+    def get_profile(self, obj):
+        profile = self._get_profile(obj)
+
+        if not profile:
+            return None
+
+        return UserProfileSerializer(profile).data
+
+    def get_display_name(self, obj):
+        profile = self._get_profile(obj)
+
+        if profile:
+            return (
+                profile.display_name
+                or profile.username
+                or obj.deckbuilder_name
+            )
+
+        return obj.deckbuilder_name
+
+    def get_username(self, obj):
+        profile = self._get_profile(obj)
+
+        if not profile:
+            return ""
+
+        return profile.username or ""
+
+    def get_profile_slug(self, obj):
+        profile = self._get_profile(obj)
+
+        if not profile:
+            return ""
+
+        return profile.profile_slug or ""
+
+    def get_avatar(self, obj):
+        profile = self._get_profile(obj)
+
+        if not profile:
+            return ""
+
+        return profile.avatar or ""
+
+    def get_bio(self, obj):
+        profile = self._get_profile(obj)
+
+        if not profile:
+            return ""
+
+        return profile.bio or ""
+
+    def get_discord_id(self, obj):
+        profile = self._get_profile(obj)
+
+        if profile:
+            return profile.discord_id
+
+        return str(obj.user_id)
 class WebCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = WebCards

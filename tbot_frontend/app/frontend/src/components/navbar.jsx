@@ -17,6 +17,7 @@ const NAVIGATION = [
     links: [
       { label: "Decklists", path: "/decklists" },
       { label: "Legacy Decks", path: "/legacydecks" },
+      { label: "Deckbuilders", path: "/deckbuilders" },
     ],
   },
   {

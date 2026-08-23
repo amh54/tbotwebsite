@@ -27,7 +27,39 @@ class Decklist(models.Model):
     class Meta:
         db_table = "web_decks"
         managed = False
+class WebDeckbuilder(models.Model):
+    id = models.IntegerField(primary_key=True)
 
+    deckbuilder_name = models.CharField(
+        max_length=255,
+    )
+
+    color = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    user_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        db_column="userid",
+    )
+
+    aliases = models.CharField(
+        max_length=1000,
+        blank=True,
+        null=True,
+    )
+
+    numb_of_decks = models.IntegerField(
+        default=0,
+    )
+
+    class Meta:
+        db_table = "web_deckbuilders"
+        managed = False
 
 class WebCards(models.Model):
     cardid = models.SmallIntegerField(primary_key=True)

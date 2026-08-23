@@ -265,11 +265,6 @@ function Profile() {
           "",
           `/profile/${encodeURIComponent(newSlug)}`,
         );
-
-        /*
-         * Reload the profile using the new slug so everything
-         * stays synchronized.
-         */
         await loadProfile(newSlug);
       }
     } catch (err) {
@@ -324,10 +319,6 @@ function Profile() {
       setShareMessage("");
     }, 2500);
   };
-
-  /*
-   * LOADING
-   */
   if (loading) {
     return (
       <div>
@@ -341,10 +332,6 @@ function Profile() {
       </div>
     );
   }
-
-  /*
-   * ERROR
-   */
   if (error) {
     return (
       <div>
@@ -358,10 +345,6 @@ function Profile() {
       </div>
     );
   }
-
-  /*
-   * PROFILE NOT FOUND
-   */
   if (!profile) {
     return (
       <div>
@@ -375,10 +358,6 @@ function Profile() {
       </div>
     );
   }
-
-  /*
-   * Discord avatar
-   */
   const avatarUrl = profile.avatar
     ? `https://cdn.discordapp.com/avatars/${profile.discord_id}/${profile.avatar}.${
         String(profile.avatar).startsWith("a_") ? "gif" : "png"
