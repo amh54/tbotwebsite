@@ -5,14 +5,17 @@ from django.db import DatabaseError
 from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import status
+
 from rest_framework.decorators import (
     api_view,
     parser_classes,
 )
+
 from rest_framework.parsers import (
     MultiPartParser,
     FormParser,
 )
+
 from rest_framework.response import Response
 
 from ..models import (
@@ -33,7 +36,47 @@ from .helpers import (
     TARGET_CARD_RATIO_TOTAL,
 )
 
+
 logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# SIDE NORMALIZATION
+# ============================================================
+
+def normalize_side(value):
+    """
+    Normalize all accepted side values to the database values:
+
+        Plants
+        Zombies
+
+    The database uses the plural forms.
+    """
+
+    value = str(value or "").strip()
+
+    if value.lower() in {
+        "plant",
+        "plants",
+    }:
+        return "Plants"
+
+    if value.lower() in {
+        "zombie",
+        "zombies",
+    }:
+        return "Zombies"
+
+    return None
+
+
+def normalize_name(value):
+    """
+    Normalize a card/hero name for comparison.
+    """
+
+    return str(value or "").strip().casefold()
 
 
 # ============================================================
@@ -73,50 +116,135 @@ def validate_deck_cards(
     # SIDE
     # ========================================================
 
-    side = str(
-        side or ""
-    ).strip()
+    normalized_side = normalize_side(side)
 
-    if side.lower() in {
-        "plant",
-        "plants",
-    }:
-        side = "Plants"
-
-    elif side.lower() in {
-        "zombie",
-        "zombies",
-    }:
-        side = "Zombies"
-
-    else:
+    if not normalized_side:
         return {
-            "error": "Side must be Plants or Zombies."
+            "error": "Side must be Plants or Zombies.",
         }
 
+    side = normalized_side
+
+    logger.info(
+        "DECK VALIDATION - selected side=%r normalized side=%r",
+        side,
+        normalized_side,
+    )
+
     # ========================================================
-    # HERO
+    # HERO NAME
     # ========================================================
 
-    hero_name = str(
-        hero or ""
-    ).strip()
+    hero_name = str(hero or "").strip()
 
     if not hero_name:
         return {
-            "error": "A hero is required."
+            "error": "A hero is required.",
         }
+
+    logger.info(
+        "DECK VALIDATION - selected hero=%r",
+        hero_name,
+    )
+
+    # ========================================================
+    # FIND HERO BY NAME FIRST
+    #
+    # IMPORTANT:
+    #
+    # Do NOT combine hero name + side in the initial query.
+    #
+    # If the combined query fails, the old code incorrectly
+    # reported that the hero belonged to the wrong side.
+    #
+    # We now find the hero first and then explicitly compare
+    # the hero's database side.
+    # ========================================================
 
     hero_card = (
         WebCards.objects
         .filter(
             card_name__iexact=hero_name,
-            side__iexact=side,
         )
         .first()
     )
 
     if not hero_card:
+        logger.error(
+            "HERO VALIDATION FAILED - hero does not exist in "
+            "WebCards. hero=%r selected_side=%r",
+            hero_name,
+            side,
+        )
+
+        return {
+            "error": (
+                "The selected hero could not be found "
+                "in the card database."
+            ),
+            "side": side,
+            "hero": hero_name,
+        }
+
+    # ========================================================
+    # READ HERO DATABASE SIDE
+    # ========================================================
+
+    database_hero_side_raw = str(
+        getattr(
+            hero_card,
+            "side",
+            "",
+        ) or ""
+    ).strip()
+
+    database_hero_side = normalize_side(
+        database_hero_side_raw
+    )
+
+    logger.info(
+        "HERO VALIDATION - hero=%r "
+        "selected_side=%r "
+        "database_side=%r "
+        "raw_database_side=%r",
+        hero_name,
+        side,
+        database_hero_side,
+        database_hero_side_raw,
+    )
+
+    # ========================================================
+    # HERO SIDE VALIDATION
+    # ========================================================
+
+    if not database_hero_side:
+        logger.error(
+            "HERO VALIDATION FAILED - hero=%r has invalid "
+            "database side=%r",
+            hero_name,
+            database_hero_side_raw,
+        )
+
+        return {
+            "error": (
+                "The selected hero does not have a valid "
+                "Plants or Zombies side in the card database."
+            ),
+            "hero": hero_name,
+            "database_side": database_hero_side_raw,
+            "selected_side": side,
+        }
+
+    if database_hero_side != side:
+        logger.error(
+            "HERO SIDE MISMATCH - hero=%r "
+            "selected_side=%r "
+            "database_side=%r",
+            hero_name,
+            side,
+            database_hero_side,
+        )
+
         return {
             "error": (
                 "The selected hero does not belong "
@@ -124,6 +252,7 @@ def validate_deck_cards(
             ),
             "side": side,
             "hero": hero_name,
+            "database_side": database_hero_side,
         }
 
     # ========================================================
@@ -137,6 +266,12 @@ def validate_deck_cards(
             "",
         ) or ""
     ).strip().lower()
+
+    logger.info(
+        "HERO VALIDATION - hero=%r rarity=%r",
+        hero_name,
+        hero_rarity,
+    )
 
     if "hero" not in hero_rarity:
         return {
@@ -171,6 +306,12 @@ def validate_deck_cards(
             "hero": hero_name,
         }
 
+    logger.info(
+        "HERO VALIDATION - hero=%r card_types=%s",
+        hero_name,
+        sorted(hero_card_types),
+    )
+
     # ========================================================
     # PARSE NAME|COUNT
     # ========================================================
@@ -181,26 +322,51 @@ def validate_deck_cards(
 
     if not parsed_cards:
         return {
-            "error": "Please select at least one card."
+            "error": "Please select at least one card.",
         }
 
     # ========================================================
     # LOAD CARDS FOR SIDE
+    #
+    # Database values are expected to be:
+    #
+    #     Plants
+    #     Zombies
+    #
+    # We still normalize the result in Python so accidental
+    # whitespace/casing does not cause incorrect behavior.
     # ========================================================
 
     side_cards = list(
         WebCards.objects
-        .filter(
-            side__iexact=side
-        )
         .exclude(
             set_rarity__iexact="Token"
         )
     )
 
+    # ========================================================
+    # BUILD SIDE-SPECIFIC CARD LOOKUP
+    # ========================================================
+
     card_lookup = {}
 
     for card in side_cards:
+
+        database_side_raw = str(
+            getattr(
+                card,
+                "side",
+                "",
+            ) or ""
+        ).strip()
+
+        database_side = normalize_side(
+            database_side_raw
+        )
+
+        if database_side != side:
+            continue
+
         card_name = str(
             getattr(
                 card,
@@ -209,11 +375,20 @@ def validate_deck_cards(
             ) or ""
         ).strip()
 
-        if card_name:
-            card_lookup.setdefault(
-                card_name.lower(),
-                card,
-            )
+        if not card_name:
+            continue
+
+        card_lookup.setdefault(
+            normalize_name(card_name),
+            card,
+        )
+
+    logger.info(
+        "CARD VALIDATION - selected side=%r "
+        "loaded %d cards for that side",
+        side,
+        len(card_lookup),
+    )
 
     # ========================================================
     # VALIDATE CARDS
@@ -232,7 +407,9 @@ def validate_deck_cards(
             )
         ).strip()
 
-        lookup_key = cleaned_name.lower()
+        lookup_key = normalize_name(
+            cleaned_name
+        )
 
         card = card_lookup.get(
             lookup_key
@@ -304,7 +481,8 @@ def validate_deck_cards(
                     getattr(
                         card,
                         "card_name",
-                    )
+                        "",
+                    ) or ""
                 ).strip(),
                 "count": entry["count"],
             }
@@ -315,6 +493,13 @@ def validate_deck_cards(
     # ========================================================
 
     if invalid_cards:
+        logger.error(
+            "CARD VALIDATION FAILED - wrong/missing side cards "
+            "side=%r cards=%s",
+            side,
+            invalid_cards,
+        )
+
         return {
             "error": (
                 "One or more selected cards do not "
@@ -329,6 +514,14 @@ def validate_deck_cards(
     # ========================================================
 
     if incompatible_cards:
+        logger.error(
+            "CARD VALIDATION FAILED - incompatible cards "
+            "hero=%r hero_types=%s cards=%s",
+            hero_name,
+            sorted(hero_card_types),
+            incompatible_cards,
+        )
+
         return {
             "error": (
                 "One or more selected cards are not "
@@ -372,14 +565,6 @@ def validate_deck_cards(
 
 # ============================================================
 # GET / POST ADMIN DECKLISTS
-#
-# GET:
-#     /tbotapp/admin/decklists/
-#
-# POST:
-#     /tbotapp/admin/decklists/
-#
-# This now behaves like the legacy deck endpoint.
 # ============================================================
 
 @api_view(["GET", "POST"])
@@ -391,12 +576,13 @@ def validate_deck_cards(
 def admin_decklists(request):
 
     # ========================================================
-    # GET — LIST CURRENT DECKS
+    # GET
     # ========================================================
 
     if request.method == "GET":
 
         try:
+
             decks = (
                 Decklist.objects
                 .all()
@@ -438,13 +624,11 @@ def admin_decklists(request):
 
             return Response(
                 payload,
-                status=(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR
-                ),
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     # ========================================================
-    # POST — CREATE CURRENT DECK
+    # POST
     # ========================================================
 
     if request.method == "POST":
@@ -454,10 +638,17 @@ def admin_decklists(request):
         )
 
 
+# ============================================================
+# CREATE ADMIN DECK
+# ============================================================
+
 def create_admin_deck(request):
 
     data = request.data.copy()
 
+    # ========================================================
+    # REQUIRED FIELDS
+    # ========================================================
 
     required_fields = [
         "side",
@@ -493,6 +684,11 @@ def create_admin_deck(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    # ========================================================
+    # GENERATE DECK ID
+    # ========================================================
+
     try:
 
         existing_ids = (
@@ -557,37 +753,21 @@ def create_admin_deck(request):
 
         return Response(
             payload,
-            status=(
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            ),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     # ========================================================
     # SIDE
     # ========================================================
 
-    deck_side = str(
+    deck_side = normalize_side(
         data.get(
             "side",
             "",
         )
-    ).strip().lower()
+    )
 
-    if deck_side in {
-        "plant",
-        "plants",
-    }:
-
-        deck_side = "Plants"
-
-    elif deck_side in {
-        "zombie",
-        "zombies",
-    }:
-
-        deck_side = "Zombies"
-
-    else:
+    if not deck_side:
 
         return Response(
             {
@@ -601,7 +781,7 @@ def create_admin_deck(request):
     data["side"] = deck_side
 
     # ========================================================
-    # CARDS
+    # HERO + CARDS
     # ========================================================
 
     if "cards" in data:
@@ -641,7 +821,7 @@ def create_admin_deck(request):
         )
 
     # ========================================================
-    # CLOUDINARY IMAGE UPLOAD
+    # CLOUDINARY IMAGE
     # ========================================================
 
     uploaded_image = (
@@ -712,9 +892,7 @@ def create_admin_deck(request):
 
         return Response(
             payload,
-            status=(
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            ),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     # ========================================================
@@ -732,7 +910,7 @@ def create_admin_deck(request):
     )
 
     # ========================================================
-    # CREATE SERIALIZER
+    # SERIALIZER
     # ========================================================
 
     serializer = AdminDeckSerializer(
@@ -786,9 +964,7 @@ def create_admin_deck(request):
 
         return Response(
             payload,
-            status=(
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            ),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     except Exception as exc:
@@ -811,9 +987,7 @@ def create_admin_deck(request):
 
         return Response(
             payload,
-            status=(
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            ),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     return Response(
@@ -826,11 +1000,6 @@ def create_admin_deck(request):
 
 # ============================================================
 # CREATE ENDPOINT
-#
-# POST:
-#     /tbotapp/admin/decklists/create/
-#
-# Kept for compatibility with your current frontend.
 # ============================================================
 
 @api_view(["POST"])
@@ -901,9 +1070,7 @@ def admin_decklist_update(
 
         return Response(
             payload,
-            status=(
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            ),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     # ========================================================
@@ -916,30 +1083,14 @@ def admin_decklist_update(
     # SIDE
     # ========================================================
 
-    selected_side = data.get(
-        "side",
-        deck.side,
+    selected_side = normalize_side(
+        data.get(
+            "side",
+            deck.side,
+        )
     )
 
-    selected_side = str(
-        selected_side or ""
-    ).strip().lower()
-
-    if selected_side in {
-        "plant",
-        "plants",
-    }:
-
-        selected_side = "Plants"
-
-    elif selected_side in {
-        "zombie",
-        "zombies",
-    }:
-
-        selected_side = "Zombies"
-
-    else:
+    if not selected_side:
 
         return Response(
             {
@@ -952,21 +1103,51 @@ def admin_decklist_update(
 
     data["side"] = selected_side
 
-    # ========================================================
-    # CARDS
-    # ========================================================
+    logger.info(
+        "DECK UPDATE - deckid=%s "
+        "selected side=%r "
+        "existing side=%r "
+        "selected hero=%r "
+        "existing hero=%r",
+        deckid,
+        selected_side,
+        deck.side,
+        data.get("hero", deck.hero),
+        deck.hero,
+    )
 
-    if "cards" in data:
+    hero_changed = "hero" in data
+    cards_changed = "cards" in data
+    side_changed = (
+        normalize_side(deck.side)
+        != selected_side
+    )
+
+    if (
+        hero_changed
+        or cards_changed
+        or side_changed
+    ):
+
+        selected_hero = data.get(
+            "hero",
+            deck.hero,
+        )
+
+        selected_cards = data.get(
+            "cards",
+            deck.cards,
+        )
 
         validation = validate_deck_cards(
             side=selected_side,
-            hero=data.get(
-                "hero",
-                deck.hero,
-            ),
-            selected_cards=data.get(
-                "cards"
-            ),
+            hero=selected_hero,
+            selected_cards=selected_cards,
+        )
+
+        print(
+            "UPDATE CARD VALIDATION:",
+            validation,
         )
 
         if validation.get("error"):
@@ -980,6 +1161,10 @@ def admin_decklist_update(
             "cards",
             "",
         )
+
+        data["hero"] = str(
+            selected_hero or ""
+        ).strip()
 
     # ========================================================
     # IMAGE UPLOAD
@@ -1034,9 +1219,7 @@ def admin_decklist_update(
 
             return Response(
                 payload,
-                status=(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR
-                ),
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     # ========================================================
@@ -1056,7 +1239,6 @@ def admin_decklist_update(
     }
 
     if remove_image and not uploaded_image:
-
         data["image"] = ""
 
     # ========================================================
@@ -1130,9 +1312,7 @@ def admin_decklist_update(
 
         return Response(
             payload,
-            status=(
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            ),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     except Exception as exc:
@@ -1155,9 +1335,7 @@ def admin_decklist_update(
 
         return Response(
             payload,
-            status=(
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            ),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     return Response(
@@ -1220,9 +1398,7 @@ def admin_decklist_delete(
 
         return Response(
             payload,
-            status=(
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            ),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     # ========================================================
@@ -1254,9 +1430,7 @@ def admin_decklist_delete(
 
         return Response(
             payload,
-            status=(
-                status.HTTP_500_INTERNAL_SERVER_ERROR
-            ),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     return Response(
