@@ -44,21 +44,25 @@ const ARCHETYPE_META = {
     description:
       "Attempts to kill the opponent as soon as possible, usually winning the game by turn 4-7.",
   },
+
   combo: {
     icon: "🧩",
     description:
       "Uses a specific card synergy to do massive damage to the opponent (OTK or One Turn Kill decks).",
   },
+
   midrange: {
     icon: "⚖️",
     description:
-      "Slower than aggro, usually likes to set up earlygame boards into mid-cost cards to win the game.",
+      "Slower than aggro, usually likes to set up earlygame boards into mid-cost cards to win the opponent.",
   },
+
   control: {
     icon: "🛡️",
     description:
       "Focuses on removal and card advantage, winning in the late game.",
   },
+
   tempo: {
     icon: "🏃",
     description:
@@ -71,14 +75,17 @@ const CATEGORY_META = {
     icon: "💵",
     description: "Decks that are cheap for new players",
   },
+
   competitive: {
     icon: "🏆",
     description: "Some of the best decks in the game",
   },
+
   ladder: {
     icon: "🪜",
     description: "Decks that are mostly only good for ranked games",
   },
+
   meme: {
     icon: "😂",
     description: "Decks built for fun or unusual combos",
@@ -123,12 +130,41 @@ const parseDeckCards = (value) => {
     .filter(Boolean);
 };
 
+const parseCategories = (value) => {
+  const text = normalizeText(value);
+
+  if (!text) {
+    return [];
+  }
+
+  return text
+    .toLowerCase()
+    .split(/[\s,;/|]+/)
+    .map((category) => category.trim())
+    .filter(Boolean);
+};
+
+const parseArchetypes = (value) => {
+  const text = normalizeText(value);
+
+  if (!text) {
+    return [];
+  }
+
+  return text
+    .toLowerCase()
+    .split(/[\s,;/|]+/)
+    .map((archetype) => archetype.trim())
+    .filter(Boolean);
+};
+
 const getAvatarUrl = (profile) => {
   if (!profile) {
     return "";
   }
 
   const avatar = normalizeText(profile.avatar);
+
   const discordId = normalizeText(profile.discord_id);
 
   if (!avatar) {
@@ -156,19 +192,27 @@ function UserDecklists() {
   const { profile_slug } = useParams();
 
   const [profile, setProfile] = useState(null);
+
   const [decks, setDecks] = useState([]);
+
   const [allCards, setAllCards] = useState([]);
 
   const [search, setSearch] = useState("");
+
   const [side, setSide] = useState("All");
+
   const [hero, setHero] = useState([]);
+
   const [category, setCategory] = useState([]);
+
   const [archetype, setArchetype] = useState([]);
 
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
 
   const [avatarError, setAvatarError] = useState(false);
+
   const [profileLinkCopied, setProfileLinkCopied] = useState(false);
 
   useEffect(() => {
@@ -185,7 +229,9 @@ function UserDecklists() {
     const loadUserDecklists = async () => {
       try {
         setLoading(true);
+
         setError("");
+
         setAvatarError(false);
 
         const response = await fetch(
@@ -360,24 +406,24 @@ function UserDecklists() {
     const categoryMap = new Map();
 
     sideFilteredDecks.forEach((deck) => {
-      const categoryName = normalizeText(deck.category);
+      const categories = parseCategories(deck.category);
 
-      if (!categoryName) {
-        return;
-      }
+      categories.forEach((categoryName) => {
+        if (!CATEGORY_META[categoryName]) {
+          return;
+        }
 
-      const key = normalizeKey(categoryName);
+        if (!categoryMap.has(categoryName)) {
+          categoryMap.set(categoryName, {
+            value: categoryName,
+            label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
+            count: 0,
+            ...(CATEGORY_META[categoryName] || {}),
+          });
+        }
 
-      if (!categoryMap.has(key)) {
-        categoryMap.set(key, {
-          value: categoryName,
-          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
-          count: 0,
-          ...(CATEGORY_META[key] || {}),
-        });
-      }
-
-      categoryMap.get(key).count += 1;
+        categoryMap.get(categoryName).count += 1;
+      });
     });
 
     return Array.from(categoryMap.values()).sort((a, b) =>
@@ -395,14 +441,10 @@ function UserDecklists() {
     });
 
     sideFilteredDecks.forEach((deck) => {
-      const deckArchetype = normalizeKey(deck.archetype);
-
-      if (!deckArchetype) {
-        return;
-      }
+      const deckArchetypes = parseArchetypes(deck.archetype);
 
       Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
-        if (deckArchetype.includes(archetypeName)) {
+        if (deckArchetypes.includes(archetypeName)) {
           counts[archetypeName] += 1;
         }
       });
@@ -426,6 +468,7 @@ function UserDecklists() {
       };
 
       const sideA = normalizeKey(a.side);
+
       const sideB = normalizeKey(b.side);
 
       const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
@@ -508,20 +551,20 @@ function UserDecklists() {
             normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
         );
 
+      const deckCategories = parseCategories(deck.category);
+
       const categoryMatch =
         category.length === 0 ||
-        category.some(
-          (selectedCategory) =>
-            normalizeKey(deck.category) ===
-            normalizeKey(selectedCategory.value),
+        category.every((selectedCategory) =>
+          deckCategories.includes(normalizeKey(selectedCategory.value)),
         );
 
-      const deckArchetype = normalizeKey(deck.archetype);
+      const deckArchetypes = parseArchetypes(deck.archetype);
 
       const archetypeMatch =
         archetype.length === 0 ||
         archetype.every((selectedArchetype) =>
-          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
+          deckArchetypes.includes(normalizeKey(selectedArchetype.value)),
         );
 
       return (
@@ -532,13 +575,17 @@ function UserDecklists() {
 
   const clearFilters = () => {
     setSearch("");
+
     setHero([]);
+
     setCategory([]);
+
     setArchetype([]);
   };
 
   const handleSideChange = (newSide) => {
     setSide(newSide);
+
     clearFilters();
   };
 
