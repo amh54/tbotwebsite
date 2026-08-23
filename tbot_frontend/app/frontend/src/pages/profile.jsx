@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import Navbar from "../components/navbar.jsx";
-
 import Footer from "../components/footer.jsx";
 
 import "../css/profile.css";
@@ -32,7 +31,10 @@ function Profile() {
   const { profile_slug } = useParams();
 
   const [profile, setProfile] = useState(null);
-  const [decks, setDecks] = useState([]);
+
+  // We only use this to determine the number of decks.
+  const [deckCount, setDeckCount] = useState(0);
+
   const [isOwner, setIsOwner] = useState(false);
   const [isSiteOwner, setIsSiteOwner] = useState(false);
 
@@ -61,40 +63,110 @@ function Profile() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(slug)}/`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          credentials: "include",
-        },
-      );
-
-      let data = {};
+      /*
+       * First load the profile itself.
+       */
+      let profileResponse;
 
       try {
-        data = await response.json();
+        profileResponse = await fetch(
+          `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(slug)}/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+          },
+        );
+      } catch (fetchError) {
+        console.error("Profile request failed:", fetchError);
+
+        throw new Error(
+          `Unable to connect to the API at ${API_BASE_URL || "the configured API"}. ` +
+            "Make sure Django is running.",
+        );
+      }
+
+      let profileData = {};
+
+      try {
+        profileData = await profileResponse.json();
       } catch {
-        data = {};
+        profileData = {};
       }
 
-      if (!response.ok) {
-        throw new Error(data?.error || "Unable to load profile.");
+      if (!profileResponse.ok) {
+        throw new Error(profileData?.error || "Unable to load profile.");
       }
 
-      setProfile(data.profile || null);
-      setDecks(Array.isArray(data.decks) ? data.decks : []);
-      setIsOwner(Boolean(data.is_owner));
-      setIsSiteOwner(Boolean(data.is_site_owner));
+      const loadedProfile = profileData.profile || null;
+
+      if (!loadedProfile) {
+        throw new Error("Profile data was not returned.");
+      }
+
+      setProfile(loadedProfile);
+      setIsOwner(Boolean(profileData.is_owner));
+      setIsSiteOwner(Boolean(profileData.is_site_owner));
+
+      /*
+       * The profile detail endpoint does not return the user's decks.
+       *
+       * The separate endpoint is:
+       *
+       * /tbotapp/profile/<profile_slug>/decks/
+       *
+       * We only need the number of returned decks.
+       */
+      try {
+        const deckResponse = await fetch(
+          `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(slug)}/decks/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+          },
+        );
+
+        let deckData = {};
+
+        try {
+          deckData = await deckResponse.json();
+        } catch {
+          deckData = {};
+        }
+
+        if (!deckResponse.ok) {
+          console.error("Unable to load profile decks:", deckData);
+
+          /*
+           * Don't make the entire profile fail just because
+           * the deck count endpoint failed.
+           */
+          setDeckCount(0);
+        } else {
+          const returnedDecks = Array.isArray(deckData.decks)
+            ? deckData.decks
+            : [];
+
+          setDeckCount(returnedDecks.length);
+        }
+      } catch (deckError) {
+        console.error("Unable to load profile decks:", deckError);
+
+        setDeckCount(0);
+      }
     } catch (err) {
       console.error("Unable to load profile:", err);
 
       setProfile(null);
-      setDecks([]);
+      setDeckCount(0);
       setIsOwner(false);
       setIsSiteOwner(false);
+
       setError(err.message || "Unable to load profile.");
     } finally {
       setLoading(false);
@@ -114,6 +186,7 @@ function Profile() {
     setEditProfileSlug(profile.profile_slug || "");
     setEditBio(profile.bio || "");
     setEditIsPublic(Boolean(profile.is_public));
+
     setEditError("");
     setEditOpen(true);
   };
@@ -180,6 +253,7 @@ function Profile() {
       }
 
       setProfile(updatedProfile);
+
       setEditOpen(false);
       setEditError("");
 
@@ -191,9 +265,16 @@ function Profile() {
           "",
           `/profile/${encodeURIComponent(newSlug)}`,
         );
+
+        /*
+         * Reload the profile using the new slug so everything
+         * stays synchronized.
+         */
+        await loadProfile(newSlug);
       }
     } catch (err) {
       console.error("Unable to update profile:", err);
+
       setEditError(err.message || "Unable to update profile.");
     } finally {
       setSaving(false);
@@ -208,9 +289,8 @@ function Profile() {
       return;
     }
 
-    const profileUrl = `${window.location.origin}/profile/${encodeURIComponent(
-      currentSlug,
-    )}`;
+    const profileUrl =
+      `${window.location.origin}/profile/` + encodeURIComponent(currentSlug);
 
     try {
       if (navigator.clipboard?.writeText) {
@@ -236,6 +316,7 @@ function Profile() {
       setShareMessage("Profile link copied!");
     } catch (err) {
       console.error("Unable to copy profile link:", err);
+
       setShareMessage("Unable to copy profile link.");
     }
 
@@ -244,6 +325,9 @@ function Profile() {
     }, 2500);
   };
 
+  /*
+   * LOADING
+   */
   if (loading) {
     return (
       <div>
@@ -253,11 +337,14 @@ function Profile() {
           <div className="profile-loading">Loading profile...</div>
         </main>
 
-        <Footer credits="Special thanks to the many pvzh community members who took time out of their day to give me helpful feedback and critiques before publishing this site" />
+        <Footer />
       </div>
     );
   }
 
+  /*
+   * ERROR
+   */
   if (error) {
     return (
       <div>
@@ -267,11 +354,14 @@ function Profile() {
           <div className="profile-error">{error}</div>
         </main>
 
-        <Footer credits="Special thanks to the many pvzh community members who took time out of their day to give me helpful feedback and critiques before publishing this site" />
+        <Footer />
       </div>
     );
   }
 
+  /*
+   * PROFILE NOT FOUND
+   */
   if (!profile) {
     return (
       <div>
@@ -281,22 +371,22 @@ function Profile() {
           <div className="profile-error">Profile not found.</div>
         </main>
 
-        <Footer credits="Special thanks to the many pvzh community members who took time out of their day to give me helpful feedback and critiques before publishing this site" />
+        <Footer />
       </div>
     );
   }
 
+  /*
+   * Discord avatar
+   */
   const avatarUrl = profile.avatar
     ? `https://cdn.discordapp.com/avatars/${profile.discord_id}/${profile.avatar}.${
         String(profile.avatar).startsWith("a_") ? "gif" : "png"
       }?size=256`
     : null;
-
   const decklistsPath = `/profile/${encodeURIComponent(
     profile.profile_slug,
   )}/decklists`;
-
-  const deckCount = decks.length;
 
   return (
     <div>
@@ -354,7 +444,7 @@ function Profile() {
 
         <section className="profile-decks">
           <div className="profile-decks-header">
-            <h2>Decklists </h2>
+            <h2 style={{ marginTop: "10px" }}>Decklists</h2>
 
             <div
               className="profile-decks-header-actions"
@@ -366,36 +456,11 @@ function Profile() {
             </div>
           </div>
 
-          {deckCount === 0 ? (
-            <div className="profile-no-decks">0 decklists</div>
-          ) : (
-            <div className="profile-deck-grid">
-              {decks.map((deck) => (
-                <article
-                  key={deck.id || deck.deckid}
-                  className="profile-deck-card"
-                >
-                  {deck.image && (
-                    <img
-                      src={deck.image}
-                      alt={deck.name}
-                      className="profile-deck-image"
-                    />
-                  )}
-
-                  <div className="profile-deck-content">
-                    <h3>{deck.name}</h3>
-
-                    {deck.hero && <p>{deck.hero}</p>}
-
-                    {deck.archetype && <p>{deck.archetype}</p>}
-
-                    {deck.category && <p>{deck.category}</p>}
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+          <div className="profile-no-decks">
+            {deckCount === 0
+              ? "0 decklists"
+              : `${deckCount} ${deckCount === 1 ? "decklist" : "decklists"}`}
+          </div>
         </section>
 
         {isSiteOwner && (
