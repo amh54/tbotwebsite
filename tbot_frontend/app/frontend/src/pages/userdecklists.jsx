@@ -649,9 +649,6 @@ function UserDecklists() {
 
             <div className="user-decklists-profile-info">
               <h1>{profileName} Decklists</h1>
-
-              <p>Browse this user's Tbot decklists.</p>
-
               {profile?.bio && (
                 <p className="user-decklists-profile-bio">{profile.bio}</p>
               )}
