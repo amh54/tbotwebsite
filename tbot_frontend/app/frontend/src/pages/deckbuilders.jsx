@@ -397,17 +397,14 @@ function Deckbuilders() {
                       <p className="user-card-bio">{bio}</p>
                     ) : (
                       <p className="user-card-bio user-card-no-bio">
-                        {deckbuilder.has_profile
-                          ? "No bio provided."
-                          : "Tbot deckbuilder"}
+                        {deckbuilder.has_profile}
                       </p>
                     )}
 
                     <p className="user-card-bio">
                       <strong>
                         {Number.isFinite(deckCount) ? deckCount : 0}
-                      </strong>{" "}
-                      {deckCount === 1 ? "Tbot Decks" : "decks built"}
+                      </strong>{" Tbot Decks"}
                     </p>
                   </div>
 
