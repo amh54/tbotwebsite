@@ -24,6 +24,10 @@
   width: 100%;
 }
 
+/* -------------------------------------------------- */
+/* Side tabs */
+/* -------------------------------------------------- */
+
 .kos-side-tabs {
   width: 100%;
   display: grid;
@@ -59,6 +63,10 @@
   border-bottom-color: #8fe38b;
 }
 
+/* -------------------------------------------------- */
+/* Filters */
+/* -------------------------------------------------- */
+
 .kos-filters {
   width: 100%;
   margin-top: 25px;
@@ -71,10 +79,15 @@
   max-width: 100%;
 }
 
+/* -------------------------------------------------- */
+/* Intro */
+/* -------------------------------------------------- */
+
 .kos-intro {
   width: 100%;
   margin-top: 40px;
 }
+
 .kos-creator-heading {
   display: block;
   margin-bottom: 6px;
@@ -94,6 +107,7 @@
 .kos-creator-list li {
   margin-bottom: 4px;
 }
+
 .kos-intro-item {
   width: 100%;
   display: grid;
@@ -124,6 +138,7 @@
   height: 100%;
   object-fit: cover;
 }
+
 .kos-intro-body {
   width: 100%;
   min-width: 0;
@@ -134,28 +149,59 @@
   box-sizing: border-box;
 }
 
-.kos-intro-text strong.kos-intro-label {
-  color: #8fe38b;
-  display: block;
-  margin-top: 22px;
-  margin-bottom: 4px;
-  font-size: 19px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.kos-intro-label {
-  display: block;
-  margin-top: 22px;
-  margin-bottom: 4px;
-  color: #8fe38b;
-  font-size: 19px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+/* -------------------------------------------------- */
+/* ReactMarkdown intro content */
+/* -------------------------------------------------- */
+
+.kos-intro-text {
+  color: #d8dddf;
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
-.kos-intro-item:first-child .kos-intro-text .kos-intro-label:first-child {
+.kos-intro-text p {
+  margin: 0 0 16px;
+}
+
+.kos-intro-text p:last-child {
+  margin-bottom: 0;
+}
+
+.kos-intro-text h1,
+.kos-intro-text h2,
+.kos-intro-text h3,
+.kos-intro-text h4,
+.kos-intro-text h5,
+.kos-intro-text h6 {
+  margin: 25px 0 10px;
+  color: #ffffff;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.kos-intro-text h1 {
+  font-size: 30px;
+}
+
+.kos-intro-text h2 {
+  font-size: 26px;
+}
+
+.kos-intro-text h3 {
+  font-size: 22px;
+}
+
+.kos-intro-text h4 {
+  font-size: 19px;
+}
+
+.kos-intro-text h5,
+.kos-intro-text h6 {
+  font-size: 17px;
+}
+
+.kos-intro-text > :first-child {
   margin-top: 0;
 }
 
@@ -164,11 +210,133 @@
   font-weight: 800;
 }
 
+.kos-intro-text em {
+  color: #d8dddf;
+}
+
+.kos-intro-text a {
+  color: #8fe38b;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.kos-intro-text a:hover {
+  text-decoration: underline;
+}
+
+/* Markdown unordered / ordered lists */
+
+.kos-intro-text ul,
+.kos-intro-text ol {
+  margin: 12px 0 18px;
+  padding-left: 28px;
+}
+
+.kos-intro-text li {
+  margin: 5px 0;
+  padding-left: 3px;
+}
+
+.kos-intro-text ul ul,
+.kos-intro-text ol ol,
+.kos-intro-text ul ol,
+.kos-intro-text ol ul {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+/* Markdown blockquote */
+
+.kos-intro-text blockquote {
+  margin: 18px 0;
+  padding: 12px 18px;
+  border-left: 4px solid #8fe38b;
+  background: #101416;
+  color: #c5cbcd;
+}
+
+.kos-intro-text blockquote p {
+  margin: 0;
+}
+
+/* Markdown horizontal rule */
+
+.kos-intro-text hr {
+  margin: 25px 0;
+  border: 0;
+  border-top: 1px solid #343a3d;
+}
+
+/* Inline code */
+
+.kos-intro-text code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #202529;
+  color: #8fe38b;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+/* Code blocks */
+
+.kos-intro-text pre {
+  margin: 18px 0;
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid #292e31;
+  border-radius: 6px;
+  background: #0c0f10;
+}
+
+.kos-intro-text pre code {
+  padding: 0;
+  background: transparent;
+  color: #d8dddf;
+  font-size: 14px;
+}
+
+/* Markdown tables */
+
+.kos-intro-text table {
+  width: 100%;
+  margin: 20px 0;
+  border-collapse: collapse;
+  background: #101416;
+  border: 1px solid #292e31;
+}
+
+.kos-intro-text th,
+.kos-intro-text td {
+  padding: 10px 12px;
+  border: 1px solid #292e31;
+  text-align: left;
+  vertical-align: top;
+}
+
+.kos-intro-text th {
+  background: #181d20;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.kos-intro-text td {
+  color: #d8dddf;
+}
+
+/* -------------------------------------------------- */
+/* Creator */
+/* -------------------------------------------------- */
+
 .kos-creator {
   margin: 18px 0 0;
   color: #ffffff;
   font-size: 14px;
 }
+
+/* -------------------------------------------------- */
+/* Class grid */
+/* -------------------------------------------------- */
 
 .kos-class-grid {
   width: 100%;
@@ -203,7 +371,10 @@
   font-weight: 800;
 }
 
+/* -------------------------------------------------- */
 /* Compact preview */
+/* -------------------------------------------------- */
+
 .kos-class-preview {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr);
@@ -241,7 +412,10 @@
   flex-direction: column;
 }
 
+/* -------------------------------------------------- */
 /* Description preview */
+/* -------------------------------------------------- */
+
 .kos-tier-list {
   width: 100%;
   max-height: 340px;
@@ -255,7 +429,6 @@
   position: relative;
 }
 
-/* Fade out the clipped description */
 .kos-tier-list::after {
   content: "";
   position: absolute;
@@ -264,7 +437,11 @@
   bottom: 0;
   height: 65px;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgba(21, 25, 28, 0), #15191c);
+  background: linear-gradient(
+    to bottom,
+    rgba(21, 25, 28, 0),
+    #15191c
+  );
 }
 
 .kos-tier-item {
@@ -291,7 +468,58 @@
   background: #1a1f22;
 }
 
+/* -------------------------------------------------- */
+/* ReactMarkdown inside tier previews */
+/* -------------------------------------------------- */
+
+.kos-tier-item p {
+  margin: 0 0 10px;
+}
+
+.kos-tier-item p:last-child {
+  margin-bottom: 0;
+}
+
+.kos-tier-item strong {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.kos-tier-item em {
+  color: #c5cbcd;
+}
+
+.kos-tier-item ul,
+.kos-tier-item ol {
+  margin: 8px 0;
+  padding-left: 22px;
+}
+
+.kos-tier-item li {
+  margin: 3px 0;
+}
+
+.kos-tier-item blockquote {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-left: 3px solid #8fe38b;
+  background: #101416;
+  color: #c5cbcd;
+}
+
+.kos-tier-item a {
+  color: #8fe38b;
+  text-decoration: none;
+}
+
+.kos-tier-item a:hover {
+  text-decoration: underline;
+}
+
+/* -------------------------------------------------- */
 /* View Details button */
+/* -------------------------------------------------- */
+
 .kos-view-details {
   width: 100%;
   min-height: 44px;
@@ -319,7 +547,10 @@
   transform: translateY(0);
 }
 
+/* -------------------------------------------------- */
 /* Modal */
+/* -------------------------------------------------- */
+
 .kos-modal-overlay {
   position: fixed;
   inset: 0;
@@ -406,12 +637,165 @@
   border-radius: 6px;
 }
 
+/* -------------------------------------------------- */
+/* ReactMarkdown modal description */
+/* -------------------------------------------------- */
+
 .kos-modal-description {
   min-width: 0;
   color: #d8dddf;
   font-size: 16px;
   line-height: 1.7;
+  overflow-wrap: anywhere;
 }
+
+.kos-modal-description p {
+  margin: 0 0 18px;
+}
+
+.kos-modal-description p:last-child {
+  margin-bottom: 0;
+}
+
+.kos-modal-description h1,
+.kos-modal-description h2,
+.kos-modal-description h3,
+.kos-modal-description h4,
+.kos-modal-description h5,
+.kos-modal-description h6 {
+  margin: 25px 0 10px;
+  color: #ffffff;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.kos-modal-description h1 {
+  font-size: 30px;
+}
+
+.kos-modal-description h2 {
+  font-size: 26px;
+}
+
+.kos-modal-description h3 {
+  font-size: 22px;
+}
+
+.kos-modal-description h4 {
+  font-size: 19px;
+}
+
+.kos-modal-description h5,
+.kos-modal-description h6 {
+  font-size: 17px;
+}
+
+.kos-modal-description > :first-child {
+  margin-top: 0;
+}
+
+.kos-modal-description strong {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.kos-modal-description em {
+  color: #c5cbcd;
+}
+
+.kos-modal-description ul,
+.kos-modal-description ol {
+  margin: 12px 0 20px;
+  padding-left: 28px;
+}
+
+.kos-modal-description li {
+  margin: 5px 0;
+}
+
+.kos-modal-description blockquote {
+  margin: 18px 0;
+  padding: 12px 18px;
+  border-left: 4px solid #8fe38b;
+  background: #15191c;
+  color: #c5cbcd;
+}
+
+.kos-modal-description blockquote p {
+  margin: 0;
+}
+
+.kos-modal-description a {
+  color: #8fe38b;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.kos-modal-description a:hover {
+  text-decoration: underline;
+}
+
+.kos-modal-description hr {
+  margin: 25px 0;
+  border: 0;
+  border-top: 1px solid #343a3d;
+}
+
+.kos-modal-description code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #202529;
+  color: #8fe38b;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+.kos-modal-description pre {
+  margin: 18px 0;
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid #292e31;
+  border-radius: 6px;
+  background: #0c0f10;
+}
+
+.kos-modal-description pre code {
+  padding: 0;
+  background: transparent;
+  color: #d8dddf;
+}
+
+/* Markdown tables inside modal */
+
+.kos-modal-description table {
+  width: 100%;
+  margin: 20px 0;
+  border-collapse: collapse;
+  border: 1px solid #292e31;
+  background: #15191c;
+}
+
+.kos-modal-description th,
+.kos-modal-description td {
+  padding: 10px 12px;
+  border: 1px solid #292e31;
+  text-align: left;
+  vertical-align: top;
+}
+
+.kos-modal-description th {
+  background: #181d20;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.kos-modal-description td {
+  color: #d8dddf;
+}
+
+/* -------------------------------------------------- */
+/* Modal entry support */
+/* -------------------------------------------------- */
 
 .kos-modal-entry {
   margin: 0 0 20px;
@@ -429,6 +813,10 @@
   color: #ffffff;
   font-weight: 800;
 }
+
+/* -------------------------------------------------- */
+/* Empty / loading / error states */
+/* -------------------------------------------------- */
 
 .no-kos-results {
   width: 100%;
@@ -462,9 +850,17 @@
   line-height: 1.6;
 }
 
+/* -------------------------------------------------- */
+/* React Select */
+/* -------------------------------------------------- */
+
 .Select__control {
   background-color: #202020;
 }
+
+/* -------------------------------------------------- */
+/* 1050px */
+/* -------------------------------------------------- */
 
 @media (max-width: 1050px) {
   .kos-class-grid {
@@ -492,9 +888,9 @@
   }
 }
 
-/* ----------------------------- */
+/* -------------------------------------------------- */
 /* 900px */
-/* ----------------------------- */
+/* -------------------------------------------------- */
 
 @media (max-width: 900px) {
   .kos-content {
@@ -523,6 +919,7 @@
   .kos-intro-text {
     font-size: 16px;
   }
+
   .kos-class-preview {
     grid-template-columns: 320px minmax(0, 1fr);
   }
@@ -536,9 +933,9 @@
   }
 }
 
-/* ----------------------------- */
+/* -------------------------------------------------- */
 /* 700px */
-/* ----------------------------- */
+/* -------------------------------------------------- */
 
 @media (max-width: 700px) {
   .kos-class-preview {
@@ -598,9 +995,9 @@
   }
 }
 
-/* ----------------------------- */
+/* -------------------------------------------------- */
 /* 650px */
-/* ----------------------------- */
+/* -------------------------------------------------- */
 
 @media (max-width: 650px) {
   .kos-content {
@@ -637,11 +1034,20 @@
     padding: 16px;
     font-size: 15px;
   }
+
+  .kos-modal-description {
+    font-size: 15px;
+  }
+
+  .kos-modal-description table {
+    display: block;
+    overflow-x: auto;
+  }
 }
 
-/* ----------------------------- */
+/* -------------------------------------------------- */
 /* 450px */
-/* ----------------------------- */
+/* -------------------------------------------------- */
 
 @media (max-width: 450px) {
   .kos-content {
@@ -681,5 +1087,17 @@
 
   .kos-modal-description {
     font-size: 15px;
+  }
+
+  .kos-modal-description h1 {
+    font-size: 25px;
+  }
+
+  .kos-modal-description h2 {
+    font-size: 22px;
+  }
+
+  .kos-modal-description h3 {
+    font-size: 19px;
   }
 }

@@ -1,9 +1,7 @@
-
 import { useEffect, useMemo, useState } from "react";
-
 import "../css/keeporscrap.css";
 import "../css/loading.css";
-
+import ReactMarkdown from "react-markdown";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 
@@ -18,9 +16,7 @@ const getApiBaseUrl = () => {
     return normalized;
   };
 
-  const envBaseUrl = String(
-    import.meta.env.VITE_API_BASE_URL || "",
-  ).trim();
+  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
 
   if (envBaseUrl) {
     return stripTrailingSlashes(envBaseUrl);
@@ -29,10 +25,7 @@ const getApiBaseUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
 
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1"
-    ) {
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
       return "http://localhost:8000";
     }
   }
@@ -60,19 +53,13 @@ const normalizeText = (value) =>
     .replace(/\s+/g, " ");
 
 const hasValue = (value) =>
-  value !== null &&
-  value !== undefined &&
-  String(value).trim() !== "";
+  value !== null && value !== undefined && String(value).trim() !== "";
 
 const isIntroEntry = (entry) => {
   const sideValue = normalizeText(entry.side);
 
-  return (
-    sideValue === "intro" ||
-    sideValue === "intro/explanation"
-  );
+  return sideValue === "intro" || sideValue === "intro/explanation";
 };
-
 const renderBoldText = (text) => {
   if (!hasValue(text)) {
     return null;
@@ -101,139 +88,72 @@ const renderBoldText = (text) => {
     const matchIndex = match.index;
 
     if (matchIndex > lastIndex) {
-      const textBefore = rawText.slice(
-        lastIndex,
-        matchIndex,
-      );
+      const textBefore = rawText.slice(lastIndex, matchIndex);
 
       const lines = textBefore.split(/\r?\n/);
 
       lines.forEach((line, lineIndex) => {
-        parts.push(
-          <span
-            key={`text-${index}-${lineIndex}`}
-          >
-            {line}
-          </span>,
-        );
+        parts.push(<span key={`text-${index}-${lineIndex}`}>{line}</span>);
 
         if (lineIndex < lines.length - 1) {
-          parts.push(
-            <br
-              key={`br-${index}-${lineIndex}`}
-            />,
-          );
+          parts.push(<br key={`br-${index}-${lineIndex}`} />);
         }
       });
     }
 
-    parts.push(
-      <strong key={`bold-${index}`}>
-        {match[1]}
-      </strong>,
-    );
+    parts.push(<strong key={`bold-${index}`}>{match[1]}</strong>);
 
-    lastIndex =
-      matchIndex + match[0].length;
+    lastIndex = matchIndex + match[0].length;
   });
 
   if (lastIndex < rawText.length) {
     const textAfter = rawText.slice(lastIndex);
-
     const lines = textAfter.split(/\r?\n/);
 
     lines.forEach((line, lineIndex) => {
-      parts.push(
-        <span key={`end-${lineIndex}`}>
-          {line}
-        </span>,
-      );
+      parts.push(<span key={`end-${lineIndex}`}>{line}</span>);
 
       if (lineIndex < lines.length - 1) {
-        parts.push(
-          <br
-            key={`end-br-${lineIndex}`}
-          />,
-        );
+        parts.push(<br key={`end-br-${lineIndex}`} />);
       }
     });
   }
 
   return parts;
 };
-
-const INTRO_SECTION_LABELS = [
-  "Craft",
-  "Keep",
-  "Scrappable",
-  "Scrap",
-  "Note",
-];
-
 const renderIntroText = (text) => {
   if (!hasValue(text)) {
     return null;
   }
 
-  const rawText = String(text);
+  return (
+    <ReactMarkdown
+      components={{
+        h1: ({ children }) => <h1 className="kos-intro-heading">{children}</h1>,
 
-  const labelPattern = new RegExp(
-    `(^|\\n)(${INTRO_SECTION_LABELS.join(
-      "|",
-    )}):\\s*`,
-    "gi",
+        h2: ({ children }) => <h2 className="kos-intro-heading">{children}</h2>,
+
+        h3: ({ children }) => <h3 className="kos-intro-heading">{children}</h3>,
+
+        blockquote: ({ children }) => (
+          <blockquote className="kos-intro-quote">{children}</blockquote>
+        ),
+
+        p: ({ children }) => <p className="kos-intro-paragraph">{children}</p>,
+
+        strong: ({ children }) => <strong>{children}</strong>,
+
+        ul: ({ children }) => <ul className="kos-intro-list">{children}</ul>,
+
+        ol: ({ children }) => <ol className="kos-intro-list">{children}</ol>,
+
+        li: ({ children }) => <li>{children}</li>,
+      }}
+    >
+      {String(text)}
+    </ReactMarkdown>
   );
-
-  const parts = [];
-
-  let lastIndex = 0;
-  let match;
-  let key = 0;
-
-  while (
-    (match = labelPattern.exec(rawText)) !== null
-  ) {
-    const before = rawText.slice(
-      lastIndex,
-      match.index + match[1].length,
-    );
-
-    if (before.trim()) {
-      parts.push(
-        <span key={`text-${key++}`}>
-          {renderBoldText(before)}
-        </span>,
-      );
-    }
-
-    parts.push(
-      <strong
-        className="kos-intro-label"
-        key={`label-${key++}`}
-      >
-        {match[2].charAt(0).toUpperCase() +
-          match[2].slice(1).toLowerCase()}
-        :
-      </strong>,
-    );
-
-    lastIndex =
-      match.index + match[0].length;
-  }
-
-  const remaining = rawText.slice(lastIndex);
-
-  if (remaining) {
-    parts.push(
-      <span key={`text-${key++}`}>
-        {renderBoldText(remaining)}
-      </span>,
-    );
-  }
-
-  return parts;
 };
-
 const renderCreatorText = (text) => {
   if (!hasValue(text)) {
     return null;
@@ -241,19 +161,14 @@ const renderCreatorText = (text) => {
 
   const rawText = String(text).trim();
 
-  const headingMatch =
-    rawText.match(/^([^:]+:)\s*/);
+  const headingMatch = rawText.match(/^([^:]+:)\s*\*/);
 
-  const heading = headingMatch
-    ? headingMatch[1]
-    : null;
+  const heading = headingMatch ? headingMatch[1] : null;
 
-  const rest = headingMatch
-    ? rawText.slice(headingMatch[0].length)
-    : rawText;
+  const rest = headingMatch ? rawText.slice(headingMatch[0].length) : rawText;
 
   const items = rest
-    .replace(/^-\s*/, "")
+    .replace(/^-\s*\*/, "")
     .split(/\s+-\s+/)
     .map((item) => item.trim())
     .filter(Boolean);
@@ -264,11 +179,7 @@ const renderCreatorText = (text) => {
 
   return (
     <>
-      {heading && (
-        <span className="kos-creator-heading">
-          {heading}
-        </span>
-      )}
+      {heading && <span className="kos-creator-heading">{heading}</span>}
 
       <ul className="kos-creator-list">
         {items.map((item, index) => (
@@ -281,19 +192,11 @@ const renderCreatorText = (text) => {
 
 function KeepOrScrap() {
   const [entries, setEntries] = useState([]);
-
   const [side, setSide] = useState("Intro");
-
-  const [selectedGroup, setSelectedGroup] =
-    useState(null);
-
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
-
-  const [totalEntries, setTotalEntries] =
-    useState(null);
-
+  const [totalEntries, setTotalEntries] = useState(null);
   useEffect(() => {
     document.title = "Keep or Scrap";
 
@@ -301,27 +204,12 @@ function KeepOrScrap() {
       document.title = "Tbot";
     };
   }, []);
-
-  /*
-   * ============================================================
-   * LOAD COUNT
-   * ============================================================
-   *
-   * The API count includes the Intro row.
-   *
-   * Example:
-   * API returns 44
-   * Actual Keep or Scrap entries = 43
-   *
-   * Therefore we subtract exactly 1.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchCount = async () => {
       try {
-        const endpoint =
-          `${API_BASE_URL}/tbotapp/keeporscrap/count/`;
+        const endpoint = `${API_BASE_URL}/tbotapp/keeporscrap/count/`;
 
         const response = await fetch(endpoint, {
           signal: controller.signal,
@@ -335,10 +223,7 @@ function KeepOrScrap() {
 
         const data = await response.json();
 
-        console.log(
-          "Keep or Scrap count API response:",
-          data,
-        );
+        console.log("Keep or Scrap count API response:", data);
 
         const apiCount = Number(data?.count);
 
@@ -352,25 +237,11 @@ function KeepOrScrap() {
           return;
         }
 
-        /*
-         * IMPORTANT:
-         * The API count includes the Intro entry.
-         * Remove that one entry from the displayed count.
-         */
-        const actualCount = Math.max(
-          0,
-          apiCount - 1,
-        );
+        const actualCount = Math.max(0, apiCount - 1);
 
-        console.log(
-          "Keep or Scrap API count:",
-          apiCount,
-        );
+        console.log("Keep or Scrap API count:", apiCount);
 
-        console.log(
-          "Displayed Keep or Scrap count:",
-          actualCount,
-        );
+        console.log("Displayed Keep or Scrap count:", actualCount);
 
         setTotalEntries(actualCount);
       } catch (fetchError) {
@@ -378,15 +249,8 @@ function KeepOrScrap() {
           return;
         }
 
-        console.error(
-          "Keep or Scrap count loading failed:",
-          fetchError,
-        );
+        console.error("Keep or Scrap count loading failed:", fetchError);
 
-        /*
-         * Do not make the entire page fail if the count
-         * endpoint has a problem.
-         */
         setTotalEntries(null);
       }
     };
@@ -411,20 +275,17 @@ function KeepOrScrap() {
         setLoading(true);
         setError("");
 
-        const endpoint =
-          `${API_BASE_URL}/tbotapp/keeporscrap/`;
+        const endpoint = `${API_BASE_URL}/tbotapp/keeporscrap/`;
 
         const response = await fetch(endpoint, {
           signal: controller.signal,
         });
 
         if (!response.ok) {
-          let message =
-            `Request failed with status ${response.status}`;
+          let message = `Request failed with status ${response.status}`;
 
           try {
-            const errorPayload =
-              await response.json();
+            const errorPayload = await response.json();
 
             if (errorPayload?.detail) {
               message += `: ${errorPayload.detail}`;
@@ -442,20 +303,11 @@ function KeepOrScrap() {
           response.headers.get("content-type") || ""
         ).toLowerCase();
 
-        const responseText =
-          await response.text();
+        const responseText = await response.text();
 
-        if (
-          !contentType.includes(
-            "application/json",
-          )
-        ) {
-          if (
-            responseText.trim().startsWith("<")
-          ) {
-            throw new Error(
-              `Received HTML instead of JSON from ${endpoint}.`,
-            );
+        if (!contentType.includes("application/json")) {
+          if (responseText.trim().startsWith("<")) {
+            throw new Error(`Received HTML instead of JSON from ${endpoint}.`);
           }
 
           throw new Error(
@@ -479,10 +331,7 @@ function KeepOrScrap() {
           return;
         }
 
-        console.error(
-          "Keep or Scrap loading failed:",
-          fetchError,
-        );
+        console.error("Keep or Scrap loading failed:", fetchError);
 
         setError(
           `Unable to load Keep or Scrap right now. ${
@@ -503,15 +352,8 @@ function KeepOrScrap() {
     };
   }, []);
 
-  /*
-   * ============================================================
-   * MODAL BODY SCROLL
-   * ============================================================
-   */
   useEffect(() => {
-    document.body.style.overflow = selectedGroup
-      ? "hidden"
-      : "";
+    document.body.style.overflow = selectedGroup ? "hidden" : "";
 
     return () => {
       document.body.style.overflow = "";
@@ -529,62 +371,46 @@ function KeepOrScrap() {
    * ============================================================
    */
   const introEntries = useMemo(() => {
-    return entries
-      .filter(isIntroEntry)
-      .sort((a, b) => {
-        const aName = normalizeText(a.name);
-        const bName = normalizeText(b.name);
+    return entries.filter(isIntroEntry).sort((a, b) => {
+      const aName = normalizeText(a.name);
+      const bName = normalizeText(b.name);
 
-        const aIsPlant =
-          aName.includes("plant");
+      const aIsPlant = aName.includes("plant");
 
-        const bIsPlant =
-          bName.includes("plant");
+      const bIsPlant = bName.includes("plant");
 
-        const aIsZombie =
-          aName.includes("zombie");
+      const aIsZombie = aName.includes("zombie");
 
-        const bIsZombie =
-          bName.includes("zombie");
+      const bIsZombie = bName.includes("zombie");
 
-        if (aIsPlant && !bIsPlant) {
-          return -1;
-        }
+      if (aIsPlant && !bIsPlant) {
+        return -1;
+      }
 
-        if (!aIsPlant && bIsPlant) {
-          return 1;
-        }
+      if (!aIsPlant && bIsPlant) {
+        return 1;
+      }
 
-        if (aIsZombie && !bIsZombie) {
-          return -1;
-        }
+      if (aIsZombie && !bIsZombie) {
+        return -1;
+      }
 
-        if (!aIsZombie && bIsZombie) {
-          return 1;
-        }
+      if (!aIsZombie && bIsZombie) {
+        return 1;
+      }
 
-        return aName.localeCompare(bName);
-      });
+      return aName.localeCompare(bName);
+    });
   }, [entries]);
-
-  /*
-   * ============================================================
-   * GROUP CLASSES
-   * ============================================================
-   */
   const groupedClasses = useMemo(() => {
     const filtered = entries.filter(
-      (entry) =>
-        !isIntroEntry(entry) &&
-        hasValue(entry.card_class),
+      (entry) => !isIntroEntry(entry) && hasValue(entry.card_class),
     );
 
     const groups = new Map();
 
     filtered.forEach((entry) => {
-      const key = normalizeText(
-        entry.card_class,
-      );
+      const key = normalizeText(entry.card_class);
 
       if (!groups.has(key)) {
         groups.set(key, {
@@ -594,32 +420,23 @@ function KeepOrScrap() {
         });
       }
 
-      groups
-        .get(key)
-        .entries.push(entry);
+      groups.get(key).entries.push(entry);
     });
 
     return [...groups.values()]
       .map((group) => ({
         ...group,
-
         entries: group.entries.sort(
-          (a, b) =>
-            Number(a.tierid) -
-            Number(b.tierid),
+          (a, b) => Number(a.tierid) - Number(b.tierid),
         ),
       }))
       .sort((a, b) => {
         const aSide = normalizeText(a.side);
         const bSide = normalizeText(b.side);
 
-        const aIsPlant =
-          aSide === "plants" ||
-          aSide === "plant";
+        const aIsPlant = aSide === "plants" || aSide === "plant";
 
-        const bIsPlant =
-          bSide === "plants" ||
-          bSide === "plant";
+        const bIsPlant = bSide === "plants" || bSide === "plant";
 
         if (aIsPlant && !bIsPlant) {
           return -1;
@@ -629,17 +446,9 @@ function KeepOrScrap() {
           return 1;
         }
 
-        return a.name.localeCompare(
-          b.name,
-        );
+        return a.name.localeCompare(b.name);
       });
   }, [entries]);
-
-  /*
-   * ============================================================
-   * LOADING PAGE
-   * ============================================================
-   */
   if (loading) {
     return (
       <div className="loading-page">
@@ -656,14 +465,11 @@ function KeepOrScrap() {
           </h2>
 
           <p>
-            Preparing the Keep or Scrap browser
-            and loading available entries.
+            Preparing the Keep or Scrap browser and loading available entries.
           </p>
 
           <div className="loading-status">
-            <span>
-              Loading Keep or Scrap data
-            </span>
+            <span>Loading Keep or Scrap data</span>
 
             <strong>
               {totalEntries !== null
@@ -675,12 +481,6 @@ function KeepOrScrap() {
       </div>
     );
   }
-
-  /*
-   * ============================================================
-   * PAGE
-   * ============================================================
-   */
   return (
     <div className="keep-or-scrap-page">
       <Navbar />
@@ -694,16 +494,8 @@ function KeepOrScrap() {
               <button
                 key={sideOption.key}
                 type="button"
-                className={
-                  side === sideOption.key
-                    ? "active"
-                    : ""
-                }
-                onClick={() =>
-                  changeSide(
-                    sideOption.key,
-                  )
-                }
+                className={side === sideOption.key ? "active" : ""}
+                onClick={() => changeSide(sideOption.key)}
               >
                 {sideOption.label}
               </button>
@@ -719,159 +511,96 @@ function KeepOrScrap() {
           </p>
         )}
 
-        {error && (
-          <p className="error-message">
-            {error}
-          </p>
+        {error && <p className="error-message">{error}</p>}
+
+        {!error && side === "Intro" && (
+          <div className="kos-intro">
+            {introEntries.length === 0 ? (
+              <p className="no-kos-results">No introduction available.</p>
+            ) : (
+              introEntries.map((entry) => (
+                <div className="kos-intro-item" key={entry.tierid}>
+                  <div className="kos-intro-media">
+                    {hasValue(entry.image) && (
+                      <img src={entry.image} alt="Keep or Scrap" />
+                    )}
+                  </div>
+
+                  <div className="kos-intro-body">
+                    {hasValue(entry.reasoning) && (
+                      <div className="kos-intro-text">
+                        {renderIntroText(entry.reasoning)}
+                      </div>
+                    )}
+
+                    {hasValue(entry.creator) && (
+                      <div className="kos-creator">
+                        <strong className="kos-intro-label kos-creator-label">
+                          Credits:
+                        </strong>
+
+                        {renderCreatorText(entry.creator)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         )}
 
-        {!error &&
-          side === "Intro" && (
-            <div className="kos-intro">
-              {introEntries.length === 0 ? (
-                <p className="no-kos-results">
-                  No introduction available.
-                </p>
-              ) : (
-                introEntries.map((entry) => (
-                  <div
-                    className="kos-intro-item"
-                    key={entry.tierid}
-                  >
-                    <div className="kos-intro-media">
-                      {hasValue(
-                        entry.image,
-                      ) && (
-                        <img
-                          src={entry.image}
-                          alt="Keep or Scrap"
-                        />
-                      )}
+        {!error && side === "All" && (
+          <div className="kos-class-grid">
+            {groupedClasses.length === 0 ? (
+              <p className="no-kos-results">No Keep or Scrap entries found.</p>
+            ) : (
+              groupedClasses.map((group) => {
+                const firstEntry = group.entries[0];
+
+                return (
+                  <section className="kos-class-section" key={group.name}>
+                    <div className="kos-class-header">
+                      <h2>{group.name}</h2>
                     </div>
 
-                    <div className="kos-intro-body">
-                      {hasValue(
-                        entry.reasoning,
-                      ) && (
-                        <p className="kos-intro-text">
-                          {renderIntroText(
-                            entry.reasoning,
-                          )}
-                        </p>
-                      )}
+                    <div className="kos-class-preview">
+                      <div className="kos-class-media">
+                        {hasValue(firstEntry?.image) && (
+                          <img src={firstEntry.image} alt={group.name} />
+                        )}
+                      </div>
 
-                      {hasValue(
-                        entry.creator,
-                      ) && (
-                        <div className="kos-creator">
-                          <strong className="kos-intro-label kos-creator-label">
-                            Credits:
-                          </strong>
+                      <div className="kos-class-content">
+                        <ul className="kos-tier-list">
+                          {group.entries.map((entry) => (
+                            <li key={entry.tierid} className="kos-tier-item">
+                              {renderBoldText(entry.reasoning)}
+                            </li>
+                          ))}
+                        </ul>
 
-                          {renderCreatorText(
-                            entry.creator,
-                          )}
-                        </div>
-                      )}
+                        <button
+                          type="button"
+                          className="kos-view-details"
+                          onClick={() => setSelectedGroup(group)}
+                        >
+                          View Details
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-        {!error &&
-          side === "All" && (
-            <div className="kos-class-grid">
-              {groupedClasses.length ===
-              0 ? (
-                <p className="no-kos-results">
-                  No Keep or Scrap entries
-                  found.
-                </p>
-              ) : (
-                groupedClasses.map(
-                  (group) => {
-                    const firstEntry =
-                      group.entries[0];
-
-                    return (
-                      <section
-                        className="kos-class-section"
-                        key={group.name}
-                      >
-                        <div className="kos-class-header">
-                          <h2>
-                            {group.name}
-                          </h2>
-                        </div>
-
-                        <div className="kos-class-preview">
-                          <div className="kos-class-media">
-                            {hasValue(
-                              firstEntry?.image,
-                            ) && (
-                              <img
-                                src={
-                                  firstEntry.image
-                                }
-                                alt={
-                                  group.name
-                                }
-                              />
-                            )}
-                          </div>
-
-                          <div className="kos-class-content">
-                            <ul className="kos-tier-list">
-                              {group.entries.map(
-                                (
-                                  entry,
-                                ) => (
-                                  <li
-                                    key={
-                                      entry.tierid
-                                    }
-                                    className="kos-tier-item"
-                                  >
-                                    {renderBoldText(
-                                      entry.reasoning,
-                                    )}
-                                  </li>
-                                ),
-                              )}
-                            </ul>
-
-                            <button
-                              type="button"
-                              className="kos-view-details"
-                              onClick={() =>
-                                setSelectedGroup(
-                                  group,
-                                )
-                              }
-                            >
-                              View Details
-                            </button>
-                          </div>
-                        </div>
-                      </section>
-                    );
-                  },
-                )
-              )}
-            </div>
-          )}
+                  </section>
+                );
+              })
+            )}
+          </div>
+        )}
       </main>
 
       {selectedGroup && (
         <div
           className="kos-modal-overlay"
           onMouseDown={(event) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
+            if (event.target === event.currentTarget) {
               setSelectedGroup(null);
             }
           }}
@@ -880,52 +609,32 @@ function KeepOrScrap() {
             <button
               type="button"
               className="kos-modal-close"
-              onClick={() =>
-                setSelectedGroup(null)
-              }
+              onClick={() => setSelectedGroup(null)}
               aria-label="Close"
             >
               ×
             </button>
 
             <div className="kos-modal-header">
-              <h2>
-                {selectedGroup.name}
-              </h2>
+              <h2>{selectedGroup.name}</h2>
             </div>
 
             <div className="kos-modal-body">
-              {hasValue(
-                selectedGroup.entries[0]
-                  ?.image,
-              ) && (
+              {hasValue(selectedGroup.entries[0]?.image) && (
                 <div className="kos-modal-image">
                   <img
-                    src={
-                      selectedGroup
-                        .entries[0]
-                        .image
-                    }
-                    alt={
-                      selectedGroup.name
-                    }
+                    src={selectedGroup.entries[0].image}
+                    alt={selectedGroup.name}
                   />
                 </div>
               )}
 
               <div className="kos-modal-description">
-                {selectedGroup.entries.map(
-                  (entry) => (
-                    <div
-                      className="kos-modal-entry"
-                      key={entry.tierid}
-                    >
-                      {renderBoldText(
-                        entry.reasoning,
-                      )}
-                    </div>
-                  ),
-                )}
+                {selectedGroup.entries.map((entry) => (
+                  <div className="kos-modal-entry" key={entry.tierid}>
+                    {renderBoldText(entry.reasoning)}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
