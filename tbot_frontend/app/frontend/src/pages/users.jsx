@@ -1,15 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Link } from "react-router-dom";
 
 import Navbar from "../components/navbar";
-
 import Footer from "../components/footer";
 
 import "../css/users.css";
-
 import "../css/navbar.css";
-
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
@@ -65,7 +62,9 @@ const getDiscordAvatarUrl = (profile) => {
   }
 
   if (discordId) {
-    return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.png?size=256`;
+    const extension = avatar.startsWith("a_") ? "gif" : "png";
+
+    return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=256`;
   }
 
   return "";
@@ -112,7 +111,9 @@ function Users() {
             } else if (payload?.error) {
               message += `: ${payload.error}`;
             }
-          } catch {}
+          } catch {
+            // Ignore invalid JSON error responses.
+          }
 
           throw new Error(message);
         }
@@ -148,28 +149,65 @@ function Users() {
     return () => controller.abort();
   }, []);
 
-  const filteredProfiles = profiles.filter((profile) => {
+  const sortedProfiles = useMemo(() => {
+    const getAlphabeticalKey = (profile) => {
+      const name =
+        normalizeText(profile.display_name) ||
+        normalizeText(profile.username) ||
+        normalizeText(profile.profile_slug) ||
+        "";
+
+      return name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toLowerCase();
+    };
+
+    return [...profiles].sort((a, b) => {
+      const aKey = getAlphabeticalKey(a);
+      const bKey = getAlphabeticalKey(b);
+
+      if (aKey < bKey) {
+        return -1;
+      }
+
+      if (aKey > bKey) {
+        return 1;
+      }
+
+      return 0;
+    });
+  }, [profiles]);
+
+  /*
+   * Search the already alphabetically sorted users.
+   * Filtering does not change their alphabetical order.
+   */
+  const filteredProfiles = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
 
     if (!searchValue) {
-      return true;
+      return sortedProfiles;
     }
 
-    const displayName = normalizeText(profile.display_name).toLowerCase();
+    return sortedProfiles.filter((profile) => {
+      const displayName = normalizeText(profile.display_name).toLowerCase();
 
-    const username = normalizeText(profile.username).toLowerCase();
+      const username = normalizeText(profile.username).toLowerCase();
 
-    const profileSlug = normalizeText(profile.profile_slug).toLowerCase();
+      const profileSlug = normalizeText(profile.profile_slug).toLowerCase();
 
-    const bio = normalizeText(profile.bio).toLowerCase();
+      const bio = normalizeText(profile.bio).toLowerCase();
 
-    return (
-      displayName.includes(searchValue) ||
-      username.includes(searchValue) ||
-      profileSlug.includes(searchValue) ||
-      bio.includes(searchValue)
-    );
-  });
+      return (
+        displayName.includes(searchValue) ||
+        username.includes(searchValue) ||
+        profileSlug.includes(searchValue) ||
+        bio.includes(searchValue)
+      );
+    });
+  }, [sortedProfiles, search]);
 
   if (loading) {
     return (
@@ -251,7 +289,10 @@ function Users() {
               const avatar = getDiscordAvatarUrl(profile);
 
               return (
-                <article className="user-card" key={profile.id}>
+                <article
+                  className="user-card"
+                  key={profile.id || profile.profile_slug || profile.username}
+                >
                   <div className="user-card-top">
                     <div className="user-avatar">
                       {avatar ? (
@@ -263,25 +304,31 @@ function Users() {
 
                             if (
                               discordId &&
-                              event.currentTarget.src !==
-                                `https://cdn.discordapp.com/embed/avatars/${(Number(discordId) >> 22) % 6}.png`
+                              Number.isFinite(Number(discordId))
                             ) {
-                              const defaultAvatarIndex =
-                                (Number(discordId) >> 22) % 6;
+                              const numericId = Number(discordId);
 
-                              event.currentTarget.src = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
-                            } else {
-                              event.currentTarget.style.display = "none";
+                              const defaultAvatarIndex = (numericId >> 22) % 6;
 
-                              const parent = event.currentTarget.parentElement;
+                              const fallbackUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
 
-                              if (parent) {
-                                parent.classList.add("user-avatar-fallback");
+                              if (event.currentTarget.src !== fallbackUrl) {
+                                event.currentTarget.src = fallbackUrl;
 
-                                parent.textContent = displayName
-                                  .charAt(0)
-                                  .toUpperCase();
+                                return;
                               }
+                            }
+
+                            event.currentTarget.style.display = "none";
+
+                            const parent = event.currentTarget.parentElement;
+
+                            if (parent) {
+                              parent.classList.add("user-avatar-fallback");
+
+                              parent.textContent = displayName
+                                .charAt(0)
+                                .toUpperCase();
                             }
                           }}
                         />
