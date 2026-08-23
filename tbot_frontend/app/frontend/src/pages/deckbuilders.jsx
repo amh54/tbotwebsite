@@ -3,10 +3,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Navbar from "../components/navbar";
+
 import Footer from "../components/footer";
 
 import "../css/users.css";
+
 import "../css/navbar.css";
+
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
@@ -30,6 +33,28 @@ const getApiBaseUrl = () => {
 const API_BASE_URL = getApiBaseUrl();
 
 const normalizeText = (value) => String(value ?? "").trim();
+
+const getDeckCount = (deckbuilder) => {
+  const actualDeckCount = Number(deckbuilder?.actual_deck_count);
+
+  if (Number.isFinite(actualDeckCount)) {
+    return actualDeckCount;
+  }
+
+  const deckCount = Number(deckbuilder?.deck_count);
+
+  if (Number.isFinite(deckCount)) {
+    return deckCount;
+  }
+
+  const legacyDeckCount = Number(deckbuilder?.numb_of_decks);
+
+  if (Number.isFinite(legacyDeckCount)) {
+    return legacyDeckCount;
+  }
+
+  return 0;
+};
 
 const getDiscordAvatarUrl = (profile) => {
   const avatar = normalizeText(profile?.avatar);
@@ -72,6 +97,7 @@ const getDiscordAvatarUrl = (profile) => {
 
 function Deckbuilders() {
   const [deckbuilders, setDeckbuilders] = useState([]);
+
   const [totalDeckbuilders, setTotalDeckbuilders] = useState(null);
 
   const [search, setSearch] = useState("");
@@ -131,6 +157,7 @@ function Deckbuilders() {
     const controller = new AbortController();
 
     const loadingStartTime = Date.now();
+
     const minimumLoadingTime = 1200;
 
     const loadDeckbuilders = async () => {
@@ -195,8 +222,25 @@ function Deckbuilders() {
     return () => controller.abort();
   }, []);
 
+  /*
+   * SORT BY ACTUAL DECK COUNT.
+   *
+   * Highest number of decks appears first.
+   *
+   * If two deckbuilders have the same
+   * number of decks, their names are
+   * used as the alphabetical tie-breaker.
+   */
   const sortedDeckbuilders = useMemo(() => {
     return [...deckbuilders].sort((a, b) => {
+      const aDeckCount = getDeckCount(a);
+
+      const bDeckCount = getDeckCount(b);
+
+      if (aDeckCount !== bDeckCount) {
+        return bDeckCount - aDeckCount;
+      }
+
       const aName =
         normalizeText(a.display_name) ||
         normalizeText(a.deckbuilder_name) ||
@@ -307,11 +351,7 @@ function Deckbuilders() {
           </div>
         ) : filteredDeckbuilders.length === 0 ? (
           <div className="users-empty">
-            <h2>
-              {deckbuilders.length === 0
-                ? "No deckbuilders found"
-                : "No deckbuilders found"}
-            </h2>
+            <h2>No deckbuilders found</h2>
 
             <p>Try a different search.</p>
           </div>
@@ -331,7 +371,7 @@ function Deckbuilders() {
 
               const avatar = getDiscordAvatarUrl(deckbuilder);
 
-              const deckCount = Number(deckbuilder.numb_of_decks);
+              const deckCount = getDeckCount(deckbuilder);
 
               return (
                 <article
@@ -397,14 +437,12 @@ function Deckbuilders() {
                       <p className="user-card-bio">{bio}</p>
                     ) : (
                       <p className="user-card-bio user-card-no-bio">
-                        {deckbuilder.has_profile}
+                        {deckbuilder.has_profile ? "" : "Deckbuilder"}
                       </p>
                     )}
 
                     <p className="user-card-bio">
-                      <strong>
-                        {Number.isFinite(deckCount) ? deckCount : 0}
-                      </strong>{" Tbot Decks"}
+                      <strong>{deckCount}</strong> Tbot Decks
                     </p>
                   </div>
 
@@ -434,7 +472,7 @@ function Deckbuilders() {
         )}
       </main>
 
-      <Footer/>
+      <Footer />
     </div>
   );
 }

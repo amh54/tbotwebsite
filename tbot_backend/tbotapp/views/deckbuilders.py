@@ -17,32 +17,6 @@ from ..serializers import (
 
 
 def _split_deckbuilder_names(value):
-    """
-    Convert a creator/optimization field into individual names.
-
-    Supported separators:
-        ,
-        ;
-        |
-        &
-        "and"
-
-    Examples:
-
-        "Xera"
-            -> ["xera"]
-
-        "Xera, Pillowy, Zzyzx_Master"
-            -> ["xera", "pillowy", "zzyzx_master"]
-
-        "Xera & Salt"
-            -> ["xera", "salt"]
-
-        "Xera, Pillowy & Zzyzx_Master"
-            -> ["xera", "pillowy", "zzyzx_master"]
-
-    Matching is case-insensitive.
-    """
     if not value:
         return []
 
@@ -129,22 +103,9 @@ def _get_deckbuilder_decks(deckbuilder):
 
 @api_view(["GET"])
 def deckbuilders(request):
-    """
-    Return all deckbuilders.
-
-    Profile matching is performed using:
-
-        web_deckbuilders.user_id
-            ->
-        user_profiles.discord_id
-
-    A profile is optional. Deckbuilders without a matching
-    profile are still returned.
-    """
     deckbuilders_queryset = (
         WebDeckbuilder.objects
         .all()
-        .order_by("deckbuilder_name")
     )
 
     results = []
@@ -158,6 +119,9 @@ def deckbuilders(request):
             .first()
         )
 
+        decks = _get_deckbuilder_decks(deckbuilder)
+        actual_count = len(decks)
+
         serializer = PublicDeckbuilderSerializer(
             deckbuilder
         )
@@ -165,8 +129,20 @@ def deckbuilders(request):
         data = serializer.data
 
         data["has_profile"] = profile is not None
+        data["numb_of_decks"] = actual_count
+        data["deck_count"] = actual_count
+        data["actual_deck_count"] = actual_count
 
         results.append(data)
+    results.sort(
+        key=lambda item: (
+            -int(item.get("numb_of_decks") or 0),
+            str(
+                item.get("deckbuilder_name")
+                or ""
+            ).casefold(),
+        )
+    )
 
     return Response(
         {
