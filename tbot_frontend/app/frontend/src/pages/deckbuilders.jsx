@@ -434,7 +434,7 @@ function Deckbuilders() {
         )}
       </main>
 
-      <Footer credits="Browse Tbot deckbuilders and explore the decks they have built." />
+      <Footer/>
     </div>
   );
 }
