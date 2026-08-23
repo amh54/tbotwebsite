@@ -696,11 +696,6 @@ function DeckCard({
       {open && (
         <div
           className="modal-overlay"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !isSaving) {
-              closeModal();
-            }
-          }}
         >
           <dialog
             open
