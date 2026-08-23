@@ -107,6 +107,30 @@ const hasValue = (value) => {
   return String(value).trim() !== "";
 };
 
+const normalizeText = (value) => {
+  return String(value ?? "").trim();
+};
+
+/*
+ * Resolve the owner name from the fields returned by the
+ * admin user-decks API.
+ *
+ * This is intentionally only displayed when isAdmin === true.
+ */
+const getOwnerName = (deck) => {
+  return (
+    normalizeText(deck?.owner) ||
+    normalizeText(deck?.owner_username) ||
+    normalizeText(deck?.owner_name) ||
+    normalizeText(deck?.username) ||
+    normalizeText(deck?.profile_display_name) ||
+    normalizeText(deck?.display_name) ||
+    normalizeText(deck?.profile_slug) ||
+    normalizeText(deck?.user) ||
+    ""
+  );
+};
+
 const toExternalUrl = (value) => {
   const raw = String(value || "").trim();
 
@@ -198,17 +222,20 @@ function DeckCard({
   const deck = decklist ?? {};
 
   /*
-   * IMPORTANT:
+   * isAdmin is used for both:
    *
-   * isAdmin is also used for the user's own deck dashboard.
+   * 1. The user's own deck dashboard.
+   * 2. The site admin user-decks dashboard.
    *
    * Therefore:
-   * - normal public deck page/list = isAdmin false
-   * - user's deck dashboard = isAdmin true
-   * - admin dashboard = isAdmin true
    *
-   * Sharing is disabled whenever isAdmin is true.
+   * - normal public deck page/list = false
+   * - user's deck dashboard = true
+   * - admin user-decks page = true
+   *
+   * Owner is only displayed when isAdmin is true.
    */
+
   const isAdmin = admin || adminMode;
 
   const [heroColor1, heroColor2] = getHeroColors(deck.hero);
@@ -242,6 +269,13 @@ function DeckCard({
   const description = hasValue(deck.description)
     ? deck.description
     : "No description available.";
+
+  /*
+   * Owner is resolved here so it can be used
+   * anywhere in the component while still only
+   * being rendered for admin cards.
+   */
+  const ownerName = getOwnerName(deck);
 
   useEffect(() => {
     if (addMode) {
@@ -356,9 +390,7 @@ function DeckCard({
 
   const resetEditImageState = () => {
     setEditImageFile(null);
-
     setEditImagePreview(deck.image ?? "");
-
     setEditImgError(false);
   };
 
@@ -370,9 +402,7 @@ function DeckCard({
     }
 
     setEditImageFile(null);
-
     setEditImagePreview(deck.image ?? "");
-
     setEditImgError(false);
     setEditing(true);
   };
@@ -393,19 +423,14 @@ function DeckCard({
 
     if (!file) {
       setEditImageFile(null);
-
       setEditImagePreview(deck.image ?? "");
-
       return;
     }
 
     if (!file.type.startsWith("image/")) {
       event.target.value = "";
-
       setEditImageFile(null);
-
       setEditImagePreview(deck.image ?? "");
-
       return;
     }
 
@@ -418,7 +443,6 @@ function DeckCard({
   const handleEditSave = async () => {
     if (!editModalRef.current?.save) {
       console.error("EditDeckModal save method is unavailable.");
-
       return;
     }
 
@@ -438,10 +462,8 @@ function DeckCard({
   /*
    * SHARE DECK
    *
-   * This function can only be reached from
-   * a normal non-dashboard deck card because
-   * the Share Deck button is hidden whenever
-   * isAdmin === true.
+   * Sharing is only available outside
+   * user/admin dashboards.
    */
   const handleShare = async () => {
     if (isAdmin) {
@@ -466,11 +488,6 @@ function DeckCard({
     let shareUrl;
 
     if (resolvedProfileIsPublic && resolvedProfileSlug) {
-      /*
-       * Public profile:
-       * Open the user's normal decklists page
-       * with the selected deck modal open.
-       */
       shareUrl = new URL(
         `/profile/${encodeURIComponent(resolvedProfileSlug)}/decklists`,
         window.location.origin,
@@ -478,10 +495,6 @@ function DeckCard({
 
       shareUrl.searchParams.set("deck", deckKey);
     } else if (resolvedProfileSlug) {
-      /*
-       * Private profile:
-       * Open the standalone deck page.
-       */
       shareUrl = new URL(
         `/deck/${encodeURIComponent(resolvedProfileSlug)}/${encodeURIComponent(
           deckKey,
@@ -492,7 +505,6 @@ function DeckCard({
       console.error(
         "Unable to create deck share link: profile slug is missing.",
       );
-
       return;
     }
 
@@ -536,9 +548,7 @@ function DeckCard({
       link.download = `${deck.name || "decklist"}.png`.replace(/\s+/g, "_");
 
       document.body.appendChild(link);
-
       link.click();
-
       link.remove();
 
       URL.revokeObjectURL(blobUrl);
@@ -633,7 +643,8 @@ function DeckCard({
           </p>
 
           <p>
-            <span>Cost:</span> {deck.cost || "-"}
+            <span>Cost:</span>{" "}
+            {deck.cost ? Number(deck.cost).toLocaleString() : "-"}
             <img
               src="https://i.ibb.co/jZkdqf6y/spark.webp"
               alt="Spark icon"
@@ -642,16 +653,19 @@ function DeckCard({
           </p>
 
           {hasValue(deck.creator) && (
-            <p className="creator-field">
-              <span className="field-label">Creator:</span>
-
-              <span className="creator-value">{deck.creator}</span>
+            <p>
+              <span>Creator:</span> {deck.creator}
             </p>
           )}
 
           {hasValue(deck.optimization) && (
             <p>
               <span>Optimized by:</span> {deck.optimization}
+            </p>
+          )}
+          {isAdmin && hasValue(ownerName) && (
+            <p>
+              <span>Owner:</span> {ownerName}
             </p>
           )}
         </div>
@@ -770,17 +784,6 @@ function DeckCard({
 
                   {!editing && (
                     <div className="modal-actions">
-                      {/*
-                       * SHARE IS ONLY AVAILABLE
-                       * OUTSIDE USER/ADMIN DASHBOARDS.
-                       *
-                       * isAdmin is true for both:
-                       * - User deck management dashboard
-                       * - Admin dashboard
-                       *
-                       * Therefore Share Deck will NOT
-                       * render in either dashboard.
-                       */}
                       {!isAdmin && (
                         <button
                           type="button"
@@ -923,6 +926,13 @@ function DeckCard({
                             />
                           </span>
                         </div>
+                        {isAdmin && hasValue(ownerName) && (
+                          <div className="metadata-item">
+                            <span className="label">Owner</span>
+
+                            <span className="value">{ownerName}</span>
+                          </div>
+                        )}
                       </section>
 
                       {isAdmin && (
