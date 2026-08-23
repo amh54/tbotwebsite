@@ -3,6 +3,7 @@ import "./css/navbar.css";
 
 import { Link, Route, Routes } from "react-router-dom";
 import StandaloneDeckPage from "./pages/standalonedeck.jsx";
+import AdminUserDecks from "./pages/admin-userdecks.jsx";
 import Admin from "./pages/admin.jsx";
 import DecklistsPage from "./pages/decklists.jsx";
 import CardInfo from "./pages/cardinfo.jsx";
@@ -247,7 +248,7 @@ function App() {
       <Route path="/admin/decklists/add" element={<AdminDecklists />} />
 
       <Route path="/admin/legacy-decks/*" element={<AdminLegacyDecks />} />
-
+      <Route path="/admin/user-decks" element={<AdminUserDecks />} />
       <Route
         path="*"
         element={

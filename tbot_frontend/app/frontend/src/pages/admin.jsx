@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { Link, useNavigate } from "react-router-dom";
 
 import "../css/admin.css";
@@ -37,7 +38,11 @@ function Admin() {
 
         setAuthorized(true);
       } catch (error) {
-        console.error("Unable to verify admin permissions:", error);
+        console.error(
+          "Unable to verify admin permissions:",
+          error,
+        );
+
         navigate("/");
       } finally {
         setLoading(false);
@@ -73,7 +78,10 @@ function Admin() {
             <p>Manage the Tbot website.</p>
           </div>
 
-          <Link to="/" className="admin-back-button">
+          <Link
+            to="/"
+            className="admin-back-button"
+          >
             ← Back to Tbot
           </Link>
         </div>
@@ -83,23 +91,52 @@ function Admin() {
             to="/admin/decklists"
             className="admin-dashboard-card"
           >
-            <span className="admin-card-label">Decklists</span>
-            <span className="admin-card-action">Manage →</span>
+            <span className="admin-card-label">
+              Decklists
+            </span>
+
+            <span className="admin-card-action">
+              Manage →
+            </span>
           </Link>
 
           <Link
             to="/admin/legacy-decks"
             className="admin-dashboard-card"
           >
-            <span className="admin-card-label">Legacy Decks</span>
-            <span className="admin-card-action">Manage →</span>
+            <span className="admin-card-label">
+              Legacy Decks
+            </span>
+
+            <span className="admin-card-action">
+              Manage →
+            </span>
           </Link>
+
+          <Link
+            to="/admin/user-decks"
+            className="admin-dashboard-card"
+          >
+            <span className="admin-card-label">
+              User Decks
+            </span>
+
+            <span className="admin-card-action">
+              Manage →
+            </span>
+          </Link>
+
           <Link
             to="/admin/keeporscrap"
             className="admin-dashboard-card"
           >
-            <span className="admin-card-label">Keep or Scrap</span>
-            <span className="admin-card-action">Manage →</span>
+            <span className="admin-card-label">
+              Keep or Scrap
+            </span>
+
+            <span className="admin-card-action">
+              Manage →
+            </span>
           </Link>
         </div>
       </main>

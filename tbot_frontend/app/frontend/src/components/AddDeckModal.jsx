@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-
 import Select from "react-select";
 
 import "../css/deckmodal.css";
@@ -123,6 +122,7 @@ const selectStyles = {
     minHeight: "45px",
     boxShadow: state.isFocused ? "0 0 0 2px rgba(139, 148, 158, 0.12)" : "none",
     cursor: "pointer",
+
     "&:hover": {
       borderColor: "#646d76",
     },
@@ -141,6 +141,7 @@ const selectStyles = {
     ...base,
     scrollbarWidth: "none",
     msOverflowStyle: "none",
+
     "::-webkit-scrollbar": {
       display: "none",
     },
@@ -193,6 +194,7 @@ const selectStyles = {
     borderRadius: "0 999px 999px 0",
     padding: "3px 8px 3px 4px",
     flexShrink: 0,
+
     "&:hover": {
       backgroundColor: "#4a535d",
       color: "#ffffff",
@@ -242,6 +244,7 @@ const selectStyles = {
     color: "#737b84",
     padding: "8px",
     flexShrink: 0,
+
     "&:hover": {
       color: "#c7cbd1",
     },
@@ -258,6 +261,7 @@ const selectStyles = {
     justifyContent: "center",
     borderRadius: "50%",
     flexShrink: 0,
+
     "&:hover": {
       backgroundColor: "#4a535d",
       color: "#ffffff",
@@ -297,6 +301,7 @@ function TextField({
   onChange,
   required = false,
   error = "",
+  type = "text",
 }) {
   return (
     <label className="admin-modal-field">
@@ -305,7 +310,7 @@ function TextField({
       </span>
 
       <input
-        type="text"
+        type={type}
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value)}
       />
@@ -315,13 +320,7 @@ function TextField({
   );
 }
 
-function TextArea({
-  label,
-  value,
-  onChange,
-  required = false,
-  error = "",
-}) {
+function TextArea({ label, value, onChange, required = false, error = "" }) {
   return (
     <label className="admin-modal-field admin-modal-textarea-field">
       {label && (
@@ -803,14 +802,27 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
         message: "Deck description is required.",
       };
     }
+    const costString = String(form.cost ?? "").trim();
 
-    if (!String(form.cost || "").trim()) {
+    if (!costString) {
       return {
         field: "cost",
         message: "Deck cost is required.",
       };
     }
 
+    const numericCost = Number(costString);
+
+    if (!Number.isFinite(numericCost) || numericCost < 0) {
+      return {
+        field: "cost",
+        message: "Deck cost must be a valid number.",
+      };
+    }
+
+    /*
+     * CREATOR IS REQUIRED.
+     */
     if (!String(form.creator || "").trim()) {
       return {
         field: "creator",
@@ -867,18 +879,30 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
         name: form.name ?? "",
         hero: form.hero ?? "",
         side: normalizedFormSide,
+
         category: optionsToCombinedValue(form.categorySelected),
+
         archetype: optionsToCombinedValue(form.archetypeSelected),
+
         description: form.description ?? "",
+
         image: hasNewImage ? "" : String(form.image || "").trim(),
+
         image_file: hasNewImage ? form.image_file : null,
-        creator: form.creator ?? "",
-        cost: form.cost ?? "",
+        creator: String(form.creator ?? "").trim(),
+
+        cost: Number(form.cost),
+
         inspiration: form.inspiration ?? "",
+
         optimization: form.optimization ?? "",
+
         suggested_date: form.suggested_date ?? "",
+
         updated_date: form.updated_date ?? "",
+
         deck_doc: form.deck_doc ?? "",
+
         cards: cardOptionsToRatioLines(form.cardsSelected),
       };
 
@@ -1128,30 +1152,24 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
               </section>
 
               <section className="modal-section description-section">
-                <section className="modal-section description-section">
-                  <TextArea
-                    label="Description"
-                    value={form.description}
-                    onChange={(value) => handleChange("description", value)}
-                    required
-                    error={
-                      validationError?.field === "description"
-                        ? validationError.message
-                        : ""
-                    }
-                  />
-                </section>
+                <TextArea
+                  label="Description"
+                  value={form.description}
+                  onChange={(value) => handleChange("description", value)}
+                  required
+                  error={fieldError("description")}
+                />
               </section>
 
               <section className="modal-metadata">
                 <TextField
                   label="Cost"
+                  type="number"
                   value={form.cost}
                   onChange={(value) => handleChange("cost", value)}
                   required
                   error={fieldError("cost")}
                 />
-
                 <TextField
                   label="Creator"
                   value={form.creator}
@@ -1183,13 +1201,11 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                   value={form.updated_date}
                   onChange={(value) => handleChange("updated_date", value)}
                 />
-
                 <TextField
                   label="Deck Tutorial URL"
                   value={form.deck_doc}
                   onChange={(value) => handleChange("deck_doc", value)}
                 />
-
                 <div className="admin-modal-field admin-modal-cards-field">
                   <span className="admin-modal-label">
                     <RequiredLabel>

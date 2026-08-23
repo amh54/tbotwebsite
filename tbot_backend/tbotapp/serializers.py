@@ -107,11 +107,24 @@ class AdminLegacyDeckSerializer(serializers.ModelSerializer):
 
 
 class UserDeckSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    display_name = serializers.SerializerMethodField()
+    profile_slug = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
+
     class Meta:
         model = UserDeck
         fields = [
             "id",
             "profile_id",
+
+            # User information
+            "username",
+            "display_name",
+            "profile_slug",
+            "avatar",
+
+            # Deck information
             "name",
             "hero",
             "side",
@@ -131,12 +144,57 @@ class UserDeckSerializer(serializers.ModelSerializer):
             "created_at",
             "modified_at",
         ]
+
         read_only_fields = [
             "id",
             "profile_id",
+            "username",
+            "display_name",
+            "profile_slug",
+            "avatar",
             "created_at",
             "modified_at",
         ]
+
+    def _get_profile(self, obj):
+        try:
+            return UserProfile.objects.filter(
+                id=obj.profile_id
+            ).first()
+        except Exception:
+            return None
+
+    def get_username(self, obj):
+        profile = self._get_profile(obj)
+
+        if not profile:
+            return ""
+
+        return profile.username or ""
+
+    def get_display_name(self, obj):
+        profile = self._get_profile(obj)
+
+        if not profile:
+            return ""
+
+        return profile.display_name or ""
+
+    def get_profile_slug(self, obj):
+        profile = self._get_profile(obj)
+
+        if not profile:
+            return ""
+
+        return profile.profile_slug or ""
+
+    def get_avatar(self, obj):
+        profile = self._get_profile(obj)
+
+        if not profile:
+            return ""
+
+        return profile.avatar or ""
 
     def validate(self, attrs):
         cards = attrs.get("cards")
@@ -146,8 +204,10 @@ class UserDeckSerializer(serializers.ModelSerializer):
 
         if isinstance(cards, str):
             lines = cards.splitlines()
+
         elif isinstance(cards, list):
             lines = cards
+
         else:
             raise serializers.ValidationError({
                 "cards": "Cards must be a valid card ratio list."
@@ -171,6 +231,7 @@ class UserDeckSerializer(serializers.ModelSerializer):
 
                 try:
                     ratio = int(parts[1].strip())
+
                 except (TypeError, ValueError):
                     raise serializers.ValidationError({
                         "cards": f"Invalid ratio for {card_name}."
@@ -185,6 +246,7 @@ class UserDeckSerializer(serializers.ModelSerializer):
 
                 try:
                     ratio = int(line.get("count", 0))
+
                 except (TypeError, ValueError):
                     raise serializers.ValidationError({
                         "cards": f"Invalid ratio for {card_name}."
