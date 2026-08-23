@@ -111,12 +111,6 @@ const normalizeText = (value) => {
   return String(value ?? "").trim();
 };
 
-/*
- * Resolve the owner name from the fields returned by the
- * admin user-decks API.
- *
- * This is intentionally only displayed when isAdmin === true.
- */
 const getOwnerName = (deck) => {
   return (
     normalizeText(deck?.owner) ||
@@ -131,6 +125,22 @@ const getOwnerName = (deck) => {
   );
 };
 
+const formatCost = (value) => {
+  if (!hasValue(value)) {
+    return "-";
+  }
+
+  const raw = String(value).trim();
+
+  const numericValue = Number(raw.replace(/,/g, ""));
+
+  if (Number.isFinite(numericValue)) {
+    return numericValue.toLocaleString("en-US");
+  }
+
+  return raw;
+};
+
 const toExternalUrl = (value) => {
   const raw = String(value || "").trim();
 
@@ -139,7 +149,6 @@ const toExternalUrl = (value) => {
   }
 
   const markdownMatch = /\((https?:\/\/[^)]+)\)/i.exec(raw);
-
   const inlineUrlMatch = /https?:\/\/\S+/i.exec(raw);
 
   let candidate = (markdownMatch?.[1] || inlineUrlMatch?.[0] || raw)
@@ -178,9 +187,7 @@ const parseCardRatioLines = (value) =>
     .filter(Boolean)
     .map((line) => {
       const [namePart, countPart] = line.split("|");
-
       const name = String(namePart || "").trim();
-
       const parsedCount = Number(countPart);
 
       const count =
@@ -221,21 +228,6 @@ function DeckCard({
 }) {
   const deck = decklist ?? {};
 
-  /*
-   * isAdmin is used for both:
-   *
-   * 1. The user's own deck dashboard.
-   * 2. The site admin user-decks dashboard.
-   *
-   * Therefore:
-   *
-   * - normal public deck page/list = false
-   * - user's deck dashboard = true
-   * - admin user-decks page = true
-   *
-   * Owner is only displayed when isAdmin is true.
-   */
-
   const isAdmin = admin || adminMode;
 
   const [heroColor1, heroColor2] = getHeroColors(deck.hero);
@@ -247,19 +239,12 @@ function DeckCard({
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [open, setOpen] = useState(addMode);
-
   const [editing, setEditing] = useState(false);
-
   const [imgError, setImgError] = useState(false);
-
   const [copied, setCopied] = useState(false);
-
   const [editImageFile, setEditImageFile] = useState(null);
-
   const [editImagePreview, setEditImagePreview] = useState("");
-
   const [editImgError, setEditImgError] = useState(false);
-
   const [editSavingLocal, setEditSavingLocal] = useState(false);
 
   const editModalRef = useRef(null);
@@ -270,11 +255,6 @@ function DeckCard({
     ? deck.description
     : "No description available.";
 
-  /*
-   * Owner is resolved here so it can be used
-   * anywhere in the component while still only
-   * being rendered for admin cards.
-   */
   const ownerName = getOwnerName(deck);
 
   useEffect(() => {
@@ -349,9 +329,7 @@ function DeckCard({
     }
 
     const next = new URLSearchParams(searchParams);
-
     next.set("deck", deckKey);
-
     setSearchParams(next);
   };
 
@@ -459,12 +437,6 @@ function DeckCard({
     }
   };
 
-  /*
-   * SHARE DECK
-   *
-   * Sharing is only available outside
-   * user/admin dashboards.
-   */
   const handleShare = async () => {
     if (isAdmin) {
       return;
@@ -496,9 +468,9 @@ function DeckCard({
       shareUrl.searchParams.set("deck", deckKey);
     } else if (resolvedProfileSlug) {
       shareUrl = new URL(
-        `/deck/${encodeURIComponent(resolvedProfileSlug)}/${encodeURIComponent(
-          deckKey,
-        )}`,
+        `/deck/${encodeURIComponent(
+          resolvedProfileSlug,
+        )}/${encodeURIComponent(deckKey)}`,
         window.location.origin,
       );
     } else {
@@ -538,13 +510,10 @@ function DeckCard({
       }
 
       const blob = await response.blob();
-
       const blobUrl = URL.createObjectURL(blob);
-
       const link = document.createElement("a");
 
       link.href = blobUrl;
-
       link.download = `${deck.name || "decklist"}.png`.replace(/\s+/g, "_");
 
       document.body.appendChild(link);
@@ -643,8 +612,7 @@ function DeckCard({
           </p>
 
           <p>
-            <span>Cost:</span>{" "}
-            {deck.cost ? Number(deck.cost).toLocaleString() : "-"}
+            <span>Cost:</span> {formatCost(deck.cost)}
             <img
               src="https://i.ibb.co/jZkdqf6y/spark.webp"
               alt="Spark icon"
@@ -663,6 +631,7 @@ function DeckCard({
               <span>Optimized by:</span> {deck.optimization}
             </p>
           )}
+
           {isAdmin && hasValue(ownerName) && (
             <p>
               <span>Owner:</span> {ownerName}
@@ -903,13 +872,11 @@ function DeckCard({
 
                         <div className="metadata-item">
                           <span className="label">Category</span>
-
                           <span className="value">{deck.category || "-"}</span>
                         </div>
 
                         <div className="metadata-item">
                           <span className="label">Archetype</span>
-
                           <span className="value">{deck.archetype || "-"}</span>
                         </div>
 
@@ -917,7 +884,7 @@ function DeckCard({
                           <span className="label">Cost</span>
 
                           <span className="cost-value">
-                            {deck.cost || "-"}
+                            {formatCost(deck.cost)}
 
                             <img
                               src="https://i.ibb.co/jZkdqf6y/spark.webp"
@@ -926,10 +893,10 @@ function DeckCard({
                             />
                           </span>
                         </div>
+
                         {isAdmin && hasValue(ownerName) && (
                           <div className="metadata-item">
                             <span className="label">Owner</span>
-
                             <span className="value">{ownerName}</span>
                           </div>
                         )}
