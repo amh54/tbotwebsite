@@ -975,11 +975,6 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
   return (
     <div
       className="modal-overlay"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !saving) {
-          onClose();
-        }
-      }}
     >
       <dialog
         open
