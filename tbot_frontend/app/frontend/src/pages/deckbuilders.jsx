@@ -221,16 +221,6 @@ function Deckbuilders() {
 
     return () => controller.abort();
   }, []);
-
-  /*
-   * SORT BY ACTUAL DECK COUNT.
-   *
-   * Highest number of decks appears first.
-   *
-   * If two deckbuilders have the same
-   * number of decks, their names are
-   * used as the alphabetical tie-breaker.
-   */
   const sortedDeckbuilders = useMemo(() => {
     return [...deckbuilders].sort((a, b) => {
       const aDeckCount = getDeckCount(a);
@@ -437,7 +427,7 @@ function Deckbuilders() {
                       <p className="user-card-bio">{bio}</p>
                     ) : (
                       <p className="user-card-bio user-card-no-bio">
-                        {deckbuilder.has_profile ? "" : "Deckbuilder"}
+                        {deckbuilder.has_profile}
                       </p>
                     )}
 
