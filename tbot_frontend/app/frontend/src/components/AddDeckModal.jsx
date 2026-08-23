@@ -122,7 +122,6 @@ const selectStyles = {
     minHeight: "45px",
     boxShadow: state.isFocused ? "0 0 0 2px rgba(139, 148, 158, 0.12)" : "none",
     cursor: "pointer",
-
     "&:hover": {
       borderColor: "#646d76",
     },
@@ -141,7 +140,6 @@ const selectStyles = {
     ...base,
     scrollbarWidth: "none",
     msOverflowStyle: "none",
-
     "::-webkit-scrollbar": {
       display: "none",
     },
@@ -194,7 +192,6 @@ const selectStyles = {
     borderRadius: "0 999px 999px 0",
     padding: "3px 8px 3px 4px",
     flexShrink: 0,
-
     "&:hover": {
       backgroundColor: "#4a535d",
       color: "#ffffff",
@@ -244,7 +241,6 @@ const selectStyles = {
     color: "#737b84",
     padding: "8px",
     flexShrink: 0,
-
     "&:hover": {
       color: "#c7cbd1",
     },
@@ -261,7 +257,6 @@ const selectStyles = {
     justifyContent: "center",
     borderRadius: "50%",
     flexShrink: 0,
-
     "&:hover": {
       backgroundColor: "#4a535d",
       color: "#ffffff",
@@ -411,7 +406,10 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
     description: "",
     image: "",
     image_file: null,
+
+    // CREATOR IS REQUIRED
     creator: "",
+
     cost: "",
     inspiration: "",
     optimization: "",
@@ -737,6 +735,17 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       return;
     }
 
+    if (!file.type.startsWith("image/")) {
+      event.target.value = "";
+
+      setValidationError({
+        field: "image",
+        message: "Please select a valid image file.",
+      });
+
+      return;
+    }
+
     const previewUrl = URL.createObjectURL(file);
 
     setForm((previous) => ({
@@ -775,7 +784,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       };
     }
 
-    if (!form.hero) {
+    if (!String(form.hero || "").trim()) {
       return {
         field: "hero",
         message: "Please select a hero.",
@@ -802,6 +811,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
         message: "Deck description is required.",
       };
     }
+
     const costString = String(form.cost ?? "").trim();
 
     if (!costString) {
@@ -822,8 +832,13 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
 
     /*
      * CREATOR IS REQUIRED.
+     *
+     * This check happens BEFORE onAdd() is called.
+     * Empty strings and whitespace-only values are rejected.
      */
-    if (!String(form.creator || "").trim()) {
+    const creator = String(form.creator ?? "").trim();
+
+    if (!creator) {
       return {
         field: "creator",
         message: "Creator is required.",
@@ -861,6 +876,10 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       return;
     }
 
+    /*
+     * IMPORTANT:
+     * Validate BEFORE creating/sending the payload.
+     */
     const error = validateForm();
 
     if (error) {
@@ -875,33 +894,52 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
 
       const hasNewImage = form.image_file instanceof File;
 
+      const creator = String(form.creator ?? "").trim();
+
+      /*
+       * Extra safety check immediately before submission.
+       * Even if something changes in the form state,
+       * an empty creator can never be submitted.
+       */
+      if (!creator) {
+        setValidationError({
+          field: "creator",
+          message: "Creator is required.",
+        });
+
+        setSaving(false);
+        return;
+      }
+
       const payload = {
-        name: form.name ?? "",
-        hero: form.hero ?? "",
+        name: String(form.name ?? "").trim(),
+        hero: String(form.hero ?? "").trim(),
         side: normalizedFormSide,
 
         category: optionsToCombinedValue(form.categorySelected),
 
         archetype: optionsToCombinedValue(form.archetypeSelected),
 
-        description: form.description ?? "",
+        description: String(form.description ?? "").trim(),
 
         image: hasNewImage ? "" : String(form.image || "").trim(),
 
         image_file: hasNewImage ? form.image_file : null,
-        creator: String(form.creator ?? "").trim(),
+
+        // CREATOR CANNOT BE EMPTY
+        creator,
 
         cost: Number(form.cost),
 
-        inspiration: form.inspiration ?? "",
+        inspiration: String(form.inspiration ?? "").trim(),
 
-        optimization: form.optimization ?? "",
+        optimization: String(form.optimization ?? "").trim(),
 
-        suggested_date: form.suggested_date ?? "",
+        suggested_date: String(form.suggested_date ?? "").trim(),
 
-        updated_date: form.updated_date ?? "",
+        updated_date: String(form.updated_date ?? "").trim(),
 
-        deck_doc: form.deck_doc ?? "",
+        deck_doc: String(form.deck_doc ?? "").trim(),
 
         cards: cardOptionsToRatioLines(form.cardsSelected),
       };
@@ -981,6 +1019,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   onChange={handleImageFileChange}
+                  disabled={saving}
                 />
 
                 {fieldError("image") && (
@@ -1063,6 +1102,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                       placeholder="Select side..."
                       isClearable
                       styles={selectStyles}
+                      isDisabled={saving}
                     />
 
                     {fieldError("side") && (
@@ -1089,7 +1129,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                           : "Select side first..."
                       }
                       isClearable
-                      isDisabled={!normalizedFormSide}
+                      isDisabled={!normalizedFormSide || saving}
                       isSearchable
                       styles={selectStyles}
                     />
@@ -1116,6 +1156,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                       styles={selectStyles}
                       closeMenuOnSelect={false}
                       isSearchable
+                      isDisabled={saving}
                     />
 
                     {fieldError("category") && (
@@ -1140,6 +1181,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                       styles={selectStyles}
                       closeMenuOnSelect={false}
                       isSearchable
+                      isDisabled={saving}
                     />
 
                     {fieldError("archetype") && (
@@ -1170,6 +1212,8 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                   required
                   error={fieldError("cost")}
                 />
+
+                {/* CREATOR IS REQUIRED */}
                 <TextField
                   label="Creator"
                   value={form.creator}
@@ -1201,11 +1245,13 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                   value={form.updated_date}
                   onChange={(value) => handleChange("updated_date", value)}
                 />
+
                 <TextField
                   label="Deck Tutorial URL"
                   value={form.deck_doc}
                   onChange={(value) => handleChange("deck_doc", value)}
                 />
+
                 <div className="admin-modal-field admin-modal-cards-field">
                   <span className="admin-modal-label">
                     <RequiredLabel>
@@ -1232,7 +1278,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                     styles={selectStyles}
                     closeMenuOnSelect={false}
                     isSearchable
-                    isDisabled={!normalizedFormSide || !form.hero}
+                    isDisabled={!normalizedFormSide || !form.hero || saving}
                   />
 
                   {!form.cardsSelected?.length && fieldError("cards") && (

@@ -3,19 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import DeckCard from "../components/deckcomponent";
-
 import FilterDropdown from "../components/filterdropdown";
-
-import Navbar from "../components/navbar";
-
 import Footer from "../components/footer";
 
 import "../css/decklists.css";
-
-import "../css/navbar.css";
-
 import "../css/loading.css";
-
 import "../css/userdecklists.css";
 
 const getApiBaseUrl = () => {
@@ -131,25 +123,20 @@ const ensureCsrfToken = async () => {
     return existingToken;
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/tbotapp/csrf/`,
-    {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-      },
+  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
     },
-  );
+  });
 
   const responseText = await response.text();
 
   let data = null;
 
   try {
-    data = responseText
-      ? JSON.parse(responseText)
-      : null;
+    data = responseText ? JSON.parse(responseText) : null;
   } catch {
     data = null;
   }
@@ -163,9 +150,7 @@ const ensureCsrfToken = async () => {
   }
 
   const csrfToken =
-    data?.csrfToken ||
-    data?.csrf_token ||
-    getCookie("csrftoken");
+    data?.csrfToken || data?.csrf_token || getCookie("csrftoken");
 
   if (!csrfToken) {
     throw new Error(
@@ -212,29 +197,21 @@ function UserDeckManager() {
   const navigate = useNavigate();
 
   const [decks, setDecks] = useState([]);
-
   const [search, setSearch] = useState("");
-
   const [side, setSide] = useState("All");
 
   const [hero, setHero] = useState([]);
-
   const [category, setCategory] = useState([]);
-
   const [archetype, setArchetype] = useState([]);
 
   const [allCards, setAllCards] = useState([]);
 
   const [loading, setLoading] = useState(true);
-
   const [authenticated, setAuthenticated] = useState(false);
 
   const [error, setError] = useState("");
-
   const [cardsError, setCardsError] = useState("");
-
   const [editError, setEditError] = useState("");
-
   const [deleteError, setDeleteError] = useState("");
 
   const [editSaving, setEditSaving] = useState(false);
@@ -250,6 +227,10 @@ function UserDeckManager() {
       document.title = "Tbot";
     };
   }, []);
+
+  /*
+   * Authentication
+   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -280,6 +261,7 @@ function UserDeckManager() {
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to verify authentication:", err);
+
           navigate("/");
         }
       }
@@ -290,6 +272,9 @@ function UserDeckManager() {
     return () => controller.abort();
   }, [navigate]);
 
+  /*
+   * Cards
+   */
   useEffect(() => {
     if (!authenticated) {
       return;
@@ -301,17 +286,14 @@ function UserDeckManager() {
       try {
         setCardsError("");
 
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/cardinfo/`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
+        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
           },
-        );
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error(
@@ -336,8 +318,7 @@ function UserDeckManager() {
           console.error("Unable to load card information:", err);
 
           setCardsError(
-            err.message ||
-              "Unable to load card information right now.",
+            err.message || "Unable to load card information right now.",
           );
         }
       }
@@ -348,21 +329,21 @@ function UserDeckManager() {
     return () => controller.abort();
   }, [authenticated]);
 
+  /*
+   * Load user decks
+   */
   const loadDecks = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        `${API_BASE_URL}/tbotapp/user-decks/`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
+      const response = await fetch(`${API_BASE_URL}/tbotapp/user-decks/`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
         },
-      );
+      });
 
       if (!response.ok) {
         const message = await getApiErrorMessage(
@@ -388,9 +369,7 @@ function UserDeckManager() {
       console.error("Unable to load user decklists:", err);
 
       setError(
-        `Unable to load your decklists right now. ${
-          err.message || ""
-        }`.trim(),
+        `Unable to load your decklists right now. ${err.message || ""}`.trim(),
       );
     } finally {
       setLoading(false);
@@ -405,6 +384,9 @@ function UserDeckManager() {
     loadDecks();
   }, [authenticated]);
 
+  /*
+   * Side filtering
+   */
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
@@ -412,11 +394,12 @@ function UserDeckManager() {
 
     const selectedSide = normalizeKey(side);
 
-    return decks.filter(
-      (deck) => normalizeKey(deck.side) === selectedSide,
-    );
+    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
   }, [decks, side]);
 
+  /*
+   * Hero options
+   */
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
 
@@ -447,6 +430,9 @@ function UserDeckManager() {
     );
   }, [sideFilteredDecks]);
 
+  /*
+   * Category options
+   */
   const categoryOptions = useMemo(() => {
     const categoryMap = new Map();
 
@@ -462,9 +448,7 @@ function UserDeckManager() {
       if (!categoryMap.has(key)) {
         categoryMap.set(key, {
           value: categoryName,
-          label:
-            categoryName.charAt(0).toUpperCase() +
-            categoryName.slice(1),
+          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
           count: 0,
           ...(CATEGORY_META[key] || {}),
         });
@@ -480,6 +464,9 @@ function UserDeckManager() {
     );
   }, [sideFilteredDecks]);
 
+  /*
+   * Archetype options
+   */
   const archetypeOptions = useMemo(() => {
     const counts = {};
 
@@ -504,14 +491,16 @@ function UserDeckManager() {
     return Object.entries(ARCHETYPE_META)
       .map(([value, meta]) => ({
         value,
-        label:
-          value.charAt(0).toUpperCase() + value.slice(1),
+        label: value.charAt(0).toUpperCase() + value.slice(1),
         count: counts[value] || 0,
         ...meta,
       }))
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
 
+  /*
+   * Sorting
+   */
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
       const sideOrder = {
@@ -522,9 +511,7 @@ function UserDeckManager() {
       const sideA = normalizeKey(a.side);
       const sideB = normalizeKey(b.side);
 
-      const sideCompare =
-        (sideOrder[sideA] ?? 99) -
-        (sideOrder[sideB] ?? 99);
+      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
 
       if (sideCompare !== 0) {
         return sideCompare;
@@ -552,6 +539,9 @@ function UserDeckManager() {
     });
   }, [decks]);
 
+  /*
+   * Filtering
+   */
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
 
@@ -570,22 +560,17 @@ function UserDeckManager() {
 
       const searchMatch =
         !searchValue ||
-        searchableValues.some((value) =>
-          value.includes(searchValue),
-        );
+        searchableValues.some((value) => value.includes(searchValue));
 
       const deckSide = normalizeKey(deck.side);
 
-      const sideMatch =
-        side === "All" ||
-        deckSide === normalizeKey(side);
+      const sideMatch = side === "All" || deckSide === normalizeKey(side);
 
       const heroMatch =
         hero.length === 0 ||
         hero.some(
           (selectedHero) =>
-            normalizeKey(deck.hero) ===
-            normalizeKey(selectedHero.value),
+            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
         );
 
       const categoryMatch =
@@ -601,27 +586,14 @@ function UserDeckManager() {
       const archetypeMatch =
         archetype.length === 0 ||
         archetype.every((selectedArchetype) =>
-          deckArchetype.includes(
-            normalizeKey(selectedArchetype.value),
-          ),
+          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
         );
 
       return (
-        searchMatch &&
-        sideMatch &&
-        heroMatch &&
-        categoryMatch &&
-        archetypeMatch
+        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
       );
     });
-  }, [
-    sortedDecks,
-    search,
-    side,
-    hero,
-    category,
-    archetype,
-  ]);
+  }, [sortedDecks, search, side, hero, category, archetype]);
 
   const clearFilters = () => {
     setSearch("");
@@ -635,17 +607,20 @@ function UserDeckManager() {
     clearFilters();
   };
 
+  /*
+   * ADD DECK
+   *
+   * Creator is intentionally allowed to be empty.
+   */
   const handleAdd = async (form) => {
     setError("");
 
     try {
       const csrfToken = await ensureCsrfToken();
 
-      const createUrl =
-        `${API_BASE_URL}/tbotapp/user-decks/create/`;
+      const createUrl = `${API_BASE_URL}/tbotapp/user-decks/create/`;
 
-      const hasImageFile =
-        form?.image_file instanceof File;
+      const hasImageFile = form?.image_file instanceof File;
 
       let response;
 
@@ -653,41 +628,37 @@ function UserDeckManager() {
         const formData = new FormData();
 
         formData.append("name", form.name ?? "");
+
         formData.append("hero", form.hero ?? "");
+
         formData.append("side", form.side ?? "");
+
         formData.append("category", form.category ?? "");
+
         formData.append("archetype", form.archetype ?? "");
-        formData.append(
-          "description",
-          form.description ?? "",
-        );
-        formData.append("creator", form.creator ?? "");
+
+        formData.append("description", form.description ?? "");
+
+        /*
+         * Creator may be blank.
+         */
+        formData.append("creator", normalizeText(form.creator));
+
         formData.append("cost", form.cost ?? "");
-        formData.append(
-          "inspiration",
-          form.inspiration ?? "",
-        );
-        formData.append(
-          "optimization",
-          form.optimization ?? "",
-        );
-        formData.append(
-          "suggested_date",
-          form.suggested_date ?? "",
-        );
-        formData.append(
-          "updated_date",
-          form.updated_date ?? "",
-        );
-        formData.append(
-          "deck_doc",
-          form.deck_doc ?? "",
-        );
+
+        formData.append("inspiration", form.inspiration ?? "");
+
+        formData.append("optimization", form.optimization ?? "");
+
+        formData.append("suggested_date", form.suggested_date ?? "");
+
+        formData.append("updated_date", form.updated_date ?? "");
+
+        formData.append("deck_doc", form.deck_doc ?? "");
+
         formData.append("cards", form.cards ?? "");
-        formData.append(
-          "image_file",
-          form.image_file,
-        );
+
+        formData.append("image_file", form.image_file);
 
         response = await fetch(createUrl, {
           method: "POST",
@@ -715,14 +686,17 @@ function UserDeckManager() {
             archetype: form.archetype ?? "",
             description: form.description ?? "",
             image: form.image ?? "",
-            creator: form.creator ?? "",
+
+            /*
+             * Creator can be empty.
+             */
+            creator: normalizeText(form.creator),
+
             cost: form.cost ?? "",
             inspiration: form.inspiration ?? "",
             optimization: form.optimization ?? "",
-            suggested_date:
-              form.suggested_date ?? "",
-            updated_date:
-              form.updated_date ?? "",
+            suggested_date: form.suggested_date ?? "",
+            updated_date: form.updated_date ?? "",
             deck_doc: form.deck_doc ?? "",
             cards: form.cards ?? "",
           }),
@@ -734,9 +708,7 @@ function UserDeckManager() {
       let data = null;
 
       try {
-        data = responseText
-          ? JSON.parse(responseText)
-          : null;
+        data = responseText ? JSON.parse(responseText) : null;
       } catch {
         data = null;
       }
@@ -750,16 +722,10 @@ function UserDeckManager() {
         throw new Error(message);
       }
 
-      const newDeck =
-        data?.deck ??
-        data?.result ??
-        data;
+      const newDeck = data?.deck ?? data?.result ?? data;
 
       if (newDeck) {
-        setDecks((currentDecks) => [
-          ...currentDecks,
-          newDeck,
-        ]);
+        setDecks((currentDecks) => [...currentDecks, newDeck]);
       } else {
         await loadDecks();
       }
@@ -770,19 +736,17 @@ function UserDeckManager() {
     } catch (error) {
       console.error("Unable to add deck:", error);
 
-      setError(
-        error.message || "Unable to add deck.",
-      );
+      setError(error.message || "Unable to add deck.");
 
       throw error;
     }
   };
 
+  /*
+   * SAVE DECK
+   */
   const handleSave = async (deck, form) => {
-    const deckId =
-      deck?.deckid ??
-      deck?.deckID ??
-      deck?.id;
+    const deckId = deck?.deckid ?? deck?.deckID ?? deck?.id;
 
     if (!deckId) {
       throw new Error("Deck ID is missing.");
@@ -792,95 +756,51 @@ function UserDeckManager() {
     setEditSaving(true);
 
     try {
-      const csrfToken =
-        await ensureCsrfToken();
+      const csrfToken = await ensureCsrfToken();
 
       const url =
         `${API_BASE_URL}/tbotapp/user-decks/` +
         `${encodeURIComponent(deckId)}/`;
 
-      const hasImageFile =
-        form?.image_file instanceof File;
+      const hasImageFile = form?.image_file instanceof File;
 
       let response;
 
       if (hasImageFile) {
         const formData = new FormData();
 
-        formData.append(
-          "name",
-          form.name ?? "",
-        );
+        formData.append("name", form.name ?? "");
 
-        formData.append(
-          "hero",
-          form.hero ?? "",
-        );
+        formData.append("hero", form.hero ?? "");
 
-        formData.append(
-          "side",
-          form.side ?? "",
-        );
+        formData.append("side", form.side ?? "");
 
-        formData.append(
-          "category",
-          form.category ?? "",
-        );
+        formData.append("category", form.category ?? "");
 
-        formData.append(
-          "archetype",
-          form.archetype ?? "",
-        );
+        formData.append("archetype", form.archetype ?? "");
 
-        formData.append(
-          "description",
-          form.description ?? "",
-        );
+        formData.append("description", form.description ?? "");
 
-        formData.append(
-          "creator",
-          form.creator ?? "",
-        );
+        /*
+         * Creator can be blank.
+         */
+        formData.append("creator", normalizeText(form.creator));
 
-        formData.append(
-          "cost",
-          form.cost ?? "",
-        );
+        formData.append("cost", form.cost ?? "");
 
-        formData.append(
-          "inspiration",
-          form.inspiration ?? "",
-        );
+        formData.append("inspiration", form.inspiration ?? "");
 
-        formData.append(
-          "optimization",
-          form.optimization ?? "",
-        );
+        formData.append("optimization", form.optimization ?? "");
 
-        formData.append(
-          "suggested_date",
-          form.suggested_date ?? "",
-        );
+        formData.append("suggested_date", form.suggested_date ?? "");
 
-        formData.append(
-          "updated_date",
-          form.updated_date ?? "",
-        );
+        formData.append("updated_date", form.updated_date ?? "");
 
-        formData.append(
-          "deck_doc",
-          form.deck_doc ?? "",
-        );
+        formData.append("deck_doc", form.deck_doc ?? "");
 
-        formData.append(
-          "cards",
-          form.cards ?? "",
-        );
+        formData.append("cards", form.cards ?? "");
 
-        formData.append(
-          "image_file",
-          form.image_file,
-        );
+        formData.append("image_file", form.image_file);
 
         response = await fetch(url, {
           method: "PATCH",
@@ -906,39 +826,31 @@ function UserDeckManager() {
             side: form.side ?? "",
             category: form.category ?? "",
             archetype: form.archetype ?? "",
-            description:
-              form.description ?? "",
-            image:
-              form.image ?? deck.image ?? "",
-            creator:
-              form.creator ?? "",
-            cost:
-              form.cost ?? "",
-            inspiration:
-              form.inspiration ?? "",
-            optimization:
-              form.optimization ?? "",
-            suggested_date:
-              form.suggested_date ?? "",
-            updated_date:
-              form.updated_date ?? "",
-            deck_doc:
-              form.deck_doc ?? "",
-            cards:
-              form.cards ?? "",
+            description: form.description ?? "",
+            image: form.image ?? deck.image ?? "",
+
+            /*
+             * Creator can be blank.
+             */
+            creator: normalizeText(form.creator),
+
+            cost: form.cost ?? "",
+            inspiration: form.inspiration ?? "",
+            optimization: form.optimization ?? "",
+            suggested_date: form.suggested_date ?? "",
+            updated_date: form.updated_date ?? "",
+            deck_doc: form.deck_doc ?? "",
+            cards: form.cards ?? "",
           }),
         });
       }
 
-      const responseText =
-        await response.text();
+      const responseText = await response.text();
 
       let data = null;
 
       try {
-        data = responseText
-          ? JSON.parse(responseText)
-          : null;
+        data = responseText ? JSON.parse(responseText) : null;
       } catch {
         data = null;
       }
@@ -952,10 +864,7 @@ function UserDeckManager() {
         throw new Error(message);
       }
 
-      const updatedDeck =
-        data?.deck ??
-        data?.result ??
-        data;
+      const updatedDeck = data?.deck ?? data?.result ?? data;
 
       if (!updatedDeck) {
         await loadDecks();
@@ -965,14 +874,9 @@ function UserDeckManager() {
       setDecks((currentDecks) =>
         currentDecks.map((existingDeck) => {
           const existingId =
-            existingDeck.deckid ??
-            existingDeck.deckID ??
-            existingDeck.id;
+            existingDeck.deckid ?? existingDeck.deckID ?? existingDeck.id;
 
-          if (
-            String(existingId) !==
-            String(deckId)
-          ) {
+          if (String(existingId) !== String(deckId)) {
             return existingDeck;
           }
 
@@ -985,15 +889,9 @@ function UserDeckManager() {
 
       return updatedDeck;
     } catch (error) {
-      console.error(
-        "Deck update failed:",
-        error,
-      );
+      console.error("Deck update failed:", error);
 
-      setEditError(
-        error?.message ||
-          "Failed to save deck.",
-      );
+      setEditError(error?.message || "Failed to save deck.");
 
       throw error;
     } finally {
@@ -1001,22 +899,21 @@ function UserDeckManager() {
     }
   };
 
+  /*
+   * DELETE DECK
+   */
   const handleDelete = async (deck) => {
-    const deckId =
-      deck?.deckid ??
-      deck?.deckID ??
-      deck?.id;
+    const deckId = deck?.deckid ?? deck?.deckID ?? deck?.id;
 
     if (!deckId) {
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Are you sure you want to delete "${
-          deck.name || "this deck"
-        }"?\n\nThis cannot be undone.`,
-      );
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${
+        deck.name || "this deck"
+      }"?\n\nThis cannot be undone.`,
+    );
 
     if (!confirmed) {
       return;
@@ -1026,58 +923,42 @@ function UserDeckManager() {
     setDeleteError("");
 
     try {
-      const csrfToken =
-        await ensureCsrfToken();
+      const csrfToken = await ensureCsrfToken();
 
       const deleteUrl =
         `${API_BASE_URL}/tbotapp/user-decks/` +
         `${encodeURIComponent(deckId)}/delete/`;
 
-      const response =
-        await fetch(deleteUrl, {
-          method: "DELETE",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-            "X-CSRFToken": csrfToken,
-          },
-        });
+      const response = await fetch(deleteUrl, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+      });
 
       if (!response.ok) {
-        const message =
-          await getApiErrorMessage(
-            response,
-            `Delete failed with status ${response.status}`,
-          );
+        const message = await getApiErrorMessage(
+          response,
+          `Delete failed with status ${response.status}`,
+        );
 
         throw new Error(message);
       }
 
       setDecks((currentDecks) =>
-        currentDecks.filter(
-          (currentDeck) => {
-            const currentId =
-              currentDeck.deckid ??
-              currentDeck.deckID ??
-              currentDeck.id;
+        currentDecks.filter((currentDeck) => {
+          const currentId =
+            currentDeck.deckid ?? currentDeck.deckID ?? currentDeck.id;
 
-            return (
-              String(currentId) !==
-              String(deckId)
-            );
-          },
-        ),
+          return String(currentId) !== String(deckId);
+        }),
       );
     } catch (err) {
-      console.error(
-        "Unable to delete deck:",
-        err,
-      );
+      console.error("Unable to delete deck:", err);
 
-      setDeleteError(
-        err.message ||
-          "Unable to delete deck.",
-      );
+      setDeleteError(err.message || "Unable to delete deck.");
     } finally {
       setDeleteLoading(false);
     }
@@ -1089,13 +970,9 @@ function UserDeckManager() {
         <div className="loading-card">
           <div className="loading-spinner" />
 
-          <h2>
-            Loading your decklists
-          </h2>
+          <h2>Loading your decklists</h2>
 
-          <p>
-            Preparing your personal deck browser.
-          </p>
+          <p>Preparing your personal deck browser.</p>
         </div>
       </div>
     );
@@ -1107,14 +984,12 @@ function UserDeckManager() {
 
   return (
     <div className="deck-page">
-      <Navbar />
-
       <main className="deck-content">
+        {/* NO NAVBAR */}
+
         <div className="admin-decklists-topbar">
           <div>
-            <h1>
-              My Decklists
-            </h1>
+            <h1>My Decklists</h1>
 
             <p className="admin-decklists-subtitle">
               Manage and share your personal Tbot decks.
@@ -1122,10 +997,7 @@ function UserDeckManager() {
           </div>
 
           <div className="admin-decklists-actions">
-            <Link
-              to="/dashboard"
-              className="admin-back-button"
-            >
+            <Link to="/dashboard" className="admin-back-button">
               ← Dashboard
             </Link>
 
@@ -1144,29 +1016,15 @@ function UserDeckManager() {
           </div>
         </div>
 
-        {deleteError && (
-          <div className="admin-error">
-            {deleteError}
-          </div>
-        )}
+        {deleteError && <div className="admin-error">{deleteError}</div>}
 
-        {editError && (
-          <div className="admin-error">
-            {editError}
-          </div>
-        )}
+        {editError && <div className="admin-error">{editError}</div>}
 
         {cardsError && (
-          <div className="admin-error">
-            Card list: {cardsError}
-          </div>
+          <div className="admin-error">Card list: {cardsError}</div>
         )}
 
-        {error && (
-          <div className="admin-error">
-            {error}
-          </div>
-        )}
+        {error && <div className="admin-error">{error}</div>}
 
         {addingDeck && (
           <DeckCard
@@ -1184,55 +1042,35 @@ function UserDeckManager() {
           <div className="tabs">
             <button
               type="button"
-              className={
-                side === "All"
-                  ? "active"
-                  : ""
-              }
-              onClick={() =>
-                handleSideChange("All")
-              }
+              className={side === "All" ? "active" : ""}
+              onClick={() => handleSideChange("All")}
             >
               All
             </button>
 
             <button
               type="button"
-              className={
-                side === "Plants"
-                  ? "active"
-                  : ""
-              }
-              onClick={() =>
-                handleSideChange("Plants")
-              }
+              className={side === "Plants" ? "active" : ""}
+              onClick={() => handleSideChange("Plants")}
             >
               <img
                 src="https://i.ibb.co/fYHsRqP0/plants.png"
                 alt="Plants"
                 className="tab-icon"
               />
-
               Plants
             </button>
 
             <button
               type="button"
-              className={
-                side === "Zombies"
-                  ? "active"
-                  : ""
-              }
-              onClick={() =>
-                handleSideChange("Zombies")
-              }
+              className={side === "Zombies" ? "active" : ""}
+              onClick={() => handleSideChange("Zombies")}
             >
               <img
                 src="https://i.ibb.co/pvT38Y1n/zombies.png"
                 alt="Zombies"
                 className="tab-icon"
               />
-
               Zombies
             </button>
           </div>
@@ -1242,9 +1080,7 @@ function UserDeckManager() {
               className="search"
               placeholder="Search your decks, heroes, cards..."
               value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
@@ -1291,20 +1127,15 @@ function UserDeckManager() {
 
         <div className="user-decklists-results-bar">
           <p className="results-count">
-            Showing {filteredDecks.length} of{" "}
-            {decks.length} decks
+            Showing {filteredDecks.length} of {decks.length} decks
           </p>
         </div>
 
         {filteredDecks.length === 0 ? (
           <div className="user-decklists-empty">
-            <h2>
-              No decks found
-            </h2>
+            <h2>No decks found</h2>
 
-            <p>
-              You haven't created a deck matching these filters.
-            </p>
+            <p>You haven't created a deck matching these filters.</p>
 
             <button
               type="button"
@@ -1324,10 +1155,7 @@ function UserDeckManager() {
             {filteredDecks.map((deck) => (
               <div
                 key={`${deck.side}-${
-                  deck.deckid ||
-                  deck.deckID ||
-                  deck.id ||
-                  deck.name
+                  deck.deckid || deck.deckID || deck.id || deck.name
                 }`}
               >
                 <DeckCard
@@ -1344,15 +1172,11 @@ function UserDeckManager() {
         )}
       </main>
 
-      <Footer
-        credits="Manage your personal Tbot decklists and share your decks with the PVZH community."
-      />
+      <Footer credits="Manage your personal Tbot decklists and share your decks with the PVZH community." />
 
       {deleteLoading && (
         <div className="admin-delete-overlay">
-          <div className="admin-delete-dialog">
-            Deleting deck...
-          </div>
+          <div className="admin-delete-dialog">Deleting deck...</div>
         </div>
       )}
     </div>

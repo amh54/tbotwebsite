@@ -296,6 +296,8 @@ function Profile() {
     profile.profile_slug,
   )}/decklists`;
 
+  const deckCount = decks.length;
+
   return (
     <div>
       <Navbar />
@@ -352,17 +354,20 @@ function Profile() {
 
         <section className="profile-decks">
           <div className="profile-decks-header">
-            <h2>Decklists</h2>
+            <h2>Decklists </h2>
 
-            <div className="profile-decks-header-actions">
+            <div
+              className="profile-decks-header-actions"
+              style={{ marginTop: "10px" }}
+            >
               <Link to={decklistsPath} className="profile-decklists-button">
                 View Decklists
               </Link>
             </div>
           </div>
 
-          {decks.length === 0 ? (
-            <div className="profile-no-decks">No decklists yet.</div>
+          {deckCount === 0 ? (
+            <div className="profile-no-decks">0 decklists</div>
           ) : (
             <div className="profile-deck-grid">
               {decks.map((deck) => (
