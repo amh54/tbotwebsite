@@ -124,30 +124,6 @@ const getSelectedQuantity = (value) => {
 const getCardKey = (card) => {
   return String(card.cardid ?? card.card_id ?? card.card_name);
 };
-const setAllVisibleToFour = () => {
-  if (!availableCards.length) {
-    return;
-  }
-
-  const nextSelected = {};
-  const nextQuantities = {
-    ...selectedQuantities,
-  };
-
-  availableCards.forEach((card) => {
-    const key = getCardKey(card);
-
-    if (card.already_owned) {
-      return;
-    }
-
-    nextSelected[key] = true;
-    nextQuantities[key] = MAX_QUANTITY; // 4
-  });
-
-  setSelectedCards(nextSelected);
-  setSelectedQuantities(nextQuantities);
-};
 const UserCardManager = () => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -172,7 +148,30 @@ const UserCardManager = () => {
 
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [addingCards, setAddingCards] = useState(false);
+const setAllVisibleToFour = () => {
+  if (!availableCards.length) {
+    return;
+  }
 
+  const nextSelected = {};
+  const nextQuantities = {
+    ...selectedQuantities,
+  };
+
+  availableCards.forEach((card) => {
+    const key = getCardKey(card);
+
+    if (card.already_owned) {
+      return;
+    }
+
+    nextSelected[key] = true;
+    nextQuantities[key] = MAX_QUANTITY;
+  });
+
+  setSelectedCards(nextSelected);
+  setSelectedQuantities(nextQuantities);
+};
   const loadCollection = useCallback(async () => {
     setLoading(true);
     setError("");
