@@ -466,22 +466,24 @@ const UserCardManager = () => {
     setAddingCards(true);
     clearMessages();
 
-    const csrfToken = await ensureCsrfToken();
-    console.log("CSRF TOKEN:", csrfToken);
     let addedCount = 0;
     const failedCards = [];
 
     try {
+      const csrfToken = await ensureCsrfToken();
+
+      console.log("CSRF TOKEN:", csrfToken);
+
+      if (!csrfToken) {
+        throw new Error("Missing CSRF token.");
+      }
+
       for (const card of selected) {
         const key = getCardKey(card);
 
         const quantity = getSelectedQuantity(selectedQuantities[key] ?? 1);
 
         try {
-          const csrfToken = await ensureCsrfToken();
-
-          console.log("Sending CSRF token:", csrfToken);
-
           await requestJson(`${API_BASE_URL}/tbotapp/user-cards/create/`, {
             method: "POST",
             headers: {
@@ -517,6 +519,8 @@ const UserCardManager = () => {
         setIsAddModalOpen(false);
         resetAddModalState();
       }
+    } catch (error) {
+      setError(error.message || "Unable to add cards.");
     } finally {
       setAddingCards(false);
     }
