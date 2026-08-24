@@ -1,15 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useParams } from "react-router-dom";
 
 import DeckCard from "../components/deckcomponent";
 
 import Navbar from "../components/navbar";
+
 import Footer from "../components/footer";
 
 import "../css/decklists.css";
+
 import "../css/navbar.css";
+
 import "../css/loading.css";
+
 import "../css/userdecklists.css";
 
 const getApiBaseUrl = () => {
@@ -38,13 +42,9 @@ function StandaloneDeckPage() {
   const { profile_slug, deckId } = useParams();
 
   const [profile, setProfile] = useState(null);
-
   const [deck, setDeck] = useState(null);
-
   const [allCards, setAllCards] = useState([]);
-
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -56,7 +56,12 @@ function StandaloneDeckPage() {
   }, []);
 
   /*
-   * Load ONLY the requested deck.
+   * Load ONLY the requested shared deck.
+   *
+   * This route is used for decks belonging to private profiles.
+   * Public-profile decks are accessed through:
+   *
+   * /profile/:profile_slug
    */
   useEffect(() => {
     const controller = new AbortController();
@@ -76,8 +81,6 @@ function StandaloneDeckPage() {
           `${API_BASE_URL}/tbotapp/user-decks/shared/` +
           `${encodeURIComponent(profile_slug)}/` +
           `${encodeURIComponent(deckId)}/`;
-
-        console.log("Loading shared deck:", url);
 
         const response = await fetch(url, {
           method: "GET",
@@ -162,10 +165,10 @@ function StandaloneDeckPage() {
     return () => controller.abort();
   }, []);
 
-  const profileName = useMemo(
-    () => profile?.display_name || profile?.username || "User",
-    [profile],
-  );
+  const profileName =
+    normalizeText(profile?.display_name) ||
+    normalizeText(profile?.username) ||
+    "User";
 
   if (loading) {
     return (
@@ -219,7 +222,7 @@ function StandaloneDeckPage() {
             decklist={deck}
             allCards={allCards}
             profileSlug={normalizeText(profile?.profile_slug) || profile_slug}
-            profileIsPublic={profile?.is_public === true}
+            profileIsPublic={false}
             autoOpen={true}
           />
         </div>

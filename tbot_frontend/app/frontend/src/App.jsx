@@ -2,6 +2,7 @@ import "./css/App.css";
 import "./css/navbar.css";
 
 import { Link, Route, Routes } from "react-router-dom";
+
 import StandaloneDeckPage from "./pages/standalonedeck.jsx";
 import AdminUserDecks from "./pages/admin-userdecks.jsx";
 import Admin from "./pages/admin.jsx";
@@ -20,7 +21,6 @@ import Profile from "./pages/profile.jsx";
 import LegacyDecksPage from "./pages/legacydecks.jsx";
 import AdminLegacyDecks from "./pages/admin-legacydecks.jsx";
 import Users from "./pages/users.jsx";
-import UserDecklists from "./pages/userdecklists.jsx";
 import UserDeckManager from "./pages/userdeckmanager.jsx";
 import UserDashboard from "./pages/userdashboard.jsx";
 
@@ -197,44 +197,37 @@ function HomePage() {
 function App() {
   return (
     <Routes>
+      {/* Home */}
       <Route path="/" element={<HomePage />} />
 
+      {/* Public website pages */}
       <Route path="/decklists" element={<DecklistsPage />} />
-
       <Route path="/legacydecks" element={<LegacyDecksPage />} />
-
       <Route path="/cardinfo" element={<CardInfo />} />
-
       <Route path="/keeporscrap" element={<KeepOrScrap />} />
-
       <Route path="/heroinfo" element={<HeroInfo />} />
-
       <Route path="/termsofservice" element={<TermsOfService />} />
-
       <Route path="/privacypolicy" element={<Privacy />} />
-
       <Route path="/users" element={<Users />} />
+
+      {/* Deckbuilders */}
       <Route path="/deckbuilders" element={<Deckbuilders />} />
 
       <Route
         path="/deckbuilders/:deckbuilder_name/decks"
         element={<DeckbuilderDecks />}
       />
-      <Route
-        path="/users/:profile_slug/decklists"
-        element={<UserDecklists />}
-      />
+
+      {/* Public/private profile page */}
+      <Route path="/profile/:profile_slug" element={<Profile />} />
+
+      {/* Standalone shared deck */}
       <Route
         path="/deck/:profile_slug/:deckId"
         element={<StandaloneDeckPage />}
       />
-      <Route path="/profile/:profile_slug" element={<Profile />} />
 
-      <Route
-        path="/profile/:profile_slug/decklists"
-        element={<UserDecklists />}
-      />
-
+      {/* User dashboard */}
       <Route path="/dashboard" element={<UserDashboard />} />
 
       <Route path="/dashboard/decks" element={<UserDeckManager />} />
@@ -246,6 +239,7 @@ function App() {
         element={<UserDeckManager />}
       />
 
+      {/* Admin */}
       <Route path="/admin" element={<Admin />} />
 
       <Route path="/admin/decklists" element={<AdminDecklists />} />
@@ -255,7 +249,10 @@ function App() {
       <Route path="/admin/decklists/add" element={<AdminDecklists />} />
 
       <Route path="/admin/legacy-decks/*" element={<AdminLegacyDecks />} />
+
       <Route path="/admin/user-decks" element={<AdminUserDecks />} />
+
+      {/* 404 */}
       <Route
         path="*"
         element={

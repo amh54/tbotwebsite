@@ -43,7 +43,9 @@ const getDiscordAvatarUrl = (profile) => {
       const numericId = Number(discordId);
 
       if (Number.isSafeInteger(numericId) && numericId >= 0) {
-        const defaultAvatarIndex = (numericId >> 22) % 6;
+        const defaultAvatarIndex = Math.floor(
+          Number(BigInt(discordId) >> 22n) % 6n,
+        );
 
         return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
       }
@@ -118,7 +120,6 @@ function Users() {
         }
 
         const data = await response.json();
-
         const count = Number(data?.count);
 
         if (Number.isFinite(count)) {
@@ -141,7 +142,6 @@ function Users() {
    */
   useEffect(() => {
     const controller = new AbortController();
-
     const loadingStartTime = Date.now();
     const minimumLoadingTime = 1200;
 
@@ -203,7 +203,6 @@ function Users() {
         });
 
         const elapsed = Date.now() - loadingStartTime;
-
         const remaining = Math.max(minimumLoadingTime - elapsed, 0);
 
         window.setTimeout(() => {
@@ -219,7 +218,6 @@ function Users() {
         console.error("Unable to load public profiles:", err);
 
         setError(err.message || "Unable to load users right now.");
-
         setLoading(false);
       }
     };
@@ -274,11 +272,8 @@ function Users() {
 
     return sortedProfiles.filter((profile) => {
       const displayName = normalizeText(profile.display_name).toLowerCase();
-
       const username = normalizeText(profile.username).toLowerCase();
-
       const profileSlug = normalizeText(profile.profile_slug).toLowerCase();
-
       const bio = normalizeText(profile.bio).toLowerCase();
 
       return (
@@ -350,7 +345,6 @@ function Users() {
         {error ? (
           <div className="users-error">
             <h2>Unable to load users</h2>
-
             <p>{error}</p>
           </div>
         ) : filteredProfiles.length === 0 ? (
@@ -375,11 +369,8 @@ function Users() {
                 "Tbot User";
 
               const username = normalizeText(profile.username);
-
               const profileSlug = normalizeText(profile.profile_slug);
-
               const bio = normalizeText(profile.bio);
-
               const avatar = getDiscordAvatarUrl(profile);
 
               return (
@@ -400,16 +391,21 @@ function Users() {
                               discordId &&
                               Number.isFinite(Number(discordId))
                             ) {
-                              const numericId = Number(discordId);
+                              try {
+                                const numericId = BigInt(discordId);
 
-                              const defaultAvatarIndex = (numericId >> 22) % 6;
+                                const defaultAvatarIndex = Number(
+                                  (numericId >> 22n) % 6n,
+                                );
 
-                              const fallbackUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
+                                const fallbackUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
 
-                              if (event.currentTarget.src !== fallbackUrl) {
-                                event.currentTarget.src = fallbackUrl;
-
-                                return;
+                                if (event.currentTarget.src !== fallbackUrl) {
+                                  event.currentTarget.src = fallbackUrl;
+                                  return;
+                                }
+                              } catch {
+                                // Ignore invalid Discord IDs.
                               }
                             }
 
@@ -454,23 +450,12 @@ function Users() {
 
                   <div className="user-card-actions">
                     {profileSlug ? (
-                      <>
-                        <Link
-                          to={`/profile/${encodeURIComponent(profileSlug)}`}
-                          className="user-profile-button"
-                        >
-                          View Profile
-                        </Link>
-
-                        <Link
-                          to={`/users/${encodeURIComponent(
-                            profileSlug,
-                          )}/decklists`}
-                          className="user-decklists-button"
-                        >
-                          View Decklists
-                        </Link>
-                      </>
+                      <Link
+                        to={`/profile/${encodeURIComponent(profileSlug)}`}
+                        className="user-profile-button"
+                      >
+                        View Profile
+                      </Link>
                     ) : (
                       <span className="user-card-unavailable">
                         Profile link unavailable

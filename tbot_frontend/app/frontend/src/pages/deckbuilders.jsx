@@ -1,15 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-
 import { Link } from "react-router-dom";
 
 import Navbar from "../components/navbar";
-
 import Footer from "../components/footer";
 
 import "../css/users.css";
-
 import "../css/navbar.css";
-
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
@@ -31,6 +27,9 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
+const DECKBUILDERS_CACHE_KEY = "tbot_deckbuilders_cache";
+const DECKBUILDERS_COUNT_CACHE_KEY = "tbot_deckbuilders_count_cache";
 
 const normalizeText = (value) => String(value ?? "").trim();
 
@@ -65,7 +64,7 @@ const getDiscordAvatarUrl = (profile) => {
       const numericId = Number(discordId);
 
       if (Number.isSafeInteger(numericId) && numericId >= 0) {
-        const defaultAvatarIndex = (numericId >> 22) % 6;
+        const defaultAvatarIndex = Math.floor(numericId / 4194304) % 6;
 
         return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
       }
@@ -95,14 +94,59 @@ const getDiscordAvatarUrl = (profile) => {
   return "";
 };
 
-function Deckbuilders() {
-  const [deckbuilders, setDeckbuilders] = useState([]);
+const readCache = (key) => {
+  try {
+    const cached = sessionStorage.getItem(key);
 
-  const [totalDeckbuilders, setTotalDeckbuilders] = useState(null);
+    if (!cached) {
+      return null;
+    }
+
+    return JSON.parse(cached);
+  } catch (error) {
+    console.warn(`Unable to read ${key} from sessionStorage:`, error);
+
+    return null;
+  }
+};
+
+const writeCache = (key, value) => {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Unable to write ${key} to sessionStorage:`, error);
+  }
+};
+
+function Deckbuilders() {
+  const cachedDeckbuilders = readCache(DECKBUILDERS_CACHE_KEY);
+
+  const cachedCount = readCache(DECKBUILDERS_COUNT_CACHE_KEY);
+
+  const hasCachedDeckbuilders = Array.isArray(cachedDeckbuilders);
+
+  const hasCachedCount = Number.isFinite(Number(cachedCount));
+
+  const [deckbuilders, setDeckbuilders] = useState(
+    hasCachedDeckbuilders ? cachedDeckbuilders : [],
+  );
+
+  const [totalDeckbuilders, setTotalDeckbuilders] = useState(
+    hasCachedCount ? Number(cachedCount) : null,
+  );
 
   const [search, setSearch] = useState("");
 
-  const [loading, setLoading] = useState(true);
+  /*
+   * IMPORTANT:
+   *
+   * If we already have cached data, do NOT show
+   * the loading page again.
+   *
+   * This is what prevents the page from flashing
+   * the loading screen whenever you navigate back.
+   */
+  const [loading, setLoading] = useState(!hasCachedDeckbuilders);
 
   const [error, setError] = useState("");
 
@@ -114,6 +158,12 @@ function Deckbuilders() {
     };
   }, []);
 
+  /*
+   * Load deckbuilder count.
+   *
+   * Cached count is used immediately.
+   * The API is still checked in the background.
+   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -140,6 +190,8 @@ function Deckbuilders() {
 
         if (Number.isFinite(count)) {
           setTotalDeckbuilders(count);
+
+          writeCache(DECKBUILDERS_COUNT_CACHE_KEY, count);
         }
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -150,19 +202,36 @@ function Deckbuilders() {
 
     fetchCount();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
   }, []);
 
+  /*
+   * Load deckbuilders.
+   *
+   * Cached data is displayed immediately.
+   *
+   * If there is no cache:
+   *   show loading screen.
+   *
+   * If there IS cache:
+   *   keep the existing page visible while
+   *   silently refreshing from Django.
+   */
   useEffect(() => {
     const controller = new AbortController();
 
-    const loadingStartTime = Date.now();
-
-    const minimumLoadingTime = 1200;
-
     const loadDeckbuilders = async () => {
       try {
-        setLoading(true);
+        /*
+         * Only show loading when we don't already
+         * have deckbuilder data.
+         */
+        if (!hasCachedDeckbuilders) {
+          setLoading(true);
+        }
+
         setError("");
 
         const response = await fetch(`${API_BASE_URL}/tbotapp/deckbuilders/`, {
@@ -189,21 +258,36 @@ function Deckbuilders() {
               ? data.results
               : [];
 
+        /*
+         * Update React state with the fresh data.
+         */
         setDeckbuilders(results);
 
-        setTotalDeckbuilders((currentCount) =>
-          currentCount !== null ? currentCount : results.length,
-        );
+        /*
+         * Save fresh data so navigating away and
+         * coming back does not require another
+         * visible reload.
+         */
+        writeCache(DECKBUILDERS_CACHE_KEY, results);
 
-        const elapsed = Date.now() - loadingStartTime;
-
-        const remaining = Math.max(minimumLoadingTime - elapsed, 0);
-
-        window.setTimeout(() => {
-          if (!controller.signal.aborted) {
-            setLoading(false);
+        /*
+         * Only use the result length as the count
+         * if the count endpoint has not supplied one.
+         */
+        setTotalDeckbuilders((currentCount) => {
+          if (currentCount !== null) {
+            return currentCount;
           }
-        }, remaining);
+
+          writeCache(DECKBUILDERS_COUNT_CACHE_KEY, results.length);
+
+          return results.length;
+        });
+
+        /*
+         * We have data now.
+         */
+        setLoading(false);
       } catch (err) {
         if (err.name === "AbortError") {
           return;
@@ -211,20 +295,30 @@ function Deckbuilders() {
 
         console.error("Unable to load deckbuilders:", err);
 
-        setError(err.message || "Unable to load deckbuilders right now.");
+        /*
+         * If cached data exists, KEEP showing it.
+         *
+         * Do not replace the page with an error just
+         * because the background refresh failed.
+         */
+        if (!hasCachedDeckbuilders) {
+          setError(err.message || "Unable to load deckbuilders right now.");
 
-        setLoading(false);
+          setLoading(false);
+        }
       }
     };
 
     loadDeckbuilders();
 
-    return () => controller.abort();
-  }, []);
+    return () => {
+      controller.abort();
+    };
+  }, [hasCachedDeckbuilders]);
+
   const sortedDeckbuilders = useMemo(() => {
     return [...deckbuilders].sort((a, b) => {
       const aDeckCount = getDeckCount(a);
-
       const bDeckCount = getDeckCount(b);
 
       if (aDeckCount !== bDeckCount) {
@@ -274,7 +368,11 @@ function Deckbuilders() {
     });
   }, [sortedDeckbuilders, search]);
 
-  if (loading) {
+  /*
+   * Only show the full loading page when we truly
+   * have no data to display.
+   */
+  if (loading && deckbuilders.length === 0) {
     return (
       <div className="loading-page">
         <div className="loading-card">
@@ -383,7 +481,9 @@ function Deckbuilders() {
                               const numericId = Number(discordId);
 
                               if (Number.isFinite(numericId)) {
-                                const fallbackUrl = `https://cdn.discordapp.com/embed/avatars/${(numericId >> 22) % 6}.png`;
+                                const fallbackUrl = `https://cdn.discordapp.com/embed/avatars/${
+                                  Math.floor(numericId / 4194304) % 6
+                                }.png`;
 
                                 if (event.currentTarget.src !== fallbackUrl) {
                                   event.currentTarget.src = fallbackUrl;

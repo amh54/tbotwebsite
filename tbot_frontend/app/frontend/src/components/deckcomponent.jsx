@@ -486,60 +486,64 @@ function DeckCard({
   };
 
   const handleShare = async () => {
-    if (isAdmin) {
-      return;
-    }
+  if (isAdmin) {
+    return;
+  }
 
-    if (!deckKey) {
-      return;
-    }
+  if (!deckKey) {
+    return;
+  }
 
-    const resolvedProfileSlug = String(
-      profileSlug || deck.profile_slug || deck.profileSlug || "",
-    ).trim();
+  const resolvedProfileSlug = String(
+    profileSlug || deck.profile_slug || deck.profileSlug || "",
+  ).trim();
 
-    const resolvedProfileIsPublic =
-      profileIsPublic !== null && profileIsPublic !== undefined
-        ? profileIsPublic === true
-        : deck.is_public === true ||
-          deck.profile_is_public === true ||
-          deck.profileIsPublic === true;
+  const resolvedProfileIsPublic =
+    profileIsPublic !== null && profileIsPublic !== undefined
+      ? profileIsPublic === true
+      : deck.is_public === true ||
+        deck.profile_is_public === true ||
+        deck.profileIsPublic === true;
 
-    let shareUrl;
+  let shareUrl;
 
-    if (resolvedProfileIsPublic && resolvedProfileSlug) {
-      shareUrl = new URL(
-        `/profile/${encodeURIComponent(resolvedProfileSlug)}/decklists`,
-        window.location.origin,
-      );
+  if (resolvedProfileIsPublic && resolvedProfileSlug) {
+    // Public profile:
+    // Open the profile page and automatically open this deck.
+    shareUrl = new URL(
+      `/profile/${encodeURIComponent(resolvedProfileSlug)}`,
+      window.location.origin,
+    );
 
-      shareUrl.searchParams.set("deck", deckKey);
-    } else if (resolvedProfileSlug) {
-      shareUrl = new URL(
-        `/deck/${encodeURIComponent(resolvedProfileSlug)}/${encodeURIComponent(
-          deckKey,
-        )}`,
-        window.location.origin,
-      );
-    } else {
-      console.error(
-        "Unable to create deck share link: profile slug is missing.",
-      );
-      return;
-    }
+    shareUrl.searchParams.set("deck", deckKey);
+  } else if (resolvedProfileSlug) {
+    // Private profile:
+    // Open the standalone deck page without exposing the profile's decklist.
+    shareUrl = new URL(
+      `/deck/${encodeURIComponent(
+        resolvedProfileSlug,
+      )}/${encodeURIComponent(deckKey)}`,
+      window.location.origin,
+    );
+  } else {
+    console.error(
+      "Unable to create deck share link: profile slug is missing.",
+    );
+    return;
+  }
 
-    try {
-      await navigator.clipboard.writeText(shareUrl.toString());
+  try {
+    await navigator.clipboard.writeText(shareUrl.toString());
 
-      setCopied(true);
+    setCopied(true);
 
-      window.setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-    } catch (error) {
-      console.error("Failed to copy link", error);
-    }
-  };
+    window.setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  } catch (error) {
+    console.error("Failed to copy link", error);
+  }
+};
 
   const handleDownload = async () => {
     const imageUrl = getImageUrl(deck.image);
