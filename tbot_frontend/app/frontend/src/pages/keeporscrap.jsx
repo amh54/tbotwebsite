@@ -364,12 +364,6 @@ function KeepOrScrap() {
     setSide(newSide);
     setSelectedGroup(null);
   };
-
-  /*
-   * ============================================================
-   * INTRO ENTRIES
-   * ============================================================
-   */
   const introEntries = useMemo(() => {
     return entries.filter(isIntroEntry).sort((a, b) => {
       const aName = normalizeText(a.name);
