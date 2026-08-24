@@ -44,7 +44,22 @@ const getCookie = (name) => {
 
   return null;
 };
+const ensureCsrfToken = async () => {
+  let token = getCsrfToken();
 
+  if (token) {
+    return token;
+  }
+
+  await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  token = getCsrfToken();
+
+  return token;
+};
 const getCsrfToken = () => getCookie("csrftoken");
 
 const requestJson = async (url, options = {}) => {
@@ -109,7 +124,30 @@ const getSelectedQuantity = (value) => {
 const getCardKey = (card) => {
   return String(card.cardid ?? card.card_id ?? card.card_name);
 };
+const setAllVisibleToFour = () => {
+  if (!availableCards.length) {
+    return;
+  }
 
+  const nextSelected = {};
+  const nextQuantities = {
+    ...selectedQuantities,
+  };
+
+  availableCards.forEach((card) => {
+    const key = getCardKey(card);
+
+    if (card.already_owned) {
+      return;
+    }
+
+    nextSelected[key] = true;
+    nextQuantities[key] = MAX_QUANTITY; // 4
+  });
+
+  setSelectedCards(nextSelected);
+  setSelectedQuantities(nextQuantities);
+};
 const UserCardManager = () => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -421,7 +459,7 @@ const UserCardManager = () => {
     setAddingCards(true);
     clearMessages();
 
-    const csrfToken = getCsrfToken();
+    const csrfToken = await ensureCsrfToken();
 
     let addedCount = 0;
     const failedCards = [];
@@ -896,26 +934,35 @@ const UserCardManager = () => {
                         }`}
                   </span>
 
-                  <div className="selection-actions">
-                    <button
-                      type="button"
-                      onClick={selectAllVisible}
-                      disabled={
-                        loadingCards || !availableCards.length || addingCards
-                      }
-                    >
-                      Select Available
-                    </button>
+                <div className="selection-actions">
+  <button
+    type="button"
+    onClick={selectAllVisible}
+    disabled={
+      loadingCards || !availableCards.length || addingCards
+    }
+  >
+    Select Available
+  </button>
 
-                    <button
-                      type="button"
-                      onClick={clearSelectedCards}
-                      disabled={selectedCount === 0 || addingCards}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
+  <button
+    type="button"
+    onClick={setAllVisibleToFour}
+    disabled={
+      loadingCards || !availableCards.length || addingCards
+    }
+  >
+    Set All +4
+  </button>
+
+  <button
+    type="button"
+    onClick={clearSelectedCards}
+    disabled={selectedCount === 0 || addingCards}
+  >
+    Clear
+  </button>
+</div>
 
                 <div className="available-card-list">
                   {loadingCards ? (
