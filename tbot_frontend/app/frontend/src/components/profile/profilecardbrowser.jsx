@@ -4,6 +4,9 @@ export default function ProfileCardBrowser({
   cards = [],
   allCards = [],
 }) {
+
+  console.log("PROFILE RAW CARDS:", cards);
+
   return (
     <CardBrowser
       cards={cards}

@@ -977,7 +977,7 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         .filter((userCard) => userCard.card)
         .map((userCard) => ({
           ...userCard.card,
-          amount: userCard.quantity,
+          quantity: userCard.quantity,
           collection_id: userCard.id,
         }));
 
@@ -1551,11 +1551,11 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
     setFilter,
     rarityFilter,
   ]);
-useEffect(() => {
-  console.log("CARDS STATE:", cards);
-  console.log("NORMAL CARDS:", normalCards);
-  console.log("FILTERED CARDS:", filteredCards);
-}, [cards, normalCards, filteredCards]);
+  useEffect(() => {
+    console.log("CARDS STATE:", cards);
+    console.log("NORMAL CARDS:", normalCards);
+    console.log("FILTERED CARDS:", filteredCards);
+  }, [cards, normalCards, filteredCards]);
   const clearFilters = () => {
     setSearch("");
     setTypeFilter([]);
@@ -1796,10 +1796,16 @@ useEffect(() => {
 
                   <div className="card-item-info">
                     <h2 className="card-item-title">
-                      {hasValue(card.title)
+                      {hasValue(card?.title)
                         ? renderTitleText(card.title)
-                        : card.card_name || "Unknown Card"}
+                        : card?.card_name || "Unknown Card"}
                     </h2>
+
+                    {userCollection && card?.quantity !== undefined && (
+                      <p>
+                        <span>Copies:</span> {card.quantity}x
+                      </p>
+                    )}
 
                     {hasValue(card.card_type) && (
                       <p>
