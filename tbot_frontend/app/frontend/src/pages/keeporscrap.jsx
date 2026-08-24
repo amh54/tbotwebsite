@@ -503,13 +503,6 @@ function KeepOrScrap() {
           </div>
         </div>
 
-        {!error && (
-          <p className="results-count">
-            {totalEntries !== null
-              ? `${totalEntries} Keep or Scrap entries`
-              : "Keep or Scrap entries"}
-          </p>
-        )}
 
         {error && <p className="error-message">{error}</p>}
 
