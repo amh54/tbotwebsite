@@ -197,10 +197,10 @@ function HomePage() {
 function App() {
   return (
     <Routes>
-      {/* Home */}
+  
       <Route path="/" element={<HomePage />} />
 
-      {/* Public website pages */}
+    
       <Route path="/decklists" element={<DecklistsPage />} />
       <Route path="/legacydecks" element={<LegacyDecksPage />} />
       <Route path="/cardinfo" element={<CardInfo />} />
@@ -209,25 +209,17 @@ function App() {
       <Route path="/termsofservice" element={<TermsOfService />} />
       <Route path="/privacypolicy" element={<Privacy />} />
       <Route path="/users" element={<Users />} />
-
-      {/* Deckbuilders */}
       <Route path="/deckbuilders" element={<Deckbuilders />} />
 
       <Route
         path="/deckbuilders/:deckbuilder_name/decks"
         element={<DeckbuilderDecks />}
       />
-
-      {/* Public/private profile page */}
       <Route path="/profile/:profile_slug" element={<Profile />} />
-
-      {/* Standalone shared deck */}
       <Route
         path="/deck/:profile_slug/:deckId"
         element={<StandaloneDeckPage />}
       />
-
-      {/* User dashboard */}
       <Route path="/dashboard" element={<UserDashboard />} />
 
       <Route path="/dashboard/decks" element={<UserDeckManager />} />
