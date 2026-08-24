@@ -363,12 +363,13 @@ if FRONTEND_URL:
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_DOMAIN = None
+
 CSRF_COOKIE_NAME = "csrftoken"
-SESSION_COOKIE_DOMAIN = ".pvzhtbot.com"
-CSRF_COOKIE_DOMAIN = ".pvzhtbot.com"
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_DOMAIN = None
 
 
 # ============================================================

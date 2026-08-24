@@ -4,7 +4,7 @@ import os
 from urllib.parse import urlencode
 
 import requests
-
+from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
@@ -31,23 +31,18 @@ logger = logging.getLogger(__name__)
 # CSRF TOKEN
 # ============================================================
 
-@api_view(["GET"])
+@require_GET
 @ensure_csrf_cookie
 def csrf_token(request):
     token = get_token(request)
 
-    response = Response({
-        "csrfToken": token
-    })
-
-    response.set_cookie(
-        "csrftoken",
-        token,
-        domain=".pvzhtbot.com",
-        secure=True,
-        httponly=False,
-        samesite="None",
+    response = JsonResponse(
+        {
+            "csrfToken": token,
+        }
     )
+
+    response["Access-Control-Allow-Credentials"] = "true"
 
     return response
 # ============================================================
