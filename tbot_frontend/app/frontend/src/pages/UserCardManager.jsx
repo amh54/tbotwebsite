@@ -588,47 +588,41 @@ const UserCardManager = () => {
   };
 
   const handleDelete = async (card) => {
-  const confirmed = window.confirm(
-    `Remove ${card.card_name} from your collection?`,
-  );
-
-  if (!confirmed) {
-    return;
-  }
-
-  setDeletingCardId(card.id);
-  clearMessages();
-
-  try {
-    const csrfToken = getCsrfToken();
-
-    await requestJson(
-      `${API_BASE_URL}/tbotapp/user-cards/${card.id}/delete/`,
-      {
-        method: "DELETE",
-        headers: csrfToken
-          ? {
-              "X-CSRFToken": csrfToken,
-            }
-          : {},
-      },
+    const confirmed = window.confirm(
+      `Remove ${card.card_name} from your collection?`,
     );
 
-    setCards((current) =>
-      current.filter((item) => item.id !== card.id),
-    );
+    if (!confirmed) {
+      return;
+    }
 
-    setSuccessMessage(
-      `${card.card_name} was removed from your collection.`,
-    );
-  } catch (requestError) {
-    setError(
-      requestError.message || "Unable to remove card.",
-    );
-  } finally {
-    setDeletingCardId(null);
-  }
-};
+    setDeletingCardId(card.id);
+    clearMessages();
+
+    try {
+      const csrfToken = getCsrfToken();
+
+      await requestJson(
+        `${API_BASE_URL}/tbotapp/user-cards/${card.id}/delete/`,
+        {
+          method: "DELETE",
+          headers: csrfToken
+            ? {
+                "X-CSRFToken": csrfToken,
+              }
+            : {},
+        },
+      );
+
+      setCards((current) => current.filter((item) => item.id !== card.id));
+
+      setSuccessMessage(`${card.card_name} was removed from your collection.`);
+    } catch (requestError) {
+      setError(requestError.message || "Unable to remove card.");
+    } finally {
+      setDeletingCardId(null);
+    }
+  };
 
   const renderCardRow = (card) => {
     const fullCard = card.card;
@@ -934,35 +928,36 @@ const UserCardManager = () => {
                         }`}
                   </span>
 
-                <div className="selection-actions">
-  <button
-    type="button"
-    onClick={selectAllVisible}
-    disabled={
-      loadingCards || !availableCards.length || addingCards
-    }
-  >
-    Select Available
-  </button>
+                  <div className="selection-actions">
+                    <button
+                      type="button"
+                      onClick={selectAllVisible}
+                      disabled={
+                        loadingCards || !availableCards.length || addingCards
+                      }
+                    >
+                      Select Available
+                    </button>
 
-  <button
-    type="button"
-    onClick={setAllVisibleToFour}
-    disabled={
-      loadingCards || !availableCards.length || addingCards
-    }
-  >
-    Set All +4
-  </button>
+                    <button
+                      type="button"
+                      onClick={setAllVisibleToFour}
+                      disabled={
+                        loadingCards || !availableCards.length || addingCards
+                      }
+                    >
+                      Set All +4
+                    </button>
 
-  <button
-    type="button"
-    onClick={clearSelectedCards}
-    disabled={selectedCount === 0 || addingCards}
-  >
-    Clear
-  </button>
-</div>
+                    <button
+                      type="button"
+                      onClick={clearSelectedCards}
+                      disabled={selectedCount === 0 || addingCards}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
 
                 <div className="available-card-list">
                   {loadingCards ? (
