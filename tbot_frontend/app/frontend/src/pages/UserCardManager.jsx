@@ -51,14 +51,27 @@ const ensureCsrfToken = async () => {
     return token;
   }
 
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/tbotapp/csrf/`,
+    {
+      method: "GET",
+      credentials: "include",
+      mode: "cors",
+      headers: {
+        Accept: "application/json",
+      },
+    }
+  );
+
+  console.log("CSRF RESPONSE:", response.status);
+  console.log("SET COOKIE HEADER:", response.headers.get("set-cookie"));
 
   if (!response.ok) {
     throw new Error("Unable to get CSRF cookie");
   }
+
+  // give browser time to save cookie
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   token = getCsrfToken();
 

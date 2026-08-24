@@ -31,16 +31,25 @@ logger = logging.getLogger(__name__)
 # CSRF TOKEN
 # ============================================================
 
-@ensure_csrf_cookie
 @api_view(["GET"])
+@ensure_csrf_cookie
 def csrf_token(request):
     token = get_token(request)
 
-    return Response(
-        {
-            "csrfToken": token,
-        }
+    response = Response({
+        "csrfToken": token
+    })
+
+    response.set_cookie(
+        "csrftoken",
+        token,
+        domain=".pvzhtbot.com",
+        secure=True,
+        httponly=False,
+        samesite="None",
     )
+
+    return response
 # ============================================================
 # DISCORD LOGIN
 # ============================================================

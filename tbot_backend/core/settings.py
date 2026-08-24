@@ -313,11 +313,13 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = parse_csv_env(
     os.getenv("CORS_ALLOWED_ORIGINS"),
     default=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4173",
-        "http://127.0.0.1:4173",
-    ],
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+    "https://pvzhtbot.com",
+    "https://www.pvzhtbot.com",
+],
 )
 
 CORS_ALLOW_CREDENTIALS = True
@@ -341,6 +343,8 @@ CSRF_TRUSTED_ORIGINS = parse_csv_env(
         "http://127.0.0.1:5173",
         "http://localhost:4173",
         "http://127.0.0.1:4173",
+        "https://pvzhtbot.com",
+        "https://www.pvzhtbot.com",
     ],
 )
 
@@ -359,7 +363,9 @@ if FRONTEND_URL:
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_DOMAIN = None
+CSRF_COOKIE_NAME = "csrftoken"
+SESSION_COOKIE_DOMAIN = ".pvzhtbot.com"
+CSRF_COOKIE_DOMAIN = ".pvzhtbot.com"
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
