@@ -288,15 +288,6 @@ function Navbar() {
                     User Dashboard
                   </Link>
 
-                  {profileSlug && (
-                    <Link
-                      to={`/users/${encodeURIComponent(profileSlug)}/decklists`}
-                      onClick={closeMenus}
-                    >
-                      My Decklists
-                    </Link>
-                  )}
-
                   {user.is_owner && (
                     <Link to="/admin" onClick={closeMenus}>
                       Admin
@@ -413,15 +404,6 @@ function Navbar() {
                   <Link to="/dashboard" onClick={closeMenus}>
                     User Dashboard
                   </Link>
-
-                  {profileSlug && (
-                    <Link
-                      to={`/users/${encodeURIComponent(profileSlug)}/decklists`}
-                      onClick={closeMenus}
-                    >
-                      My Decklists
-                    </Link>
-                  )}
 
                   {user.is_owner && (
                     <Link to="/admin" onClick={closeMenus}>
