@@ -51,12 +51,20 @@ const ensureCsrfToken = async () => {
     return token;
   }
 
-  await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
+  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
     method: "GET",
     credentials: "include",
   });
 
+  if (!response.ok) {
+    throw new Error("Unable to get CSRF token");
+  }
+
   token = getCsrfToken();
+
+  if (!token) {
+    throw new Error("CSRF cookie was not created");
+  }
 
   return token;
 };
@@ -148,30 +156,30 @@ const UserCardManager = () => {
 
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [addingCards, setAddingCards] = useState(false);
-const setAllVisibleToFour = () => {
-  if (!availableCards.length) {
-    return;
-  }
-
-  const nextSelected = {};
-  const nextQuantities = {
-    ...selectedQuantities,
-  };
-
-  availableCards.forEach((card) => {
-    const key = getCardKey(card);
-
-    if (card.already_owned) {
+  const setAllVisibleToFour = () => {
+    if (!availableCards.length) {
       return;
     }
 
-    nextSelected[key] = true;
-    nextQuantities[key] = MAX_QUANTITY;
-  });
+    const nextSelected = {};
+    const nextQuantities = {
+      ...selectedQuantities,
+    };
 
-  setSelectedCards(nextSelected);
-  setSelectedQuantities(nextQuantities);
-};
+    availableCards.forEach((card) => {
+      const key = getCardKey(card);
+
+      if (card.already_owned) {
+        return;
+      }
+
+      nextSelected[key] = true;
+      nextQuantities[key] = MAX_QUANTITY;
+    });
+
+    setSelectedCards(nextSelected);
+    setSelectedQuantities(nextQuantities);
+  };
   const loadCollection = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -459,7 +467,7 @@ const setAllVisibleToFour = () => {
     clearMessages();
 
     const csrfToken = await ensureCsrfToken();
-
+    console.log("CSRF TOKEN:", csrfToken);
     let addedCount = 0;
     const failedCards = [];
 
@@ -470,13 +478,15 @@ const setAllVisibleToFour = () => {
         const quantity = getSelectedQuantity(selectedQuantities[key] ?? 1);
 
         try {
+          const csrfToken = await ensureCsrfToken();
+
+          console.log("Sending CSRF token:", csrfToken);
+
           await requestJson(`${API_BASE_URL}/tbotapp/user-cards/create/`, {
             method: "POST",
-            headers: csrfToken
-              ? {
-                  "X-CSRFToken": csrfToken,
-                }
-              : {},
+            headers: {
+              "X-CSRFToken": csrfToken,
+            },
             body: JSON.stringify({
               card_name: card.card_name,
               quantity,
