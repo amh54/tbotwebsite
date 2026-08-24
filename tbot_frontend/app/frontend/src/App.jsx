@@ -23,6 +23,7 @@ import AdminLegacyDecks from "./pages/admin-legacydecks.jsx";
 import Users from "./pages/users.jsx";
 import UserDeckManager from "./pages/userdeckmanager.jsx";
 import UserDashboard from "./pages/userdashboard.jsx";
+import UserCardManager from "./pages/UserCardManager.jsx";
 
 function HomePage() {
   return (
@@ -197,10 +198,8 @@ function HomePage() {
 function App() {
   return (
     <Routes>
-  
       <Route path="/" element={<HomePage />} />
 
-    
       <Route path="/decklists" element={<DecklistsPage />} />
       <Route path="/legacydecks" element={<LegacyDecksPage />} />
       <Route path="/cardinfo" element={<CardInfo />} />
@@ -230,7 +229,7 @@ function App() {
         path="/dashboard/decks/:deckId/edit"
         element={<UserDeckManager />}
       />
-
+      <Route path="/dashboard/card-manager" element={<UserCardManager />} />
       {/* Admin */}
       <Route path="/admin" element={<Admin />} />
 

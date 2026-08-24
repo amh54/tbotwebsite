@@ -51,7 +51,29 @@
   margin: 0;
   color: #ffffff;
 }
+.profile-tab-content {
+  width: min(1100px, 100%) !important;
+  margin: 0 auto !important;
+}
 
+.profile-tabs {
+  margin-bottom: 12px !important;
+}
+
+.profile-tab-content .card-information-page {
+  padding: 0 !important;
+  min-height: 0 !important;
+  background: transparent !important;
+}
+
+.profile-tab-content .card-information-page h1 {
+  margin: 0 0 16px !important;
+  line-height: 1.1 !important;
+}
+
+.profile-decks {
+  margin-top: 12px !important;
+}
 .user-decklists-profile-info > p {
   margin: 6px 0 0;
 }

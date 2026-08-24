@@ -2,15 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useParams } from "react-router-dom";
 
-import DeckCard from "../components/deckcomponent";
-import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar.jsx";
 import Footer from "../components/footer.jsx";
 
+import ProfileHeader from "../components/profile/profileheader.jsx";
+import ProfileTabs from "../components/profile/profiletabs.jsx";
+import ProfileCardBrowser from "../components/profile/profilecardbrowser.jsx";
+import ProfileDeckBrowser from "../components/profile/profiledeckbrowser.jsx";
+import ProfileShareMessage from "../components/profile/profilesharemessage.jsx";
+import ProfileEditModal from "../components/profile/profileeditmodal.jsx";
 import "../css/profile.css";
 import "../css/decklists.css";
 import "../css/navbar.css";
 import "../css/loading.css";
+import "../css/profilecards.css";
 import "../css/userdecklists.css";
 
 const getApiBaseUrl = () => {
@@ -146,56 +151,15 @@ const parseArchetypes = (value) => {
     .filter(Boolean);
 };
 
-const getAvatarUrl = (profile) => {
-  if (!profile) {
-    return "";
-  }
-
-  const avatar = normalizeText(profile.avatar);
-  const discordId = normalizeText(profile.discord_id);
-
-  if (!avatar) {
-    if (discordId) {
-      const numericId = Number(discordId);
-
-      if (Number.isSafeInteger(numericId) && numericId >= 0) {
-        const defaultAvatarIndex = (numericId >> 22) % 6;
-
-        return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
-      }
-    }
-
-    return "";
-  }
-
-  if (
-    avatar.startsWith("http://") ||
-    avatar.startsWith("https://") ||
-    avatar.startsWith("//")
-  ) {
-    return avatar;
-  }
-
-  if (avatar.startsWith("/avatars/") || avatar.startsWith("/embed/avatars/")) {
-    return `https://cdn.discordapp.com${avatar}`;
-  }
-
-  if (!discordId) {
-    return "";
-  }
-
-  const extension = avatar.startsWith("a_") ? "gif" : "png";
-
-  return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=256`;
-};
-
 function Profile() {
   const { profile_slug } = useParams();
-
+  const [userCards, setUserCards] = useState([]);
   const [profile, setProfile] = useState(null);
   const [decks, setDecks] = useState([]);
   const [deckCount, setDeckCount] = useState(null);
   const [allCards, setAllCards] = useState([]);
+
+  const [activeTab, setActiveTab] = useState("cards");
 
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
@@ -214,18 +178,13 @@ function Profile() {
   const [editError, setEditError] = useState("");
 
   const [editDisplayName, setEditDisplayName] = useState("");
+
   const [editProfileSlug, setEditProfileSlug] = useState("");
+
   const [editBio, setEditBio] = useState("");
   const [editIsPublic, setEditIsPublic] = useState(false);
 
   const [shareMessage, setShareMessage] = useState("");
-  const [avatarError, setAvatarError] = useState(false);
-
-  /*
-   * Load the profile, decks, and card information together.
-   *
-   * This replaces the old separate Profile and UserDecklists pages.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -239,11 +198,6 @@ function Profile() {
       try {
         setLoading(true);
         setError("");
-        setAvatarError(false);
-
-        /*
-         * Load profile.
-         */
         const profileResponse = await fetch(
           `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(
             profile_slug,
@@ -306,40 +260,45 @@ function Profile() {
         setDecks(loadedDecks);
         setDeckCount(loadedDecks.length);
 
-        /*
-         * Load card information.
-         *
-         * This is needed by the hero filter and DeckCard component.
-         */
-        try {
-          const cardsResponse = await fetch(
-            `${API_BASE_URL}/tbotapp/cardinfo/`,
-            {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-              },
-              signal: controller.signal,
-            },
+       const cardsResponse = await fetch(
+  `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(
+    profile_slug,
+  )}/cards/`,
+  {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+    signal: controller.signal,
+  },
+);
+
+        const cardsData = await cardsResponse.json().catch(() => null);
+
+        if (cardsResponse.ok) {
+          setUserCards(
+            Array.isArray(cardsData) ? cardsData : cardsData?.cards || [],
           );
-
-          if (cardsResponse.ok) {
-            const cardsData = await cardsResponse.json();
-
-            setAllCards(
-              Array.isArray(cardsData)
-                ? cardsData
-                : Array.isArray(cardsData?.results)
-                  ? cardsData.results
-                  : [],
-            );
-          }
-        } catch (cardError) {
-          if (cardError.name !== "AbortError") {
-            console.error("Unable to load card information:", cardError);
-          }
         }
+        const allCardsResponse = await fetch(
+          `${API_BASE_URL}/tbotapp/cardinfo/`,
+          {
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
+          },
+        );
 
+        const allCardsData = await allCardsResponse.json().catch(() => null);
+
+        if (allCardsResponse.ok) {
+          setAllCards(
+            Array.isArray(allCardsData)
+              ? allCardsData
+              : allCardsData?.results || [],
+          );
+        }
         if (!controller.signal.aborted) {
           setLoading(false);
         }
@@ -364,21 +323,15 @@ function Profile() {
 
     return () => controller.abort();
   }, [profile_slug]);
-
-  useEffect(() => {
-    setAvatarError(false);
-  }, [profile?.avatar, profile?.discord_id]);
-
-  /*
-   * Profile editing
-   */
   const openEditProfile = () => {
     if (!profile) {
       return;
     }
 
     setEditDisplayName(profile.display_name || "");
+
     setEditProfileSlug(profile.profile_slug || "");
+
     setEditBio(profile.bio || "");
     setEditIsPublic(Boolean(profile.is_public));
     setEditError("");
@@ -420,7 +373,9 @@ function Profile() {
         credentials: "include",
         body: JSON.stringify({
           display_name: editDisplayName.trim(),
+
           profile_slug: editProfileSlug.trim().toLowerCase(),
+
           bio: editBio,
           is_public: editIsPublic,
         }),
@@ -446,9 +401,6 @@ function Profile() {
 
       const newSlug = normalizeText(updatedProfile.profile_slug);
 
-      /*
-       * Update the URL without forcing a full page reload.
-       */
       if (newSlug && newSlug !== profile_slug) {
         window.history.replaceState(
           {},
@@ -466,9 +418,7 @@ function Profile() {
   };
 
   /*
-   * Single Share Profile button.
-   *
-   * There is intentionally NO "Share Deck Profile" button anymore.
+   * Share profile.
    */
   const handleShareProfile = async () => {
     const currentSlug = normalizeText(profile?.profile_slug) || profile_slug;
@@ -515,7 +465,7 @@ function Profile() {
   };
 
   /*
-   * Filtering
+   * Deck filtering options.
    */
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -586,7 +536,7 @@ function Profile() {
             value: categoryName,
             label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
             count: 0,
-            ...(CATEGORY_META[categoryName] || {}),
+            ...CATEGORY_META[categoryName],
           });
         }
 
@@ -628,6 +578,9 @@ function Profile() {
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
 
+  /*
+   * Sort decks.
+   */
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
       const sideOrder = {
@@ -636,6 +589,7 @@ function Profile() {
       };
 
       const sideA = normalizeKey(a.side);
+
       const sideB = normalizeKey(b.side);
 
       const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
@@ -666,6 +620,9 @@ function Profile() {
     });
   }, [decks]);
 
+  /*
+   * Apply deck filters.
+   */
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
 
@@ -747,13 +704,17 @@ function Profile() {
     setArchetype([]);
   };
 
+  /*
+   * Changing Plants/Zombies also
+   * clears the current deck filters.
+   */
   const handleSideChange = (newSide) => {
     setSide(newSide);
     clearFilters();
   };
 
   /*
-   * Loading state
+   * Loading state.
    */
   if (loading) {
     return (
@@ -780,7 +741,7 @@ function Profile() {
   }
 
   /*
-   * Error state
+   * Error state.
    */
   if (error) {
     return (
@@ -812,340 +773,80 @@ function Profile() {
 
   const profileName = profile.display_name || profile.username || "User";
 
-  const avatarUrl = getAvatarUrl(profile);
-
   return (
     <div className="profile-page-wrapper">
       <Navbar />
 
       <main className="profile-page">
-        {/* =========================
-            PROFILE HEADER
-        ========================== */}
-        <section className="profile-header">
-          <div className="profile-avatar">
-            {avatarUrl && !avatarError ? (
-              <img
-                src={avatarUrl}
-                alt={`${profileName} avatar`}
-                onError={() => setAvatarError(true)}
-              />
-            ) : (
-              <div className="profile-avatar-placeholder">
-                {profileName.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
+        <ProfileHeader
+          profile={profile}
+          profileName={profileName}
+          isOwner={isOwner}
+          onShare={handleShareProfile}
+          onEdit={openEditProfile}
+        />
 
-          <div className="profile-info">
-            <h1>{profileName}</h1>
+        <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-            <div className="profile-username">
-              @
-              {profile.username ||
-                profile.discord_username ||
-                profile.display_name}
-            </div>
-
-            {profile.bio && <p className="profile-bio">{profile.bio}</p>}
-
-            <div className="profile-meta">
-              {profile.is_public ? "Public profile" : "Private profile"}
-            </div>
-          </div>
-
-          <div className="profile-header-actions">
-            <button
-              type="button"
-              className="profile-share-button"
-              onClick={handleShareProfile}
-            >
-              Share Profile
-            </button>
-
-            {isOwner && (
-              <button
-                type="button"
-                className="profile-edit-button"
-                onClick={openEditProfile}
-              >
-                Edit Profile
-              </button>
-            )}
-          </div>
-        </section>
-
-        {/* =========================
-            DECKLIST SECTION
-        ========================== */}
-        <section className="profile-decks">
-          <div className="profile-decks-header">
-            <div>
-              <h2>Decklists</h2>
-
-              <p>
-                {deckCount === 0
-                  ? "0 decklists"
-                  : `${deckCount} ${
-                      deckCount === 1 ? "decklist" : "decklists"
-                    }`}
-              </p>
-            </div>
-          </div>
-
-          <div className="deck-browser">
-            {/* SIDE TABS */}
-            <div className="tabs">
-              <button
-                type="button"
-                className={side === "All" ? "active" : ""}
-                onClick={() => handleSideChange("All")}
-              >
-                All
-              </button>
-
-              <button
-                type="button"
-                className={side === "Plants" ? "active" : ""}
-                onClick={() => handleSideChange("Plants")}
-              >
-                <img
-                  src="https://i.ibb.co/fYHsRqP0/plants.png"
-                  alt="Plants"
-                  className="tab-icon"
-                />
-                Plants
-              </button>
-
-              <button
-                type="button"
-                className={side === "Zombies" ? "active" : ""}
-                onClick={() => handleSideChange("Zombies")}
-              >
-                <img
-                  src="https://i.ibb.co/pvT38Y1n/zombies.png"
-                  alt="Zombies"
-                  className="tab-icon"
-                />
-                Zombies
-              </button>
-            </div>
-
-            {/* SEARCH */}
-            <div className="search-container">
-              <input
-                className="search"
-                placeholder="Search decks, creators, heroes, cards..."
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-            </div>
-
-            {/* FILTERS */}
-            <div className="filters">
-              <div className="select-wrapper">
-                <FilterDropdown
-                  label="Hero"
-                  options={heroOptions}
-                  value={hero}
-                  onChange={setHero}
-                  multi
-                />
-              </div>
-
-              <div className="select-wrapper">
-                <FilterDropdown
-                  label="Category"
-                  options={categoryOptions}
-                  value={category}
-                  onChange={setCategory}
-                  multi
-                />
-              </div>
-
-              <div className="select-wrapper archetype-select-wrapper">
-                <FilterDropdown
-                  label="Archetype"
-                  options={archetypeOptions}
-                  value={archetype}
-                  onChange={setArchetype}
-                  multi
-                />
-              </div>
-
-              <button
-                type="button"
-                className="clear-filter-btn"
-                onClick={clearFilters}
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-
-          {/* RESULTS */}
-          <div className="user-decklists-results-bar">
-            <p className="results-count">
-              Showing {filteredDecks.length} of {decks.length} decks
-            </p>
-          </div>
-
-          {filteredDecks.length === 0 ? (
-            <div className="user-decklists-empty">
-              <h2>No decks found</h2>
-
-              <p>This user hasn't added any decks matching these filters.</p>
-            </div>
-          ) : (
-            <div className="deck-grid">
-              {filteredDecks.map((deck) => (
-                <DeckCard
-                  key={
-                    deck.deckid ||
-                    deck.deckID ||
-                    deck.id ||
-                    `${deck.side}-${deck.name}`
-                  }
-                  decklist={deck}
-                  allCards={allCards}
-                  profileSlug={
-                    normalizeText(profile.profile_slug) || profile_slug
-                  }
-                  profileIsPublic={profile.is_public === true}
-                />
-              ))}
-            </div>
+        <div className="profile-tab-content">
+          {activeTab === "cards" && (
+            <ProfileCardBrowser cards={userCards} allCards={allCards} />
           )}
-        </section>
+
+          {activeTab === "decks" && (
+            <ProfileDeckBrowser
+              decks={decks}
+              filteredDecks={filteredDecks}
+              allCards={allCards}
+              profile={profile}
+              profileSlug={profile_slug}
+              deckCount={deckCount}
+              side={side}
+              onSideChange={handleSideChange}
+              search={search}
+              setSearch={setSearch}
+              hero={hero}
+              setHero={setHero}
+              category={category}
+              setCategory={setCategory}
+              archetype={archetype}
+              setArchetype={setArchetype}
+              heroOptions={heroOptions}
+              categoryOptions={categoryOptions}
+              archetypeOptions={archetypeOptions}
+              onClearFilters={clearFilters}
+            />
+          )}
+        </div>
 
         {isSiteOwner && (
-          <div style={{ display: "none" }}>
+          <div
+            style={{
+              display: "none",
+            }}
+          >
             Site owner profile access enabled.
           </div>
         )}
       </main>
 
-      {/* SHARE MESSAGE */}
-      {shareMessage && (
-        <div className="profile-share-message">{shareMessage}</div>
-      )}
+      <ProfileShareMessage message={shareMessage} />
 
-      {/* =========================
-          EDIT PROFILE MODAL
-      ========================== */}
-      {editOpen && (
-        <div
-          className="profile-edit-modal-overlay"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeEditProfile();
-            }
-          }}
-        >
-          <div className="profile-edit-modal">
-            <h2>Edit Profile</h2>
-
-            <form className="profile-edit-form" onSubmit={handleSaveProfile}>
-              {editError && (
-                <div className="profile-edit-error">{editError}</div>
-              )}
-
-              <div className="profile-edit-field">
-                <label htmlFor="profile-display-name">Display Name</label>
-
-                <input
-                  id="profile-display-name"
-                  type="text"
-                  value={editDisplayName}
-                  maxLength={100}
-                  onChange={(event) => setEditDisplayName(event.target.value)}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="profile-edit-field">
-                <label htmlFor="profile-slug">Profile URL</label>
-
-                <input
-                  id="profile-slug"
-                  type="text"
-                  value={editProfileSlug}
-                  maxLength={100}
-                  onChange={(event) =>
-                    setEditProfileSlug(
-                      event.target.value.toLowerCase().replace(/\s+/g, "-"),
-                    )
-                  }
-                  disabled={saving}
-                />
-
-                <small>
-                  Your profile will be available at
-                  {" /profile/"}
-                  {editProfileSlug || "your-name"}
-                </small>
-              </div>
-
-              <div className="profile-edit-field">
-                <label htmlFor="profile-bio">Bio</label>
-
-                <textarea
-                  id="profile-bio"
-                  value={editBio}
-                  maxLength={2000}
-                  onChange={(event) => setEditBio(event.target.value)}
-                  placeholder="Tell people a little about yourself..."
-                  disabled={saving}
-                />
-
-                <small>{editBio.length}/2000 characters</small>
-              </div>
-
-              <div className="profile-public-toggle">
-                <div className="profile-public-toggle-info">
-                  <p className="profile-public-toggle-title">Public Profile</p>
-
-                  <p className="profile-public-toggle-description">
-                    Public profiles can be discovered by other users. Private
-                    profiles can still be shared directly with someone using the
-                    profile link.
-                  </p>
-                </div>
-
-                <label className="profile-switch">
-                  <input
-                    type="checkbox"
-                    checked={editIsPublic}
-                    onChange={(event) => setEditIsPublic(event.target.checked)}
-                    disabled={saving}
-                  />
-
-                  <span className="profile-switch-slider" />
-                </label>
-              </div>
-
-              <div className="profile-edit-actions">
-                <button
-                  type="button"
-                  className="profile-edit-cancel"
-                  onClick={closeEditProfile}
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="profile-edit-save"
-                  disabled={saving}
-                >
-                  {saving ? "Saving..." : "Save Changes"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ProfileEditModal
+        open={editOpen}
+        saving={saving}
+        error={editError}
+        displayName={editDisplayName}
+        profileSlug={editProfileSlug}
+        bio={editBio}
+        isPublic={editIsPublic}
+        onDisplayNameChange={setEditDisplayName}
+        onProfileSlugChange={setEditProfileSlug}
+        onBioChange={setEditBio}
+        onPublicChange={setEditIsPublic}
+        onSubmit={handleSaveProfile}
+        onClose={closeEditProfile}
+      />
 
       <Footer />
     </div>

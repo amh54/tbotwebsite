@@ -274,3 +274,34 @@ class UserDeck(models.Model):
     class Meta:
         db_table = "user_decks"
         managed = False
+class UserCard(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    profile_id = models.BigIntegerField()
+
+    card_name = models.CharField(
+        max_length=200,
+    )
+
+    quantity = models.IntegerField(
+        default=1,
+    )
+
+    created_at = models.DateTimeField(
+        db_default=Now(),
+    )
+
+    updated_at = models.DateTimeField(
+        db_default=Now(),
+    )
+
+    class Meta:
+        db_table = "user_cards"
+        managed = False
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["profile_id", "card_name"],
+                name="user_cards_unique_profile_card",
+            ),
+        ]

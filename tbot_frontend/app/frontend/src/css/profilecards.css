@@ -1,0 +1,33 @@
+.user-decklists-card-browser {
+  width: 100%;
+  margin-top: 0;
+}
+
+.user-decklists-card-browser .card-browser {
+  width: 100%;
+}
+
+.profile-tab-content {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.profile-tab-content .card-browser {
+  margin-top: 0 !important;
+}
+
+.profile-tab-content .card-information-page {
+  padding: 0;
+  min-height: 0;
+  background: transparent;
+}
+
+.profile-tab-content .card-information-page h1 {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+.profile-tab-content h1,
+.profile-tab-content h2 {
+  margin-top: 0;
+}

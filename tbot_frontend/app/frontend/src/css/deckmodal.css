@@ -332,7 +332,35 @@
   z-index: 0;
   pointer-events: none;
 }
+/* ============================================================
+   CARD MANAGER MODAL BACKGROUND
+   ============================================================ */
 
+.card-manager-modal {
+  position: relative;
+  overflow: hidden;
+  background: #15181b;
+}
+
+/* background image layer */
+.card-manager-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center /
+    cover no-repeat;
+  filter: blur(12px);
+  opacity: 0.15;
+  transform: scale(1.1);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* keep modal content above background */
+.card-manager-modal > * {
+  position: relative;
+  z-index: 1;
+}
 /* ============================================================
    MODAL SCROLL
    ============================================================ */

@@ -83,14 +83,6 @@ def profile_detail(request, profile_slug):
         and str(discord_user["id"]) == str(profile.discord_id)
     )
 
-    if not profile.is_public and not is_owner:
-        return Response(
-            {
-                "error": "This profile is private.",
-            },
-            status=status.HTTP_403_FORBIDDEN,
-        )
-
     is_site_owner = False
 
     if discord_user:
@@ -106,7 +98,6 @@ def profile_detail(request, profile_slug):
             and str(discord_user["id"]) == str(profile.discord_id)
         )
 
-    # Get ONLY the number of decks.
     deck_count = UserDeck.objects.filter(
         profile_id=profile.id
     ).count()
@@ -120,7 +111,8 @@ def profile_detail(request, profile_slug):
             "is_owner": is_owner,
             "is_site_owner": is_site_owner,
         },
-        status=status.HTTP_200_OK    )
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["GET"])
@@ -173,14 +165,6 @@ def public_profile_decks(request, profile_slug):
         discord_user is not None
         and str(discord_user["id"]) == str(profile.discord_id)
     )
-
-    if not profile.is_public and not is_owner:
-        return Response(
-            {
-                "error": "This profile is private.",
-            },
-            status=status.HTTP_403_FORBIDDEN,
-        )
 
     decks = (
         UserDeck.objects

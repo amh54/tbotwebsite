@@ -96,12 +96,17 @@ function UserDashboard() {
             </div>
           </div>
         )}
-
         <div className="user-dashboard-grid">
           <Link to="/dashboard/decks" className="user-dashboard-card">
-            <span className="user-dashboard-card-label">My Decklists</span>
-
-            <span className="user-dashboard-card-action">Manage →</span>
+            <span className="user-dashboard-card-label">My Decklists</span>{" "}
+            <span className="user-dashboard-card-action">Manage →</span>{" "}
+          </Link>
+          <Link to="/dashboard/card-manager" className="user-dashboard-card">
+        
+            <span className="user-dashboard-card-label">
+              My Card Collection
+            </span>
+            <span className="user-dashboard-card-action">Manage →</span>{" "}
           </Link>
         </div>
       </main>

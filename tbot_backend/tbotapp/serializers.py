@@ -4,6 +4,7 @@ from .models import (
     Decklist,
     WebCards,
     KeepOrScrap,
+    UserCard,
     UserDeck,
     LegacyDecklist,
     UserProfile,
@@ -281,7 +282,32 @@ class UserDeckSerializer(serializers.ModelSerializer):
             })
 
         return attrs
+class UserCardSerializer(serializers.ModelSerializer):
+    card = serializers.SerializerMethodField()
 
+    class Meta:
+        model = UserCard
+        fields = [
+            "id",
+            "profile_id",
+            "card_name",
+            "amount",
+            "card",
+        ]
+
+    def get_card(self, obj):
+        try:
+            card = WebCards.objects.filter(
+                card_name=obj.card_name
+            ).first()
+
+            if not card:
+                return None
+
+            return WebCardSerializer(card).data
+
+        except Exception:
+            return None
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
