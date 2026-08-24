@@ -57,10 +57,12 @@ const ensureCsrfToken = async () => {
   });
 
   if (!response.ok) {
-    throw new Error("Unable to get CSRF token");
+    throw new Error("Unable to get CSRF cookie");
   }
 
   token = getCsrfToken();
+
+  console.log("CSRF COOKIE AFTER FETCH:", token);
 
   if (!token) {
     throw new Error("CSRF cookie was not created");
@@ -472,12 +474,6 @@ const UserCardManager = () => {
     try {
       const csrfToken = await ensureCsrfToken();
 
-      console.log("CSRF TOKEN:", csrfToken);
-
-      if (!csrfToken) {
-        throw new Error("Missing CSRF token.");
-      }
-
       for (const card of selected) {
         const key = getCardKey(card);
 
@@ -495,7 +491,7 @@ const UserCardManager = () => {
             }),
           });
 
-          addedCount += 1;
+          addedCount++;
         } catch (requestError) {
           failedCards.push(`${card.card_name}: ${requestError.message}`);
         }
@@ -505,22 +501,16 @@ const UserCardManager = () => {
 
       if (failedCards.length) {
         setError(
-          `Added ${addedCount} card${
-            addedCount === 1 ? "" : "s"
-          }, but some cards could not be added: ${failedCards.join(" | ")}`,
+          `Added ${addedCount} cards, but failed: ${failedCards.join(" | ")}`,
         );
       } else {
-        setSuccessMessage(
-          `${addedCount} card${
-            addedCount === 1 ? "" : "s"
-          } added to your collection.`,
-        );
+        setSuccessMessage(`${addedCount} cards added to your collection.`);
 
         setIsAddModalOpen(false);
         resetAddModalState();
       }
     } catch (error) {
-      setError(error.message || "Unable to add cards.");
+      setError(error.message);
     } finally {
       setAddingCards(false);
     }

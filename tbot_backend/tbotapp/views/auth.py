@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 # CSRF TOKEN
 # ============================================================
 
-@api_view(["GET"])
 @ensure_csrf_cookie
+@api_view(["GET"])
 def csrf_token(request):
     token = get_token(request)
 
@@ -41,7 +41,6 @@ def csrf_token(request):
             "csrfToken": token,
         }
     )
-
 # ============================================================
 # DISCORD LOGIN
 # ============================================================
