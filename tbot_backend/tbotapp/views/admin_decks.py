@@ -14,6 +14,7 @@ from rest_framework.decorators import (
 from rest_framework.parsers import (
     MultiPartParser,
     FormParser,
+    JSONParser,
 )
 
 from rest_framework.response import Response
@@ -1024,6 +1025,7 @@ def admin_decklist_create(request):
 @parser_classes([
     MultiPartParser,
     FormParser,
+    JSONParser,
 ])
 def admin_decklist_update(
     request,
