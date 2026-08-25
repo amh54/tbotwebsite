@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
-
+import { calculateDeckCost } from "../utils/deckCost";
 import "../css/deckmodal.css";
 
 const HERO_CLASSES = {
@@ -45,7 +45,6 @@ const ARCHETYPE_OPTIONS = [
   value,
   label: value,
 }));
-
 const MAX_CARD_RATIO = 4;
 const TARGET_CARD_RATIO_TOTAL = 40;
 
@@ -80,7 +79,18 @@ const getCardSide = (card) => {
 
   return "";
 };
+const scrollToError = (field) => {
+  const element = document.querySelector(`[data-field="${field}"]`);
 
+  if (element) {
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    element.focus?.();
+  }
+};
 const normalizeCardType = (value) =>
   String(value || "")
     .trim()
@@ -263,7 +273,6 @@ const selectStyles = {
     },
   }),
 };
-
 const validationErrorStyle = {
   color: "#ff4d4d",
   fontSize: "0.82rem",
@@ -305,6 +314,7 @@ function TextField({
       </span>
 
       <input
+        data-field={label.toLowerCase()}
         type={type}
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value)}
@@ -325,12 +335,12 @@ function TextArea({ label, value, onChange, required = false, error = "" }) {
       )}
 
       <textarea
+        data-field={label.toLowerCase()}
         className="admin-modal-textarea"
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value)}
         rows={7}
       />
-
       {error && <span style={validationErrorStyle}>{error}</span>}
     </label>
   );
@@ -582,6 +592,19 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
     [form.cardsSelected],
   );
 
+  const calculatedDeckCost = useMemo(
+    () => calculateDeckCost(form.cardsSelected, allCards),
+    [form.cardsSelected, allCards],
+  );
+  useEffect(() => {
+    if (calculatedDeckCost > 0 && !String(form.cost || "").trim()) {
+      setForm((previous) => ({
+        ...previous,
+        cost: calculatedDeckCost,
+      }));
+    }
+  }, [calculatedDeckCost, form.cost]);
+
   const selectedHero =
     heroOptions.find(
       (option) =>
@@ -812,16 +835,21 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       };
     }
 
-    const costString = String(form.cost ?? "").trim();
+    const numericCost = Number(form.cost);
 
-    if (!costString) {
+    if (!Number.isFinite(numericCost) || numericCost < 0) {
       return {
         field: "cost",
-        message: "Deck cost is required.",
+        message: "Deck cost must be a valid number.",
       };
     }
 
-    const numericCost = Number(costString);
+    if (calculatedDeckCost > 0 && numericCost !== calculatedDeckCost) {
+      return {
+        field: "cost",
+        message: `Incorrect cost. Expected ${calculatedDeckCost} sparks.`,
+      };
+    }
 
     if (!Number.isFinite(numericCost) || numericCost < 0) {
       return {
@@ -884,6 +912,11 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
 
     if (error) {
       setValidationError(error);
+
+      setTimeout(() => {
+        scrollToError(error.field);
+      }, 100);
+
       return;
     }
 
@@ -973,9 +1006,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
     validationError?.field === field ? validationError.message : "";
 
   return (
-    <div
-      className="modal-overlay"
-    >
+    <div className="modal-overlay">
       <dialog
         open
         className="modal"
@@ -1074,7 +1105,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                 <h3>Deck Setup</h3>
 
                 <div className="modal-metadata">
-                  <div className="admin-modal-field">
+                  <div className="admin-modal-field" data-field="side">
                     <span className="admin-modal-label">
                       <RequiredLabel>Side</RequiredLabel>
                     </span>
@@ -1107,7 +1138,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                     )}
                   </div>
 
-                  <div className="admin-modal-field">
+                  <div className="admin-modal-field" data-field="hero">
                     <span className="admin-modal-label">
                       <RequiredLabel>Hero</RequiredLabel>
                     </span>
@@ -1136,7 +1167,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                     )}
                   </div>
 
-                  <div className="admin-modal-field">
+                  <div className="admin-modal-field" data-field="category">
                     <span className="admin-modal-label">
                       <RequiredLabel>Category</RequiredLabel>
                     </span>
@@ -1161,7 +1192,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                     )}
                   </div>
 
-                  <div className="admin-modal-field">
+                  <div className="admin-modal-field" data-field="archetype">
                     <span className="admin-modal-label">
                       <RequiredLabel>Archetype</RequiredLabel>
                     </span>
@@ -1186,112 +1217,117 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                     )}
                   </div>
                 </div>
-              </section>
 
-              <section className="modal-section description-section">
-                <TextArea
-                  label="Description"
-                  value={form.description}
-                  onChange={(value) => handleChange("description", value)}
-                  required
-                  error={fieldError("description")}
-                />
-              </section>
+                <section
+                  className="modal-section description-section"
+                  data-field="description"
+                >
+                  <TextArea
+                    label="Description"
+                    value={form.description}
+                    onChange={(value) => handleChange("description", value)}
+                    required
+                    error={fieldError("description")}
+                  />
+                </section>
 
-              <section className="modal-metadata">
-                <TextField
-                  label="Cost"
-                  type="number"
-                  value={form.cost}
-                  onChange={(value) => handleChange("cost", value)}
-                  required
-                  error={fieldError("cost")}
-                />
-
-                {/* CREATOR IS REQUIRED */}
-                <TextField
-                  label="Creator"
-                  value={form.creator}
-                  onChange={(value) => handleChange("creator", value)}
-                  required
-                  error={fieldError("creator")}
-                />
-
-                <TextField
-                  label="Optimization"
-                  value={form.optimization}
-                  onChange={(value) => handleChange("optimization", value)}
-                />
-
-                <TextField
-                  label="Inspiration"
-                  value={form.inspiration}
-                  onChange={(value) => handleChange("inspiration", value)}
-                />
-
-                <TextField
-                  label="Suggested Date"
-                  value={form.suggested_date}
-                  onChange={(value) => handleChange("suggested_date", value)}
-                />
-
-                <TextField
-                  label="Updated Date"
-                  value={form.updated_date}
-                  onChange={(value) => handleChange("updated_date", value)}
-                />
-
-                <TextField
-                  label="Deck Tutorial URL"
-                  value={form.deck_doc}
-                  onChange={(value) => handleChange("deck_doc", value)}
-                />
-
-                <div className="admin-modal-field admin-modal-cards-field">
-                  <span className="admin-modal-label">
-                    <RequiredLabel>
-                      Cards
-                      {form.hero && selectedHeroClasses.length > 0
-                        ? ` — ${selectedHeroClasses.join(" / ")}`
-                        : ""}
-                    </RequiredLabel>
-                  </span>
-
-                  <Select
-                    classNamePrefix="deck-cards-select"
-                    isMulti
-                    options={cardOptions}
-                    value={form.cardsSelected}
-                    onChange={handleCardsChange}
-                    placeholder={
-                      !normalizedFormSide
-                        ? "Select side first..."
-                        : !form.hero
-                          ? "Select hero first..."
-                          : "Search cards..."
-                    }
-                    styles={selectStyles}
-                    closeMenuOnSelect={false}
-                    isSearchable
-                    isDisabled={!normalizedFormSide || !form.hero || saving}
+                <section className="modal-metadata">
+                  <TextField
+                    label="Cost"
+                    type="number"
+                    value={form.cost}
+                    onChange={(value) => handleChange("cost", value)}
+                    required
+                    error={fieldError("cost")}
                   />
 
-                  {!form.cardsSelected?.length && fieldError("cards") && (
-                    <div style={validationErrorStyle}>
-                      {fieldError("cards")}
-                    </div>
+                  <TextField
+                    label="Creator"
+                    value={form.creator}
+                    onChange={(value) => handleChange("creator", value)}
+                    required
+                    error={fieldError("creator")}
+                  />
+
+                  <TextField
+                    label="Optimization"
+                    value={form.optimization}
+                    onChange={(value) => handleChange("optimization", value)}
+                  />
+
+                  <TextField
+                    label="Inspiration"
+                    value={form.inspiration}
+                    onChange={(value) => handleChange("inspiration", value)}
+                  />
+
+                  <TextField
+                    label="Suggested Date"
+                    value={form.suggested_date}
+                    onChange={(value) => handleChange("suggested_date", value)}
+                  />
+
+                  <TextField
+                    label="Updated Date"
+                    value={form.updated_date}
+                    onChange={(value) => handleChange("updated_date", value)}
+                  />
+
+                  <TextField
+                    label="Deck Tutorial URL"
+                    value={form.deck_doc}
+                    onChange={(value) => handleChange("deck_doc", value)}
+                  />
+
+                  <div
+                    className="admin-modal-field admin-modal-cards-field"
+                    data-field="cards"
+                  >
+                    <span className="admin-modal-label">
+                      <RequiredLabel>
+                        Cards
+                        {form.hero && selectedHeroClasses.length > 0
+                          ? ` — ${selectedHeroClasses.join(" / ")}`
+                          : ""}
+                      </RequiredLabel>
+                    </span>
+
+                    <Select
+                      classNamePrefix="deck-cards-select"
+                      isMulti
+                      options={cardOptions}
+                      value={form.cardsSelected}
+                      onChange={handleCardsChange}
+                      placeholder={
+                        !normalizedFormSide
+                          ? "Select side first..."
+                          : !form.hero
+                            ? "Select hero first..."
+                            : "Search cards..."
+                      }
+                      styles={selectStyles}
+                      closeMenuOnSelect={false}
+                      isSearchable
+                      isDisabled={!normalizedFormSide || !form.hero || saving}
+                    />
+
+                    {!form.cardsSelected?.length && fieldError("cards") && (
+                      <div style={validationErrorStyle}>
+                        {fieldError("cards")}
+                      </div>
+                    )}
+                  </div>
+
+                  {form.cardsSelected?.length > 0 && (
+                    <CardRatioEditor
+                      options={form.cardsSelected}
+                      onChange={handleCardRatioChange}
+                      disabled={saving}
+                      total={totalCardRatio}
+                      error={fieldError("cards")}
+                    />
                   )}
-                </div>
-
-                {form.cardsSelected?.length > 0 && (
-                  <CardRatioEditor
-                    options={form.cardsSelected}
-                    onChange={handleCardRatioChange}
-                    disabled={saving}
-                    total={totalCardRatio}
-                    error={fieldError("cards")}
-                  />
-                )}
+                </section>
               </section>
             </div>
           </div>

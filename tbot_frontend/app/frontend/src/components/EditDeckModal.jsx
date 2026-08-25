@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-
+import { calculateDeckCost } from "../utils/deckCost";
 import Select from "react-select";
 
 import "../css/adminmodal.css";
@@ -157,7 +157,23 @@ const cardRatioLinesToOptions = (value, options = []) => {
     })
     .filter(Boolean);
 };
+const normalizeCostValue = (value) => {
+  const cleaned = String(value ?? "")
+    .replace(/,/g, "")
+    .trim();
 
+  if (!cleaned) {
+    return "";
+  }
+
+  const number = Number(cleaned);
+
+  if (!Number.isFinite(number) || number < 0) {
+    return null;
+  }
+
+  return String(Math.floor(number));
+};
 const cardOptionsToRatioLines = (options) =>
   (options || [])
     .map((option) => {
@@ -434,6 +450,7 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   ref,
 ) {
   const [cardsError, setCardsError] = useState("");
+  const [costError, setCostError] = useState("");
 
   const cardsInitializedRef = useRef(false);
   const initializedDeckRef = useRef("");
@@ -558,6 +575,7 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       options.push({
         value: name,
         label: name,
+        card,
       });
     });
 
@@ -676,7 +694,10 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     () => sumCardRatios(form.cardsSelected),
     [form.cardsSelected],
   );
-
+  const calculatedDeckCost = useMemo(
+    () => calculateDeckCost(form.cardsSelected, allCards),
+    [form.cardsSelected, allCards],
+  );
   const selectedHero =
     heroOptions.find(
       (option) =>
@@ -826,7 +847,14 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       setCardsError("Save handler is unavailable.");
       return null;
     }
+    const normalizedCost = normalizeCostValue(form.cost);
 
+    if (normalizedCost === null) {
+      setCostError("Cost must be a valid number.");
+      return null;
+    }
+
+    setCostError("");
     if (!normalizedFormSide) {
       setCardsError("Please select Plants or Zombies.");
       return null;
@@ -879,7 +907,7 @@ const EditDeckModal = forwardRef(function EditDeckModal(
         image: hasNewImage ? "" : String(imageUrl ?? form.image ?? "").trim(),
         image_file: hasNewImage ? imageFile : null,
         creator: form.creator ?? "",
-        cost: form.cost ?? "",
+        cost: String(calculatedDeckCost),
         inspiration: form.inspiration ?? "",
         optimization: form.optimization ?? "",
         suggested_date: form.suggested_date ?? "",
@@ -1037,11 +1065,18 @@ const EditDeckModal = forwardRef(function EditDeckModal(
         </section>
 
         <section className="modal-metadata">
-          <AdminModalField
-            label="Cost"
-            value={form.cost}
-            onChange={(value) => handleChange("cost", value)}
-          />
+          <div className="admin-modal-field">
+            <AdminModalField
+              label={`Cost (Calculated: ${calculatedDeckCost.toLocaleString()} sparks)`}
+              value={form.cost}
+              onChange={(value) => {
+                handleChange("cost", value);
+                setCostError("");
+              }}
+            />
+
+            {costError && <div className="admin-modal-error">{costError}</div>}
+          </div>
 
           <AdminModalField
             label="Creator"
