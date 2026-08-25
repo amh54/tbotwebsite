@@ -24,6 +24,7 @@ import Users from "./pages/users.jsx";
 import UserDeckManager from "./pages/userdeckmanager.jsx";
 import UserDashboard from "./pages/userdashboard.jsx";
 import UserCardManager from "./pages/UserCardManager.jsx";
+import AdminCards from "./pages/admincards";
 
 function HomePage() {
   return (
@@ -209,7 +210,7 @@ function App() {
       <Route path="/privacypolicy" element={<Privacy />} />
       <Route path="/users" element={<Users />} />
       <Route path="/deckbuilders" element={<Deckbuilders />} />
-
+      <Route path="/admin/cards" element={<AdminCards />} />
       <Route
         path="/deckbuilders/:deckbuilder_name/decks"
         element={<DeckbuilderDecks />}

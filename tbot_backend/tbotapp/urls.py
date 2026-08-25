@@ -85,6 +85,11 @@ from .views.user_cards import (
     user_cards_available,
     user_card_classes,
 )
+from .views.admin_cards import (
+    admin_cards,
+    admin_card_detail,
+    admin_card_image_upload,
+)
 urlpatterns = [
 
     # ---------------------------------------------------------
@@ -276,7 +281,22 @@ urlpatterns = [
         admin_user_deck_delete,
         name="admin_user_deck_delete",
     ),
+path(
+    "admin/cards/",
+    admin_cards,
+    name="admin-cards",
+),
 
+path(
+    "admin/cards/<int:cardid>/",
+    admin_card_detail,
+    name="admin-card-detail",
+),
+path(
+    "admin/cards/image-upload/",
+    admin_card_image_upload,
+    name="admin-card-image-upload",
+),
     # ---------------------------------------------------------
     # Profiles
     # ---------------------------------------------------------

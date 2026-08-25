@@ -16,13 +16,10 @@ function Admin() {
   useEffect(() => {
     const checkOwner = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/admin/check/`,
-          {
-            method: "GET",
-            credentials: "include",
-          },
-        );
+        const response = await fetch(`${API_BASE_URL}/tbotapp/admin/check/`, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!response.ok) {
           navigate("/");
@@ -38,10 +35,7 @@ function Admin() {
 
         setAuthorized(true);
       } catch (error) {
-        console.error(
-          "Unable to verify admin permissions:",
-          error,
-        );
+        console.error("Unable to verify admin permissions:", error);
 
         navigate("/");
       } finally {
@@ -78,65 +72,38 @@ function Admin() {
             <p>Manage the Tbot website.</p>
           </div>
 
-          <Link
-            to="/"
-            className="admin-back-button"
-          >
+          <Link to="/" className="admin-back-button">
             ← Back to Tbot
           </Link>
         </div>
-
         <div className="admin-dashboard-grid">
-          <Link
-            to="/admin/decklists"
-            className="admin-dashboard-card"
-          >
-            <span className="admin-card-label">
-              Decklists
-            </span>
+          <Link to="/admin/cards" className="admin-dashboard-card">
+            <span className="admin-card-label">Cards</span>
 
-            <span className="admin-card-action">
-              Manage →
-            </span>
+            <span className="admin-card-action">Manage →</span>
+          </Link>
+          <Link to="/admin/decklists" className="admin-dashboard-card">
+            <span className="admin-card-label">Decklists</span>
+
+            <span className="admin-card-action">Manage →</span>
           </Link>
 
-          <Link
-            to="/admin/legacy-decks"
-            className="admin-dashboard-card"
-          >
-            <span className="admin-card-label">
-              Legacy Decks
-            </span>
+          <Link to="/admin/legacy-decks" className="admin-dashboard-card">
+            <span className="admin-card-label">Legacy Decks</span>
 
-            <span className="admin-card-action">
-              Manage →
-            </span>
+            <span className="admin-card-action">Manage →</span>
           </Link>
 
-          <Link
-            to="/admin/user-decks"
-            className="admin-dashboard-card"
-          >
-            <span className="admin-card-label">
-              User Decks
-            </span>
+          <Link to="/admin/user-decks" className="admin-dashboard-card">
+            <span className="admin-card-label">User Decks</span>
 
-            <span className="admin-card-action">
-              Manage →
-            </span>
+            <span className="admin-card-action">Manage →</span>
           </Link>
 
-          <Link
-            to="/admin/keeporscrap"
-            className="admin-dashboard-card"
-          >
-            <span className="admin-card-label">
-              Keep or Scrap
-            </span>
+          <Link to="/admin/keeporscrap" className="admin-dashboard-card">
+            <span className="admin-card-label">Keep or Scrap</span>
 
-            <span className="admin-card-action">
-              Manage →
-            </span>
+            <span className="admin-card-action">Manage →</span>
           </Link>
         </div>
       </main>
