@@ -150,7 +150,9 @@ const parseArchetypes = (value) => {
     .map((archetype) => archetype.trim())
     .filter(Boolean);
 };
+const PROFILE_CACHE_DURATION = 30 * 60 * 1000;
 
+const getProfileCacheKey = (slug) => `tbot_profile_cache_${normalizeKey(slug)}`;
 function Profile() {
   const { profile_slug } = useParams();
   const [userCards, setUserCards] = useState([]);
@@ -195,22 +197,121 @@ function Profile() {
         return;
       }
 
+      const cacheKey = getProfileCacheKey(profile_slug);
+      let hasCachedData = false;
+
       try {
-        setLoading(true);
         setError("");
-        const profileResponse = await fetch(
-          `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(
-            profile_slug,
-          )}/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            credentials: "include",
-            signal: controller.signal,
-          },
-        );
+
+        /*
+         * ============================================================
+         * LOAD CACHED PROFILE FIRST
+         * ============================================================
+         */
+
+        try {
+          const cached = sessionStorage.getItem(cacheKey);
+
+          if (cached) {
+            const parsed = JSON.parse(cached);
+
+            const cacheAge = Date.now() - Number(parsed?.timestamp || 0);
+
+            const validCache =
+              cacheAge < PROFILE_CACHE_DURATION &&
+              parsed?.profile &&
+              Array.isArray(parsed?.decks) &&
+              Array.isArray(parsed?.userCards) &&
+              Array.isArray(parsed?.allCards);
+
+            if (validCache) {
+              hasCachedData = true;
+
+              setProfile(parsed.profile);
+              setDecks(parsed.decks);
+              setDeckCount(parsed.decks.length);
+              setUserCards(parsed.userCards);
+              setAllCards(parsed.allCards);
+              setIsOwner(Boolean(parsed.isOwner));
+              setIsSiteOwner(Boolean(parsed.isSiteOwner));
+
+              /*
+               * The profile can render immediately.
+               */
+              setLoading(false);
+
+              /*
+               * Cache is fresh, so don't make another request.
+               */
+              return;
+            }
+          }
+        } catch (cacheError) {
+          console.warn("Unable to read profile cache:", cacheError);
+        }
+
+        /*
+         * ============================================================
+         * FIRST LOAD / EXPIRED CACHE
+         * ============================================================
+         */
+
+        setLoading(true);
+
+        const encodedSlug = encodeURIComponent(profile_slug);
+
+        /*
+         * Run all requests at the same time.
+         *
+         * Previously these happened one after another:
+         *
+         * profile -> decks -> cards -> all cards
+         *
+         * Now they happen simultaneously.
+         */
+
+        const [profileResponse, deckResponse, cardsResponse, allCardsResponse] =
+          await Promise.all([
+            fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/`, {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
+              credentials: "include",
+              signal: controller.signal,
+            }),
+
+            fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/decks/`, {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
+              credentials: "include",
+              signal: controller.signal,
+            }),
+
+            fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/cards/`, {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
+              signal: controller.signal,
+            }),
+
+            fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
+              signal: controller.signal,
+            }),
+          ]);
+
+        /*
+         * ============================================================
+         * PROFILE
+         * ============================================================
+         */
 
         const profileData = await profileResponse.json().catch(() => null);
 
@@ -224,26 +325,11 @@ function Profile() {
           throw new Error("Profile data was not returned.");
         }
 
-        setProfile(loadedProfile);
-        setIsOwner(Boolean(profileData?.is_owner));
-        setIsSiteOwner(Boolean(profileData?.is_site_owner));
-
         /*
-         * Load the user's decks.
+         * ============================================================
+         * DECKS
+         * ============================================================
          */
-        const deckResponse = await fetch(
-          `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(
-            profile_slug,
-          )}/decks/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            credentials: "include",
-            signal: controller.signal,
-          },
-        );
 
         const deckData = await deckResponse.json().catch(() => null);
 
@@ -257,48 +343,77 @@ function Profile() {
           ? deckData.decks
           : [];
 
-        setDecks(loadedDecks);
-        setDeckCount(loadedDecks.length);
-
-       const cardsResponse = await fetch(
-  `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(
-    profile_slug,
-  )}/cards/`,
-  {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-    signal: controller.signal,
-  },
-);
+        /*
+         * ============================================================
+         * USER CARDS
+         * ============================================================
+         */
 
         const cardsData = await cardsResponse.json().catch(() => null);
 
-        if (cardsResponse.ok) {
-          setUserCards(
-            Array.isArray(cardsData) ? cardsData : cardsData?.cards || [],
-          );
-        }
-        const allCardsResponse = await fetch(
-          `${API_BASE_URL}/tbotapp/cardinfo/`,
-          {
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
-          },
-        );
+        const loadedUserCards = cardsResponse.ok
+          ? Array.isArray(cardsData)
+            ? cardsData
+            : Array.isArray(cardsData?.cards)
+              ? cardsData.cards
+              : []
+          : [];
+
+        /*
+         * ============================================================
+         * ALL CARDS
+         * ============================================================
+         */
 
         const allCardsData = await allCardsResponse.json().catch(() => null);
 
-        if (allCardsResponse.ok) {
-          setAllCards(
-            Array.isArray(allCardsData)
-              ? allCardsData
-              : allCardsData?.results || [],
+        const loadedAllCards = allCardsResponse.ok
+          ? Array.isArray(allCardsData)
+            ? allCardsData
+            : Array.isArray(allCardsData?.results)
+              ? allCardsData.results
+              : []
+          : [];
+
+        /*
+         * ============================================================
+         * UPDATE STATE
+         * ============================================================
+         */
+
+        setProfile(loadedProfile);
+        setIsOwner(Boolean(profileData?.is_owner));
+        setIsSiteOwner(Boolean(profileData?.is_site_owner));
+
+        setDecks(loadedDecks);
+        setDeckCount(loadedDecks.length);
+
+        setUserCards(loadedUserCards);
+        setAllCards(loadedAllCards);
+
+        /*
+         * ============================================================
+         * SAVE EVERYTHING TO SESSION CACHE
+         * ============================================================
+         */
+
+        try {
+          sessionStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              timestamp: Date.now(),
+              profile: loadedProfile,
+              isOwner: Boolean(profileData?.is_owner),
+              isSiteOwner: Boolean(profileData?.is_site_owner),
+              decks: loadedDecks,
+              userCards: loadedUserCards,
+              allCards: loadedAllCards,
+            }),
           );
+        } catch (cacheError) {
+          console.warn("Unable to save profile cache:", cacheError);
         }
+
         if (!controller.signal.aborted) {
           setLoading(false);
         }
@@ -309,19 +424,31 @@ function Profile() {
 
         console.error("Unable to load profile:", err);
 
-        setProfile(null);
-        setDecks([]);
-        setDeckCount(0);
-        setIsOwner(false);
-        setIsSiteOwner(false);
-        setError(err.message || "Unable to load profile.");
+        /*
+         * If cached data was already displayed, don't
+         * destroy the profile just because the refresh failed.
+         */
+        if (!hasCachedData) {
+          setProfile(null);
+          setDecks([]);
+          setDeckCount(0);
+          setUserCards([]);
+          setAllCards([]);
+          setIsOwner(false);
+          setIsSiteOwner(false);
+
+          setError(err.message || "Unable to load profile.");
+        }
+
         setLoading(false);
       }
     };
 
     loadProfile();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
   }, [profile_slug]);
   const openEditProfile = () => {
     if (!profile) {
@@ -713,27 +840,26 @@ function Profile() {
     clearFilters();
   };
 
-  /*
-   * Loading state.
-   */
   if (loading) {
     return (
       <div className="loading-page">
         <div className="loading-card">
           <div className="loading-spinner" />
 
-          <h2>Loading profile</h2>
+          <h2>
+            Loading profile
+            <span className="loading-dots">
+              <span />
+              <span />
+              <span />
+            </span>
+          </h2>
 
-          <p>Preparing this user's profile and decklists.</p>
+          <p>Preparing this user's profile and available content.</p>
 
           <div className="loading-status">
-            <span>Loading deck data</span>
-
-            <strong>
-              {deckCount !== null
-                ? `${deckCount} ${deckCount === 1 ? "deck" : "decks"}`
-                : "Loading..."}
-            </strong>
+            <span>Loading profile data</span>
+            <strong>Preparing...</strong>
           </div>
         </div>
       </div>

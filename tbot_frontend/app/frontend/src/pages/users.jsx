@@ -3,13 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Navbar from "../components/navbar";
-
 import Footer from "../components/footer";
 
 import "../css/users.css";
-
 import "../css/navbar.css";
-
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
@@ -32,7 +29,44 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+const STORAGE_KEYS = {
+  profiles: "tbot_public_profiles",
+  userCount: "tbot_public_user_count",
+};
+
 const normalizeText = (value) => String(value ?? "").trim();
+
+const readSessionCache = (key, fallback) => {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  try {
+    const value = window.sessionStorage.getItem(key);
+
+    if (!value) {
+      return fallback;
+    }
+
+    return JSON.parse(value);
+  } catch (error) {
+    console.warn(`Unable to read session cache "${key}":`, error);
+
+    return fallback;
+  }
+};
+
+const writeSessionCache = (key, value) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Unable to write session cache "${key}":`, error);
+  }
+};
 
 const getDiscordAvatarUrl = (profile) => {
   const avatar = normalizeText(profile?.avatar);
@@ -40,14 +74,14 @@ const getDiscordAvatarUrl = (profile) => {
 
   if (!avatar) {
     if (discordId) {
-      const numericId = Number(discordId);
+      try {
+        const numericId = BigInt(discordId);
 
-      if (Number.isSafeInteger(numericId) && numericId >= 0) {
-        const defaultAvatarIndex = Math.floor(
-          Number(BigInt(discordId) >> 22n) % 6n,
-        );
+        const defaultAvatarIndex = Number((numericId >> 22n) % 6n);
 
         return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
+      } catch {
+        return "";
       }
     }
 
@@ -76,10 +110,25 @@ const getDiscordAvatarUrl = (profile) => {
 };
 
 function Users() {
-  const [profiles, setProfiles] = useState([]);
-  const [totalUsers, setTotalUsers] = useState(null);
+  const initialProfiles = readSessionCache(STORAGE_KEYS.profiles, []);
+
+  const initialUserCount = readSessionCache(STORAGE_KEYS.userCount, null);
+
+  const hasCachedProfiles =
+    Array.isArray(initialProfiles) && initialProfiles.length > 0;
+
+  const [profiles, setProfiles] = useState(
+    Array.isArray(initialProfiles) ? initialProfiles : [],
+  );
+
+  const [totalUsers, setTotalUsers] = useState(
+    Number.isFinite(Number(initialUserCount)) ? Number(initialUserCount) : null,
+  );
+
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+
+  const [loading, setLoading] = useState(!hasCachedProfiles);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -90,13 +139,6 @@ function Users() {
     };
   }, []);
 
-  /*
-   * Load the public-user count separately.
-   *
-   * This is intentionally independent from the full profiles request
-   * so the loading screen can show the number of users before all
-   * profile data has finished loading.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -120,36 +162,33 @@ function Users() {
         }
 
         const data = await response.json();
+
         const count = Number(data?.count);
 
-        if (Number.isFinite(count)) {
+        if (Number.isFinite(count) && count >= 0) {
           setTotalUsers(count);
+
+          writeSessionCache(STORAGE_KEYS.userCount, count);
         }
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Unable to load public user count:", err);
+          console.error("Unable to refresh public user count:", err);
         }
       }
     };
 
     fetchUserCount();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
   }, []);
 
-  /*
-   * Load the actual public profiles.
-   */
   useEffect(() => {
     const controller = new AbortController();
-    const loadingStartTime = Date.now();
-    const minimumLoadingTime = 1200;
 
     const loadProfiles = async () => {
       try {
-        setLoading(true);
-        setError("");
-
         const response = await fetch(`${API_BASE_URL}/tbotapp/profiles/`, {
           method: "GET",
           headers: {
@@ -169,9 +208,7 @@ function Users() {
             } else if (payload?.error) {
               message += `: ${payload.error}`;
             }
-          } catch {
-            // Ignore invalid JSON error responses.
-          }
+          } catch {}
 
           throw new Error(message);
         }
@@ -187,29 +224,17 @@ function Users() {
               : [];
 
         setProfiles(results);
+        setError("");
 
-        /*
-         * The count endpoint is the authoritative count.
-         *
-         * Only use the returned profile length as a fallback if the
-         * separate count endpoint has not returned a valid value.
-         */
-        setTotalUsers((currentCount) => {
-          if (currentCount !== null) {
-            return currentCount;
-          }
+        writeSessionCache(STORAGE_KEYS.profiles, results);
 
-          return results.length;
-        });
+        if (totalUsers === null || totalUsers === 0) {
+          setTotalUsers(results.length);
 
-        const elapsed = Date.now() - loadingStartTime;
-        const remaining = Math.max(minimumLoadingTime - elapsed, 0);
+          writeSessionCache(STORAGE_KEYS.userCount, results.length);
+        }
 
-        window.setTimeout(() => {
-          if (!controller.signal.aborted) {
-            setLoading(false);
-          }
-        }, remaining);
+        setLoading(false);
       } catch (err) {
         if (err.name === "AbortError") {
           return;
@@ -217,14 +242,23 @@ function Users() {
 
         console.error("Unable to load public profiles:", err);
 
+        if (hasCachedProfiles) {
+          setError("");
+          setLoading(false);
+          return;
+        }
+
         setError(err.message || "Unable to load users right now.");
+
         setLoading(false);
       }
     };
 
     loadProfiles();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   const sortedProfiles = useMemo(() => {
@@ -258,11 +292,6 @@ function Users() {
     });
   }, [profiles]);
 
-  /*
-   * Search the already alphabetically sorted users.
-   *
-   * Filtering does not change their alphabetical order.
-   */
   const filteredProfiles = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
 
@@ -272,8 +301,11 @@ function Users() {
 
     return sortedProfiles.filter((profile) => {
       const displayName = normalizeText(profile.display_name).toLowerCase();
+
       const username = normalizeText(profile.username).toLowerCase();
+
       const profileSlug = normalizeText(profile.profile_slug).toLowerCase();
+
       const bio = normalizeText(profile.bio).toLowerCase();
 
       return (
@@ -345,6 +377,7 @@ function Users() {
         {error ? (
           <div className="users-error">
             <h2>Unable to load users</h2>
+
             <p>{error}</p>
           </div>
         ) : filteredProfiles.length === 0 ? (
@@ -369,8 +402,11 @@ function Users() {
                 "Tbot User";
 
               const username = normalizeText(profile.username);
+
               const profileSlug = normalizeText(profile.profile_slug);
+
               const bio = normalizeText(profile.bio);
+
               const avatar = getDiscordAvatarUrl(profile);
 
               return (
@@ -387,10 +423,7 @@ function Users() {
                           onError={(event) => {
                             const discordId = normalizeText(profile.discord_id);
 
-                            if (
-                              discordId &&
-                              Number.isFinite(Number(discordId))
-                            ) {
+                            if (discordId) {
                               try {
                                 const numericId = BigInt(discordId);
 
@@ -402,11 +435,10 @@ function Users() {
 
                                 if (event.currentTarget.src !== fallbackUrl) {
                                   event.currentTarget.src = fallbackUrl;
+
                                   return;
                                 }
-                              } catch {
-                                // Ignore invalid Discord IDs.
-                              }
+                              } catch {}
                             }
 
                             event.currentTarget.style.display = "none";

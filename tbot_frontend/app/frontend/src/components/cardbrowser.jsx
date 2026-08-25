@@ -25,7 +25,9 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
-
+const CARD_CACHE_KEY = "tbot_card_info_cache";
+let cardCountMemoryCache = null;
+let cardInfoMemoryCache = null;
 const STAT_ICON_LINKS = {
   cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
   strength: "https://i.ibb.co/GQt785K6/strength.webp",
@@ -436,8 +438,49 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
 
-  const [cards, setCards] = useState(providedCards);
+  const getInitialCards = () => {
+    // User collection data must always come from the parent.
+    if (userCollection) {
+      return providedCards
+        .filter((userCard) => userCard.card)
+        .map((userCard) => ({
+          ...userCard.card,
+          quantity: userCard.quantity,
+          collection_id: userCard.id,
+        }));
+    }
+
+    // First use the in-memory cache.
+    if (Array.isArray(cardInfoMemoryCache) && cardInfoMemoryCache.length > 0) {
+      return cardInfoMemoryCache;
+    }
+
+    // Then try sessionStorage.
+    try {
+      const cachedCards = sessionStorage.getItem(CARD_CACHE_KEY);
+
+      if (cachedCards) {
+        const parsedCards = JSON.parse(cachedCards);
+
+        if (Array.isArray(parsedCards) && parsedCards.length > 0) {
+          cardInfoMemoryCache = parsedCards;
+          return parsedCards;
+        }
+      }
+    } catch (error) {
+      console.error("Unable to read cached card data:", error);
+    }
+
+    return [];
+  };
+
+  const initialCards = getInitialCards();
+
+  const [cards, setCards] = useState(initialCards);
   const [totalCards, setTotalCards] = useState(0);
+  const [loading, setLoading] = useState(
+    !userCollection && initialCards.length === 0,
+  );
   const [selectedCard, setSelectedCard] = useState(null);
 
   const [side, setSide] = useState("Plants");
@@ -452,8 +495,6 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
   const [tribeFilter, setTribeFilter] = useState([]);
   const [setFilter, setSetFilter] = useState([]);
   const [rarityFilter, setRarityFilter] = useState([]);
-
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const getEmojiIcon = (emoji) => {
@@ -940,6 +981,11 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
     return 2;
   };
   useEffect(() => {
+    if (cardCountMemoryCache !== null) {
+      setTotalCards(cardCountMemoryCache);
+      return;
+    }
+
     const controller = new AbortController();
 
     const fetchCardCount = async () => {
@@ -958,7 +1004,11 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
         const data = await response.json();
 
-        setTotalCards(Number(data?.count) || 0);
+        const count = Number(data?.count) || 0;
+
+        cardCountMemoryCache = count;
+
+        setTotalCards(count);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to load card count:", err);
@@ -970,26 +1020,27 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
     return () => controller.abort();
   }, []);
-
   useEffect(() => {
     if (userCollection) {
-      const collectionCards = providedCards
-        .filter((userCard) => userCard.card)
-        .map((userCard) => ({
-          ...userCard.card,
-          quantity: userCard.quantity,
-          collection_id: userCard.id,
-        }));
+      return;
+    }
 
-      setCards(collectionCards);
+    // Cards already exist in memory/sessionStorage.
+    // Do not fetch them again.
+    if (cards.length > 0) {
       setLoading(false);
       return;
     }
+
+    const controller = new AbortController();
+
     const fetchCards = async () => {
       try {
         const endpoint = `${API_BASE_URL}/tbotapp/cardinfo/`;
 
-        const response = await fetch(endpoint);
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           let message = `Request failed with status ${response.status}`;
@@ -1033,9 +1084,25 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
         const data = JSON.parse(responseText);
 
-        setCards(Array.isArray(data) ? data : []);
+        const loadedCards = Array.isArray(data) ? data : [];
+
+        // Store in memory.
+        cardInfoMemoryCache = loadedCards;
+
+        // Store in sessionStorage.
+        try {
+          sessionStorage.setItem(CARD_CACHE_KEY, JSON.stringify(loadedCards));
+        } catch (error) {
+          console.error("Unable to cache card data:", error);
+        }
+
+        setCards(loadedCards);
         setError("");
       } catch (fetchError) {
+        if (fetchError.name === "AbortError") {
+          return;
+        }
+
         console.error(fetchError);
 
         setError(
@@ -1047,7 +1114,9 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
     };
 
     fetchCards();
-  }, []);
+
+    return () => controller.abort();
+  }, [userCollection, cards.length]);
 
   useEffect(() => {
     if (!cards.length) {

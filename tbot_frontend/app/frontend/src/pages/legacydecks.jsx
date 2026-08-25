@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 
 import DeckCard from "../components/deckcomponent";
@@ -29,6 +28,12 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
+const STORAGE_KEYS = {
+  decks: "tbot_legacy_decks",
+  deckCount: "tbot_legacy_deck_count",
+  cards: "tbot_cards",
+};
 
 const ARCHETYPE_META = {
   aggro: {
@@ -132,18 +137,66 @@ function normalizeCardSearchValue(value) {
     .filter(Boolean);
 }
 
+function readSessionCache(key, fallback) {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  try {
+    const value = window.sessionStorage.getItem(key);
+
+    if (!value) {
+      return fallback;
+    }
+
+    return JSON.parse(value);
+  } catch (error) {
+    console.warn(`Unable to read session cache "${key}":`, error);
+    return fallback;
+  }
+}
+
+function writeSessionCache(key, value) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Unable to write session cache "${key}":`, error);
+  }
+}
+
 function LegacyDecksPage() {
-  const [decks, setDecks] = useState([]);
-  const [totalDecks, setTotalDecks] = useState(0);
+  const initialDecks = readSessionCache(STORAGE_KEYS.decks, []);
+
+  const initialDeckCount = readSessionCache(STORAGE_KEYS.deckCount, null);
+
+  const initialCards = readSessionCache(STORAGE_KEYS.cards, []);
+
+  const hasCachedDecks = Array.isArray(initialDecks) && initialDecks.length > 0;
+
+  const [decks, setDecks] = useState(
+    Array.isArray(initialDecks) ? initialDecks : [],
+  );
+
+  const [totalDecks, setTotalDecks] = useState(
+    Number.isFinite(Number(initialDeckCount)) ? Number(initialDeckCount) : 0,
+  );
+
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
   const [hero, setHero] = useState([]);
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
-  const [allCards, setAllCards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [countLoaded, setCountLoaded] = useState(false);
-  const [decksLoaded, setDecksLoaded] = useState(false);
+
+  const [allCards, setAllCards] = useState(
+    Array.isArray(initialCards) ? initialCards : [],
+  );
+
+  const [loading, setLoading] = useState(!hasCachedDecks);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -156,62 +209,16 @@ function LegacyDecksPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    let mounted = true;
-
-    const fetchLegacyCount = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/legacy-decklist-count/`,
-          {
-            signal: controller.signal,
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Legacy deck count request failed with status ${response.status}`,
-          );
-        }
-
-        const data = await response.json();
-
-        if (mounted) {
-          const count = Number(data?.count);
-
-          if (Number.isFinite(count) && count >= 0) {
-            setTotalDecks(count);
-          }
-
-          setCountLoaded(true);
-        }
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load legacy deck count:", err);
-
-          if (mounted) {
-            setCountLoaded(true);
-          }
-        }
-      }
-    };
-
-    fetchLegacyCount();
-
-    return () => {
-      mounted = false;
-      controller.abort();
-    };
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    let mounted = true;
 
     const fetchLegacyDecks = async () => {
       try {
         const response = await fetch(
           `${API_BASE_URL}/tbotapp/legacy-decklists/`,
           {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
             signal: controller.signal,
           },
         );
@@ -227,9 +234,7 @@ function LegacyDecksPage() {
             } else if (payload?.error) {
               message += `: ${payload.error}`;
             }
-          } catch {
-            // Ignore invalid JSON.
-          }
+          } catch {}
 
           throw new Error(message);
         }
@@ -239,9 +244,7 @@ function LegacyDecksPage() {
         ).toLowerCase();
 
         if (!contentType.includes("application/json")) {
-          throw new Error(
-            "The legacy decklist endpoint did not return JSON.",
-          );
+          throw new Error("The legacy decklist endpoint did not return JSON.");
         }
 
         const data = await response.json();
@@ -257,17 +260,22 @@ function LegacyDecksPage() {
           cards: deck?.cards ?? "",
         }));
 
-        if (!mounted) {
-          return;
-        }
-
         setDecks(normalizedResults);
         setError("");
-        setDecksLoaded(true);
 
-        if (totalDecks === 0 && normalizedResults.length > 0) {
-          setTotalDecks(normalizedResults.length);
+        writeSessionCache(STORAGE_KEYS.decks, normalizedResults);
+
+        if (normalizedResults.length > 0) {
+          setTotalDecks((currentCount) => {
+            if (currentCount > 0) {
+              return currentCount;
+            }
+
+            return normalizedResults.length;
+          });
         }
+
+        setLoading(false);
       } catch (err) {
         if (err.name === "AbortError") {
           return;
@@ -275,54 +283,101 @@ function LegacyDecksPage() {
 
         console.error("Unable to load legacy decklists:", err);
 
-        if (mounted) {
-          setError(
-            `Unable to load legacy decklists right now. ${
-              err.message || ""
-            }`.trim(),
-          );
-
-          setDecksLoaded(true);
+        if (hasCachedDecks) {
+          setError("");
+          setLoading(false);
+          return;
         }
+
+        setError(
+          `Unable to load legacy decklists right now. ${
+            err.message || ""
+          }`.trim(),
+        );
+
+        setLoading(false);
       }
     };
 
     fetchLegacyDecks();
 
     return () => {
-      mounted = false;
       controller.abort();
     };
-  }, [totalDecks]);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    let mounted = true;
 
-    const fetchCards = async () => {
+    const fetchLegacyCount = async () => {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/tbotapp/cardinfo/`,
+          `${API_BASE_URL}/tbotapp/legacy-decklist-count/`,
           {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
             signal: controller.signal,
           },
         );
 
         if (!response.ok) {
-          console.error(
-            `Card information request failed with status ${response.status}`,
+          throw new Error(
+            `Legacy deck count request failed with status ${response.status}`,
           );
-          return;
         }
 
         const data = await response.json();
+        const count = Number(data?.count);
 
-        if (mounted) {
-          setAllCards(Array.isArray(data) ? data : []);
+        if (Number.isFinite(count) && count >= 0) {
+          setTotalDecks(count);
+
+          writeSessionCache(STORAGE_KEYS.deckCount, count);
         }
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Unable to load card information:", err);
+          console.error("Unable to refresh legacy deck count:", err);
+        }
+      }
+    };
+
+    fetchLegacyCount();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchCards = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Card information request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+        const cards = Array.isArray(data) ? data : [];
+
+        setAllCards(cards);
+
+        writeSessionCache(STORAGE_KEYS.cards, cards);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to refresh card information:", err);
         }
       }
     };
@@ -330,20 +385,9 @@ function LegacyDecksPage() {
     fetchCards();
 
     return () => {
-      mounted = false;
       controller.abort();
     };
   }, []);
-
-  useEffect(() => {
-    if (countLoaded && decksLoaded) {
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 700);
-
-      return () => clearTimeout(timer);
-    }
-  }, [countLoaded, decksLoaded]);
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -352,9 +396,7 @@ function LegacyDecksPage() {
 
     const selectedSide = normalizeKey(side);
 
-    return decks.filter(
-      (deck) => normalizeKey(deck.side) === selectedSide,
-    );
+    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
   }, [decks, side]);
 
   const heroOptions = useMemo(() => {
@@ -385,8 +427,7 @@ function LegacyDecksPage() {
       .map((option) => {
         const matchedCard = allCards.find(
           (card) =>
-            normalizeKey(card?.card_name) ===
-            normalizeKey(option.label),
+            normalizeKey(card?.card_name) === normalizeKey(option.label),
         );
 
         return {
@@ -417,9 +458,7 @@ function LegacyDecksPage() {
       if (!categoryMap.has(key)) {
         categoryMap.set(key, {
           value: categoryName,
-          label:
-            categoryName.charAt(0).toUpperCase() +
-            categoryName.slice(1),
+          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
           count: 0,
           ...(CATEGORY_META[key] || {}),
         });
@@ -476,9 +515,7 @@ function LegacyDecksPage() {
       const sideA = normalizeKey(a.side);
       const sideB = normalizeKey(b.side);
 
-      const sideCompare =
-        (sideOrder[sideA] ?? 99) -
-        (sideOrder[sideB] ?? 99);
+      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
 
       if (sideCompare !== 0) {
         return sideCompare;
@@ -533,22 +570,17 @@ function LegacyDecksPage() {
         !searchValue ||
         (alias
           ? normalizeKey(deck.hero).includes(alias)
-          : searchableValues.some((value) =>
-              value.includes(searchValue),
-            ));
+          : searchableValues.some((value) => value.includes(searchValue)));
 
       const deckSide = normalizeKey(deck.side);
 
-      const sideMatch =
-        side === "All" ||
-        deckSide === normalizeKey(side);
+      const sideMatch = side === "All" || deckSide === normalizeKey(side);
 
       const heroMatch =
         hero.length === 0 ||
         hero.some(
           (selectedHero) =>
-            normalizeKey(deck.hero) ===
-            normalizeKey(selectedHero.value),
+            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
         );
 
       const categoryMatch =
@@ -564,27 +596,14 @@ function LegacyDecksPage() {
       const archetypeMatch =
         archetype.length === 0 ||
         archetype.every((selectedArchetype) =>
-          deckArchetype.includes(
-            normalizeKey(selectedArchetype.value),
-          ),
+          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
         );
 
       return (
-        searchMatch &&
-        sideMatch &&
-        heroMatch &&
-        categoryMatch &&
-        archetypeMatch
+        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
       );
     });
-  }, [
-    sortedDecks,
-    search,
-    side,
-    hero,
-    category,
-    archetype,
-  ]);
+  }, [sortedDecks, search, side, hero, category, archetype]);
 
   const clearFilters = () => {
     setSearch("");
@@ -606,18 +625,13 @@ function LegacyDecksPage() {
 
           <h2>Loading legacy decks</h2>
 
-          <p>
-            Preparing the legacy deck browser and loading available
-            decks.
-          </p>
+          <p>Preparing the legacy deck browser and loading available decks.</p>
 
           <div className="loading-status">
             <span>Legacy decks available</span>
 
             <strong>
-              {countLoaded
-                ? `${totalDecks} decks`
-                : "Loading..."}
+              {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
             </strong>
           </div>
         </div>
@@ -674,9 +688,7 @@ function LegacyDecksPage() {
               className="search"
               placeholder="Search legacy decks, creators, heroes, cards..."
               value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
@@ -725,15 +737,13 @@ function LegacyDecksPage() {
           <p className="error-message">{error}</p>
         ) : (
           <p className="results-count">
-            Showing {filteredDecks.length} of{" "}
-            {totalDecks || decks.length} legacy decks
+            Showing {filteredDecks.length} of {totalDecks || decks.length}{" "}
+            legacy decks
           </p>
         )}
 
         {!error && filteredDecks.length === 0 ? (
-          <p className="no-results">
-            No legacy decks found.
-          </p>
+          <p className="no-results">No legacy decks found.</p>
         ) : (
           !error && (
             <div className="deck-grid">

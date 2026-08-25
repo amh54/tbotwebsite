@@ -82,16 +82,61 @@ const getRarityName = (setRarity) => {
 
   return value.slice(separatorIndex + 3).trim();
 };
+const HERO_CACHE_KEY = "tbot_hero_info_cache";
+const HERO_CACHE_DURATION = 24 * 60 * 60 * 1000;
+const getCachedHeroData = () => {
+  try {
+    const cached = sessionStorage.getItem(HERO_CACHE_KEY);
 
+    if (!cached) {
+      return {
+        cards: [],
+        totalHeroes: 0,
+        hasCache: false,
+        isFresh: false,
+      };
+    }
+
+    const parsed = JSON.parse(cached);
+
+    if (!Array.isArray(parsed?.results) || parsed.results.length === 0) {
+      return {
+        cards: [],
+        totalHeroes: 0,
+        hasCache: false,
+        isFresh: false,
+      };
+    }
+
+    const timestamp = Number(parsed.timestamp || 0);
+    const age = Date.now() - timestamp;
+
+    return {
+      cards: parsed.results,
+      totalHeroes: Number(parsed.count) || parsed.results.length,
+      hasCache: true,
+      isFresh: age < HERO_CACHE_DURATION,
+    };
+  } catch (error) {
+    console.warn("Unable to read hero cache:", error);
+
+    return {
+      cards: [],
+      totalHeroes: 0,
+      hasCache: false,
+      isFresh: false,
+    };
+  }
+};
 function HeroInfo() {
-  const [cards, setCards] = useState([]);
+  const initialHeroCache = getCachedHeroData();
+
+  const [cards, setCards] = useState(initialHeroCache.cards);
   const [side, setSide] = useState("Plants");
   const [selectedCard, setSelectedCard] = useState(null);
-
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialHeroCache.hasCache);
   const [error, setError] = useState("");
-
-  const [totalHeroes, setTotalHeroes] = useState(0);
+  const [totalHeroes, setTotalHeroes] = useState(initialHeroCache.totalHeroes);
 
   const getEmojiIcon = (emoji) => {
     const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
@@ -590,102 +635,190 @@ function HeroInfo() {
 
     return <span>{parts}</span>;
   };
+ useEffect(() => {
+  const controller = new AbortController();
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const loadHeroes = async () => {
+    let hasCachedData = false;
+    let cacheIsFresh = false;
 
-    const fetchHeroCount = async () => {
+    try {
+      setError("");
+
+      /*
+       * Read cache again inside the effect.
+       * This handles navigation/remounts correctly.
+       */
       try {
-        const endpoint = `${API_BASE_URL}/tbotapp/hero-count/`;
+        const cached = sessionStorage.getItem(HERO_CACHE_KEY);
 
-        const response = await fetch(endpoint, {
-          signal: controller.signal,
-        });
+        if (cached) {
+          const parsed = JSON.parse(cached);
 
-        if (!response.ok) {
-          throw new Error(
-            `Hero count request failed with status ${response.status}`,
-          );
-        }
+          if (
+            Array.isArray(parsed?.results) &&
+            parsed.results.length > 0
+          ) {
+            hasCachedData = true;
 
-        const data = await response.json();
+            const cachedResults = parsed.results;
+            const cachedCount =
+              Number(parsed.count) || cachedResults.length;
 
-        setTotalHeroes(Number(data?.count) || 0);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load hero count:", err);
-        }
-      }
-    };
+            const cacheAge =
+              Date.now() - Number(parsed.timestamp || 0);
 
-    fetchHeroCount();
+            cacheIsFresh = cacheAge < HERO_CACHE_DURATION;
 
-    return () => controller.abort();
-  }, []);
+            /*
+             * If the component mounted without cached state,
+             * immediately populate it now.
+             */
+            setCards(cachedResults);
+            setTotalHeroes(cachedCount);
 
-  useEffect(() => {
-    const controller = new AbortController();
+            /*
+             * Cached data is already usable, so don't show
+             * the loading screen while refreshing.
+             */
+            setLoading(false);
 
-    const fetchHeroes = async () => {
-      try {
-        setLoading(true);
-
-        const endpoint = `${API_BASE_URL}/tbotapp/heroinfo/`;
-
-        const response = await fetch(endpoint, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          let message = `Request failed with status ${response.status}`;
-
-          try {
-            const errorPayload = await response.json();
-
-            if (errorPayload?.detail) {
-              message = `${message}: ${errorPayload.detail}`;
-            } else if (errorPayload?.error) {
-              message = `${message}: ${errorPayload.error}`;
+            /*
+             * Fresh cache = no API request needed.
+             */
+            if (cacheIsFresh) {
+              return;
             }
-          } catch (_error) {}
+          }
+        }
+      } catch (cacheError) {
+        console.warn("Unable to read hero cache:", cacheError);
+      }
 
-          throw new Error(message);
+      /*
+       * Refresh stale/missing cache from the API.
+       */
+      const endpoint = `${API_BASE_URL}/tbotapp/heroinfo/`;
+
+      const response = await fetch(endpoint, {
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        let message = `Request failed with status ${response.status}`;
+
+        try {
+          const errorPayload = await response.json();
+
+          if (errorPayload?.detail) {
+            message = `${message}: ${errorPayload.detail}`;
+          } else if (errorPayload?.error) {
+            message = `${message}: ${errorPayload.error}`;
+          }
+        } catch {
+          // Ignore invalid JSON.
         }
 
-        const data = await response.json();
+        throw new Error(message);
+      }
 
-        if (typeof data?.count !== "undefined") {
-          setTotalHeroes(Number(data.count) || 0);
-        }
+      const data = await response.json();
 
-        const results = Array.isArray(data?.results)
-          ? data.results
-          : Array.isArray(data)
-            ? data
-            : [];
+      const results = Array.isArray(data?.results)
+        ? data.results
+        : Array.isArray(data)
+          ? data
+          : [];
 
+      const count =
+        Number(data?.count) || results.length;
+
+      /*
+       * Never replace working cached data with an empty
+       * API response.
+       */
+      if (results.length > 0) {
         setCards(results);
-        setError("");
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Hero loading failed:", err);
+        setTotalHeroes(count);
 
-          setCards([]);
-
-          setError(
-            `Unable to load heroes right now. ${err.message || ""}`.trim(),
+        try {
+          sessionStorage.setItem(
+            HERO_CACHE_KEY,
+            JSON.stringify({
+              timestamp: Date.now(),
+              count,
+              results,
+            }),
+          );
+        } catch (cacheError) {
+          console.warn(
+            "Unable to save hero cache:",
+            cacheError,
           );
         }
-      } finally {
+      } else if (!hasCachedData) {
+        setCards([]);
+        setTotalHeroes(0);
+      }
+    } catch (err) {
+      if (err.name === "AbortError") {
+        return;
+      }
+
+      console.error("Hero loading failed:", err);
+
+      /*
+       * If cached heroes exist, keep displaying them.
+       */
+      if (!hasCachedData) {
+        setCards([]);
+        setError(
+          `Unable to load heroes right now. ${
+            err.message || ""
+          }`.trim(),
+        );
+      }
+    } finally {
+      if (!controller.signal.aborted) {
         setLoading(false);
       }
-    };
+    }
+  };
 
-    fetchHeroes();
+  loadHeroes();
 
-    return () => controller.abort();
-  }, []);
+  return () => controller.abort();
+}, []);
+  useEffect(() => {
+    if (!cards.length) {
+      return;
+    }
 
+    const selectedSide = normalizeText(side);
+
+    const visibleHeroes = cards.filter((card) => {
+      const cardSide = normalizeText(card.side);
+
+      if (selectedSide === "plants") {
+        return cardSide === "plant" || cardSide === "plants";
+      }
+
+      if (selectedSide === "zombies") {
+        return cardSide === "zombie" || cardSide === "zombies";
+      }
+
+      return false;
+    });
+
+    visibleHeroes.forEach((card) => {
+      if (!card.thumbnail) {
+        return;
+      }
+
+      const image = new Image();
+      image.src = card.thumbnail;
+    });
+  }, [cards, side]);
   useEffect(() => {
     if (!cards.length) {
       return;

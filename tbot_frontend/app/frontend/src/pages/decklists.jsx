@@ -29,6 +29,12 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+const STORAGE_KEYS = {
+  decks: "tbot_decks",
+  cards: "tbot_cards",
+  deckCount: "tbot_deck_count",
+};
+
 const ARCHETYPE_META = {
   aggro: {
     icon: "⚡",
@@ -118,17 +124,94 @@ function parseDeckCards(value) {
     .filter(Boolean);
 }
 
+function readSessionCache(key, fallback) {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  try {
+    const value = window.sessionStorage.getItem(key);
+
+    if (!value) {
+      return fallback;
+    }
+
+    return JSON.parse(value);
+  } catch (error) {
+    console.warn(`Unable to read session cache "${key}":`, error);
+
+    return fallback;
+  }
+}
+
+function writeSessionCache(key, value) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Unable to write session cache "${key}":`, error);
+  }
+}
+
 function DecklistsPage() {
-  const [decks, setDecks] = useState([]);
-  const [totalDecks, setTotalDecks] = useState(null);
+  /*
+   * ------------------------------------------------------------
+   * INITIAL CACHE
+   * ------------------------------------------------------------
+   */
+
+  const initialDecks = readSessionCache(STORAGE_KEYS.decks, []);
+
+  const initialCards = readSessionCache(STORAGE_KEYS.cards, []);
+
+  const initialDeckCount = readSessionCache(STORAGE_KEYS.deckCount, null);
+
+  const hasCachedDecks = Array.isArray(initialDecks) && initialDecks.length > 0;
+
+  /*
+   * ------------------------------------------------------------
+   * STATE
+   * ------------------------------------------------------------
+   */
+
+  const [decks, setDecks] = useState(
+    Array.isArray(initialDecks) ? initialDecks : [],
+  );
+
+  const [allCards, setAllCards] = useState(
+    Array.isArray(initialCards) ? initialCards : [],
+  );
+
+  const [totalDecks, setTotalDecks] = useState(
+    Number.isFinite(Number(initialDeckCount)) ? Number(initialDeckCount) : null,
+  );
+
+  /*
+   * IMPORTANT:
+   *
+   * If cached decks exist, loading is immediately false.
+   *
+   * If they don't exist, loading stays true until the
+   * deck API request finishes.
+   */
+  const [loading, setLoading] = useState(!hasCachedDecks);
+
+  const [error, setError] = useState("");
+
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
   const [hero, setHero] = useState([]);
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
-  const [allCards, setAllCards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+
+  /*
+   * ------------------------------------------------------------
+   * PAGE TITLE
+   * ------------------------------------------------------------
+   */
 
   useEffect(() => {
     document.title = "Decklists";
@@ -137,6 +220,192 @@ function DecklistsPage() {
       document.title = "Tbot";
     };
   }, []);
+
+  /*
+   * ------------------------------------------------------------
+   * DECKS
+   * ------------------------------------------------------------
+   *
+   * This is the ONLY request that controls the initial
+   * loading screen.
+   */
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchDecks = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/decklists/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          let message = `Request failed with status ${response.status}`;
+
+          try {
+            const payload = await response.json();
+
+            if (payload?.detail) {
+              message += `: ${payload.detail}`;
+            } else if (payload?.error) {
+              message += `: ${payload.error}`;
+            }
+          } catch {
+            // Ignore invalid error response.
+          }
+
+          throw new Error(message);
+        }
+
+        const contentType = (
+          response.headers.get("content-type") || ""
+        ).toLowerCase();
+
+        const text = await response.text();
+
+        if (!contentType.includes("application/json")) {
+          throw new Error("The decklist endpoint did not return JSON.");
+        }
+
+        const data = JSON.parse(text);
+
+        const results = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+            ? data.results
+            : [];
+
+        /*
+         * Update the page.
+         */
+        setDecks(results);
+
+        /*
+         * Update the persistent tab cache.
+         */
+        writeSessionCache(STORAGE_KEYS.decks, results);
+
+        /*
+         * If the count endpoint hasn't returned yet,
+         * the deck result itself gives us a fallback.
+         */
+        setTotalDecks((currentCount) => {
+          if (currentCount !== null && currentCount > 0) {
+            return currentCount;
+          }
+
+          return results.length;
+        });
+
+        /*
+         * Save fallback count too.
+         */
+        if (totalDecks === null && results.length > 0) {
+          writeSessionCache(STORAGE_KEYS.deckCount, results.length);
+        }
+
+        /*
+         * The initial load is finished.
+         */
+        setLoading(false);
+        setError("");
+      } catch (err) {
+        if (err.name === "AbortError") {
+          return;
+        }
+
+        console.error("Unable to load decklists:", err);
+
+        /*
+         * If we already had cached decks, don't destroy
+         * the page just because the refresh failed.
+         */
+        if (hasCachedDecks) {
+          console.warn("Using cached decklists because refresh failed.");
+
+          setLoading(false);
+          setError("");
+
+          return;
+        }
+
+        /*
+         * No cache + API failure = actual page error.
+         */
+        setLoading(false);
+
+        setError(
+          `Unable to load decklists right now. ${err.message || ""}`.trim(),
+        );
+      }
+    };
+
+    fetchDecks();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  /*
+   * ------------------------------------------------------------
+   * CARD INFORMATION
+   * ------------------------------------------------------------
+   *
+   * Cards never control the loading screen.
+   */
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchCards = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Card information request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+
+        const cards = Array.isArray(data) ? data : [];
+
+        setAllCards(cards);
+
+        writeSessionCache(STORAGE_KEYS.cards, cards);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to refresh card information:", err);
+        }
+      }
+    };
+
+    fetchCards();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  /*
+   * ------------------------------------------------------------
+   * DECK COUNT
+   * ------------------------------------------------------------
+   *
+   * Deck count never controls the loading screen.
+   */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -161,151 +430,33 @@ function DecklistsPage() {
         }
 
         const data = await response.json();
+
         const count = Number(data?.count);
 
         if (Number.isFinite(count)) {
           setTotalDecks(count);
+
+          writeSessionCache(STORAGE_KEYS.deckCount, count);
         }
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Unable to load deck count:", err);
+          console.error("Unable to refresh deck count:", err);
         }
       }
     };
 
     fetchDeckCount();
 
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchCards = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-
-        setAllCards(Array.isArray(data) ? data : []);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load card information:", err);
-        }
-      }
+    return () => {
+      controller.abort();
     };
-
-    fetchCards();
-
-    return () => controller.abort();
   }, []);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const loadingStartTime = Date.now();
-    const minimumLoadingTime = 1200;
-
-    const fetchDecks = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/decklists/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
-          },
-        );
-
-        if (!response.ok) {
-          let message = `Request failed with status ${response.status}`;
-
-          try {
-            const payload = await response.json();
-
-            if (payload?.detail) {
-              message += `: ${payload.detail}`;
-            } else if (payload?.error) {
-              message += `: ${payload.error}`;
-            }
-          } catch {
-          }
-
-          throw new Error(message);
-        }
-
-        const contentType = (
-          response.headers.get("content-type") || ""
-        ).toLowerCase();
-
-        const text = await response.text();
-
-        if (!contentType.includes("application/json")) {
-          throw new Error("The decklist endpoint did not return JSON.");
-        }
-
-        const data = JSON.parse(text);
-
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
-
-        setDecks(results);
-
-        setTotalDecks((currentCount) => {
-          if (currentCount !== null && currentCount > 0) {
-            return currentCount;
-          }
-
-          return results.length;
-        });
-
-        const elapsed = Date.now() - loadingStartTime;
-        const remaining = Math.max(
-          minimumLoadingTime - elapsed,
-          0,
-        );
-
-        window.setTimeout(() => {
-          if (!controller.signal.aborted) {
-            setLoading(false);
-          }
-        }, remaining);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load decklists:", err);
-
-          setError(
-            `Unable to load decklists right now. ${
-              err.message || ""
-            }`.trim(),
-          );
-
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchDecks();
-
-    return () => controller.abort();
-  }, []);
+  /*
+   * ------------------------------------------------------------
+   * SIDE FILTER
+   * ------------------------------------------------------------
+   */
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -314,10 +465,14 @@ function DecklistsPage() {
 
     const selectedSide = normalizeKey(side);
 
-    return decks.filter(
-      (deck) => normalizeKey(deck.side) === selectedSide,
-    );
+    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
   }, [decks, side]);
+
+  /*
+   * ------------------------------------------------------------
+   * HERO OPTIONS
+   * ------------------------------------------------------------
+   */
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
@@ -346,8 +501,7 @@ function DecklistsPage() {
     return Array.from(heroMap.values())
       .map((option) => {
         const matchedCard = allCards.find(
-          (card) =>
-            normalizeKey(card.card_name) === normalizeKey(option.label),
+          (card) => normalizeKey(card.card_name) === normalizeKey(option.label),
         );
 
         return {
@@ -362,6 +516,12 @@ function DecklistsPage() {
         }),
       );
   }, [sideFilteredDecks, allCards]);
+
+  /*
+   * ------------------------------------------------------------
+   * CATEGORY OPTIONS
+   * ------------------------------------------------------------
+   */
 
   const categoryOptions = useMemo(() => {
     const categoryMap = new Map();
@@ -378,9 +538,7 @@ function DecklistsPage() {
       if (!categoryMap.has(key)) {
         categoryMap.set(key, {
           value: categoryName,
-          label:
-            categoryName.charAt(0).toUpperCase() +
-            categoryName.slice(1),
+          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
           count: 0,
           ...CATEGORY_META[key],
         });
@@ -395,6 +553,12 @@ function DecklistsPage() {
       }),
     );
   }, [sideFilteredDecks]);
+
+  /*
+   * ------------------------------------------------------------
+   * ARCHETYPE OPTIONS
+   * ------------------------------------------------------------
+   */
 
   const archetypeOptions = useMemo(() => {
     const counts = {};
@@ -427,6 +591,12 @@ function DecklistsPage() {
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
 
+  /*
+   * ------------------------------------------------------------
+   * SORTING
+   * ------------------------------------------------------------
+   */
+
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
       const sideOrder = {
@@ -437,8 +607,7 @@ function DecklistsPage() {
       const sideA = normalizeKey(a.side);
       const sideB = normalizeKey(b.side);
 
-      const sideCompare =
-        (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
+      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
 
       if (sideCompare !== 0) {
         return sideCompare;
@@ -466,6 +635,12 @@ function DecklistsPage() {
     });
   }, [decks]);
 
+  /*
+   * ------------------------------------------------------------
+   * SEARCH + FILTERS
+   * ------------------------------------------------------------
+   */
+
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
 
@@ -476,9 +651,7 @@ function DecklistsPage() {
     return sortedDecks.filter((deck) => {
       const deckCards = parseDeckCards(deck.cards);
 
-      const searchableCardValues = deckCards.map((card) =>
-        normalizeKey(card),
-      );
+      const searchableCardValues = deckCards.map((card) => normalizeKey(card));
 
       const searchableValues = [
         deck.name,
@@ -511,15 +684,13 @@ function DecklistsPage() {
 
       const deckSide = normalizeKey(deck.side);
 
-      const sideMatch =
-        side === "All" || deckSide === normalizeKey(side);
+      const sideMatch = side === "All" || deckSide === normalizeKey(side);
 
       const heroMatch =
         hero.length === 0 ||
         hero.some(
           (selectedHero) =>
-            normalizeKey(deck.hero) ===
-            normalizeKey(selectedHero.value),
+            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
         );
 
       const categoryMatch =
@@ -535,20 +706,20 @@ function DecklistsPage() {
       const archetypeMatch =
         archetype.length === 0 ||
         archetype.every((selectedArchetype) =>
-          deckArchetype.includes(
-            normalizeKey(selectedArchetype.value),
-          ),
+          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
         );
 
       return (
-        searchMatch &&
-        sideMatch &&
-        heroMatch &&
-        categoryMatch &&
-        archetypeMatch
+        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
       );
     });
   }, [sortedDecks, search, side, hero, category, archetype]);
+
+  /*
+   * ------------------------------------------------------------
+   * CLEAR FILTERS
+   * ------------------------------------------------------------
+   */
 
   const clearFilters = () => {
     setSearch("");
@@ -557,10 +728,22 @@ function DecklistsPage() {
     setArchetype([]);
   };
 
+  /*
+   * ------------------------------------------------------------
+   * SIDE CHANGE
+   * ------------------------------------------------------------
+   */
+
   const handleSideChange = (newSide) => {
     setSide(newSide);
     clearFilters();
   };
+
+  /*
+   * ------------------------------------------------------------
+   * INITIAL LOADING
+   * ------------------------------------------------------------
+   */
 
   if (loading) {
     return (
@@ -570,23 +753,25 @@ function DecklistsPage() {
 
           <h2>Loading decklists</h2>
 
-          <p>
-            Preparing the deck browser and loading available decks.
-          </p>
+          <p>Preparing the deck browser and loading available decks.</p>
 
           <div className="loading-status">
             <span>Loading deck data</span>
 
             <strong>
-              {totalDecks !== null
-                ? `${totalDecks} decks`
-                : "Loading..."}
+              {totalDecks !== null ? `${totalDecks} decks` : "Loading..."}
             </strong>
           </div>
         </div>
       </div>
     );
   }
+
+  /*
+   * ------------------------------------------------------------
+   * PAGE
+   * ------------------------------------------------------------
+   */
 
   return (
     <div className="deck-page">
@@ -705,10 +890,7 @@ function DecklistsPage() {
               {filteredDecks.map((deck) => (
                 <DeckCard
                   key={`${deck.side}-${
-                    deck.deckid ||
-                    deck.deckID ||
-                    deck.id ||
-                    deck.name
+                    deck.deckid || deck.deckID || deck.id || deck.name
                   }`}
                   decklist={deck}
                 />
@@ -718,10 +900,9 @@ function DecklistsPage() {
         )}
       </main>
 
-      <Footer
-        credits="Special thanks to rip for uploading all of the deck images, and to everyone in the PVZH community who continues to contribute great decks and help grow the Tbot website and Discord bot. Credit to AirheadZ for designing the deck banner used on this page."
-      />
+      <Footer credits="Special thanks to rip for uploading all of the deck images, and to everyone in the PVZH community who continues to contribute great decks and help grow the Tbot website and Discord bot. Credit to AirheadZ for designing the deck banner used on this page." />
     </div>
   );
 }
+
 export default DecklistsPage;
