@@ -19,6 +19,12 @@ from .views.keep_or_scrap import (
     keep_or_scrap_count,
 )
 
+from .views.admin_keep_or_scrap import (
+    admin_keep_or_scrap,
+    admin_keep_or_scrap_detail,
+    admin_keep_or_scrap_image_upload,
+)
+
 from .views.auth import (
     csrf_token,
     discord_login,
@@ -68,6 +74,7 @@ from .views.user_decks import (
     user_deck_delete,
     shared_user_deck,
 )
+
 from .views.deckbuilders import (
     deckbuilders,
     deckbuilder_count,
@@ -75,6 +82,7 @@ from .views.deckbuilders import (
     deckbuilder_decks,
     deckbuilder_deck_count,
 )
+
 from .views.user_cards import (
     user_cards,
     user_profile_cards,
@@ -85,11 +93,14 @@ from .views.user_cards import (
     user_cards_available,
     user_card_classes,
 )
+
 from .views.admin_cards import (
     admin_cards,
     admin_card_detail,
     admin_card_image_upload,
 )
+
+
 urlpatterns = [
 
     # ---------------------------------------------------------
@@ -120,6 +131,7 @@ urlpatterns = [
         name="decklist-count",
     ),
 
+
     # ---------------------------------------------------------
     # Cards / Heroes
     # ---------------------------------------------------------
@@ -148,6 +160,7 @@ urlpatterns = [
         name="hero-count",
     ),
 
+
     # ---------------------------------------------------------
     # Keep or Scrap
     # ---------------------------------------------------------
@@ -163,6 +176,7 @@ urlpatterns = [
         keep_or_scrap_count,
         name="keep-or-scrap-count",
     ),
+
 
     # ---------------------------------------------------------
     # Authentication
@@ -198,6 +212,7 @@ urlpatterns = [
         name="discord_logout",
     ),
 
+
     # ---------------------------------------------------------
     # Admin permissions
     # ---------------------------------------------------------
@@ -213,6 +228,7 @@ urlpatterns = [
         owner_action,
         name="owner_action",
     ),
+
 
     # ---------------------------------------------------------
     # Admin - Main Decklists
@@ -242,6 +258,7 @@ urlpatterns = [
         name="admin_decklist_delete",
     ),
 
+
     # ---------------------------------------------------------
     # Admin - Legacy Decklists
     # ---------------------------------------------------------
@@ -264,6 +281,11 @@ urlpatterns = [
         name="admin_legacy_decklist_delete",
     ),
 
+
+    # ---------------------------------------------------------
+    # Admin - User Decks
+    # ---------------------------------------------------------
+
     path(
         "admin/user-decks/",
         admin_user_decks,
@@ -281,22 +303,54 @@ urlpatterns = [
         admin_user_deck_delete,
         name="admin_user_deck_delete",
     ),
-path(
-    "admin/cards/",
-    admin_cards,
-    name="admin-cards",
+
+
+    # ---------------------------------------------------------
+    # Admin - Cards
+    # ---------------------------------------------------------
+
+    path(
+        "admin/cards/",
+        admin_cards,
+        name="admin-cards",
+    ),
+
+    path(
+        "admin/cards/<int:cardid>/",
+        admin_card_detail,
+        name="admin-card-detail",
+    ),
+
+    path(
+        "admin/cards/image-upload/",
+        admin_card_image_upload,
+        name="admin-card-image-upload",
+    ),
+
+
+    # ---------------------------------------------------------
+    # Admin - Keep or Scrap
+    # ---------------------------------------------------------
+
+    path(
+    "admin/keeporscrap/",
+    admin_keep_or_scrap,
+    name="admin-keep-or-scrap",
 ),
 
 path(
-    "admin/cards/<int:cardid>/",
-    admin_card_detail,
-    name="admin-card-detail",
+    "admin/keeporscrap/<int:tierid>/",
+    admin_keep_or_scrap_detail,
+    name="admin-keep-or-scrap-detail",
 ),
+
 path(
-    "admin/cards/image-upload/",
-    admin_card_image_upload,
-    name="admin-card-image-upload",
+    "admin/keeporscrap/image-upload/",
+    admin_keep_or_scrap_image_upload,
+    name="admin-keep-or-scrap-image-upload",
 ),
+
+
     # ---------------------------------------------------------
     # Profiles
     # ---------------------------------------------------------
@@ -306,10 +360,11 @@ path(
         profile_me,
         name="profile_me",
     ),
+
     path(
-    "profiles/count/",
-    public_profile_count,
-    name="public-profile-count",
+        "profiles/count/",
+        public_profile_count,
+        name="public-profile-count",
     ),
 
     path(
@@ -335,6 +390,8 @@ path(
         public_profile_decks,
         name="public_profile_decks",
     ),
+
+
     # ---------------------------------------------------------
     # Deckbuilders
     # ---------------------------------------------------------
@@ -368,6 +425,8 @@ path(
         deckbuilder_deck_count,
         name="deckbuilder-deck-count",
     ),
+
+
     # ---------------------------------------------------------
     # User Decks
     # ---------------------------------------------------------
@@ -377,11 +436,13 @@ path(
         user_decks,
         name="user_decks",
     ),
+
     path(
         "profile/<str:profile_slug>/decks/count/",
         public_profile_decks_count,
         name="public-profile-decks-count",
     ),
+
     path(
         "user-decks/create/",
         user_deck_create,
@@ -405,6 +466,8 @@ path(
         shared_user_deck,
         name="shared_user_deck",
     ),
+
+
     # ---------------------------------------------------------
     # User Card Collection
     # ---------------------------------------------------------
@@ -414,11 +477,13 @@ path(
         user_cards,
         name="user_cards",
     ),
+
     path(
-    "profile/<str:profile_slug>/cards/",
-    user_profile_cards,
-    name="user_profile_cards",
+        "profile/<str:profile_slug>/cards/",
+        user_profile_cards,
+        name="user_profile_cards",
     ),
+
     path(
         "user-cards/create/",
         user_card_create,

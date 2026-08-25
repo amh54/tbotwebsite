@@ -2,7 +2,7 @@ import "./css/App.css";
 import "./css/navbar.css";
 
 import { Link, Route, Routes } from "react-router-dom";
-
+import AdminKeepOrScrap from "./pages/admin-keeporscrap.jsx";
 import StandaloneDeckPage from "./pages/standalonedeck.jsx";
 import AdminUserDecks from "./pages/admin-userdecks.jsx";
 import ScrollToTop from "./components/scrolltotop.jsx";
@@ -199,70 +199,70 @@ function HomePage() {
 
 function App() {
   return (
-     <>
+    <>
       <ScrollToTop />
-    <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
 
-      <Route path="/decklists" element={<DecklistsPage />} />
-      <Route path="/legacydecks" element={<LegacyDecksPage />} />
-      <Route path="/cardinfo" element={<CardInfo />} />
-      <Route path="/keeporscrap" element={<KeepOrScrap />} />
-      <Route path="/heroinfo" element={<HeroInfo />} />
-      <Route path="/termsofservice" element={<TermsOfService />} />
-      <Route path="/privacypolicy" element={<Privacy />} />
-      <Route path="/users" element={<Users />} />
-      <Route path="/deckbuilders" element={<Deckbuilders />} />
-      <Route path="/admin/cards" element={<AdminCards />} />
-      <Route
-        path="/deckbuilders/:deckbuilder_name/decks"
-        element={<DeckbuilderDecks />}
-      />
-      <Route path="/profile/:profile_slug" element={<Profile />} />
-      <Route
-        path="/deck/:profile_slug/:deckId"
-        element={<StandaloneDeckPage />}
-      />
-      <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/decklists" element={<DecklistsPage />} />
+        <Route path="/legacydecks" element={<LegacyDecksPage />} />
+        <Route path="/cardinfo" element={<CardInfo />} />
+        <Route path="/keeporscrap" element={<KeepOrScrap />} />
+        <Route path="/heroinfo" element={<HeroInfo />} />
+        <Route path="/termsofservice" element={<TermsOfService />} />
+        <Route path="/privacypolicy" element={<Privacy />} />
+        <Route path="/users" element={<Users />} />
+        <Route path="/deckbuilders" element={<Deckbuilders />} />
+        <Route path="/admin/cards" element={<AdminCards />} />
+        <Route
+          path="/deckbuilders/:deckbuilder_name/decks"
+          element={<DeckbuilderDecks />}
+        />
+        <Route path="/profile/:profile_slug" element={<Profile />} />
+        <Route
+          path="/deck/:profile_slug/:deckId"
+          element={<StandaloneDeckPage />}
+        />
+        <Route path="/dashboard" element={<UserDashboard />} />
 
-      <Route path="/dashboard/decks" element={<UserDeckManager />} />
+        <Route path="/dashboard/decks" element={<UserDeckManager />} />
 
-      <Route path="/dashboard/decks/add" element={<UserDeckManager />} />
+        <Route path="/dashboard/decks/add" element={<UserDeckManager />} />
+        <Route path="/admin/keeporscrap" element={<AdminKeepOrScrap />} />
+        <Route
+          path="/dashboard/decks/:deckId/edit"
+          element={<UserDeckManager />}
+        />
+        <Route path="/dashboard/card-manager" element={<UserCardManager />} />
+        {/* Admin */}
+        <Route path="/admin" element={<Admin />} />
 
-      <Route
-        path="/dashboard/decks/:deckId/edit"
-        element={<UserDeckManager />}
-      />
-      <Route path="/dashboard/card-manager" element={<UserCardManager />} />
-      {/* Admin */}
-      <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/decklists" element={<AdminDecklists />} />
 
-      <Route path="/admin/decklists" element={<AdminDecklists />} />
+        <Route path="/admin/decklist/add" element={<AdminDecklists />} />
 
-      <Route path="/admin/decklist/add" element={<AdminDecklists />} />
+        <Route path="/admin/decklists/add" element={<AdminDecklists />} />
 
-      <Route path="/admin/decklists/add" element={<AdminDecklists />} />
+        <Route path="/admin/legacy-decks/*" element={<AdminLegacyDecks />} />
 
-      <Route path="/admin/legacy-decks/*" element={<AdminLegacyDecks />} />
+        <Route path="/admin/user-decks" element={<AdminUserDecks />} />
 
-      <Route path="/admin/user-decks" element={<AdminUserDecks />} />
-
-      {/* 404 */}
-      <Route
-        path="*"
-        element={
-          <div
-            style={{
-              padding: "40px",
-              color: "#fff",
-            }}
-          >
-            <h1>404</h1>
-            <p>Page not found.</p>
-          </div>
-        }
-      />
-    </Routes>
+        {/* 404 */}
+        <Route
+          path="*"
+          element={
+            <div
+              style={{
+                padding: "40px",
+                color: "#fff",
+              }}
+            >
+              <h1>404</h1>
+              <p>Page not found.</p>
+            </div>
+          }
+        />
+      </Routes>
     </>
   );
 }

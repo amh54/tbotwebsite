@@ -1,0 +1,1219 @@
+.admin-kos-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #101416;
+  color: #ffffff;
+  box-sizing: border-box;
+}
+
+.admin-kos-page *,
+.admin-kos-page *::before,
+.admin-kos-page *::after {
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.admin-kos-content {
+  width: min(1500px, calc(100% - 70px));
+  margin: 0 auto;
+  padding: 55px 0 90px;
+}
+
+.admin-kos-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 32px;
+}
+
+.admin-kos-eyebrow {
+  margin-bottom: 8px;
+  color: #8fe38b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.admin-kos-header h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 38px;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.admin-kos-header p {
+  max-width: 760px;
+  margin: 12px 0 0;
+  color: #9ca5aa;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.admin-kos-header > button {
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.admin-kos-primary-button,
+.admin-kos-secondary-button,
+.admin-kos-outline-button,
+.admin-kos-edit-button,
+.admin-kos-delete-button,
+.admin-kos-edit-small,
+.admin-kos-delete-small,
+.admin-kos-danger-button,
+.admin-kos-upload-button,
+.admin-kos-remove-image {
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.admin-kos-primary-button {
+  min-height: 42px;
+  padding: 0 18px;
+  background: #8fe38b;
+  border: 0;
+  color: #101416;
+}
+
+.admin-kos-primary-button:hover {
+  background: #a4ef9f;
+  transform: translateY(-1px);
+}
+
+.admin-kos-secondary-button {
+  min-height: 42px;
+  padding: 0 18px;
+  background: #202427;
+  border: 1px solid #343a3e;
+  color: #ffffff;
+}
+
+.admin-kos-secondary-button:hover {
+  background: #292e32;
+  border-color: #454d52;
+}
+
+.admin-kos-outline-button {
+  min-height: 40px;
+  padding: 0 16px;
+  background: transparent;
+  border: 1px solid #3b4449;
+  color: #dce1e3;
+}
+
+.admin-kos-outline-button:hover {
+  border-color: #8fe38b;
+  color: #8fe38b;
+}
+
+.admin-kos-danger-button {
+  min-height: 42px;
+  padding: 0 18px;
+  background: #b93c3c;
+  border: 0;
+  color: #ffffff;
+}
+
+.admin-kos-danger-button:hover {
+  background: #d14a4a;
+}
+
+.admin-kos-primary-button:disabled,
+.admin-kos-secondary-button:disabled,
+.admin-kos-danger-button:disabled,
+.admin-kos-upload-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+.admin-kos-alert {
+  margin-bottom: 24px;
+  padding: 14px 17px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.admin-kos-alert.error {
+  background: rgba(185, 60, 60, 0.12);
+  border: 1px solid rgba(210, 75, 75, 0.35);
+  color: #ffaaaa;
+}
+
+.admin-kos-alert.success {
+  background: rgba(143, 227, 139, 0.1);
+  border: 1px solid rgba(143, 227, 139, 0.3);
+  color: #a9f2a5;
+}
+
+/* =========================================================
+   TABS
+   ========================================================= */
+
+.admin-kos-browser {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 32px;
+  padding: 7px;
+  background: #171b1e;
+  border: 1px solid #292f33;
+  border-radius: 10px;
+}
+
+.admin-kos-tabs {
+  display: flex;
+  gap: 5px;
+}
+
+.admin-kos-tabs button {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #858e93;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.admin-kos-tabs button:hover {
+  color: #ffffff;
+  background: #202528;
+}
+
+.admin-kos-tabs button.active {
+  background: #8fe38b;
+  color: #101416;
+}
+
+.admin-kos-tab-actions {
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   SECTION HEADINGS
+   ========================================================= */
+
+.admin-kos-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.admin-kos-section-heading > div:first-child > span {
+  display: block;
+  margin-bottom: 5px;
+  color: #727b80;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.admin-kos-section-heading h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.admin-kos-count {
+  color: #7f898e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.admin-kos-empty {
+  padding: 65px 30px;
+  text-align: center;
+  background: #171b1e;
+  border: 1px dashed #343b3f;
+  border-radius: 10px;
+}
+
+.admin-kos-empty h3 {
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: 18px;
+}
+
+.admin-kos-empty p {
+  margin: 0 0 20px;
+  color: #7e898e;
+  font-size: 14px;
+}
+
+/* =========================================================
+   INTRODUCTION
+   ========================================================= */
+
+.admin-kos-intro {
+  width: 100%;
+}
+
+.admin-kos-intro-card {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  min-height: 360px;
+  overflow: hidden;
+  background: #171b1e;
+  border: 1px solid #2c3236;
+  border-radius: 12px;
+}
+
+.admin-kos-intro-image {
+  position: relative;
+  width: 340px;
+  min-width: 340px;
+  height: 360px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d1012;
+  border-right: 1px solid #2c3236;
+  overflow: hidden;
+}
+
+.admin-kos-intro-image img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 324px;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 6px;
+}
+
+.admin-kos-no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  color: #606a6f;
+  background: #111517;
+  border: 1px dashed #343c40;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-kos-intro-content {
+  min-width: 0;
+  padding: 34px 38px;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-kos-public-label {
+  margin-bottom: 16px;
+  color: #8fe38b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.admin-kos-content-preview {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-kos-intro-heading {
+  margin: 0 0 14px;
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.admin-kos-intro-paragraph {
+  margin: 0 0 18px;
+  color: #c3c9cc;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.admin-kos-intro-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.admin-kos-intro-quote {
+  margin: 20px 0;
+  padding: 15px 20px;
+  background: #111517;
+  border-left: 4px solid #8fe38b;
+  border-radius: 0 7px 7px 0;
+  color: #cdd3d5;
+}
+
+.admin-kos-intro-quote p {
+  margin: 0;
+}
+
+.admin-kos-intro-list {
+  margin: 12px 0 20px;
+  padding-left: 24px;
+  color: #c3c9cc;
+  line-height: 1.7;
+}
+
+.admin-kos-intro-list li {
+  margin-bottom: 7px;
+}
+
+.admin-kos-intro-list li:last-child {
+  margin-bottom: 0;
+}
+
+.admin-kos-creator {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #2c3236;
+  color: #929ca1;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.admin-kos-creator strong {
+  margin-right: 8px;
+  color: #8fe38b;
+}
+
+.admin-kos-creator span {
+  color: #b9c0c4;
+}
+
+.admin-kos-entry-actions {
+  display: flex;
+  gap: 9px;
+  margin-top: 25px;
+}
+
+.admin-kos-edit-button {
+  min-height: 38px;
+  padding: 0 15px;
+  background: #242a2e;
+  border: 1px solid #363e43;
+  color: #ffffff;
+}
+
+.admin-kos-edit-button:hover {
+  border-color: #8fe38b;
+  color: #8fe38b;
+}
+
+.admin-kos-delete-button {
+  min-height: 38px;
+  padding: 0 15px;
+  background: transparent;
+  border: 1px solid #4b3030;
+  color: #df7777;
+}
+
+.admin-kos-delete-button:hover {
+  background: rgba(185, 60, 60, 0.1);
+  border-color: #b94b4b;
+}
+
+/* =========================================================
+   RECOMMENDATION CLASS GRID
+   ========================================================= */
+
+.admin-kos-class-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.admin-kos-class-card {
+  min-width: 0;
+  overflow: hidden;
+  background: #171b1e;
+  border: 1px solid #2c3236;
+  border-radius: 12px;
+}
+
+.admin-kos-class-top {
+  min-height: 78px;
+  padding: 17px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  background: #1b2023;
+  border-bottom: 1px solid #2c3236;
+}
+
+.admin-kos-class-top span {
+  display: block;
+  margin-bottom: 4px;
+  color: #727c81;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-kos-class-top h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.admin-kos-entry-count {
+  flex-shrink: 0;
+  color: #7d878c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-kos-class-main {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  min-height: 340px;
+}
+
+.admin-kos-class-image {
+  position: relative;
+  width: 190px;
+  min-width: 190px;
+  height: 340px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d1012;
+  border-right: 1px solid #2c3236;
+  overflow: hidden;
+}
+
+.admin-kos-class-image img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 166px;
+  max-height: 316px;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 5px;
+}
+
+.admin-kos-class-image .admin-kos-no-image {
+  min-height: 0;
+}
+
+.admin-kos-tier-list {
+  min-width: 0;
+  padding: 17px;
+}
+
+.admin-kos-tier-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid #282e32;
+}
+
+.admin-kos-tier-item:first-child {
+  padding-top: 2px;
+}
+
+.admin-kos-tier-item:last-child {
+  border-bottom: 0;
+}
+
+.admin-kos-tier-info {
+  min-width: 0;
+}
+
+.admin-kos-tier-number {
+  margin-bottom: 5px;
+  color: #8fe38b;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-kos-tier-text {
+  min-width: 0;
+  color: #c0c7ca;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.admin-kos-tier-text strong {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.admin-kos-tier-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.admin-kos-edit-small,
+.admin-kos-delete-small {
+  min-height: 29px;
+  padding: 0 9px;
+  background: transparent;
+  font-size: 11px;
+}
+
+.admin-kos-edit-small {
+  border: 1px solid #363e43;
+  color: #bfc6c9;
+}
+
+.admin-kos-edit-small:hover {
+  border-color: #8fe38b;
+  color: #8fe38b;
+}
+
+.admin-kos-delete-small {
+  border: 1px solid #4a3030;
+  color: #d67474;
+}
+
+.admin-kos-delete-small:hover {
+  background: rgba(185, 60, 60, 0.1);
+  border-color: #b94b4b;
+}
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+
+.admin-kos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  padding: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+
+.admin-kos-editor-modal {
+  width: min(900px, 100%);
+  max-height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #171b1e;
+  border: 1px solid #343b3f;
+  border-radius: 12px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.55);
+}
+
+.admin-kos-modal-header {
+  flex-shrink: 0;
+  min-height: 78px;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #1b2023;
+  border-bottom: 1px solid #2d3438;
+}
+
+.admin-kos-modal-header span {
+  display: block;
+  margin-bottom: 4px;
+  color: #727c81;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.admin-kos-modal-header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 21px;
+}
+
+.admin-kos-modal-close {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 7px;
+  background: #252b2f;
+  color: #aeb6ba;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-kos-modal-close:hover {
+  background: #31383d;
+  color: #ffffff;
+}
+
+.admin-kos-modal-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-kos-editor-body {
+  min-height: 0;
+  padding: 25px;
+  overflow-y: auto;
+}
+
+.admin-kos-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.admin-kos-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-kos-form-grid label > span,
+.admin-kos-upload-heading span {
+  color: #aeb7bb;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-kos-form-full {
+  grid-column: 1 / -1;
+}
+
+.admin-kos-form-grid input,
+.admin-kos-form-grid select,
+.admin-kos-form-grid textarea {
+  width: 100%;
+  border: 1px solid #343c40;
+  border-radius: 7px;
+  outline: none;
+  background: #101416;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.18s ease;
+}
+
+.admin-kos-form-grid input,
+.admin-kos-form-grid select {
+  height: 44px;
+  padding: 0 13px;
+}
+
+.admin-kos-form-grid textarea {
+  min-height: 240px;
+  padding: 13px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.admin-kos-form-grid input:focus,
+.admin-kos-form-grid select:focus,
+.admin-kos-form-grid textarea:focus {
+  border-color: #8fe38b;
+}
+
+.admin-kos-form-grid input::placeholder,
+.admin-kos-form-grid textarea::placeholder {
+  color: #596368;
+}
+
+.admin-kos-form-grid small {
+  margin-top: -2px;
+  color: #687277;
+  font-size: 11px;
+}
+
+.admin-kos-markdown-help {
+  line-height: 1.5;
+}
+
+/* =========================================================
+   CLOUDINARY UPLOAD
+   ========================================================= */
+
+.admin-kos-upload-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.admin-kos-upload-heading > div {
+  min-width: 0;
+}
+
+.admin-kos-upload-heading span {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.admin-kos-upload-heading strong {
+  display: block;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.admin-kos-upload-button {
+  flex-shrink: 0;
+  min-height: 42px;
+  padding: 0 17px;
+  border: 1px solid #3d494e;
+  border-radius: 8px;
+  background: #202629;
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.admin-kos-upload-button:hover {
+  background: #272e32;
+  border-color: #8fe38b;
+  color: #8fe38b;
+}
+
+.admin-kos-upload-preview {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 18px;
+  padding: 14px;
+  background: #111517;
+  border: 1px solid #343c40;
+  border-radius: 8px;
+}
+
+.admin-kos-upload-preview-image {
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #0b0e10;
+  border-radius: 6px;
+}
+
+.admin-kos-upload-preview-image img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.admin-kos-upload-preview-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.admin-kos-upload-preview-info > span {
+  margin-bottom: 6px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-kos-upload-preview-info small {
+  margin-bottom: 15px;
+  color: #747f84;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.admin-kos-remove-image {
+  min-height: 35px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid #4a3030;
+  color: #d67474;
+  font-size: 12px;
+}
+
+.admin-kos-remove-image:hover {
+  background: rgba(185, 60, 60, 0.1);
+  border-color: #b94b4b;
+}
+
+.admin-kos-upload-dropzone {
+  width: 100%;
+  min-height: 180px;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #111517;
+  border: 1px dashed #3b454a;
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.admin-kos-upload-dropzone:hover {
+  background: #151a1c;
+  border-color: #8fe38b;
+}
+
+.admin-kos-upload-icon {
+  width: 42px;
+  height: 42px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(143, 227, 139, 0.1);
+  color: #8fe38b;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.admin-kos-upload-dropzone strong {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.admin-kos-upload-dropzone small {
+  margin: 0;
+  color: #697479;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* =========================================================
+   MODAL FOOTER
+   ========================================================= */
+
+.admin-kos-editor-footer {
+  flex-shrink: 0;
+  min-height: 70px;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #1b2023;
+  border-top: 1px solid #2d3438;
+}
+
+/* =========================================================
+   DELETE MODAL
+   ========================================================= */
+
+.admin-kos-delete-modal {
+  width: min(440px, 100%);
+  padding: 30px;
+  background: #171b1e;
+  border: 1px solid #343b3f;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.55);
+}
+
+.admin-kos-delete-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(185, 60, 60, 0.13);
+  border: 1px solid rgba(185, 60, 60, 0.3);
+  color: #e37b7b;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.admin-kos-delete-modal h2 {
+  margin: 0 0 10px;
+  color: #ffffff;
+  font-size: 21px;
+}
+
+.admin-kos-delete-modal p {
+  margin: 0;
+  color: #8f999e;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.admin-kos-delete-modal p strong {
+  color: #ffffff;
+}
+
+.admin-kos-delete-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1250px) {
+  .admin-kos-class-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-kos-class-main {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .admin-kos-class-image {
+    width: 220px;
+    min-width: 220px;
+    height: 350px;
+  }
+
+  .admin-kos-class-image img {
+    max-width: 196px;
+    max-height: 326px;
+  }
+
+  .admin-kos-class-main {
+    min-height: 350px;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-kos-content {
+    width: min(100% - 35px, 1500px);
+    padding-top: 35px;
+  }
+
+  .admin-kos-header {
+    flex-direction: column;
+  }
+
+  .admin-kos-header > button {
+    align-self: flex-start;
+  }
+
+  .admin-kos-browser {
+    flex-wrap: wrap;
+  }
+
+  .admin-kos-intro-card {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-kos-intro-image {
+    width: 100%;
+    min-width: 0;
+    height: 330px;
+    min-height: 330px;
+    border-right: 0;
+    border-bottom: 1px solid #2c3236;
+  }
+
+  .admin-kos-intro-image img {
+    max-height: 294px;
+  }
+
+  .admin-kos-class-main {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-kos-class-image {
+    width: 100%;
+    min-width: 0;
+    height: 330px;
+    min-height: 330px;
+    border-right: 0;
+    border-bottom: 1px solid #2c3236;
+  }
+
+  .admin-kos-class-image img {
+    max-width: 240px;
+    max-height: 306px;
+  }
+}
+
+@media (max-width: 650px) {
+  .admin-kos-content {
+    width: calc(100% - 24px);
+    padding: 25px 0 60px;
+  }
+
+  .admin-kos-header h1 {
+    font-size: 30px;
+  }
+
+  .admin-kos-browser {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-kos-tabs {
+    width: 100%;
+  }
+
+  .admin-kos-tabs button {
+    flex: 1;
+  }
+
+  .admin-kos-tab-actions {
+    width: 100%;
+  }
+
+  .admin-kos-tab-actions button {
+    width: 100%;
+  }
+
+  .admin-kos-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-kos-intro-image {
+    height: 270px;
+    min-height: 270px;
+    padding: 10px;
+  }
+
+  .admin-kos-intro-image img {
+    max-height: 250px;
+  }
+
+  .admin-kos-intro-content {
+    padding: 22px;
+  }
+
+  .admin-kos-class-image {
+    height: 270px;
+    min-height: 270px;
+    padding: 10px;
+  }
+
+  .admin-kos-class-image img {
+    max-width: 200px;
+    max-height: 250px;
+  }
+
+  .admin-kos-tier-list {
+    padding: 14px;
+  }
+
+  .admin-kos-tier-item {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .admin-kos-tier-actions {
+    margin-top: 5px;
+  }
+
+  .admin-kos-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-kos-form-full {
+    grid-column: auto;
+  }
+
+  .admin-kos-modal-overlay {
+    padding: 12px;
+  }
+
+  .admin-kos-editor-modal {
+    max-height: calc(100vh - 24px);
+  }
+
+  .admin-kos-editor-body {
+    padding: 18px;
+  }
+
+  .admin-kos-editor-footer {
+    padding: 12px 18px;
+  }
+
+  .admin-kos-upload-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-kos-upload-button {
+    width: 100%;
+  }
+
+  .admin-kos-upload-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-kos-upload-preview-image {
+    width: 100%;
+    height: 220px;
+  }
+
+  .admin-kos-upload-preview-info {
+    align-items: stretch;
+  }
+
+  .admin-kos-remove-image {
+    width: 100%;
+  }
+
+  .admin-kos-delete-modal {
+    padding: 25px 20px;
+  }
+}
