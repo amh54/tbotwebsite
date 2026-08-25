@@ -648,7 +648,7 @@ const UserCardManager = () => {
       ? collectionRarity
       : [];
 
-    return cards.filter((card) => {
+    const matches = cards.filter((card) => {
       const cardData = card.card || card;
 
       const name = card.card_name?.toLowerCase() || "";
@@ -708,6 +708,59 @@ const UserCardManager = () => {
         rarityMatch
       );
     });
+
+    const getSideRank = (cardData) => {
+      const sideValue = normalizeText(cardData.side);
+
+      if (sideValue.includes("plant")) {
+        return 0;
+      }
+
+      if (sideValue.includes("zombie")) {
+        return 1;
+      }
+
+      return 2;
+    };
+
+    matches.sort((a, b) => {
+      const aData = a.card || a;
+      const bData = b.card || b;
+
+      const sideDifference = getSideRank(aData) - getSideRank(bData);
+
+      if (sideDifference !== 0) {
+        return sideDifference;
+      }
+
+      const aClass = getClassNames(aData.card_type)[0] || "";
+      const bClass = getClassNames(bData.card_type)[0] || "";
+
+      const classDifference = aClass.localeCompare(bClass, undefined, {
+        sensitivity: "base",
+      });
+
+      if (classDifference !== 0) {
+        return classDifference;
+      }
+
+      const aCost = getCardStats(aData.stats).cost ?? Infinity;
+      const bCost = getCardStats(bData.stats).cost ?? Infinity;
+
+      if (aCost !== bCost) {
+        return aCost - bCost;
+      }
+
+      return String(a.card_name || "").localeCompare(
+        String(b.card_name || ""),
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      );
+    });
+
+    return matches;
   }, [
     cards,
     collectionSearch,
