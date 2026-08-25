@@ -35,7 +35,7 @@ const HERO_CLASSES = {
   "Professor Brainstorm": ["Brainy", "Crazy"],
   Rustbolt: ["Hearty", "Brainy"],
   "The Smash": ["Beastly", "Hearty"],
-  "Z-mech": ["Crazy", "Hearty"],
+  "Z-Mech": ["Crazy", "Hearty"],
 };
 
 const CATEGORY_OPTIONS = ["Budget", "Competitive", "Ladder", "Meme"].map(
