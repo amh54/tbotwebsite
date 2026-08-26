@@ -30,10 +30,98 @@ from .helpers import (
     normalize_card_ratio_list,
     cards_to_storage_string,
     save_deck_image,
-    TARGET_CARD_RATIO_TOTAL
+    TARGET_CARD_RATIO_TOTAL,
 )
 
+
 logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# SIDE NORMALIZATION
+# ============================================================
+
+def normalize_deck_side(value):
+    """
+    Normalize all accepted Plant/Zombie side values.
+
+    API/deck storage:
+        Plants
+        Zombies
+
+    Database may contain:
+        Plant
+        Plants
+        Zombie
+        Zombies
+    """
+
+    raw_side = str(value or "").strip()
+
+    if raw_side.casefold() in {
+        "plant",
+        "plants",
+    }:
+        return "Plants"
+
+    if raw_side.casefold() in {
+        "zombie",
+        "zombies",
+    }:
+        return "Zombies"
+
+    return None
+
+
+def side_matches(db_side, expected_side):
+    """
+    Treat singular/plural database values as equivalent.
+
+    Examples:
+
+        Zombie  == Zombies
+        Plant   == Plants
+    """
+
+    normalized_db_side = str(db_side or "").strip().casefold()
+    normalized_expected_side = str(
+        expected_side or ""
+    ).strip().casefold()
+
+    if normalized_expected_side in {
+        "plant",
+        "plants",
+    }:
+        return normalized_db_side in {
+            "plant",
+            "plants",
+        }
+
+    if normalized_expected_side in {
+        "zombie",
+        "zombies",
+    }:
+        return normalized_db_side in {
+            "zombie",
+            "zombies",
+        }
+
+    return False
+
+
+def normalized_card_name(value):
+    """
+    Normalize card names for comparisons.
+
+    Handles:
+        leading/trailing whitespace
+        repeated whitespace
+        case differences
+    """
+
+    return " ".join(
+        str(value or "").strip().split()
+    ).casefold()
 
 
 # ============================================================
@@ -45,41 +133,116 @@ def validate_deck_cards(
     hero,
     selected_cards,
 ):
-    side = str(
-        side or ""
-    ).strip()
+    # ========================================================
+    # NORMALIZE SIDE
+    # ========================================================
 
-    if side.lower() in {
-        "plant",
-        "plants",
-    }:
-        side = "Plants"
+    raw_side = str(side or "")
+    side = normalize_deck_side(raw_side)
 
-    elif side.lower() in {
-        "zombie",
-        "zombies",
-    }:
-        side = "Zombies"
+    if not side:
+        logger.error(
+            "INVALID DECK SIDE: raw=%r",
+            raw_side,
+        )
 
-    hero_name = str(
-        hero or ""
-    ).strip()
+        return {
+            "error": "Side must be Plants or Zombies.",
+            "side": raw_side.strip(),
+        }
+
+    # ========================================================
+    # NORMALIZE HERO
+    # ========================================================
+
+    raw_hero = str(hero or "")
+    hero_name = raw_hero.strip()
 
     if not hero_name:
         return {
-            "error": "A hero is required."
+            "error": "A hero is required.",
         }
+
+    # ========================================================
+    # FIND HERO
+    # ========================================================
 
     hero_card = (
         WebCards.objects
         .filter(
             card_name__iexact=hero_name,
-            side__iexact=side,
         )
         .first()
     )
 
     if not hero_card:
+        possible_heroes = list(
+            WebCards.objects
+            .filter(
+                card_name__icontains=hero_name,
+            )
+            .values(
+                "card_name",
+                "side",
+                "set_rarity",
+                "card_type",
+            )[:20]
+        )
+
+        logger.error(
+            "HERO NOT FOUND: hero=%r side=%r matches=%r",
+            hero_name,
+            side,
+            possible_heroes,
+        )
+
+        return {
+            "error": (
+                "The selected hero does not exist."
+            ),
+            "side": side,
+            "hero": hero_name,
+        }
+
+    hero_db_side = str(
+        getattr(
+            hero_card,
+            "side",
+            "",
+        ) or ""
+    ).strip()
+
+    logger.info(
+        "HERO FOUND: requested_hero=%r "
+        "requested_side=%r "
+        "db_hero=%r "
+        "db_side=%r",
+        hero_name,
+        side,
+        getattr(
+            hero_card,
+            "card_name",
+            "",
+        ),
+        hero_db_side,
+    )
+
+    # ========================================================
+    # HERO SIDE VALIDATION
+    # ========================================================
+
+    if not side_matches(
+        hero_db_side,
+        side,
+    ):
+        logger.error(
+            "HERO SIDE MISMATCH: hero=%r "
+            "requested_side=%r db_side=%r",
+            hero_name,
+            side,
+            hero_db_side,
+        )
+
         return {
             "error": (
                 "The selected hero does not belong "
@@ -87,7 +250,12 @@ def validate_deck_cards(
             ),
             "side": side,
             "hero": hero_name,
+            "database_side": hero_db_side,
         }
+
+    # ========================================================
+    # HERO RARITY
+    # ========================================================
 
     hero_rarity = str(
         getattr(
@@ -98,12 +266,23 @@ def validate_deck_cards(
     ).strip().lower()
 
     if "hero" not in hero_rarity:
+        logger.error(
+            "INVALID HERO RARITY: hero=%r rarity=%r side=%r",
+            hero_name,
+            hero_rarity,
+            side,
+        )
+
         return {
             "error": (
                 "The selected card is not a valid hero."
             ),
             "hero": hero_name,
         }
+
+    # ========================================================
+    # HERO CARD TYPES
+    # ========================================================
 
     hero_card_types = {
         value.strip().lower()
@@ -118,6 +297,12 @@ def validate_deck_cards(
     }
 
     if not hero_card_types:
+        logger.error(
+            "HERO HAS NO CARD TYPES: hero=%r side=%r",
+            hero_name,
+            side,
+        )
+
         return {
             "error": (
                 "The selected hero does not have "
@@ -136,23 +321,192 @@ def validate_deck_cards(
 
     if not parsed_cards:
         return {
-            "error": "Please select at least one card."
+            "error": "Please select at least one card.",
         }
 
-    side_cards = list(
-        WebCards.objects
-        .filter(
-            side__iexact=side
-        )
-        .exclude(
-            set_rarity__iexact="Token"
-        )
+    logger.info(
+        "VALIDATING DECK CARDS: side=%r hero=%r parsed_cards=%r",
+        side,
+        hero_name,
+        parsed_cards,
+    )
+
+    # ========================================================
+    # LOAD ALL CARDS
+    #
+    # IMPORTANT:
+    #
+    # DO NOT use:
+    #
+    #     side__iexact=side
+    #
+    # because the API uses "Zombies" while the database
+    # contains "Zombie".
+    #
+    # Instead load cards and compare using side_matches().
+    # ========================================================
+
+    all_cards = list(
+        WebCards.objects.all()
     )
 
     card_lookup = {}
 
-    for card in side_cards:
-        card_name = str(
+    for card in all_cards:
+        db_name_raw = getattr(
+            card,
+            "card_name",
+            "",
+        )
+
+        db_name = str(
+            db_name_raw or ""
+        ).strip()
+
+        if not db_name:
+            continue
+
+        if not side_matches(
+            getattr(card, "side", ""),
+            side,
+        ):
+            continue
+
+        lookup_key = normalized_card_name(
+            db_name
+        )
+
+        if lookup_key not in card_lookup:
+            card_lookup[lookup_key] = card
+
+    logger.info(
+        "CARD LOOKUP BUILT: side=%r cards=%d",
+        side,
+        len(card_lookup),
+    )
+
+    invalid_cards = []
+    incompatible_cards = []
+    valid_cards = []
+
+    # ========================================================
+    # VALIDATE EACH SELECTED CARD
+    # ========================================================
+
+    for entry in parsed_cards:
+        raw_name = entry.get(
+            "name",
+            "",
+        )
+
+        cleaned_name = str(
+            raw_name or ""
+        ).strip()
+
+        cleaned_name = " ".join(
+            cleaned_name.split()
+        )
+
+        lookup_key = normalized_card_name(
+            cleaned_name
+        )
+
+        card = card_lookup.get(
+            lookup_key
+        )
+
+        # ====================================================
+        # CARD NOT FOUND
+        # ====================================================
+
+        if not card:
+            logger.error(
+                "INVALID CARD - NOT FOUND FOR SIDE: "
+                "selected_raw=%r selected_cleaned=%r "
+                "lookup_key=%r expected_side=%r",
+                raw_name,
+                cleaned_name,
+                lookup_key,
+                side,
+            )
+
+            # Look for the card regardless of side so the
+            # database problem is visible in the logs.
+            possible_matches = list(
+                WebCards.objects
+                .filter(
+                    card_name__icontains=cleaned_name
+                )
+                .values(
+                    "card_name",
+                    "side",
+                    "set_rarity",
+                    "card_type",
+                )[:20]
+            )
+
+            logger.error(
+                "POSSIBLE DATABASE MATCHES FOR CARD %r: %r",
+                cleaned_name,
+                possible_matches,
+            )
+
+            normalized_matches = []
+
+            for db_card in all_cards:
+                db_name = str(
+                    getattr(
+                        db_card,
+                        "card_name",
+                        "",
+                    ) or ""
+                ).strip()
+
+                normalized_db_name = normalized_card_name(
+                    db_name
+                )
+
+                if normalized_db_name != lookup_key:
+                    continue
+
+                normalized_matches.append(
+                    {
+                        "card_name": db_name,
+                        "side": getattr(
+                            db_card,
+                            "side",
+                            "",
+                        ),
+                        "set_rarity": getattr(
+                            db_card,
+                            "set_rarity",
+                            "",
+                        ),
+                        "card_type": getattr(
+                            db_card,
+                            "card_type",
+                            "",
+                        ),
+                    }
+                )
+
+            logger.error(
+                "NORMALIZED NAME MATCHES FOR %r: %r",
+                cleaned_name,
+                normalized_matches,
+            )
+
+            invalid_cards.append(
+                cleaned_name
+            )
+
+            continue
+
+        # ====================================================
+        # CARD DATABASE VALUES
+        # ====================================================
+
+        db_card_name = str(
             getattr(
                 card,
                 "card_name",
@@ -160,29 +514,13 @@ def validate_deck_cards(
             ) or ""
         ).strip()
 
-        if card_name:
-            card_lookup.setdefault(
-                card_name.lower(),
+        db_side = str(
+            getattr(
                 card,
-            )
-
-    invalid_cards = []
-    incompatible_cards = []
-    valid_cards = []
-
-    for entry in parsed_cards:
-        cleaned_name = entry["name"]
-        lookup_key = cleaned_name.lower()
-
-        card = card_lookup.get(
-            lookup_key
-        )
-
-        if not card:
-            invalid_cards.append(
-                cleaned_name
-            )
-            continue
+                "side",
+                "",
+            ) or ""
+        ).strip()
 
         card_rarity = str(
             getattr(
@@ -191,12 +529,6 @@ def validate_deck_cards(
                 "",
             ) or ""
         ).strip().lower()
-
-        if card_rarity == "token":
-            incompatible_cards.append(
-                cleaned_name
-            )
-            continue
 
         card_types = {
             value.strip().lower()
@@ -210,25 +542,83 @@ def validate_deck_cards(
             if value.strip()
         }
 
-        if not card_types.intersection(
-            hero_card_types
-        ):
+        logger.debug(
+            "CARD MATCH: selected=%r "
+            "db_name=%r db_side=%r "
+            "rarity=%r types=%r",
+            cleaned_name,
+            db_card_name,
+            db_side,
+            card_rarity,
+            card_types,
+        )
+
+        # ====================================================
+        # TOKEN
+        # ====================================================
+
+        if card_rarity == "token":
+            logger.error(
+                "INCOMPATIBLE CARD - TOKEN: "
+                "card=%r db_name=%r side=%r",
+                cleaned_name,
+                db_card_name,
+                db_side,
+            )
+
             incompatible_cards.append(
                 cleaned_name
             )
+
             continue
 
-        valid_cards.append({
-            "name": str(
-                getattr(
-                    card,
-                    "card_name",
-                )
-            ).strip(),
-            "count": entry["count"],
-        })
+        # ====================================================
+        # CARD TYPE
+        # ====================================================
+
+        if not card_types.intersection(
+            hero_card_types
+        ):
+            logger.error(
+                "INCOMPATIBLE CARD - CARD TYPE: "
+                "card=%r db_name=%r "
+                "card_types=%r hero_types=%r",
+                cleaned_name,
+                db_card_name,
+                sorted(card_types),
+                sorted(hero_card_types),
+            )
+
+            incompatible_cards.append(
+                cleaned_name
+            )
+
+            continue
+
+        # ====================================================
+        # VALID CARD
+        # ====================================================
+
+        valid_cards.append(
+            {
+                "name": db_card_name,
+                "count": entry["count"],
+            }
+        )
+
+    # ========================================================
+    # INVALID SIDE CARDS
+    # ========================================================
 
     if invalid_cards:
+        logger.error(
+            "DECK CARD VALIDATION FAILED: "
+            "side=%r hero=%r invalid_cards=%r",
+            side,
+            hero_name,
+            invalid_cards,
+        )
+
         return {
             "error": (
                 "One or more selected cards do not "
@@ -238,7 +628,21 @@ def validate_deck_cards(
             "invalid_cards": invalid_cards,
         }
 
+    # ========================================================
+    # INCOMPATIBLE CARDS
+    # ========================================================
+
     if incompatible_cards:
+        logger.error(
+            "DECK CARD COMPATIBILITY FAILED: "
+            "side=%r hero=%r incompatible_cards=%r "
+            "hero_card_types=%r",
+            side,
+            hero_name,
+            incompatible_cards,
+            sorted(hero_card_types),
+        )
+
         return {
             "error": (
                 "One or more selected cards are not "
@@ -251,12 +655,27 @@ def validate_deck_cards(
             "invalid_cards": incompatible_cards,
         }
 
+    # ========================================================
+    # CARD RATIO
+    # ========================================================
+
     ratio_total = sum(
         card["count"]
         for card in valid_cards
     )
 
     if ratio_total != TARGET_CARD_RATIO_TOTAL:
+        logger.error(
+            "INVALID CARD RATIO: "
+            "side=%r hero=%r total=%r expected=%r "
+            "valid_cards=%r",
+            side,
+            hero_name,
+            ratio_total,
+            TARGET_CARD_RATIO_TOTAL,
+            valid_cards,
+        )
+
         return {
             "error": (
                 f"Card ratios must add up to "
@@ -264,6 +683,18 @@ def validate_deck_cards(
                 f"(currently {ratio_total})."
             ),
         }
+
+    # ========================================================
+    # VALIDATION PASSED
+    # ========================================================
+
+    logger.info(
+        "DECK CARD VALIDATION PASSED: "
+        "side=%r hero=%r cards=%r",
+        side,
+        hero_name,
+        valid_cards,
+    )
 
     return {
         "cards": cards_to_storage_string(
@@ -333,6 +764,7 @@ def admin_legacy_decklists(request):
     # ========================================================
 
     if request.method == "POST":
+
         data = request.data.copy()
 
         # ====================================================
@@ -411,26 +843,11 @@ def admin_legacy_decklists(request):
         # SIDE
         # ====================================================
 
-        deck_side = str(
-            data.get(
-                "side",
-                "",
-            )
-        ).strip().lower()
+        deck_side = normalize_deck_side(
+            data.get("side")
+        )
 
-        if deck_side in {
-            "plant",
-            "plants",
-        }:
-            deck_side = "Plants"
-
-        elif deck_side in {
-            "zombie",
-            "zombies",
-        }:
-            deck_side = "Zombies"
-
-        else:
+        if not deck_side:
             return Response(
                 {
                     "error": (
@@ -447,76 +864,34 @@ def admin_legacy_decklists(request):
         # ====================================================
 
         if "cards" in data:
-            parsed_cards = normalize_card_ratio_list(
-                data.get("cards")
+
+            validation = validate_deck_cards(
+                side=deck_side,
+                hero=data.get("hero"),
+                selected_cards=data.get("cards"),
             )
 
-            if not parsed_cards:
+            if validation.get("error"):
+                logger.error(
+                    "LEGACY DECK CREATION CARD "
+                    "VALIDATION FAILED: "
+                    "deckid=%r side=%r hero=%r "
+                    "cards=%r result=%r",
+                    deckid,
+                    deck_side,
+                    data.get("hero"),
+                    data.get("cards"),
+                    validation,
+                )
+
                 return Response(
-                    {
-                        "error": (
-                            "Please select at least one card."
-                        ),
-                    },
+                    validation,
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            selected_names = [
-                card["name"]
-                for card in parsed_cards
-            ]
-
-            existing_cards = set(
-                WebCards.objects
-                .filter(
-                    card_name__in=selected_names,
-                    side__iexact=deck_side,
-                )
-                .values_list(
-                    "card_name",
-                    flat=True,
-                )
-            )
-
-            invalid_cards = [
-                card["name"]
-                for card in parsed_cards
-                if card["name"] not in existing_cards
-            ]
-
-            if invalid_cards:
-                return Response(
-                    {
-                        "error": (
-                            "One or more selected cards "
-                            "do not belong to the selected "
-                            "deck side."
-                        ),
-                        "side": deck_side,
-                        "invalid_cards": invalid_cards,
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            ratio_total = sum(
-                card["count"]
-                for card in parsed_cards
-            )
-
-            if ratio_total != TARGET_CARD_RATIO_TOTAL:
-                return Response(
-                    {
-                        "error": (
-                            f"Card ratios must add up to "
-                            f"{TARGET_CARD_RATIO_TOTAL} "
-                            f"(currently {ratio_total})."
-                        ),
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            data["cards"] = cards_to_storage_string(
-                parsed_cards
+            data["cards"] = validation.get(
+                "cards",
+                "",
             )
 
         # ====================================================
@@ -671,10 +1046,16 @@ def admin_legacy_decklist_update(
     request,
     deckid,
 ):
+
+    # ========================================================
+    # GET EXISTING DECK
+    # ========================================================
+
     try:
         deck = LegacyDecklist.objects.get(
             deckid=deckid
         )
+
     except LegacyDecklist.DoesNotExist:
         return Response(
             {
@@ -682,6 +1063,7 @@ def admin_legacy_decklist_update(
             },
             status=status.HTTP_404_NOT_FOUND,
         )
+
     except DatabaseError as exc:
         logger.exception(
             "Unable to retrieve legacy decklist %s",
@@ -704,10 +1086,33 @@ def admin_legacy_decklist_update(
     data = request.data.copy()
 
     # ========================================================
+    # NORMALIZE SIDE IF PROVIDED
+    # ========================================================
+
+    if "side" in data:
+
+        normalized_side = normalize_deck_side(
+            data.get("side")
+        )
+
+        if not normalized_side:
+            return Response(
+                {
+                    "error": (
+                        "Side must be Plants or Zombies."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data["side"] = normalized_side
+
+    # ========================================================
     # CARDS
     # ========================================================
 
     if "cards" in data:
+
         selected_side = data.get(
             "side",
             deck.side,
@@ -725,6 +1130,19 @@ def admin_legacy_decklist_update(
         )
 
         if validation.get("error"):
+
+            logger.error(
+                "LEGACY DECK UPDATE CARD "
+                "VALIDATION FAILED: "
+                "deckid=%r side=%r hero=%r "
+                "cards=%r result=%r",
+                deckid,
+                selected_side,
+                selected_hero,
+                data.get("cards"),
+                validation,
+            )
+
             return Response(
                 validation,
                 status=status.HTTP_400_BAD_REQUEST,
@@ -768,7 +1186,9 @@ def admin_legacy_decklist_update(
             )
 
             payload = {
-                "error": "Unable to save uploaded image.",
+                "error": (
+                    "Unable to save uploaded image."
+                ),
                 "error_type": exc.__class__.__name__,
             }
 
@@ -872,6 +1292,7 @@ def admin_legacy_decklist_delete(
     request,
     deckid,
 ):
+
     try:
         deck = LegacyDecklist.objects.get(
             deckid=deckid
