@@ -14,22 +14,16 @@ import "../css/loading.css";
 import "../css/userdecklists.css";
 
 const getApiBaseUrl = () => {
-  const envBaseUrl = String(
-    import.meta.env.VITE_API_BASE_URL || "",
-  ).trim();
+  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
 
   if (envBaseUrl) {
     return envBaseUrl.replace(/\/+$/, "");
   }
 
   if (
-    typeof window !== "undefined"
-    &&
-    (
-      window.location.hostname === "localhost"
-      ||
-      window.location.hostname === "127.0.0.1"
-    )
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1")
   ) {
     return "http://localhost:8000";
   }
@@ -74,26 +68,22 @@ const ARCHETYPE_META = {
 const CATEGORY_META = {
   budget: {
     icon: "💵",
-    description:
-      "Decks that are cheap for new players",
+    description: "Decks that are cheap for new players",
   },
 
   competitive: {
     icon: "🏆",
-    description:
-      "Some of the best decks in the game",
+    description: "Some of the best decks in the game",
   },
 
   ladder: {
     icon: "🪜",
-    description:
-      "Decks that are mostly only good for ranked games",
+    description: "Decks that are mostly only good for ranked games",
   },
 
   meme: {
     icon: "😂",
-    description:
-      "Decks built for fun or unusual combos",
+    description: "Decks built for fun or unusual combos",
   },
 };
 
@@ -121,11 +111,9 @@ const HERO_ALIAS = {
   hg: "huge-giganticus",
 };
 
-const normalizeText = (value) =>
-  String(value ?? "").trim();
+const normalizeText = (value) => String(value ?? "").trim();
 
-const normalizeKey = (value) =>
-  normalizeText(value).toLowerCase();
+const normalizeKey = (value) => normalizeText(value).toLowerCase();
 
 const parseDeckCards = (value) => {
   return String(value ?? "")
@@ -170,24 +158,16 @@ const getAvatarUrl = (profile) => {
     return "";
   }
 
-  const avatar =
-    normalizeText(profile.avatar);
+  const avatar = normalizeText(profile.avatar);
 
-  const discordId =
-    normalizeText(profile.discord_id);
+  const discordId = normalizeText(profile.discord_id);
 
   if (!avatar) {
     if (discordId) {
-      const numericId =
-        Number(discordId);
+      const numericId = Number(discordId);
 
-      if (
-        Number.isSafeInteger(numericId)
-        &&
-        numericId >= 0
-      ) {
-        const defaultAvatarIndex =
-          (numericId >> 22) % 6;
+      if (Number.isSafeInteger(numericId) && numericId >= 0) {
+        const defaultAvatarIndex = (numericId >> 22) % 6;
 
         return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
       }
@@ -197,20 +177,15 @@ const getAvatarUrl = (profile) => {
   }
 
   if (
-    avatar.startsWith("http://")
-    ||
-    avatar.startsWith("https://")
-    ||
+    avatar.startsWith("http://") ||
+    avatar.startsWith("https://") ||
     avatar.startsWith("//")
   ) {
     return avatar;
   }
 
   if (discordId) {
-    const extension =
-      avatar.startsWith("a_")
-        ? "gif"
-        : "png";
+    const extension = avatar.startsWith("a_") ? "gif" : "png";
 
     return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=256`;
   }
@@ -219,53 +194,36 @@ const getAvatarUrl = (profile) => {
 };
 
 function DeckbuilderDecks() {
-  const { deckbuilder_name } =
-    useParams();
+  const { deckbuilder_name } = useParams();
 
-  const decodedDeckbuilderName =
-    decodeURIComponent(
-      deckbuilder_name || "",
-    );
+  const decodedDeckbuilderName = decodeURIComponent(deckbuilder_name || "");
 
-  const [deckbuilder, setDeckbuilder] =
-    useState(null);
+  const [deckbuilder, setDeckbuilder] = useState(null);
 
-  const [decks, setDecks] =
-    useState([]);
+  const [decks, setDecks] = useState([]);
 
-  const [deckCount, setDeckCount] =
-    useState(null);
+  const [deckCount, setDeckCount] = useState(null);
 
-  const [allCards, setAllCards] =
-    useState([]);
+  const [allCards, setAllCards] = useState([]);
 
-  const [search, setSearch] =
-    useState("");
+  const [search, setSearch] = useState("");
 
-  const [side, setSide] =
-    useState("All");
+  const [side, setSide] = useState("All");
 
-  const [hero, setHero] =
-    useState([]);
+  const [hero, setHero] = useState([]);
 
-  const [category, setCategory] =
-    useState([]);
+  const [category, setCategory] = useState([]);
 
-  const [archetype, setArchetype] =
-    useState([]);
+  const [archetype, setArchetype] = useState([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [avatarError, setAvatarError] =
-    useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   useEffect(() => {
-    document.title =
-      `${decodedDeckbuilderName} Decklists`;
+    document.title = `${decodedDeckbuilderName} Decklists`;
 
     return () => {
       document.title = "Tbot";
@@ -273,8 +231,7 @@ function DeckbuilderDecks() {
   }, [decodedDeckbuilderName]);
 
   useEffect(() => {
-    const controller =
-      new AbortController();
+    const controller = new AbortController();
 
     const loadDeckCount = async () => {
       if (!decodedDeckbuilderName) {
@@ -282,675 +239,380 @@ function DeckbuilderDecks() {
       }
 
       try {
-        const response =
-          await fetch(
-            `${API_BASE_URL}/tbotapp/deckbuilders/${encodeURIComponent(
-              decodedDeckbuilderName,
-            )}/decks/count/`,
-            {
-              method: "GET",
-              headers: {
-                Accept:
-                  "application/json",
-              },
-              signal:
-                controller.signal,
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/deckbuilders/${encodeURIComponent(
+            decodedDeckbuilderName,
+          )}/decks/count/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
             },
-          );
+            signal: controller.signal,
+          },
+        );
 
-        const data =
-          await response
-            .json()
-            .catch(() => null);
+        const data = await response.json().catch(() => null);
 
         if (!response.ok) {
           return;
         }
 
-        const count =
-          Number(data?.deck_count);
+        const count = Number(data?.deck_count);
 
         if (Number.isFinite(count)) {
           setDeckCount(count);
         }
       } catch (err) {
-        if (
-          err.name !== "AbortError"
-        ) {
-          console.error(
-            "Unable to load deckbuilder count:",
-            err,
-          );
+        if (err.name !== "AbortError") {
+          console.error("Unable to load deckbuilder count:", err);
         }
       }
     };
 
     loadDeckCount();
 
-    return () =>
-      controller.abort();
+    return () => controller.abort();
   }, [decodedDeckbuilderName]);
 
   useEffect(() => {
-    const controller =
-      new AbortController();
+    const controller = new AbortController();
 
-    const loadingStartTime =
-      Date.now();
+    const loadingStartTime = Date.now();
 
-    const minimumLoadingTime =
-      1200;
+    const minimumLoadingTime = 1200;
 
-    const loadDeckbuilderDecks =
-      async () => {
-        try {
-          setLoading(true);
-          setError("");
-          setAvatarError(false);
+    const loadDeckbuilderDecks = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        setAvatarError(false);
 
-          const response =
-            await fetch(
-              `${API_BASE_URL}/tbotapp/deckbuilders/${encodeURIComponent(
-                decodedDeckbuilderName,
-              )}/decks/`,
-              {
-                method: "GET",
-                headers: {
-                  Accept:
-                    "application/json",
-                },
-                signal:
-                  controller.signal,
-              },
-            );
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/deckbuilders/${encodeURIComponent(
+            decodedDeckbuilderName,
+          )}/decks/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
+          },
+        );
 
-          const data =
-            await response
-              .json()
-              .catch(() => null);
+        const data = await response.json().catch(() => null);
 
-          if (!response.ok) {
-            throw new Error(
-              data?.error
-              ||
-              "Unable to load this deckbuilder's decks.",
-            );
-          }
-
-          setDeckbuilder(
-            data?.deckbuilder || null,
+        if (!response.ok) {
+          throw new Error(
+            data?.error || "Unable to load this deckbuilder's decks.",
           );
-
-          setDecks(
-            Array.isArray(data?.decks)
-              ? data.decks
-              : [],
-          );
-
-          const returnedCount =
-            Number(data?.deck_count);
-
-          if (
-            Number.isFinite(
-              returnedCount,
-            )
-          ) {
-            setDeckCount(
-              returnedCount,
-            );
-          }
-
-          const elapsed =
-            Date.now()
-            - loadingStartTime;
-
-          const remaining =
-            Math.max(
-              minimumLoadingTime
-                - elapsed,
-              0,
-            );
-
-          window.setTimeout(() => {
-            if (
-              !controller.signal
-                .aborted
-            ) {
-              setLoading(false);
-            }
-          }, remaining);
-        } catch (err) {
-          if (
-            err.name === "AbortError"
-          ) {
-            return;
-          }
-
-          console.error(
-            "Unable to load deckbuilder decks:",
-            err,
-          );
-
-          setError(
-            err.message
-            ||
-            "Unable to load this deckbuilder's decks.",
-          );
-
-          setLoading(false);
         }
-      };
+
+        setDeckbuilder(data?.deckbuilder || null);
+
+        setDecks(Array.isArray(data?.decks) ? data.decks : []);
+
+        const returnedCount = Number(data?.deck_count);
+
+        if (Number.isFinite(returnedCount)) {
+          setDeckCount(returnedCount);
+        }
+
+        const elapsed = Date.now() - loadingStartTime;
+
+        const remaining = Math.max(minimumLoadingTime - elapsed, 0);
+
+        window.setTimeout(() => {
+          if (!controller.signal.aborted) {
+            setLoading(false);
+          }
+        }, remaining);
+      } catch (err) {
+        if (err.name === "AbortError") {
+          return;
+        }
+
+        console.error("Unable to load deckbuilder decks:", err);
+
+        setError(err.message || "Unable to load this deckbuilder's decks.");
+
+        setLoading(false);
+      }
+    };
 
     if (decodedDeckbuilderName) {
       loadDeckbuilderDecks();
     }
 
-    return () =>
-      controller.abort();
+    return () => controller.abort();
   }, [decodedDeckbuilderName]);
 
   useEffect(() => {
-    const controller =
-      new AbortController();
+    const controller = new AbortController();
 
     const fetchCards = async () => {
       try {
-        const response =
-          await fetch(
-            `${API_BASE_URL}/tbotapp/cardinfo/`,
-            {
-              method: "GET",
-              headers: {
-                Accept:
-                  "application/json",
-              },
-              signal:
-                controller.signal,
-            },
-          );
+        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           return;
         }
 
-        const data =
-          await response.json();
+        const data = await response.json();
 
         setAllCards(
           Array.isArray(data)
             ? data
-            : Array.isArray(
-                data?.results,
-              )
+            : Array.isArray(data?.results)
               ? data.results
               : [],
         );
       } catch (err) {
-        if (
-          err.name !== "AbortError"
-        ) {
-          console.error(
-            "Unable to load card information:",
-            err,
-          );
+        if (err.name !== "AbortError") {
+          console.error("Unable to load card information:", err);
         }
       }
     };
 
     fetchCards();
 
-    return () =>
-      controller.abort();
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
     setAvatarError(false);
-  }, [
-    deckbuilder?.avatar,
-    deckbuilder?.discord_id,
-  ]);
+  }, [deckbuilder?.avatar, deckbuilder?.discord_id]);
 
-  const sideFilteredDecks =
-    useMemo(() => {
-      if (side === "All") {
-        return decks;
+  const sideFilteredDecks = useMemo(() => {
+    if (side === "All") {
+      return decks;
+    }
+
+    const selectedSide = normalizeKey(side);
+
+    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
+  }, [decks, side]);
+
+  const heroOptions = useMemo(() => {
+    const heroMap = new Map();
+
+    sideFilteredDecks.forEach((deck) => {
+      const heroName = normalizeText(deck.hero);
+
+      if (!heroName) {
+        return;
       }
 
-      const selectedSide =
-        normalizeKey(side);
+      const key = normalizeKey(heroName);
 
-      return decks.filter(
-        (deck) =>
-          normalizeKey(
-            deck.side,
-          ) === selectedSide,
-      );
-    }, [decks, side]);
+      if (!heroMap.has(key)) {
+        heroMap.set(key, {
+          value: heroName,
+          label: heroName,
+          count: 0,
+          side: normalizeKey(deck.side),
+        });
+      }
 
-  const heroOptions =
-    useMemo(() => {
-      const heroMap =
-        new Map();
+      heroMap.get(key).count += 1;
+    });
 
-      sideFilteredDecks.forEach(
-        (deck) => {
-          const heroName =
-            normalizeText(
-              deck.hero,
-            );
-
-          if (!heroName) {
-            return;
-          }
-
-          const key =
-            normalizeKey(
-              heroName,
-            );
-
-          if (!heroMap.has(key)) {
-            heroMap.set(key, {
-              value:
-                heroName,
-              label:
-                heroName,
-              count: 0,
-              side:
-                normalizeKey(
-                  deck.side,
-                ),
-            });
-          }
-
-          heroMap.get(key).count += 1;
-        },
-      );
-
-      return Array.from(
-        heroMap.values(),
-      )
-        .map((option) => {
-          const matchedCard =
-            allCards.find(
-              (card) =>
-                normalizeKey(
-                  card.card_name,
-                ) ===
-                normalizeKey(
-                  option.label,
-                ),
-            );
-
-          return {
-            ...option,
-            description:
-              matchedCard?.flavor_text
-              || "",
-            image:
-              matchedCard?.thumbnail
-              || "",
-          };
-        })
-        .sort((a, b) =>
-          a.label.localeCompare(
-            b.label,
-            undefined,
-            {
-              sensitivity:
-                "base",
-            },
-          ),
+    return Array.from(heroMap.values())
+      .map((option) => {
+        const matchedCard = allCards.find(
+          (card) => normalizeKey(card.card_name) === normalizeKey(option.label),
         );
-    }, [
-      sideFilteredDecks,
-      allCards,
-    ]);
 
-  const categoryOptions =
-    useMemo(() => {
-      const categoryMap =
-        new Map();
-
-      sideFilteredDecks.forEach(
-        (deck) => {
-          const categories =
-            parseCategories(
-              deck.category,
-            );
-
-          categories.forEach(
-            (categoryName) => {
-              if (
-                !CATEGORY_META[
-                  categoryName
-                ]
-              ) {
-                return;
-              }
-
-              if (
-                !categoryMap.has(
-                  categoryName,
-                )
-              ) {
-                categoryMap.set(
-                  categoryName,
-                  {
-                    value:
-                      categoryName,
-                    label:
-                      categoryName
-                        .charAt(0)
-                        .toUpperCase()
-                      +
-                      categoryName.slice(
-                        1,
-                      ),
-                    count: 0,
-                    ...CATEGORY_META[
-                      categoryName
-                    ],
-                  },
-                );
-              }
-
-              categoryMap.get(
-                categoryName,
-              ).count += 1;
-            },
-          );
-        },
+        return {
+          ...option,
+          description: matchedCard?.flavor_text || "",
+          image: matchedCard?.thumbnail || "",
+        };
+      })
+      .sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, {
+          sensitivity: "base",
+        }),
       );
+  }, [sideFilteredDecks, allCards]);
 
-      return Array.from(
-        categoryMap.values(),
-      ).sort((a, b) =>
-        a.label.localeCompare(
-          b.label,
-          undefined,
-          {
-            sensitivity:
-              "base",
-          },
-        ),
-      );
-    }, [sideFilteredDecks]);
+  const categoryOptions = useMemo(() => {
+    const categoryMap = new Map();
 
-  const archetypeOptions =
-    useMemo(() => {
-      const counts = {};
+    sideFilteredDecks.forEach((deck) => {
+      const categories = parseCategories(deck.category);
 
-      Object.keys(
-        ARCHETYPE_META,
-      ).forEach((key) => {
-        counts[key] = 0;
+      categories.forEach((categoryName) => {
+        if (!CATEGORY_META[categoryName]) {
+          return;
+        }
+
+        if (!categoryMap.has(categoryName)) {
+          categoryMap.set(categoryName, {
+            value: categoryName,
+            label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
+            count: 0,
+            ...CATEGORY_META[categoryName],
+          });
+        }
+
+        categoryMap.get(categoryName).count += 1;
       });
+    });
 
-      sideFilteredDecks.forEach(
-        (deck) => {
-          const deckArchetypes =
-            parseArchetypes(
-              deck.archetype,
-            );
+    return Array.from(categoryMap.values()).sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, {
+        sensitivity: "base",
+      }),
+    );
+  }, [sideFilteredDecks]);
 
-          Object.keys(
-            ARCHETYPE_META,
-          ).forEach(
-            (archetypeName) => {
-              if (
-                deckArchetypes.includes(
-                  archetypeName,
-                )
-              ) {
-                counts[
-                  archetypeName
-                ] += 1;
-              }
-            },
-          );
+  const archetypeOptions = useMemo(() => {
+    const counts = {};
+
+    Object.keys(ARCHETYPE_META).forEach((key) => {
+      counts[key] = 0;
+    });
+
+    sideFilteredDecks.forEach((deck) => {
+      const deckArchetypes = parseArchetypes(deck.archetype);
+
+      Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
+        if (deckArchetypes.includes(archetypeName)) {
+          counts[archetypeName] += 1;
+        }
+      });
+    });
+
+    return Object.entries(ARCHETYPE_META)
+      .map(([value, meta]) => ({
+        value,
+        label: value.charAt(0).toUpperCase() + value.slice(1),
+        count: counts[value] || 0,
+        ...meta,
+      }))
+      .filter((option) => option.count > 0);
+  }, [sideFilteredDecks]);
+
+  const sortedDecks = useMemo(() => {
+    return [...decks].sort((a, b) => {
+      const sideOrder = {
+        plants: 0,
+        zombies: 1,
+      };
+
+      const sideA = normalizeKey(a.side);
+
+      const sideB = normalizeKey(b.side);
+
+      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
+
+      if (sideCompare !== 0) {
+        return sideCompare;
+      }
+
+      const heroCompare = normalizeText(a.hero).localeCompare(
+        normalizeText(b.hero),
+        undefined,
+        {
+          sensitivity: "base",
         },
       );
 
-      return Object.entries(
-        ARCHETYPE_META,
-      )
-        .map(
-          ([value, meta]) => ({
-            value,
-            label:
-              value
-                .charAt(0)
-                .toUpperCase()
-              +
-              value.slice(1),
-            count:
-              counts[value] || 0,
-            ...meta,
-          }),
-        )
-        .filter(
-          (option) =>
-            option.count > 0,
+      if (heroCompare !== 0) {
+        return heroCompare;
+      }
+
+      return normalizeText(a.name).localeCompare(
+        normalizeText(b.name),
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      );
+    });
+  }, [decks]);
+
+  const filteredDecks = useMemo(() => {
+    const searchValue = normalizeKey(search);
+
+    const alias = HERO_ALIAS[searchValue]
+      ? normalizeKey(HERO_ALIAS[searchValue])
+      : "";
+
+    return sortedDecks.filter((deck) => {
+      const deckCards = parseDeckCards(deck.cards);
+
+      const searchableCardValues = deckCards.map((card) => normalizeKey(card));
+
+      const searchableValues = [
+        deck.name,
+        deck.creator,
+        deck.optimization,
+        deck.hero,
+        deck.archetype,
+        deck.category,
+      ]
+        .filter(Boolean)
+        .map((value) => normalizeKey(value));
+
+      let searchMatch = true;
+
+      if (searchValue) {
+        if (alias) {
+          searchMatch = normalizeKey(deck.hero).includes(alias);
+        } else {
+          const normalFieldMatch = searchableValues.some((value) =>
+            value.includes(searchValue),
+          );
+
+          const cardMatch = searchableCardValues.some((card) =>
+            card.includes(searchValue),
+          );
+
+          searchMatch = normalFieldMatch || cardMatch;
+        }
+      }
+
+      const deckSide = normalizeKey(deck.side);
+
+      const sideMatch = side === "All" || deckSide === normalizeKey(side);
+
+      const heroMatch =
+        hero.length === 0 ||
+        hero.some(
+          (selectedHero) =>
+            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
         );
-    }, [sideFilteredDecks]);
 
-  const sortedDecks =
-    useMemo(() => {
-      return [...decks].sort(
-        (a, b) => {
-          const sideOrder = {
-            plants: 0,
-            zombies: 1,
-          };
+      const deckCategories = parseCategories(deck.category);
 
-          const sideA =
-            normalizeKey(a.side);
+      const categoryMatch =
+        category.length === 0 ||
+        category.every((selectedCategory) =>
+          deckCategories.includes(normalizeKey(selectedCategory.value)),
+        );
 
-          const sideB =
-            normalizeKey(b.side);
+      const deckArchetypes = parseArchetypes(deck.archetype);
 
-          const sideCompare =
-            (
-              sideOrder[sideA] ?? 99
-            )
-            -
-            (
-              sideOrder[sideB] ?? 99
-            );
+      const archetypeMatch =
+        archetype.length === 0 ||
+        archetype.every((selectedArchetype) =>
+          deckArchetypes.includes(normalizeKey(selectedArchetype.value)),
+        );
 
-          if (sideCompare !== 0) {
-            return sideCompare;
-          }
-
-          const heroCompare =
-            normalizeText(
-              a.hero,
-            ).localeCompare(
-              normalizeText(
-                b.hero,
-              ),
-              undefined,
-              {
-                sensitivity:
-                  "base",
-              },
-            );
-
-          if (heroCompare !== 0) {
-            return heroCompare;
-          }
-
-          return normalizeText(
-            a.name,
-          ).localeCompare(
-            normalizeText(
-              b.name,
-            ),
-            undefined,
-            {
-              sensitivity:
-                "base",
-            },
-          );
-        },
+      return (
+        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
       );
-    }, [decks]);
-
-  const filteredDecks =
-    useMemo(() => {
-      const searchValue =
-        normalizeKey(search);
-
-      const alias =
-        HERO_ALIAS[
-          searchValue
-        ]
-          ? normalizeKey(
-              HERO_ALIAS[
-                searchValue
-              ],
-            )
-          : "";
-
-      return sortedDecks.filter(
-        (deck) => {
-          const deckCards =
-            parseDeckCards(
-              deck.cards,
-            );
-
-          const searchableCardValues =
-            deckCards.map(
-              (card) =>
-                normalizeKey(
-                  card,
-                ),
-            );
-
-          const searchableValues = [
-            deck.name,
-            deck.creator,
-            deck.optimization,
-            deck.hero,
-            deck.archetype,
-            deck.category,
-          ]
-            .filter(Boolean)
-            .map((value) =>
-              normalizeKey(value),
-            );
-
-          let searchMatch = true;
-
-          if (searchValue) {
-            if (alias) {
-              searchMatch =
-                normalizeKey(
-                  deck.hero,
-                ).includes(alias);
-            } else {
-              const normalFieldMatch =
-                searchableValues.some(
-                  (value) =>
-                    value.includes(
-                      searchValue,
-                    ),
-                );
-
-              const cardMatch =
-                searchableCardValues.some(
-                  (card) =>
-                    card.includes(
-                      searchValue,
-                    ),
-                );
-
-              searchMatch =
-                normalFieldMatch
-                ||
-                cardMatch;
-            }
-          }
-
-          const deckSide =
-            normalizeKey(
-              deck.side,
-            );
-
-          const sideMatch =
-            side === "All"
-            ||
-            deckSide ===
-              normalizeKey(side);
-
-          const heroMatch =
-            hero.length === 0
-            ||
-            hero.some(
-              (selectedHero) =>
-                normalizeKey(
-                  deck.hero,
-                ) ===
-                normalizeKey(
-                  selectedHero.value,
-                ),
-            );
-
-          const deckCategories =
-            parseCategories(
-              deck.category,
-            );
-
-          const categoryMatch =
-            category.length === 0
-            ||
-            category.every(
-              (selectedCategory) =>
-                deckCategories.includes(
-                  normalizeKey(
-                    selectedCategory.value,
-                  ),
-                ),
-            );
-
-          const deckArchetypes =
-            parseArchetypes(
-              deck.archetype,
-            );
-
-          const archetypeMatch =
-            archetype.length === 0
-            ||
-            archetype.every(
-              (selectedArchetype) =>
-                deckArchetypes.includes(
-                  normalizeKey(
-                    selectedArchetype.value,
-                  ),
-                ),
-            );
-
-          return (
-            searchMatch
-            &&
-            sideMatch
-            &&
-            heroMatch
-            &&
-            categoryMatch
-            &&
-            archetypeMatch
-          );
-        },
-      );
-    }, [
-      sortedDecks,
-      search,
-      side,
-      hero,
-      category,
-      archetype,
-    ]);
+    });
+  }, [sortedDecks, search, side, hero, category, archetype]);
 
   const clearFilters = () => {
     setSearch("");
@@ -959,11 +621,10 @@ function DeckbuilderDecks() {
     setArchetype([]);
   };
 
-  const handleSideChange =
-    (newSide) => {
-      setSide(newSide);
-      clearFilters();
-    };
+  const handleSideChange = (newSide) => {
+    setSide(newSide);
+    clearFilters();
+  };
 
   if (loading) {
     return (
@@ -971,26 +632,16 @@ function DeckbuilderDecks() {
         <div className="loading-card">
           <div className="loading-spinner" />
 
-          <h2>
-            Loading decklists
-          </h2>
+          <h2>Loading decklists</h2>
 
-          <p>
-            Preparing this deckbuilder's decklists.
-          </p>
+          <p>Preparing this deckbuilder's decklists.</p>
 
           <div className="loading-status">
-            <span>
-              Loading deck data
-            </span>
+            <span>Loading deck data</span>
 
             <strong>
               {deckCount !== null
-                ? `${deckCount} ${
-                    deckCount === 1
-                      ? "deck"
-                      : "decks"
-                  }`
+                ? `${deckCount} ${deckCount === 1 ? "deck" : "decks"}`
                 : "Loading..."}
             </strong>
           </div>
@@ -1006,9 +657,7 @@ function DeckbuilderDecks() {
 
         <main className="deck-content">
           <div className="user-decklists-empty">
-            <h2>
-              Unable to load decklists
-            </h2>
+            <h2>Unable to load decklists</h2>
 
             <p>{error}</p>
           </div>
@@ -1019,24 +668,14 @@ function DeckbuilderDecks() {
     );
   }
 
-  const profile =
-    deckbuilder?.profile || null;
+  const profile = deckbuilder?.profile || null;
 
   const displayName =
-    normalizeText(
-      deckbuilder?.display_name,
-    )
-    ||
-    normalizeText(
-      deckbuilder?.deckbuilder_name,
-    )
-    ||
+    normalizeText(deckbuilder?.display_name) ||
+    normalizeText(deckbuilder?.deckbuilder_name) ||
     decodedDeckbuilderName;
 
-  const avatarUrl =
-    getAvatarUrl(
-      deckbuilder,
-    );
+  const avatarUrl = getAvatarUrl(deckbuilder);
 
   return (
     <div className="deck-page">
@@ -1051,23 +690,17 @@ function DeckbuilderDecks() {
                   src={avatarUrl}
                   alt={`${displayName} avatar`}
                   className="user-decklists-avatar-image"
-                  onError={() =>
-                    setAvatarError(true)
-                  }
+                  onError={() => setAvatarError(true)}
                 />
               ) : (
                 <div className="user-decklists-avatar-placeholder">
-                  {displayName
-                    .charAt(0)
-                    .toUpperCase()}
+                  {displayName.charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
 
             <div className="user-decklists-profile-info">
-              <h1>
-                {displayName} Decklists
-              </h1>
+              <h1>{displayName} Decklists</h1>
 
               {deckbuilder?.username && (
                 <p className="user-decklists-profile-bio">
@@ -1076,13 +709,12 @@ function DeckbuilderDecks() {
               )}
 
               {deckbuilder?.bio && (
-                <p className="user-decklists-profile-bio">
-                  {deckbuilder.bio}
-                </p>
+                <p className="user-decklists-profile-bio">{deckbuilder.bio}</p>
               )}
 
               <p className="user-decklists-profile-bio">
-                {deckCount ?? 0}{" Tbot Decks"}
+                {deckCount ?? 0}
+                {" Tbot Decks"}
               </p>
             </div>
           </div>
@@ -1090,9 +722,7 @@ function DeckbuilderDecks() {
           <div className="user-decklists-header-actions">
             {profile?.profile_slug && (
               <Link
-                to={`/profile/${encodeURIComponent(
-                  profile.profile_slug,
-                )}`}
+                to={`/profile/${encodeURIComponent(profile.profile_slug)}`}
                 className="user-decklists-share"
               >
                 View Profile
@@ -1105,61 +735,35 @@ function DeckbuilderDecks() {
           <div className="tabs">
             <button
               type="button"
-              className={
-                side === "All"
-                  ? "active"
-                  : ""
-              }
-              onClick={() =>
-                handleSideChange(
-                  "All",
-                )
-              }
+              className={side === "All" ? "active" : ""}
+              onClick={() => handleSideChange("All")}
             >
               All
             </button>
 
             <button
               type="button"
-              className={
-                side === "Plants"
-                  ? "active"
-                  : ""
-              }
-              onClick={() =>
-                handleSideChange(
-                  "Plants",
-                )
-              }
+              className={side === "Plants" ? "active" : ""}
+              onClick={() => handleSideChange("Plants")}
             >
               <img
                 src="https://i.ibb.co/fYHsRqP0/plants.png"
                 alt="Plants"
                 className="tab-icon"
               />
-
               Plants
             </button>
 
             <button
               type="button"
-              className={
-                side === "Zombies"
-                  ? "active"
-                  : ""
-              }
-              onClick={() =>
-                handleSideChange(
-                  "Zombies",
-                )
-              }
+              className={side === "Zombies" ? "active" : ""}
+              onClick={() => handleSideChange("Zombies")}
             >
               <img
                 src="https://i.ibb.co/pvT38Y1n/zombies.png"
                 alt="Zombies"
                 className="tab-icon"
               />
-
               Zombies
             </button>
           </div>
@@ -1169,11 +773,7 @@ function DeckbuilderDecks() {
               className="search"
               placeholder="Search decks, creators, heroes, cards..."
               value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value,
-                )
-              }
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
@@ -1181,9 +781,7 @@ function DeckbuilderDecks() {
             <div className="select-wrapper">
               <FilterDropdown
                 label="Hero"
-                options={
-                  heroOptions
-                }
+                options={heroOptions}
                 value={hero}
                 onChange={setHero}
                 multi
@@ -1193,9 +791,7 @@ function DeckbuilderDecks() {
             <div className="select-wrapper">
               <FilterDropdown
                 label="Category"
-                options={
-                  categoryOptions
-                }
+                options={categoryOptions}
                 value={category}
                 onChange={setCategory}
                 multi
@@ -1205,9 +801,7 @@ function DeckbuilderDecks() {
             <div className="select-wrapper archetype-select-wrapper">
               <FilterDropdown
                 label="Archetype"
-                options={
-                  archetypeOptions
-                }
+                options={archetypeOptions}
                 value={archetype}
                 onChange={setArchetype}
                 multi
@@ -1217,9 +811,7 @@ function DeckbuilderDecks() {
             <button
               type="button"
               className="clear-filter-btn"
-              onClick={
-                clearFilters
-              }
+              onClick={clearFilters}
             >
               Clear
             </button>
@@ -1228,43 +820,33 @@ function DeckbuilderDecks() {
 
         <div className="user-decklists-results-bar">
           <p className="results-count">
-            Showing{" "}
-            {filteredDecks.length} of{" "}
-            {decks.length} decks
+            Showing {filteredDecks.length} of {decks.length} decks
           </p>
         </div>
 
         {filteredDecks.length === 0 ? (
           <div className="user-decklists-empty">
-            <h2>
-              No decks found
-            </h2>
+            <h2>No decks found</h2>
 
             <p>
-              This deckbuilder hasn't
-              built any decks matching
-              these filters.
+              This deckbuilder hasn't built any decks matching these filters.
             </p>
           </div>
         ) : (
           <div className="deck-grid">
-            {filteredDecks.map(
-              (deck) => (
-                <DeckCard
-                  key={
-                    deck.deckid
-                    ||
-                    deck.deckID
-                    ||
-                    deck.id
-                    ||
-                    `${deck.side}-${deck.name}`
-                  }
-                  decklist={deck}
-                  allCards={allCards}
-                />
-              ),
-            )}
+            {filteredDecks.map((deck) => (
+              <DeckCard
+                key={
+                  deck.deckid ||
+                  deck.deckID ||
+                  deck.id ||
+                  `${deck.side}-${deck.name}`
+                }
+                decklist={deck}
+                allCards={allCards}
+                deckbuilder
+              />
+            ))}
           </div>
         )}
       </main>

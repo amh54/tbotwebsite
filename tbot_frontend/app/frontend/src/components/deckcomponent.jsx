@@ -218,26 +218,21 @@ const formatCardsDisplay = (value) => {
 
 function DeckCard({
   decklist,
-
   admin = false,
   adminMode = false,
   addMode = false,
-
   onDelete,
   onSave,
   onAdd,
   onComplete,
-
   editSaving = false,
-
   allCards = [],
-
   profileSlug = "",
   profileIsPublic = null,
-
-  // NEW:
-  // Used by the standalone deck page.
   autoOpen = false,
+  legacy = false,
+  decklists = false,
+  deckbuilder = false,
 }) {
   const deck = decklist ?? {};
 
@@ -486,64 +481,78 @@ function DeckCard({
   };
 
   const handleShare = async () => {
-  if (isAdmin) {
-    return;
-  }
+    if (isAdmin) {
+      return;
+    }
 
-  if (!deckKey) {
-    return;
-  }
+    if (!deckKey) {
+      return;
+    }
 
-  const resolvedProfileSlug = String(
-    profileSlug || deck.profile_slug || deck.profileSlug || "",
-  ).trim();
+    let shareUrl;
+ if (deckbuilder || decklists || legacy) {
+  shareUrl = new URL(
+    window.location.pathname,
+    window.location.origin,
+  );
 
-  const resolvedProfileIsPublic =
-    profileIsPublic !== null && profileIsPublic !== undefined
-      ? profileIsPublic === true
-      : deck.is_public === true ||
-        deck.profile_is_public === true ||
-        deck.profileIsPublic === true;
+  shareUrl.searchParams.set("deck", deckKey);
+}
+else {
+      const resolvedProfileSlug = String(
+        profileSlug || deck.profile_slug || deck.profileSlug || "",
+      ).trim();
 
-  let shareUrl;
+      const resolvedProfileIsPublic =
+        profileIsPublic !== null && profileIsPublic !== undefined
+          ? profileIsPublic === true
+          : deck.is_public === true ||
+            deck.profile_is_public === true ||
+            deck.profileIsPublic === true;
 
-  if (resolvedProfileIsPublic && resolvedProfileSlug) {
-    // Public profile:
-    // Open the profile page and automatically open this deck.
-    shareUrl = new URL(
-      `/profile/${encodeURIComponent(resolvedProfileSlug)}`,
-      window.location.origin,
-    );
+      if (resolvedProfileIsPublic && resolvedProfileSlug) {
+        /*
+         * Public profile:
+         * Open the profile page and automatically open this deck.
+         */
+        shareUrl = new URL(
+          `/profile/${encodeURIComponent(resolvedProfileSlug)}`,
+          window.location.origin,
+        );
 
-    shareUrl.searchParams.set("deck", deckKey);
-  } else if (resolvedProfileSlug) {
-    // Private profile:
-    // Open the standalone deck page without exposing the profile's decklist.
-    shareUrl = new URL(
-      `/deck/${encodeURIComponent(
-        resolvedProfileSlug,
-      )}/${encodeURIComponent(deckKey)}`,
-      window.location.origin,
-    );
-  } else {
-    console.error(
-      "Unable to create deck share link: profile slug is missing.",
-    );
-    return;
-  }
+        shareUrl.searchParams.set("deck", deckKey);
+      } else if (resolvedProfileSlug) {
+        /*
+         * Private profile:
+         * Open the standalone deck page without exposing
+         * the user's deck collection.
+         */
+        shareUrl = new URL(
+          `/deck/${encodeURIComponent(
+            resolvedProfileSlug,
+          )}/${encodeURIComponent(deckKey)}`,
+          window.location.origin,
+        );
+      } else {
+        console.error(
+          "Unable to create deck share link: profile slug is missing.",
+        );
+        return;
+      }
+    }
 
-  try {
-    await navigator.clipboard.writeText(shareUrl.toString());
+    try {
+      await navigator.clipboard.writeText(shareUrl.toString());
 
-    setCopied(true);
+      setCopied(true);
 
-    window.setTimeout(() => {
-      setCopied(false);
-    }, 2000);
-  } catch (error) {
-    console.error("Failed to copy link", error);
-  }
-};
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to copy link", error);
+    }
+  };
 
   const handleDownload = async () => {
     const imageUrl = getImageUrl(deck.image);
@@ -698,9 +707,7 @@ function DeckCard({
       </div>
 
       {open && (
-        <div
-          className="modal-overlay"
-        >
+        <div className="modal-overlay">
           <dialog
             open
             className="modal"

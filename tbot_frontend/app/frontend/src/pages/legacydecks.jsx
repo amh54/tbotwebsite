@@ -756,6 +756,7 @@ function LegacyDecksPage() {
                   }
                   decklist={deck}
                   allCards={allCards}
+                  legacy
                 />
               ))}
             </div>

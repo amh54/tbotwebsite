@@ -893,6 +893,7 @@ function DecklistsPage() {
                     deck.deckid || deck.deckID || deck.id || deck.name
                   }`}
                   decklist={deck}
+                  decklists
                 />
               ))}
             </div>
