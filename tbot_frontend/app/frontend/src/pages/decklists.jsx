@@ -5,6 +5,21 @@ import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 
+import {
+  ARCHETYPE_META,
+  CATEGORY_META,
+  COLLECTION_OPTIONS,
+  HERO_ALIAS,
+  normalizeText,
+  normalizeKey,
+  normalizeCardName,
+  normalizeSide,
+  parseDeckCards,
+  buildCollectionMap,
+  getDeckCollectionStatus,
+  getDeckKey,
+} from "../utils/deckFilters";
+
 import "../css/decklists.css";
 import "../css/navbar.css";
 import "../css/loading.css";
@@ -35,95 +50,6 @@ const STORAGE_KEYS = {
   deckCount: "tbot_deck_count",
 };
 
-const ARCHETYPE_META = {
-  aggro: {
-    icon: "⚡",
-    description:
-      "Attempts to kill the opponent as soon as possible, usually winning the game by turn 4-7.",
-  },
-  combo: {
-    icon: "🧩",
-    description:
-      "Uses a specific card synergy to do massive damage to the opponent (OTK or One Turn Kill decks).",
-  },
-  midrange: {
-    icon: "⚖️",
-    description:
-      "Slower than aggro, usually likes to set up earlygame boards into mid-cost cards to win the game.",
-  },
-  control: {
-    icon: "🛡️",
-    description:
-      "Focuses on removal and card advantage, winning in the late game.",
-  },
-  tempo: {
-    icon: "🏃",
-    description:
-      "Focuses on slowly building a big board, winning trades and overwhelming the opponent.",
-  },
-};
-
-const CATEGORY_META = {
-  budget: {
-    icon: "💵",
-    description: "Decks that are cheap for new players",
-  },
-  competitive: {
-    icon: "🏆",
-    description: "Some of the best decks in the game",
-  },
-  ladder: {
-    icon: "🪜",
-    description: "Decks that are mostly only good for ranked games",
-  },
-  meme: {
-    icon: "😂",
-    description: "Decks built for fun or unusual combos",
-  },
-};
-
-const HERO_ALIAS = {
-  bc: "beta-carrotina",
-  ct: "citron",
-  sf: "solar flare",
-  cz: "chompzilla",
-  gs: "green shadow",
-  gk: "grass knuckles",
-  sp: "spudow",
-  nc: "night cap",
-  ro: "rose",
-  cc: "captain combustible",
-  sb: "super brainz",
-  sm: "the smash",
-  if: "impfinity",
-  rb: "rustbolt",
-  eb: "electric boogaloo",
-  bf: "brain freeze",
-  pb: "professor brainstorm",
-  im: "immorticia",
-  zm: "z-mech",
-  nt: "neptuna",
-  hg: "huge-giganticus",
-};
-
-function normalizeText(value) {
-  return String(value ?? "").trim();
-}
-
-function normalizeKey(value) {
-  return normalizeText(value).toLowerCase();
-}
-
-function parseDeckCards(value) {
-  return String(value ?? "")
-    .replace(/\\\r\n/g, "\n")
-    .replace(/\\\n/g, "\n")
-    .replace(/\\\r/g, "\r")
-    .split(/\r?\n|,/)
-    .map((card) => card.trim())
-    .filter(Boolean);
-}
-
 function readSessionCache(key, fallback) {
   if (typeof window === "undefined") {
     return fallback;
@@ -139,7 +65,6 @@ function readSessionCache(key, fallback) {
     return JSON.parse(value);
   } catch (error) {
     console.warn(`Unable to read session cache "${key}":`, error);
-
     return fallback;
   }
 }
@@ -157,25 +82,11 @@ function writeSessionCache(key, value) {
 }
 
 function DecklistsPage() {
-  /*
-   * ------------------------------------------------------------
-   * INITIAL CACHE
-   * ------------------------------------------------------------
-   */
-
   const initialDecks = readSessionCache(STORAGE_KEYS.decks, []);
-
   const initialCards = readSessionCache(STORAGE_KEYS.cards, []);
-
   const initialDeckCount = readSessionCache(STORAGE_KEYS.deckCount, null);
 
   const hasCachedDecks = Array.isArray(initialDecks) && initialDecks.length > 0;
-
-  /*
-   * ------------------------------------------------------------
-   * STATE
-   * ------------------------------------------------------------
-   */
 
   const [decks, setDecks] = useState(
     Array.isArray(initialDecks) ? initialDecks : [],
@@ -189,28 +100,28 @@ function DecklistsPage() {
     Number.isFinite(Number(initialDeckCount)) ? Number(initialDeckCount) : null,
   );
 
-  /*
-   * IMPORTANT:
-   *
-   * If cached decks exist, loading is immediately false.
-   *
-   * If they don't exist, loading stays true until the
-   * deck API request finishes.
-   */
   const [loading, setLoading] = useState(!hasCachedDecks);
-
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
+
   const [hero, setHero] = useState([]);
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
+  const [collection, setCollection] = useState(null);
+
+  const [discordUser, setDiscordUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const [userCollection, setUserCollection] = useState([]);
+  const [collectionLoading, setCollectionLoading] = useState(false);
+  const [collectionLoaded, setCollectionLoaded] = useState(false);
 
   /*
-   * ------------------------------------------------------------
-   * PAGE TITLE
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * Document title
+   * --------------------------------------------------------------------------
    */
 
   useEffect(() => {
@@ -222,12 +133,9 @@ function DecklistsPage() {
   }, []);
 
   /*
-   * ------------------------------------------------------------
-   * DECKS
-   * ------------------------------------------------------------
-   *
-   * This is the ONLY request that controls the initial
-   * loading screen.
+   * --------------------------------------------------------------------------
+   * Load decks
+   * --------------------------------------------------------------------------
    */
 
   useEffect(() => {
@@ -254,9 +162,7 @@ function DecklistsPage() {
             } else if (payload?.error) {
               message += `: ${payload.error}`;
             }
-          } catch {
-            // Ignore invalid error response.
-          }
+          } catch {}
 
           throw new Error(message);
         }
@@ -279,20 +185,9 @@ function DecklistsPage() {
             ? data.results
             : [];
 
-        /*
-         * Update the page.
-         */
         setDecks(results);
-
-        /*
-         * Update the persistent tab cache.
-         */
         writeSessionCache(STORAGE_KEYS.decks, results);
 
-        /*
-         * If the count endpoint hasn't returned yet,
-         * the deck result itself gives us a fallback.
-         */
         setTotalDecks((currentCount) => {
           if (currentCount !== null && currentCount > 0) {
             return currentCount;
@@ -301,16 +196,6 @@ function DecklistsPage() {
           return results.length;
         });
 
-        /*
-         * Save fallback count too.
-         */
-        if (totalDecks === null && results.length > 0) {
-          writeSessionCache(STORAGE_KEYS.deckCount, results.length);
-        }
-
-        /*
-         * The initial load is finished.
-         */
         setLoading(false);
         setError("");
       } catch (err) {
@@ -320,22 +205,12 @@ function DecklistsPage() {
 
         console.error("Unable to load decklists:", err);
 
-        /*
-         * If we already had cached decks, don't destroy
-         * the page just because the refresh failed.
-         */
         if (hasCachedDecks) {
-          console.warn("Using cached decklists because refresh failed.");
-
           setLoading(false);
           setError("");
-
           return;
         }
 
-        /*
-         * No cache + API failure = actual page error.
-         */
         setLoading(false);
 
         setError(
@@ -352,11 +227,62 @@ function DecklistsPage() {
   }, []);
 
   /*
-   * ------------------------------------------------------------
-   * CARD INFORMATION
-   * ------------------------------------------------------------
-   *
-   * Cards never control the loading screen.
+   * --------------------------------------------------------------------------
+   * Check Discord authentication
+   * --------------------------------------------------------------------------
+   */
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchDiscordUser = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/discord/me/`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Discord authentication request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+
+        if (data?.authenticated && data?.user) {
+          setDiscordUser(data.user);
+        } else {
+          setDiscordUser(null);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to check Discord authentication:", err);
+
+          setDiscordUser(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setAuthLoading(false);
+        }
+      }
+    };
+
+    fetchDiscordUser();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Load all card information
+   * --------------------------------------------------------------------------
    */
 
   useEffect(() => {
@@ -383,7 +309,6 @@ function DecklistsPage() {
         const cards = Array.isArray(data) ? data : [];
 
         setAllCards(cards);
-
         writeSessionCache(STORAGE_KEYS.cards, cards);
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -400,11 +325,9 @@ function DecklistsPage() {
   }, []);
 
   /*
-   * ------------------------------------------------------------
-   * DECK COUNT
-   * ------------------------------------------------------------
-   *
-   * Deck count never controls the loading screen.
+   * --------------------------------------------------------------------------
+   * Load deck count
+   * --------------------------------------------------------------------------
    */
 
   useEffect(() => {
@@ -430,12 +353,10 @@ function DecklistsPage() {
         }
 
         const data = await response.json();
-
         const count = Number(data?.count);
 
         if (Number.isFinite(count)) {
           setTotalDecks(count);
-
           writeSessionCache(STORAGE_KEYS.deckCount, count);
         }
       } catch (err) {
@@ -453,9 +374,87 @@ function DecklistsPage() {
   }, []);
 
   /*
-   * ------------------------------------------------------------
-   * SIDE FILTER
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * Load user collection ONLY after authentication succeeds
+   * --------------------------------------------------------------------------
+   */
+
+  useEffect(() => {
+    if (authLoading) {
+      return undefined;
+    }
+
+    if (!discordUser) {
+      setUserCollection([]);
+      setCollectionLoading(false);
+      setCollectionLoaded(false);
+      setCollection(null);
+
+      return undefined;
+    }
+
+    const controller = new AbortController();
+
+    const fetchUserCollection = async () => {
+      setCollectionLoading(true);
+      setCollectionLoaded(false);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/user-cards/`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `User collection request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+
+        let collectionData = [];
+
+        if (Array.isArray(data)) {
+          collectionData = data;
+        } else if (Array.isArray(data?.cards)) {
+          collectionData = data.cards;
+        } else if (Array.isArray(data?.results)) {
+          collectionData = data.results;
+        }
+
+        setUserCollection(collectionData);
+        setCollectionLoaded(true);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load user collection:", err);
+
+          setUserCollection([]);
+          setCollection(null);
+          setCollectionLoaded(false);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setCollectionLoading(false);
+        }
+      }
+    };
+
+    fetchUserCollection();
+
+    return () => {
+      controller.abort();
+    };
+  }, [discordUser, authLoading]);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Side filtering
+   * --------------------------------------------------------------------------
    */
 
   const sideFilteredDecks = useMemo(() => {
@@ -463,15 +462,15 @@ function DecklistsPage() {
       return decks;
     }
 
-    const selectedSide = normalizeKey(side);
+    const selectedSide = normalizeSide(side);
 
-    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
+    return decks.filter((deck) => normalizeSide(deck?.side) === selectedSide);
   }, [decks, side]);
 
   /*
-   * ------------------------------------------------------------
-   * HERO OPTIONS
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * Hero options
+   * --------------------------------------------------------------------------
    */
 
   const heroOptions = useMemo(() => {
@@ -491,7 +490,7 @@ function DecklistsPage() {
           value: heroName,
           label: heroName,
           count: 0,
-          side: normalizeKey(deck.side),
+          side: normalizeSide(deck.side),
         });
       }
 
@@ -501,7 +500,9 @@ function DecklistsPage() {
     return Array.from(heroMap.values())
       .map((option) => {
         const matchedCard = allCards.find(
-          (card) => normalizeKey(card.card_name) === normalizeKey(option.label),
+          (card) =>
+            normalizeCardName(card.card_name) ===
+            normalizeCardName(option.label),
         );
 
         return {
@@ -518,9 +519,9 @@ function DecklistsPage() {
   }, [sideFilteredDecks, allCards]);
 
   /*
-   * ------------------------------------------------------------
-   * CATEGORY OPTIONS
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * Category options
+   * --------------------------------------------------------------------------
    */
 
   const categoryOptions = useMemo(() => {
@@ -540,7 +541,7 @@ function DecklistsPage() {
           value: categoryName,
           label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
           count: 0,
-          ...CATEGORY_META[key],
+          ...(CATEGORY_META[key] || {}),
         });
       }
 
@@ -555,9 +556,9 @@ function DecklistsPage() {
   }, [sideFilteredDecks]);
 
   /*
-   * ------------------------------------------------------------
-   * ARCHETYPE OPTIONS
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * Archetype options
+   * --------------------------------------------------------------------------
    */
 
   const archetypeOptions = useMemo(() => {
@@ -592,9 +593,9 @@ function DecklistsPage() {
   }, [sideFilteredDecks]);
 
   /*
-   * ------------------------------------------------------------
-   * SORTING
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * Sorted decks
+   * --------------------------------------------------------------------------
    */
 
   const sortedDecks = useMemo(() => {
@@ -604,8 +605,8 @@ function DecklistsPage() {
         zombies: 1,
       };
 
-      const sideA = normalizeKey(a.side);
-      const sideB = normalizeKey(b.side);
+      const sideA = normalizeSide(a.side);
+      const sideB = normalizeSide(b.side);
 
       const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
 
@@ -636,9 +637,46 @@ function DecklistsPage() {
   }, [decks]);
 
   /*
-   * ------------------------------------------------------------
-   * SEARCH + FILTERS
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * Collection map
+   * --------------------------------------------------------------------------
+   */
+
+  const collectionMap = useMemo(() => {
+    if (!collectionLoaded || collectionLoading || !discordUser) {
+      return new Map();
+    }
+
+    return buildCollectionMap(userCollection);
+  }, [userCollection, collectionLoaded, collectionLoading, discordUser]);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Deck collection status
+   * --------------------------------------------------------------------------
+   */
+
+  const deckCollectionStatus = useMemo(() => {
+    const statusMap = new Map();
+
+    if (!discordUser || !collectionLoaded || collectionLoading) {
+      return statusMap;
+    }
+
+    decks.forEach((deck) => {
+      statusMap.set(
+        getDeckKey(deck),
+        getDeckCollectionStatus(deck, collectionMap),
+      );
+    });
+
+    return statusMap;
+  }, [decks, collectionMap, discordUser, collectionLoaded, collectionLoading]);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Filtered decks
+   * --------------------------------------------------------------------------
    */
 
   const filteredDecks = useMemo(() => {
@@ -664,6 +702,10 @@ function DecklistsPage() {
         .filter(Boolean)
         .map((value) => normalizeKey(value));
 
+      /*
+       * Search
+       */
+
       let searchMatch = true;
 
       if (searchValue) {
@@ -682,9 +724,17 @@ function DecklistsPage() {
         }
       }
 
-      const deckSide = normalizeKey(deck.side);
+      /*
+       * Side
+       */
 
-      const sideMatch = side === "All" || deckSide === normalizeKey(side);
+      const deckSide = normalizeSide(deck.side);
+
+      const sideMatch = side === "All" || deckSide === normalizeSide(side);
+
+      /*
+       * Hero
+       */
 
       const heroMatch =
         hero.length === 0 ||
@@ -692,6 +742,10 @@ function DecklistsPage() {
           (selectedHero) =>
             normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
         );
+
+      /*
+       * Category
+       */
 
       const categoryMatch =
         category.length === 0 ||
@@ -701,6 +755,10 @@ function DecklistsPage() {
             normalizeKey(selectedCategory.value),
         );
 
+      /*
+       * Archetype
+       */
+
       const deckArchetype = normalizeKey(deck.archetype);
 
       const archetypeMatch =
@@ -709,16 +767,53 @@ function DecklistsPage() {
           deckArchetype.includes(normalizeKey(selectedArchetype.value)),
         );
 
+      /*
+       * Collection
+       */
+
+      let collectionMatch = true;
+
+      if (collection?.value) {
+        if (!discordUser || !collectionLoaded || collectionLoading) {
+          collectionMatch = false;
+        } else {
+          const status = deckCollectionStatus.get(getDeckKey(deck));
+
+          if (collection.value === "buildable") {
+            collectionMatch = status?.buildable === true;
+          } else if (collection.value === "close") {
+            collectionMatch = status?.close === true;
+          }
+        }
+      }
+
       return (
-        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
+        searchMatch &&
+        sideMatch &&
+        heroMatch &&
+        categoryMatch &&
+        archetypeMatch &&
+        collectionMatch
       );
     });
-  }, [sortedDecks, search, side, hero, category, archetype]);
+  }, [
+    sortedDecks,
+    search,
+    side,
+    hero,
+    category,
+    archetype,
+    collection,
+    deckCollectionStatus,
+    discordUser,
+    collectionLoaded,
+    collectionLoading,
+  ]);
 
   /*
-   * ------------------------------------------------------------
-   * CLEAR FILTERS
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * Clear filters
+   * --------------------------------------------------------------------------
    */
 
   const clearFilters = () => {
@@ -726,13 +821,8 @@ function DecklistsPage() {
     setHero([]);
     setCategory([]);
     setArchetype([]);
+    setCollection(null);
   };
-
-  /*
-   * ------------------------------------------------------------
-   * SIDE CHANGE
-   * ------------------------------------------------------------
-   */
 
   const handleSideChange = (newSide) => {
     setSide(newSide);
@@ -740,9 +830,61 @@ function DecklistsPage() {
   };
 
   /*
-   * ------------------------------------------------------------
-   * INITIAL LOADING
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * Collection dropdown counts
+   * --------------------------------------------------------------------------
+   */
+
+  const collectionOptions = useMemo(() => {
+    if (!discordUser || authLoading || collectionLoading || !collectionLoaded) {
+      return COLLECTION_OPTIONS;
+    }
+
+    let buildableCount = 0;
+    let closeCount = 0;
+
+    decks.forEach((deck) => {
+      const status = getDeckCollectionStatus(deck, collectionMap);
+
+      if (status.buildable) {
+        buildableCount += 1;
+      }
+
+      if (status.close) {
+        closeCount += 1;
+      }
+    });
+
+    return COLLECTION_OPTIONS.map((option) => {
+      if (option.value === "buildable") {
+        return {
+          ...option,
+          count: buildableCount,
+        };
+      }
+
+      if (option.value === "close") {
+        return {
+          ...option,
+          count: closeCount,
+        };
+      }
+
+      return option;
+    });
+  }, [
+    decks,
+    collectionMap,
+    discordUser,
+    authLoading,
+    collectionLoading,
+    collectionLoaded,
+  ]);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Loading screen
+   * --------------------------------------------------------------------------
    */
 
   if (loading) {
@@ -768,9 +910,9 @@ function DecklistsPage() {
   }
 
   /*
-   * ------------------------------------------------------------
-   * PAGE
-   * ------------------------------------------------------------
+   * --------------------------------------------------------------------------
+   * Render
+   * --------------------------------------------------------------------------
    */
 
   return (
@@ -863,6 +1005,18 @@ function DecklistsPage() {
               />
             </div>
 
+            {!authLoading && discordUser && (
+              <div className="select-wrapper">
+                <FilterDropdown
+                  label="Collection"
+                  options={collectionOptions}
+                  value={collection}
+                  onChange={setCollection}
+                  multi={false}
+                />
+              </div>
+            )}
+
             <button
               type="button"
               className="clear-filter-btn"
@@ -882,6 +1036,20 @@ function DecklistsPage() {
           </p>
         )}
 
+        {!authLoading && discordUser && collectionLoading && (
+          <p className="results-count">Loading your collection...</p>
+        )}
+
+        {!authLoading &&
+          discordUser &&
+          !collectionLoading &&
+          !collectionLoaded && (
+            <p className="results-count">
+              Unable to load your collection. Collection filters are temporarily
+              unavailable.
+            </p>
+          )}
+
         {!error && filteredDecks.length === 0 ? (
           <p className="no-results">No decklists found.</p>
         ) : (
@@ -889,9 +1057,7 @@ function DecklistsPage() {
             <div className="deck-grid">
               {filteredDecks.map((deck) => (
                 <DeckCard
-                  key={`${deck.side}-${
-                    deck.deckid || deck.deckID || deck.id || deck.name
-                  }`}
+                  key={`${normalizeSide(deck.side)}-${getDeckKey(deck)}`}
                   decklist={deck}
                   decklists
                 />

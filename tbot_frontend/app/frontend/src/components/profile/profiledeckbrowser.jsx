@@ -2,136 +2,70 @@ import { useMemo, useState } from "react";
 
 import DeckCard from "../deckcomponent";
 import FilterDropdown from "../filterdropdown";
-import "../../css/userdecklists.css"
-const ARCHETYPE_META = {
-  aggro: {
-    icon: "⚡",
-    description:
-      "Attempts to kill the opponent as soon as possible, usually winning the game by turn 4-7.",
-  },
-  combo: {
-    icon: "🧩",
-    description:
-      "Uses a specific card synergy to do massive damage to the opponent (OTK or One Turn Kill decks).",
-  },
-  midrange: {
-    icon: "⚖️",
-    description:
-      "Slower than aggro, usually likes to set up earlygame boards into mid-cost cards to win the opponent.",
-  },
-  control: {
-    icon: "🛡️",
-    description:
-      "Focuses on removal and card advantage, winning in the late game.",
-  },
-  tempo: {
-    icon: "🏃",
-    description:
-      "Focuses on slowly building a big board, winning trades and overwhelming the opponent.",
-  },
-};
 
-const CATEGORY_META = {
-  budget: {
-    icon: "💵",
-    description: "Decks that are cheap for new players",
-  },
-  competitive: {
-    icon: "🏆",
-    description: "Some of the best decks in the game",
-  },
-  ladder: {
-    icon: "🪜",
-    description: "Decks that are mostly only good for ranked games",
-  },
-  meme: {
-    icon: "😂",
-    description: "Decks built for fun or unusual combos",
-  },
-};
+import {
+  ARCHETYPE_META,
+  CATEGORY_META,
+  COLLECTION_OPTIONS,
+  HERO_ALIAS,
+  normalizeText,
+  normalizeKey,
+  normalizeSide,
+  parseDeckCards,
+  parseCategories,
+  parseArchetypes,
+  buildCollectionMap,
+  getDeckCollectionStatus,
+} from "../../utils/deckFilters";
 
-const HERO_ALIAS = {
-  bc: "beta-carrotina",
-  ct: "citron",
-  sf: "solar flare",
-  cz: "chompzilla",
-  gs: "green shadow",
-  gk: "grass knuckles",
-  sp: "spudow",
-  nc: "night cap",
-  ro: "rose",
-  cc: "captain combustible",
-  sb: "super brainz",
-  sm: "the smash",
-  if: "impfinity",
-  rb: "rustbolt",
-  eb: "electric boogaloo",
-  bf: "brain freeze",
-  pb: "professor brainstorm",
-  im: "immorticia",
-  zm: "z-mech",
-  nt: "neptuna",
-  hg: "huge-giganticus",
-};
+import "../../css/userdecklists.css";
 
-const normalizeText = (value) => String(value ?? "").trim();
-
-const normalizeKey = (value) => normalizeText(value).toLowerCase();
-
-const parseDeckCards = (value) => {
-  return String(value ?? "")
-    .replace(/\\\\\r\n/g, "\n")
-    .replace(/\\\\\n/g, "\n")
-    .replace(/\\\\\r/g, "\r")
-    .split(/\r?\n|,/)
-    .map((card) => card.trim())
-    .filter(Boolean);
-};
-
-const parseCategories = (value) => {
-  const text = normalizeText(value);
-
-  if (!text) {
-    return [];
-  }
-
-  return text
-    .toLowerCase()
-    .split(/[\s,;/|]+/)
-    .map((category) => category.trim())
-    .filter(Boolean);
-};
-
-const parseArchetypes = (value) => {
-  const text = normalizeText(value);
-
-  if (!text) {
-    return [];
-  }
-
-  return text
-    .toLowerCase()
-    .split(/[\s,;/|]+/)
-    .map((archetype) => archetype.trim())
-    .filter(Boolean);
-};
-
-function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
+function ProfileDeckBrowser({
+  decks = [],
+  allCards = [],
+  userCards = [],
+  profileSlug,
+  profileIsPublic,
+}) {
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
   const [hero, setHero] = useState([]);
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
+  const [collection, setCollection] = useState([]);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Collection map
+   * --------------------------------------------------------------------------
+   */
+
+  const collectionMap = useMemo(
+    () => buildCollectionMap(userCards),
+    [userCards],
+  );
+
+  /*
+   * --------------------------------------------------------------------------
+   * Side filtering
+   * --------------------------------------------------------------------------
+   */
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
     }
 
-    const selectedSide = normalizeKey(side);
+    const selectedSide = normalizeSide(side);
 
-    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
+    return decks.filter((deck) => normalizeSide(deck.side) === selectedSide);
   }, [decks, side]);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Hero options
+   * --------------------------------------------------------------------------
+   */
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
@@ -175,6 +109,12 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
       );
   }, [sideFilteredDecks, allCards]);
 
+  /*
+   * --------------------------------------------------------------------------
+   * Category options
+   * --------------------------------------------------------------------------
+   */
+
   const categoryOptions = useMemo(() => {
     const categoryMap = new Map();
 
@@ -206,6 +146,12 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
     );
   }, [sideFilteredDecks]);
 
+  /*
+   * --------------------------------------------------------------------------
+   * Archetype options
+   * --------------------------------------------------------------------------
+   */
+
   const archetypeOptions = useMemo(() => {
     const counts = {};
 
@@ -233,6 +179,12 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
 
+  /*
+   * --------------------------------------------------------------------------
+   * Sort decks
+   * --------------------------------------------------------------------------
+   */
+
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
       const sideOrder = {
@@ -240,8 +192,8 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
         zombies: 1,
       };
 
-      const sideA = normalizeKey(a.side);
-      const sideB = normalizeKey(b.side);
+      const sideA = normalizeSide(a.side);
+      const sideB = normalizeSide(b.side);
 
       const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
 
@@ -271,6 +223,12 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
     });
   }, [decks]);
 
+  /*
+   * --------------------------------------------------------------------------
+   * Apply all filters
+   * --------------------------------------------------------------------------
+   */
+
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
 
@@ -279,6 +237,10 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
       : "";
 
     return sortedDecks.filter((deck) => {
+      /*
+       * Search
+       */
+
       const deckCards = parseDeckCards(deck.cards);
 
       const searchableCardValues = deckCards.map((card) => normalizeKey(card));
@@ -312,9 +274,17 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
         }
       }
 
-      const deckSide = normalizeKey(deck.side);
+      /*
+       * Side
+       */
 
-      const sideMatch = side === "All" || deckSide === normalizeKey(side);
+      const deckSide = normalizeSide(deck.side);
+
+      const sideMatch = side === "All" || deckSide === normalizeSide(side);
+
+      /*
+       * Hero
+       */
 
       const heroMatch =
         hero.length === 0 ||
@@ -322,6 +292,10 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
           (selectedHero) =>
             normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
         );
+
+      /*
+       * Category
+       */
 
       const deckCategories = parseCategories(deck.category);
 
@@ -331,6 +305,10 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
           deckCategories.includes(normalizeKey(selectedCategory.value)),
         );
 
+      /*
+       * Archetype
+       */
+
       const deckArchetypes = parseArchetypes(deck.archetype);
 
       const archetypeMatch =
@@ -339,23 +317,76 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
           deckArchetypes.includes(normalizeKey(selectedArchetype.value)),
         );
 
+      /*
+       * Collection
+       */
+
+      const collectionMatch =
+        collection.length === 0 ||
+        collection.every((selectedCollection) => {
+          const status = getDeckCollectionStatus(deck, collectionMap);
+
+          if (selectedCollection.value === "buildable") {
+            return status.buildable;
+          }
+
+          if (selectedCollection.value === "close") {
+            return status.close;
+          }
+
+          return true;
+        });
+
       return (
-        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
+        searchMatch &&
+        sideMatch &&
+        heroMatch &&
+        categoryMatch &&
+        archetypeMatch &&
+        collectionMatch
       );
     });
-  }, [sortedDecks, search, side, hero, category, archetype]);
+  }, [
+    sortedDecks,
+    search,
+    side,
+    hero,
+    category,
+    archetype,
+    collection,
+    collectionMap,
+  ]);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Clear filters
+   * --------------------------------------------------------------------------
+   */
 
   const clearFilters = () => {
     setSearch("");
     setHero([]);
     setCategory([]);
     setArchetype([]);
+    setCollection([]);
   };
+
+  /*
+   * --------------------------------------------------------------------------
+   * Side change
+   * --------------------------------------------------------------------------
+   */
 
   const handleSideChange = (newSide) => {
     setSide(newSide);
     clearFilters();
   };
+
+  /*
+   * --------------------------------------------------------------------------
+   * Render
+   * --------------------------------------------------------------------------
+   */
 
   return (
     <section className="profile-decks">
@@ -450,6 +481,16 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
             />
           </div>
 
+          <div className="select-wrapper">
+            <FilterDropdown
+              label="Collection"
+              options={COLLECTION_OPTIONS}
+              value={collection}
+              onChange={setCollection}
+              multi
+            />
+          </div>
+
           <button
             type="button"
             className="clear-filter-btn"
@@ -480,7 +521,7 @@ function ProfileDeckBrowser({ decks, allCards, profileSlug, profileIsPublic }) {
                 deck.deckid ||
                 deck.deckID ||
                 deck.id ||
-                `${deck.side}-${deck.name}`
+                `${normalizeSide(deck.side)}-${normalizeKey(deck.name)}`
               }
               decklist={deck}
               allCards={allCards}

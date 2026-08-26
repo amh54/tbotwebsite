@@ -3,14 +3,34 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import DeckCard from "../components/deckcomponent";
+
 import FilterDropdown from "../components/filterdropdown";
 
 import Navbar from "../components/navbar";
+
 import Footer from "../components/footer";
 
+import {
+  ARCHETYPE_META,
+  CATEGORY_META,
+  COLLECTION_OPTIONS,
+  HERO_ALIAS,
+  normalizeText,
+  normalizeKey,
+  normalizeCardName,
+  normalizeSide,
+  parseDeckCards,
+  buildCollectionMap,
+  getDeckCollectionStatus,
+  getDeckKey,
+} from "../utils/deckFilters";
+
 import "../css/decklists.css";
+
 import "../css/navbar.css";
+
 import "../css/loading.css";
+
 import "../css/userdecklists.css";
 
 const getApiBaseUrl = () => {
@@ -20,12 +40,12 @@ const getApiBaseUrl = () => {
     return envBaseUrl.replace(/\/+$/, "");
   }
 
-  if (
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1")
-  ) {
-    return "http://localhost:8000";
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:8000";
+    }
   }
 
   return "";
@@ -33,194 +53,46 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-const ARCHETYPE_META = {
-  aggro: {
-    icon: "⚡",
-    description:
-      "Attempts to kill the opponent as soon as possible, usually winning the game by turn 4-7.",
-  },
-
-  combo: {
-    icon: "🧩",
-    description:
-      "Uses a specific card synergy to do massive damage to the opponent.",
-  },
-
-  midrange: {
-    icon: "⚖️",
-    description:
-      "Slower than aggro, usually likes to set up earlygame boards into mid-cost cards.",
-  },
-
-  control: {
-    icon: "🛡️",
-    description:
-      "Focuses on removal and card advantage, winning in the late game.",
-  },
-
-  tempo: {
-    icon: "🏃",
-    description:
-      "Focuses on slowly building a big board, winning trades and overwhelming the opponent.",
-  },
-};
-
-const CATEGORY_META = {
-  budget: {
-    icon: "💵",
-    description: "Decks that are cheap for new players",
-  },
-
-  competitive: {
-    icon: "🏆",
-    description: "Some of the best decks in the game",
-  },
-
-  ladder: {
-    icon: "🪜",
-    description: "Decks that are mostly only good for ranked games",
-  },
-
-  meme: {
-    icon: "😂",
-    description: "Decks built for fun or unusual combos",
-  },
-};
-
-const HERO_ALIAS = {
-  bc: "beta-carrotina",
-  ct: "citron",
-  sf: "solar flare",
-  cz: "chompzilla",
-  gs: "green shadow",
-  gk: "grass knuckles",
-  sp: "spudow",
-  nc: "night cap",
-  ro: "rose",
-  cc: "captain combustible",
-  sb: "super brainz",
-  sm: "the smash",
-  if: "impfinity",
-  rb: "rustbolt",
-  eb: "electric boogaloo",
-  bf: "brain freeze",
-  pb: "professor brainstorm",
-  im: "immorticia",
-  zm: "z-mech",
-  nt: "neptuna",
-  hg: "huge-giganticus",
-};
-
-const normalizeText = (value) => String(value ?? "").trim();
-
-const normalizeKey = (value) => normalizeText(value).toLowerCase();
-
-const parseDeckCards = (value) => {
-  return String(value ?? "")
-    .replace(/\\\\\r\n/g, "\n")
-    .replace(/\\\\\n/g, "\n")
-    .replace(/\\\\\r/g, "\r")
-    .split(/\r?\n|,/)
-    .map((card) => card.trim())
-    .filter(Boolean);
-};
-
-const parseCategories = (value) => {
-  const text = normalizeText(value);
-
-  if (!text) {
-    return [];
-  }
-
-  return text
-    .toLowerCase()
-    .split(/[\s,;/|]+/)
-    .map((category) => category.trim())
-    .filter(Boolean);
-};
-
-const parseArchetypes = (value) => {
-  const text = normalizeText(value);
-
-  if (!text) {
-    return [];
-  }
-
-  return text
-    .toLowerCase()
-    .split(/[\s,;/|]+/)
-    .map((archetype) => archetype.trim())
-    .filter(Boolean);
-};
-
-const getAvatarUrl = (profile) => {
-  if (!profile) {
-    return "";
-  }
-
-  const avatar = normalizeText(profile.avatar);
-
-  const discordId = normalizeText(profile.discord_id);
-
-  if (!avatar) {
-    if (discordId) {
-      const numericId = Number(discordId);
-
-      if (Number.isSafeInteger(numericId) && numericId >= 0) {
-        const defaultAvatarIndex = (numericId >> 22) % 6;
-
-        return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
-      }
-    }
-
-    return "";
-  }
-
-  if (
-    avatar.startsWith("http://") ||
-    avatar.startsWith("https://") ||
-    avatar.startsWith("//")
-  ) {
-    return avatar;
-  }
-
-  if (discordId) {
-    const extension = avatar.startsWith("a_") ? "gif" : "png";
-
-    return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=256`;
-  }
-
-  return "";
-};
-
 function DeckbuilderDecks() {
   const { deckbuilder_name } = useParams();
 
   const decodedDeckbuilderName = decodeURIComponent(deckbuilder_name || "");
 
   const [deckbuilder, setDeckbuilder] = useState(null);
-
   const [decks, setDecks] = useState([]);
-
   const [deckCount, setDeckCount] = useState(null);
-
   const [allCards, setAllCards] = useState([]);
 
   const [search, setSearch] = useState("");
-
   const [side, setSide] = useState("All");
-
   const [hero, setHero] = useState([]);
-
   const [category, setCategory] = useState([]);
-
   const [archetype, setArchetype] = useState([]);
+  const [collection, setCollection] = useState(null);
 
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
 
   const [avatarError, setAvatarError] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // Discord authentication
+  // --------------------------------------------------------------------------
+
+  const [discordUser, setDiscordUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // --------------------------------------------------------------------------
+  // User collection
+  // --------------------------------------------------------------------------
+
+  const [userCollection, setUserCollection] = useState([]);
+  const [collectionLoading, setCollectionLoading] = useState(false);
+  const [collectionLoaded, setCollectionLoaded] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // Document title
+  // --------------------------------------------------------------------------
 
   useEffect(() => {
     document.title = `${decodedDeckbuilderName} Decklists`;
@@ -229,6 +101,10 @@ function DeckbuilderDecks() {
       document.title = "Tbot";
     };
   }, [decodedDeckbuilderName]);
+
+  // --------------------------------------------------------------------------
+  // Load deck count
+  // --------------------------------------------------------------------------
 
   useEffect(() => {
     const controller = new AbortController();
@@ -275,11 +151,14 @@ function DeckbuilderDecks() {
     return () => controller.abort();
   }, [decodedDeckbuilderName]);
 
+  // --------------------------------------------------------------------------
+  // Load deckbuilder decks
+  // --------------------------------------------------------------------------
+
   useEffect(() => {
     const controller = new AbortController();
 
     const loadingStartTime = Date.now();
-
     const minimumLoadingTime = 1200;
 
     const loadDeckbuilderDecks = async () => {
@@ -348,6 +227,10 @@ function DeckbuilderDecks() {
     return () => controller.abort();
   }, [decodedDeckbuilderName]);
 
+  // --------------------------------------------------------------------------
+  // Load all card information
+  // --------------------------------------------------------------------------
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -386,19 +269,197 @@ function DeckbuilderDecks() {
     return () => controller.abort();
   }, []);
 
+  // --------------------------------------------------------------------------
+  // Check Discord authentication
+  // --------------------------------------------------------------------------
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchDiscordUser = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/discord/me/`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Discord authentication request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+
+        if (data?.authenticated && data?.user) {
+          setDiscordUser(data.user);
+        } else {
+          setDiscordUser(null);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to check Discord authentication:", err);
+
+          setDiscordUser(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setAuthLoading(false);
+        }
+      }
+    };
+
+    fetchDiscordUser();
+
+    return () => controller.abort();
+  }, []);
+
+  // --------------------------------------------------------------------------
+  // Load user collection ONLY after authentication succeeds
+  // --------------------------------------------------------------------------
+
+  useEffect(() => {
+    if (authLoading) {
+      return undefined;
+    }
+
+    if (!discordUser) {
+      setUserCollection([]);
+      setCollectionLoading(false);
+      setCollectionLoaded(false);
+      setCollection(null);
+
+      return undefined;
+    }
+
+    const controller = new AbortController();
+
+    const fetchUserCollection = async () => {
+      setCollectionLoading(true);
+      setCollectionLoaded(false);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/user-cards/`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `User collection request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+
+        let collectionData = [];
+
+        if (Array.isArray(data)) {
+          collectionData = data;
+        } else if (Array.isArray(data?.cards)) {
+          collectionData = data.cards;
+        } else if (Array.isArray(data?.results)) {
+          collectionData = data.results;
+        }
+
+        setUserCollection(collectionData);
+        setCollectionLoaded(true);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load user collection:", err);
+
+          setUserCollection([]);
+          setCollection(null);
+          setCollectionLoaded(false);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setCollectionLoading(false);
+        }
+      }
+    };
+
+    fetchUserCollection();
+
+    return () => controller.abort();
+  }, [discordUser, authLoading]);
+
+  // --------------------------------------------------------------------------
+  // Avatar error reset
+  // --------------------------------------------------------------------------
+
   useEffect(() => {
     setAvatarError(false);
   }, [deckbuilder?.avatar, deckbuilder?.discord_id]);
+
+  // --------------------------------------------------------------------------
+  // Avatar URL
+  // --------------------------------------------------------------------------
+
+  const getAvatarUrl = (profile) => {
+    if (!profile) {
+      return "";
+    }
+
+    const avatar = normalizeText(profile.avatar);
+    const discordId = normalizeText(profile.discord_id);
+
+    if (!avatar) {
+      if (discordId) {
+        const numericId = Number(discordId);
+
+        if (Number.isSafeInteger(numericId) && numericId >= 0) {
+          const defaultAvatarIndex = (numericId >> 22) % 6;
+
+          return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
+        }
+      }
+
+      return "";
+    }
+
+    if (
+      avatar.startsWith("http://") ||
+      avatar.startsWith("https://") ||
+      avatar.startsWith("//")
+    ) {
+      return avatar;
+    }
+
+    if (discordId) {
+      const extension = avatar.startsWith("a_") ? "gif" : "png";
+
+      return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=256`;
+    }
+
+    return "";
+  };
+
+  // --------------------------------------------------------------------------
+  // Side filtering
+  // --------------------------------------------------------------------------
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
     }
 
-    const selectedSide = normalizeKey(side);
+    const selectedSide = normalizeSide(side);
 
-    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
+    return decks.filter((deck) => normalizeSide(deck?.side) === selectedSide);
   }, [decks, side]);
+
+  // --------------------------------------------------------------------------
+  // Hero options
+  // --------------------------------------------------------------------------
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
@@ -417,7 +478,7 @@ function DeckbuilderDecks() {
           value: heroName,
           label: heroName,
           count: 0,
-          side: normalizeKey(deck.side),
+          side: normalizeSide(deck.side),
         });
       }
 
@@ -427,7 +488,9 @@ function DeckbuilderDecks() {
     return Array.from(heroMap.values())
       .map((option) => {
         const matchedCard = allCards.find(
-          (card) => normalizeKey(card.card_name) === normalizeKey(option.label),
+          (card) =>
+            normalizeCardName(card.card_name) ===
+            normalizeCardName(option.label),
         );
 
         return {
@@ -443,28 +506,32 @@ function DeckbuilderDecks() {
       );
   }, [sideFilteredDecks, allCards]);
 
+  // --------------------------------------------------------------------------
+  // Category options
+  // --------------------------------------------------------------------------
+
   const categoryOptions = useMemo(() => {
     const categoryMap = new Map();
 
     sideFilteredDecks.forEach((deck) => {
-      const categories = parseCategories(deck.category);
+      const categoryName = normalizeText(deck.category);
 
-      categories.forEach((categoryName) => {
-        if (!CATEGORY_META[categoryName]) {
-          return;
-        }
+      if (!categoryName) {
+        return;
+      }
 
-        if (!categoryMap.has(categoryName)) {
-          categoryMap.set(categoryName, {
-            value: categoryName,
-            label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
-            count: 0,
-            ...CATEGORY_META[categoryName],
-          });
-        }
+      const key = normalizeKey(categoryName);
 
-        categoryMap.get(categoryName).count += 1;
-      });
+      if (!categoryMap.has(key)) {
+        categoryMap.set(key, {
+          value: categoryName,
+          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
+          count: 0,
+          ...(CATEGORY_META[key] || {}),
+        });
+      }
+
+      categoryMap.get(key).count += 1;
     });
 
     return Array.from(categoryMap.values()).sort((a, b) =>
@@ -474,6 +541,10 @@ function DeckbuilderDecks() {
     );
   }, [sideFilteredDecks]);
 
+  // --------------------------------------------------------------------------
+  // Archetype options
+  // --------------------------------------------------------------------------
+
   const archetypeOptions = useMemo(() => {
     const counts = {};
 
@@ -482,10 +553,14 @@ function DeckbuilderDecks() {
     });
 
     sideFilteredDecks.forEach((deck) => {
-      const deckArchetypes = parseArchetypes(deck.archetype);
+      const deckArchetype = normalizeKey(deck.archetype);
+
+      if (!deckArchetype) {
+        return;
+      }
 
       Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
-        if (deckArchetypes.includes(archetypeName)) {
+        if (deckArchetype.includes(archetypeName)) {
           counts[archetypeName] += 1;
         }
       });
@@ -501,6 +576,10 @@ function DeckbuilderDecks() {
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
 
+  // --------------------------------------------------------------------------
+  // Sorted decks
+  // --------------------------------------------------------------------------
+
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
       const sideOrder = {
@@ -508,9 +587,8 @@ function DeckbuilderDecks() {
         zombies: 1,
       };
 
-      const sideA = normalizeKey(a.side);
-
-      const sideB = normalizeKey(b.side);
+      const sideA = normalizeSide(a.side);
+      const sideB = normalizeSide(b.side);
 
       const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
 
@@ -540,6 +618,93 @@ function DeckbuilderDecks() {
     });
   }, [decks]);
 
+  // --------------------------------------------------------------------------
+  // Collection map
+  // --------------------------------------------------------------------------
+
+  const collectionMap = useMemo(() => {
+    if (!collectionLoaded || collectionLoading || !discordUser) {
+      return new Map();
+    }
+
+    return buildCollectionMap(userCollection);
+  }, [userCollection, collectionLoaded, collectionLoading, discordUser]);
+
+  // --------------------------------------------------------------------------
+  // Deck collection status
+  // --------------------------------------------------------------------------
+
+  const deckCollectionStatus = useMemo(() => {
+    const statusMap = new Map();
+
+    if (!discordUser || !collectionLoaded || collectionLoading) {
+      return statusMap;
+    }
+
+    decks.forEach((deck) => {
+      statusMap.set(
+        getDeckKey(deck),
+        getDeckCollectionStatus(deck, collectionMap),
+      );
+    });
+
+    return statusMap;
+  }, [decks, collectionMap, discordUser, collectionLoaded, collectionLoading]);
+
+  // --------------------------------------------------------------------------
+  // Collection dropdown counts
+  // --------------------------------------------------------------------------
+
+  const collectionOptions = useMemo(() => {
+    if (!discordUser || authLoading || collectionLoading || !collectionLoaded) {
+      return COLLECTION_OPTIONS;
+    }
+
+    let buildableCount = 0;
+    let closeCount = 0;
+
+    decks.forEach((deck) => {
+      const status = getDeckCollectionStatus(deck, collectionMap);
+
+      if (status.buildable) {
+        buildableCount += 1;
+      }
+
+      if (status.close) {
+        closeCount += 1;
+      }
+    });
+
+    return COLLECTION_OPTIONS.map((option) => {
+      if (option.value === "buildable") {
+        return {
+          ...option,
+          count: buildableCount,
+        };
+      }
+
+      if (option.value === "close") {
+        return {
+          ...option,
+          count: closeCount,
+        };
+      }
+
+      return option;
+    });
+  }, [
+    decks,
+    collectionMap,
+    discordUser,
+    authLoading,
+    collectionLoading,
+    collectionLoaded,
+  ]);
+
+  // --------------------------------------------------------------------------
+  // Filtered decks
+  // --------------------------------------------------------------------------
+
   const filteredDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
 
@@ -563,6 +728,10 @@ function DeckbuilderDecks() {
         .filter(Boolean)
         .map((value) => normalizeKey(value));
 
+      // ----------------------------------------------------------------------
+      // Search
+      // ----------------------------------------------------------------------
+
       let searchMatch = true;
 
       if (searchValue) {
@@ -581,9 +750,17 @@ function DeckbuilderDecks() {
         }
       }
 
-      const deckSide = normalizeKey(deck.side);
+      // ----------------------------------------------------------------------
+      // Side
+      // ----------------------------------------------------------------------
 
-      const sideMatch = side === "All" || deckSide === normalizeKey(side);
+      const deckSide = normalizeSide(deck.side);
+
+      const sideMatch = side === "All" || deckSide === normalizeSide(side);
+
+      // ----------------------------------------------------------------------
+      // Hero
+      // ----------------------------------------------------------------------
 
       const heroMatch =
         hero.length === 0 ||
@@ -592,39 +769,93 @@ function DeckbuilderDecks() {
             normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
         );
 
-      const deckCategories = parseCategories(deck.category);
+      // ----------------------------------------------------------------------
+      // Category
+      // ----------------------------------------------------------------------
 
       const categoryMatch =
         category.length === 0 ||
-        category.every((selectedCategory) =>
-          deckCategories.includes(normalizeKey(selectedCategory.value)),
+        category.some(
+          (selectedCategory) =>
+            normalizeKey(deck.category) ===
+            normalizeKey(selectedCategory.value),
         );
 
-      const deckArchetypes = parseArchetypes(deck.archetype);
+      // ----------------------------------------------------------------------
+      // Archetype
+      // ----------------------------------------------------------------------
+
+      const deckArchetype = normalizeKey(deck.archetype);
 
       const archetypeMatch =
         archetype.length === 0 ||
         archetype.every((selectedArchetype) =>
-          deckArchetypes.includes(normalizeKey(selectedArchetype.value)),
+          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
         );
 
+      // ----------------------------------------------------------------------
+      // Collection
+      // ----------------------------------------------------------------------
+
+      let collectionMatch = true;
+
+      if (collection?.value) {
+        if (!discordUser || !collectionLoaded || collectionLoading) {
+          collectionMatch = false;
+        } else {
+          const status = deckCollectionStatus.get(getDeckKey(deck));
+
+          if (collection.value === "buildable") {
+            collectionMatch = status?.buildable === true;
+          } else if (collection.value === "close") {
+            collectionMatch = status?.close === true;
+          }
+        }
+      }
+
       return (
-        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
+        searchMatch &&
+        sideMatch &&
+        heroMatch &&
+        categoryMatch &&
+        archetypeMatch &&
+        collectionMatch
       );
     });
-  }, [sortedDecks, search, side, hero, category, archetype]);
+  }, [
+    sortedDecks,
+    search,
+    side,
+    hero,
+    category,
+    archetype,
+    collection,
+    deckCollectionStatus,
+    discordUser,
+    collectionLoaded,
+    collectionLoading,
+  ]);
+
+  // --------------------------------------------------------------------------
+  // Clear filters
+  // --------------------------------------------------------------------------
 
   const clearFilters = () => {
     setSearch("");
     setHero([]);
     setCategory([]);
     setArchetype([]);
+    setCollection(null);
   };
 
   const handleSideChange = (newSide) => {
     setSide(newSide);
     clearFilters();
   };
+
+  // --------------------------------------------------------------------------
+  // Loading screen
+  // --------------------------------------------------------------------------
 
   if (loading) {
     return (
@@ -650,6 +881,10 @@ function DeckbuilderDecks() {
     );
   }
 
+  // --------------------------------------------------------------------------
+  // Error
+  // --------------------------------------------------------------------------
+
   if (error) {
     return (
       <div className="deck-page">
@@ -668,6 +903,10 @@ function DeckbuilderDecks() {
     );
   }
 
+  // --------------------------------------------------------------------------
+  // Profile / deckbuilder information
+  // --------------------------------------------------------------------------
+
   const profile = deckbuilder?.profile || null;
 
   const displayName =
@@ -676,6 +915,10 @@ function DeckbuilderDecks() {
     decodedDeckbuilderName;
 
   const avatarUrl = getAvatarUrl(deckbuilder);
+
+  // --------------------------------------------------------------------------
+  // Render
+  // --------------------------------------------------------------------------
 
   return (
     <div className="deck-page">
@@ -808,6 +1051,18 @@ function DeckbuilderDecks() {
               />
             </div>
 
+            {!authLoading && discordUser && (
+              <div className="select-wrapper">
+                <FilterDropdown
+                  label="Collection"
+                  options={collectionOptions}
+                  value={collection}
+                  onChange={setCollection}
+                  multi={false}
+                />
+              </div>
+            )}
+
             <button
               type="button"
               className="clear-filter-btn"
@@ -824,6 +1079,20 @@ function DeckbuilderDecks() {
           </p>
         </div>
 
+        {!authLoading && discordUser && collectionLoading && (
+          <p className="results-count">Loading your collection...</p>
+        )}
+
+        {!authLoading &&
+          discordUser &&
+          !collectionLoading &&
+          !collectionLoaded && (
+            <p className="results-count">
+              Unable to load your collection. Collection filters are temporarily
+              unavailable.
+            </p>
+          )}
+
         {filteredDecks.length === 0 ? (
           <div className="user-decklists-empty">
             <h2>No decks found</h2>
@@ -836,12 +1105,7 @@ function DeckbuilderDecks() {
           <div className="deck-grid">
             {filteredDecks.map((deck) => (
               <DeckCard
-                key={
-                  deck.deckid ||
-                  deck.deckID ||
-                  deck.id ||
-                  `${deck.side}-${deck.name}`
-                }
+                key={`${normalizeSide(deck.side)}-${getDeckKey(deck)}`}
                 decklist={deck}
                 allCards={allCards}
                 deckbuilder
