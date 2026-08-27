@@ -161,6 +161,33 @@
   padding-left: 17px;
 }
 
+.navbar-dropdown-link-button {
+  width: 100%;
+  display: block;
+  padding: 11px 13px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #d7d7d7;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    padding-left 0.15s ease;
+}
+
+.navbar-dropdown-link-button:hover {
+  color: #8fe38b;
+  background: rgba(143, 227, 139, 0.08);
+  padding-left: 17px;
+}
+
 .navbar-account {
   margin-left: auto;
   display: flex;
@@ -533,6 +560,33 @@
   padding-left: 19px;
 }
 
+.navbar-mobile-link-button {
+  width: 100%;
+  display: block;
+  padding: 13px 15px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #d7d7d7;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    padding-left 0.15s ease;
+}
+
+.navbar-mobile-link-button:hover {
+  color: #8fe38b;
+  background: rgba(143, 227, 139, 0.08);
+  padding-left: 19px;
+}
+
 .navbar-mobile-close {
   width: 42px;
   height: 42px;
@@ -556,6 +610,699 @@
   background: #262626;
   color: #8fe38b;
 }
+
+/* =========================================================
+   BUG REPORT MODAL
+   ========================================================= */
+
+.bug-report-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/*
+ * IMPORTANT:
+ * The background is placed DIRECTLY on the modal.
+ * This means it covers the entire modal from the header
+ * all the way down through every question.
+ */
+.bug-report-modal {
+  position: relative;
+  width: min(820px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 12, 14, 0.55) 0%,
+      rgba(8, 12, 14, 0.62) 45%,
+      rgba(8, 12, 14, 0.72) 100%
+    ),
+    url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center / cover
+      no-repeat;
+
+  border: 1px solid rgba(143, 227, 139, 0.24);
+  border-radius: 16px;
+
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.025),
+    0 0 45px rgba(143, 227, 139, 0.08);
+
+  color: #f1f1f1;
+  box-sizing: border-box;
+
+  animation: bugReportModalIn 0.2s ease-out;
+}
+
+/*
+ * Do NOT put another opaque background over the modal.
+ * The modal background above must remain visible.
+ */
+.bug-report-modal-header {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+
+  padding: 24px 26px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+
+  background: rgba(18, 21, 23, 0.42);
+
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+
+  box-sizing: border-box;
+}
+
+.bug-report-modal-title-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.bug-report-modal-icon {
+  width: 10px;
+  min-width: 10px;
+  height: 48px;
+  margin-top: 2px;
+  border-radius: 999px;
+  background: #8fe38b;
+  box-shadow: 0 0 18px rgba(143, 227, 139, 0.4);
+}
+
+.bug-report-modal-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #8fe38b;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.bug-report-modal-header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.bug-report-modal-header p {
+  margin: 7px 0 0;
+  max-width: 600px;
+  color: #aab2b5;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.bug-report-modal-close {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  border: 1px solid #34393d;
+  border-radius: 8px;
+
+  background: rgba(32, 36, 39, 0.78);
+  color: #aeb5b8;
+
+  font-family: inherit;
+  font-size: 1.45rem;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.bug-report-modal-close:hover {
+  background: #292e31;
+  border-color: #4a5054;
+  color: #ffffff;
+  transform: scale(1.03);
+}
+
+.bug-report-modal-close:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/*
+ * FORM IS TRANSPARENT.
+ * This is what allows the modal background to continue
+ * showing behind every question.
+ */
+.bug-report-form {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  padding: 26px;
+
+  background: transparent;
+
+  box-sizing: border-box;
+}
+
+/*
+ * Sections are translucent rather than opaque.
+ * The PVZH background therefore remains visible through
+ * every section.
+ */
+.bug-report-section {
+  padding: 20px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+
+  background: rgba(14, 17, 19, 0.48);
+
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.bug-report-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.bug-report-section-heading > span {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(143, 227, 139, 0.3);
+  border-radius: 50%;
+
+  background: rgba(143, 227, 139, 0.08);
+  color: #8fe38b;
+
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.bug-report-section-heading h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.bug-report-section-heading p {
+  margin: 4px 0 0;
+  color: #7f898d;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.bug-report-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  margin-top: 16px;
+}
+
+.bug-report-section .bug-report-field:first-of-type {
+  margin-top: 0;
+}
+
+.bug-report-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.bug-report-field-row .bug-report-field {
+  margin-top: 0;
+}
+
+.bug-report-field label {
+  color: #dfe3e4;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.bug-report-required {
+  margin-left: 4px;
+  color: #8fe38b;
+}
+
+.bug-report-field input,
+.bug-report-field textarea,
+.bug-report-field select {
+  width: 100%;
+
+  border: 1px solid #343a3e;
+  border-radius: 8px;
+
+  background: rgba(8, 10, 11, 0.76);
+  color: #f1f1f1;
+
+  font-family: inherit;
+  font-size: 0.92rem;
+
+  box-sizing: border-box;
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.bug-report-field input,
+.bug-report-field select {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.bug-report-field textarea {
+  min-height: 150px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.bug-report-field input::placeholder,
+.bug-report-field textarea::placeholder {
+  color: #697276;
+}
+
+.bug-report-field input:focus,
+.bug-report-field textarea:focus,
+.bug-report-field select:focus {
+  border-color: #8fe38b;
+  background: rgba(12, 16, 17, 0.9);
+  box-shadow: 0 0 0 3px rgba(143, 227, 139, 0.08);
+}
+
+.bug-report-field input:disabled,
+.bug-report-field textarea:disabled,
+.bug-report-field select:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.bug-report-field select {
+  appearance: auto;
+  cursor: pointer;
+}
+
+.bug-report-field select option {
+  background: #15181b;
+  color: #f1f1f1;
+}
+
+.bug-report-field input[readonly] {
+  color: #aeb5b8;
+  background: rgba(25, 28, 31, 0.72);
+  cursor: default;
+}
+
+.bug-report-field small {
+  color: #737d81;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.bug-report-upload {
+  margin-top: 4px;
+}
+
+.bug-report-upload-area {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 170px;
+  padding: 25px;
+
+  border: 1px dashed rgba(143, 227, 139, 0.3);
+  border-radius: 10px;
+
+  background: rgba(8, 11, 12, 0.48);
+
+  color: #d7dada;
+  text-align: center;
+
+  cursor: pointer;
+  overflow: hidden;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+
+  box-sizing: border-box;
+}
+
+.bug-report-upload-area:hover {
+  border-color: rgba(143, 227, 139, 0.65);
+  background: rgba(143, 227, 139, 0.06);
+  transform: translateY(-1px);
+}
+
+.bug-report-upload-icon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 10px;
+
+  border: 1px solid rgba(143, 227, 139, 0.3);
+  border-radius: 50%;
+
+  background: rgba(143, 227, 139, 0.08);
+  color: #8fe38b;
+
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.bug-report-upload-title {
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.bug-report-upload-description {
+  max-width: 100%;
+  margin-top: 5px;
+  color: #929b9f;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.bug-report-upload-limit {
+  margin-top: 7px;
+  color: #687276;
+  font-size: 0.72rem;
+}
+
+#bug-report-screenshot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.bug-report-file-name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+
+  margin-top: 10px;
+  padding: 9px 11px;
+
+  border: 1px solid rgba(143, 227, 139, 0.18);
+  border-radius: 7px;
+
+  background: rgba(143, 227, 139, 0.055);
+  color: #9de999;
+
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.bug-report-file-name span {
+  color: #77827f;
+}
+
+.bug-report-user-info {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 13px 15px;
+
+  border: 1px solid rgba(143, 227, 139, 0.16);
+  border-radius: 10px;
+
+  background: rgba(17, 21, 22, 0.55);
+
+  box-sizing: border-box;
+
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.bug-report-user-avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+  border-radius: 50%;
+
+  background: #5865f2;
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.bug-report-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bug-report-user-info > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bug-report-user-info span {
+  color: #7f898d;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.bug-report-user-info strong {
+  color: #dfe3e4;
+  font-size: 0.86rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.bug-report-message {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 11px 13px;
+
+  border: 1px solid #3a4044;
+  border-radius: 8px;
+
+  background: rgba(28, 32, 35, 0.7);
+  color: #d9ddde;
+
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.bug-report-message-icon {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+
+  font-weight: 900;
+}
+
+.bug-report-message.success {
+  border-color: rgba(143, 227, 139, 0.28);
+  background: rgba(143, 227, 139, 0.07);
+  color: #9de999;
+}
+
+.bug-report-message.error {
+  border-color: rgba(220, 90, 90, 0.3);
+  background: rgba(220, 90, 90, 0.07);
+  color: #f0a1a1;
+}
+
+.bug-report-actions {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+
+  padding-top: 5px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+
+  background: transparent;
+}
+
+.bug-report-cancel,
+.bug-report-submit {
+  min-height: 42px;
+  padding: 0 17px;
+
+  border-radius: 7px;
+
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.025em;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.bug-report-cancel {
+  border: 1px solid #383e42;
+  background: rgba(32, 36, 39, 0.86);
+  color: #c3c8ca;
+}
+
+.bug-report-cancel:hover {
+  background: #292e31;
+  border-color: #4b5256;
+  color: #ffffff;
+}
+
+.bug-report-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  border: 1px solid #8fe38b;
+  background: #8fe38b;
+  color: #101410;
+}
+
+.bug-report-submit:hover {
+  background: #a3eb9f;
+  border-color: #a3eb9f;
+  transform: translateY(-1px);
+}
+
+.bug-report-submit:disabled,
+.bug-report-cancel:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
+.bug-report-submit-arrow {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.bug-report-spinner {
+  width: 15px;
+  height: 15px;
+
+  border: 2px solid rgba(16, 20, 16, 0.25);
+  border-top-color: #101410;
+  border-radius: 50%;
+
+  animation: bugReportSpin 0.7s linear infinite;
+}
+
+@keyframes bugReportSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bugReportModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
 
 @media (max-width: 800px) {
   .site-navbar {
@@ -585,20 +1332,27 @@
     position: fixed;
     inset: 0;
     z-index: 9999;
+
     display: flex;
     flex-direction: column;
+
     width: 100%;
     height: 100%;
+
     background: #0d0d0d;
+
     transform: translateX(100%);
     visibility: hidden;
     opacity: 0;
+
     transition:
       transform 0.25s ease,
       visibility 0.25s ease,
       opacity 0.25s ease;
+
     overflow-x: hidden;
     overflow-y: auto;
+
     pointer-events: none;
     box-sizing: border-box;
   }
@@ -614,10 +1368,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     width: 100%;
     height: 68px;
     flex-shrink: 0;
+
     padding: 0 18px;
+
     border-bottom: 1px solid #24272b;
     box-sizing: border-box;
   }
@@ -641,6 +1398,65 @@
     flex-shrink: 0;
     box-sizing: border-box;
   }
+
+  .bug-report-modal-overlay {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .bug-report-modal {
+    max-height: calc(100vh - 28px);
+    border-radius: 13px;
+
+    /*
+     * Keep the background on the whole modal on mobile too.
+     */
+    background:
+      linear-gradient(
+        180deg,
+        rgba(8, 12, 14, 0.55) 0%,
+        rgba(8, 12, 14, 0.62) 45%,
+        rgba(8, 12, 14, 0.72) 100%
+      ),
+      url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center / cover
+        no-repeat;
+  }
+
+  .bug-report-modal-header {
+    padding: 20px;
+  }
+
+  .bug-report-modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .bug-report-form {
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .bug-report-section {
+    padding: 17px;
+  }
+
+  .bug-report-field-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .bug-report-field-row .bug-report-field {
+    margin-top: 0;
+  }
+
+  .bug-report-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .bug-report-cancel,
+  .bug-report-submit {
+    width: 100%;
+  }
 }
 
 @media (max-width: 500px) {
@@ -663,6 +1479,84 @@
 
   .navbar-mobile-account {
     padding: 16px;
+  }
+
+  .bug-report-modal-overlay {
+    padding: 8px;
+  }
+
+  .bug-report-modal {
+    max-height: calc(100vh - 16px);
+    border-radius: 11px;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(8, 12, 14, 0.55) 0%,
+        rgba(8, 12, 14, 0.62) 45%,
+        rgba(8, 12, 14, 0.72) 100%
+      ),
+      url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center / cover
+        no-repeat;
+  }
+
+  .bug-report-modal-header {
+    padding: 17px;
+    gap: 12px;
+  }
+
+  .bug-report-modal-title-area {
+    gap: 10px;
+  }
+
+  .bug-report-modal-icon {
+    width: 7px;
+    min-width: 7px;
+    height: 42px;
+  }
+
+  .bug-report-modal-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .bug-report-modal-header p {
+    font-size: 0.8rem;
+  }
+
+  .bug-report-modal-close {
+    width: 32px;
+    height: 32px;
+  }
+
+  .bug-report-form {
+    padding: 12px;
+  }
+
+  .bug-report-section {
+    padding: 15px;
+  }
+
+  .bug-report-section-heading {
+    gap: 9px;
+  }
+
+  .bug-report-section-heading > span {
+    width: 25px;
+    height: 25px;
+    min-width: 25px;
+  }
+
+  .bug-report-field textarea {
+    min-height: 130px;
+  }
+
+  .bug-report-upload-area {
+    min-height: 145px;
+    padding: 18px;
+  }
+
+  .bug-report-user-info {
+    align-items: flex-start;
   }
 }
 

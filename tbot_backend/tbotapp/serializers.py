@@ -1,3 +1,4 @@
+import logging
 from rest_framework import serializers
 
 from .models import (
@@ -9,8 +10,10 @@ from .models import (
     LegacyDecklist,
     UserProfile,
     WebDeckbuilder,
+    BugReport,
 )
 
+logger = logging.getLogger(__name__)
 class PublicDeckSerializer(serializers.ModelSerializer):
     class Meta:
         model = Decklist
@@ -159,9 +162,11 @@ class UserDeckSerializer(serializers.ModelSerializer):
 
     def _get_profile(self, obj):
         try:
-            return UserProfile.objects.filter(
-                id=obj.profile_id
-            ).first()
+            return (
+                UserProfile.objects
+                .filter(id=obj.profile_id)
+                .first()
+            )
         except Exception:
             return None
 
@@ -235,7 +240,9 @@ class UserDeckSerializer(serializers.ModelSerializer):
 
                 except (TypeError, ValueError):
                     raise serializers.ValidationError({
-                        "cards": f"Invalid ratio for {card_name}."
+                        "cards": (
+                            f"Invalid ratio for {card_name}."
+                        )
                     })
 
             elif isinstance(line, dict):
@@ -250,7 +257,9 @@ class UserDeckSerializer(serializers.ModelSerializer):
 
                 except (TypeError, ValueError):
                     raise serializers.ValidationError({
-                        "cards": f"Invalid ratio for {card_name}."
+                        "cards": (
+                            f"Invalid ratio for {card_name}."
+                        )
                     })
 
             else:
@@ -266,8 +275,8 @@ class UserDeckSerializer(serializers.ModelSerializer):
             if ratio < 1 or ratio > 4:
                 raise serializers.ValidationError({
                     "cards": (
-                        f"{card_name} must have a ratio between "
-                        "1 and 4."
+                        f"{card_name} must have a ratio "
+                        "between 1 and 4."
                     )
                 })
 
@@ -282,6 +291,8 @@ class UserDeckSerializer(serializers.ModelSerializer):
             })
 
         return attrs
+
+
 class UserCardSerializer(serializers.ModelSerializer):
     card = serializers.SerializerMethodField()
 
@@ -297,9 +308,11 @@ class UserCardSerializer(serializers.ModelSerializer):
 
     def get_card(self, obj):
         try:
-            card = WebCards.objects.filter(
-                card_name=obj.card_name
-            ).first()
+            card = (
+                WebCards.objects
+                .filter(card_name=obj.card_name)
+                .first()
+            )
 
             if not card:
                 return None
@@ -308,6 +321,7 @@ class UserCardSerializer(serializers.ModelSerializer):
 
         except Exception:
             return None
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -325,6 +339,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
+
 class WebDeckbuilderSerializer(serializers.ModelSerializer):
     class Meta:
         model = WebDeckbuilder
@@ -336,6 +351,8 @@ class WebDeckbuilderSerializer(serializers.ModelSerializer):
             "aliases",
             "numb_of_decks",
         ]
+
+
 class PublicDeckbuilderSerializer(serializers.ModelSerializer):
     profile = serializers.SerializerMethodField()
     display_name = serializers.SerializerMethodField()
@@ -364,7 +381,9 @@ class PublicDeckbuilderSerializer(serializers.ModelSerializer):
         try:
             return (
                 UserProfile.objects
-                .filter(discord_id=str(obj.user_id))
+                .filter(
+                    discord_id=str(obj.user_id)
+                )
                 .first()
             )
         except Exception:
@@ -429,6 +448,8 @@ class PublicDeckbuilderSerializer(serializers.ModelSerializer):
             return profile.discord_id
 
         return str(obj.user_id)
+
+
 class WebCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = WebCards
@@ -464,3 +485,84 @@ class KeepOrScrapSerializer(serializers.ModelSerializer):
             "reasoning",
             "creator",
         ]
+
+
+class BugReportSerializer(serializers.ModelSerializer):
+
+    screenshot = serializers.ImageField(
+        required=False,
+        allow_null=True,
+    )
+
+    class Meta:
+        model = BugReport
+
+        fields = [
+            "id",
+            "discord_id",
+            "discord_username",
+            "title",
+            "description",
+            "page_url",
+            "category",
+            "priority",
+            "status",
+            "browser",
+            "operating_system",
+            "screenshot",
+            "admin_notes",
+            "created_at",
+            "updated_at",
+        ]
+
+        read_only_fields = [
+            "id",
+            "discord_id",
+            "discord_username",
+            "status",
+            "admin_notes",
+            "created_at",
+            "updated_at",
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        screenshot = getattr(
+            instance,
+            "screenshot",
+            None,
+        )
+
+        if not screenshot:
+            data["screenshot"] = ""
+            return data
+
+        try:
+            data["screenshot"] = str(
+                screenshot.url
+            )
+        except Exception:
+            logger.exception(
+                "Unable to resolve screenshot URL for bug report %s",
+                getattr(instance, "id", "unknown"),
+            )
+
+            data["screenshot"] = ""
+
+        return data
+
+    def validate_status(self, value):
+        valid_statuses = {
+            "open",
+            "in_progress",
+            "resolved",
+            "closed",
+        }
+
+        if value not in valid_statuses:
+            raise serializers.ValidationError(
+                "Status must be one of: open, in_progress, resolved, or closed."
+            )
+
+        return value

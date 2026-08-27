@@ -26,7 +26,8 @@ import UserDeckManager from "./pages/userdeckmanager.jsx";
 import UserDashboard from "./pages/userdashboard.jsx";
 import UserCardManager from "./pages/UserCardManager.jsx";
 import AdminCards from "./pages/admincards";
-
+import AdminBugReports from "./pages/adminbugreports.jsx";
+import MyBugReports from "./pages/mybugreports.jsx";
 function HomePage() {
   return (
     <div className="home">
@@ -223,6 +224,7 @@ function App() {
           path="/deck/:profile_slug/:deckId"
           element={<StandaloneDeckPage />}
         />
+        <Route path="/admin/bugs" element={<AdminBugReports />} />
         <Route path="/dashboard" element={<UserDashboard />} />
 
         <Route path="/dashboard/decks" element={<UserDeckManager />} />
@@ -234,7 +236,7 @@ function App() {
           element={<UserDeckManager />}
         />
         <Route path="/dashboard/card-manager" element={<UserCardManager />} />
-        {/* Admin */}
+        <Route path="/my-bug-reports" element={<MyBugReports />} />
         <Route path="/admin" element={<Admin />} />
 
         <Route path="/admin/decklists" element={<AdminDecklists />} />

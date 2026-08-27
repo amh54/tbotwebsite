@@ -4,8 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 
 import "../css/admin.css";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = String(
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+).replace(/\/+$/, "");
 
 function Admin() {
   const navigate = useNavigate();
@@ -36,7 +37,6 @@ function Admin() {
         setAuthorized(true);
       } catch (error) {
         console.error("Unable to verify admin permissions:", error);
-
         navigate("/");
       } finally {
         setLoading(false);
@@ -76,33 +76,35 @@ function Admin() {
             ← Back to Tbot
           </Link>
         </div>
+
         <div className="admin-dashboard-grid">
           <Link to="/admin/cards" className="admin-dashboard-card">
             <span className="admin-card-label">Cards</span>
-
             <span className="admin-card-action">Manage →</span>
           </Link>
+
           <Link to="/admin/decklists" className="admin-dashboard-card">
             <span className="admin-card-label">Decklists</span>
-
             <span className="admin-card-action">Manage →</span>
           </Link>
 
           <Link to="/admin/legacy-decks" className="admin-dashboard-card">
             <span className="admin-card-label">Legacy Decks</span>
-
             <span className="admin-card-action">Manage →</span>
           </Link>
 
           <Link to="/admin/user-decks" className="admin-dashboard-card">
             <span className="admin-card-label">User Decks</span>
-
             <span className="admin-card-action">Manage →</span>
           </Link>
 
           <Link to="/admin/keeporscrap" className="admin-dashboard-card">
             <span className="admin-card-label">Keep or Scrap</span>
+            <span className="admin-card-action">Manage →</span>
+          </Link>
 
+          <Link to="/admin/bugs" className="admin-dashboard-card">
+            <span className="admin-card-label">Bug Reports</span>
             <span className="admin-card-action">Manage →</span>
           </Link>
         </div>

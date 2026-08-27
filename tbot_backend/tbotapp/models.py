@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models.functions import Now
-
+from cloudinary.models import CloudinaryField
 
 class Decklist(models.Model):
     deckid = models.IntegerField(primary_key=True)
@@ -305,3 +305,99 @@ class UserCard(models.Model):
                 name="user_cards_unique_profile_card",
             ),
         ]
+class BugReport(models.Model):
+    STATUS_CHOICES = [
+        ("open", "Open"),
+        ("in_progress", "In Progress"),
+        ("resolved", "Resolved"),
+        ("closed", "Closed"),
+    ]
+
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("normal", "Normal"),
+        ("high", "High"),
+    ]
+
+    CATEGORY_CHOICES = [
+        ("ui", "UI"),
+        ("decklists", "Decklists"),
+        ("cards", "Cards"),
+        ("account", "Account"),
+        ("discord", "Discord"),
+        ("other", "Other"),
+    ]
+
+    id = models.BigAutoField(primary_key=True)
+
+    discord_id = models.BigIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    discord_username = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
+    title = models.CharField(
+        max_length=255,
+    )
+
+    description = models.TextField()
+
+    page_url = models.TextField(
+        blank=True,
+    )
+
+    category = models.CharField(
+        max_length=30,
+        choices=CATEGORY_CHOICES,
+        default="other",
+    )
+
+    priority = models.CharField(
+        max_length=20,
+        choices=PRIORITY_CHOICES,
+        default="normal",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="open",
+    )
+
+    browser = models.TextField(
+        blank=True,
+    )
+
+    operating_system = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
+    screenshot = CloudinaryField(
+        "screenshot",
+        null=True,
+        blank=True,
+    )
+
+    admin_notes = models.TextField(
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    def __str__(self):
+        return f"#{self.id} - {self.title}"
+
+    class Meta:
+        db_table = "bug_reports"
+        managed = False

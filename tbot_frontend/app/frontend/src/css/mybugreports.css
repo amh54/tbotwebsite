@@ -1,0 +1,792 @@
+
+.my-bug-reports-page {
+  min-height: calc(100vh - 80px);
+  padding: 48px 20px 80px;
+  background: #101416;
+  color: #f2f5f3;
+}
+
+.my-bug-reports-container {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+}
+
+/* =========================
+   Header
+========================= */
+
+.my-bug-reports-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 32px;
+}
+
+.my-bug-reports-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #8fe38b;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.my-bug-reports-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.my-bug-reports-header p {
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: #9da7a2;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.my-bug-reports-total {
+  min-width: 110px;
+  padding: 18px 22px;
+  border: 1px solid #2b3230;
+  border-radius: 14px;
+  background: #151a1c;
+  text-align: center;
+}
+
+.my-bug-reports-total strong {
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.my-bug-reports-total span {
+  display: block;
+  margin-top: 7px;
+  color: #8c9792;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* =========================
+   Filters
+========================= */
+
+.my-bug-reports-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+  padding: 7px;
+  border: 1px solid #282f2d;
+  border-radius: 13px;
+  background: #15191b;
+}
+
+.my-bug-reports-filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #9da7a2;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.my-bug-reports-filters button:hover {
+  background: #202624;
+  color: #f2f5f3;
+}
+
+.my-bug-reports-filters button.active {
+  border-color: #344238;
+  background: #222b25;
+  color: #8fe38b;
+}
+
+.my-bug-reports-filters button span {
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 20px;
+  background: #242b29;
+  color: #8b9691;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.my-bug-reports-filters button.active span {
+  background: #304c32;
+  color: #a7f0a2;
+}
+
+/* =========================
+   Loading
+========================= */
+
+.my-bug-reports-loading {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8f9995;
+}
+
+.my-bug-reports-loading .loading-spinner {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 14px;
+  border: 3px solid #303735;
+  border-top-color: #8fe38b;
+  border-radius: 50%;
+  animation: myBugReportsSpin 0.8s linear infinite;
+}
+
+@keyframes myBugReportsSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================
+   Empty / Error
+========================= */
+
+.my-bug-reports-state {
+  padding: 70px 25px;
+  border: 1px solid #292f2d;
+  border-radius: 16px;
+  background: #151a1c;
+  text-align: center;
+}
+
+.my-bug-reports-state-icon {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  border: 1px solid #35443a;
+  border-radius: 50%;
+  background: #1b241e;
+  color: #8fe38b;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.my-bug-reports-state h2 {
+  margin: 0 0 9px;
+  font-size: 1.3rem;
+}
+
+.my-bug-reports-state p {
+  max-width: 560px;
+  margin: 0 auto;
+  color: #929c97;
+  line-height: 1.6;
+}
+
+.my-bug-reports-state p strong {
+  color: #c7cfcb;
+}
+
+.my-bug-reports-error .my-bug-reports-state-icon {
+  border-color: #503535;
+  background: #281b1b;
+  color: #f08b8b;
+}
+
+.my-bug-reports-state button {
+  margin-top: 22px;
+  padding: 10px 18px;
+  border: 1px solid #3d4a40;
+  border-radius: 8px;
+  background: #202822;
+  color: #b8efb4;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.my-bug-reports-state button:hover {
+  background: #29352c;
+}
+
+/* =========================
+   Report Cards
+========================= */
+
+.my-bug-reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.my-bug-report-card {
+  overflow: hidden;
+  border: 1px solid #292f2d;
+  border-radius: 15px;
+  background: #151a1c;
+  transition:
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.my-bug-report-card:hover {
+  border-color: #3b4840;
+  transform: translateY(-1px);
+}
+
+.my-bug-report-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 21px 22px 15px;
+}
+
+.my-bug-report-card-title {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+}
+
+.my-bug-report-number {
+  flex-shrink: 0;
+  color: #68736e;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.my-bug-report-card h2 {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.12rem;
+}
+
+.my-bug-report-status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-open {
+  border-color: #4b4930;
+  background: #292718;
+  color: #e5d87b;
+}
+
+.status-in_progress {
+  border-color: #394b5c;
+  background: #1d2934;
+  color: #8ec8f2;
+}
+
+.status-resolved {
+  border-color: #34543b;
+  background: #1d2c20;
+  color: #8fe38b;
+}
+
+.status-closed {
+  border-color: #393e3d;
+  background: #222625;
+  color: #9ca5a1;
+}
+
+/* =========================
+   Metadata
+========================= */
+
+.my-bug-report-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 0 22px 16px;
+  color: #77817d;
+  font-size: 0.78rem;
+}
+
+.my-bug-report-meta strong {
+  color: #aab3af;
+  font-weight: 700;
+}
+
+.my-bug-report-description {
+  margin: 0;
+  padding: 0 22px 20px;
+  color: #adb6b2;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.my-bug-report-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 15px 22px;
+  border-top: 1px solid #252b29;
+  background: #131718;
+}
+
+.my-bug-report-status-message {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.my-bug-report-status-message strong {
+  color: #c6cfca;
+  font-size: 0.82rem;
+}
+
+.my-bug-report-status-message span {
+  color: #737d78;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.my-bug-report-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.my-bug-report-button {
+  padding: 9px 14px;
+  border: 1px solid #415046;
+  border-radius: 8px;
+  background: #273129;
+  color: #b7efb2;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.my-bug-report-button:hover {
+  border-color: #58705c;
+  background: #303d32;
+}
+
+.my-bug-report-button.secondary {
+  border-color: #343d39;
+  background: #1d2322;
+  color: #b0b9b5;
+}
+
+.my-bug-report-button.secondary:hover {
+  background: #272e2c;
+  color: #e0e6e3;
+}
+
+/* =========================
+   Modal
+========================= */
+
+.my-bug-report-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(5, 7, 7, 0.82);
+  backdrop-filter: blur(5px);
+}
+
+.my-bug-report-modal {
+  width: min(820px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  border: 1px solid #343c39;
+  border-radius: 17px;
+  background: #151a1c;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+}
+
+.my-bug-report-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 25px 20px;
+  border-bottom: 1px solid #292f2d;
+}
+
+.my-bug-report-modal-eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  color: #77827d;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.my-bug-report-modal-header h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.4rem;
+}
+
+.my-bug-report-modal-close {
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+  border: 1px solid #343b38;
+  border-radius: 8px;
+  background: #1c2222;
+  color: #9ba49f;
+  cursor: pointer;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.my-bug-report-modal-close:hover {
+  background: #272d2c;
+  color: #fff;
+}
+
+.my-bug-report-modal-status {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 18px 25px;
+  border-bottom: 1px solid #292f2d;
+  background: #131718;
+}
+
+.my-bug-report-modal-status p {
+  margin: 0;
+  color: #858f8a;
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+/* =========================
+   Detail Grid
+========================= */
+
+.my-bug-report-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid #292f2d;
+}
+
+.my-bug-report-detail-grid > div {
+  padding: 16px 20px;
+  border-right: 1px solid #292f2d;
+}
+
+.my-bug-report-detail-grid > div:last-child {
+  border-right: 0;
+}
+
+.my-bug-report-detail-grid span {
+  display: block;
+  margin-bottom: 5px;
+  color: #6f7975;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.my-bug-report-detail-grid strong {
+  display: block;
+  color: #c4ccc8;
+  font-size: 0.83rem;
+}
+
+/* =========================
+   Detail Sections
+========================= */
+
+.my-bug-report-detail-section {
+  padding: 21px 25px;
+  border-bottom: 1px solid #292f2d;
+}
+
+.my-bug-report-detail-section h3 {
+  margin: 0 0 11px;
+  font-size: 0.9rem;
+}
+
+.my-bug-report-description-box {
+  padding: 14px 15px;
+  border: 1px solid #2d3431;
+  border-radius: 9px;
+  background: #111516;
+  color: #aeb7b3;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.my-bug-report-page-url {
+  display: block;
+  color: #8fe38b;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.my-bug-report-page-url:hover {
+  text-decoration: underline;
+}
+
+.my-bug-report-detail-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 11px;
+}
+
+.my-bug-report-detail-heading h3 {
+  margin: 0;
+}
+
+.my-bug-report-detail-heading button {
+  padding: 7px 11px;
+  border: 1px solid #39453d;
+  border-radius: 7px;
+  background: #202922;
+  color: #9de798;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.my-bug-report-detail-heading button:hover {
+  background: #2a362c;
+}
+
+.my-bug-report-screenshot {
+  overflow: hidden;
+  border: 1px solid #303734;
+  border-radius: 10px;
+  background: #0d1011;
+  text-align: center;
+}
+
+.my-bug-report-screenshot img {
+  display: block;
+  width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+}
+
+/* =========================
+   Admin Notes
+========================= */
+
+.my-bug-report-admin-notes {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin: 21px 25px;
+  padding: 15px;
+  border: 1px solid #38503b;
+  border-radius: 10px;
+  background: #19231b;
+}
+
+.my-bug-report-admin-notes-icon {
+  width: 29px;
+  height: 29px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #2b4930;
+  color: #a4eda0;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.my-bug-report-admin-notes span {
+  display: block;
+  margin-bottom: 5px;
+  color: #9fe59b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.my-bug-report-admin-notes p {
+  margin: 0;
+  color: #b8c1bc;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.my-bug-report-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 25px;
+  border-top: 1px solid #292f2d;
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 760px) {
+  .my-bug-reports-page {
+    padding: 32px 14px 60px;
+  }
+
+  .my-bug-reports-header {
+    align-items: flex-start;
+  }
+
+  .my-bug-reports-total {
+    min-width: 85px;
+    padding: 14px;
+  }
+
+  .my-bug-reports-total strong {
+    font-size: 1.6rem;
+  }
+
+  .my-bug-report-card-top {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .my-bug-report-card-bottom {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .my-bug-report-actions {
+    width: 100%;
+  }
+
+  .my-bug-report-actions .my-bug-report-button {
+    flex: 1;
+  }
+
+  .my-bug-report-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .my-bug-report-detail-grid > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .my-bug-report-detail-grid > div:nth-child(-n + 2) {
+    border-bottom: 1px solid #292f2d;
+  }
+}
+
+@media (max-width: 520px) {
+  .my-bug-reports-header {
+    flex-direction: column;
+  }
+
+  .my-bug-reports-total {
+    align-self: flex-start;
+  }
+
+  .my-bug-reports-filters {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .my-bug-reports-filters button:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .my-bug-report-card-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .my-bug-report-actions {
+    flex-direction: column;
+  }
+
+  .my-bug-report-actions .my-bug-report-button {
+    width: 100%;
+  }
+
+  .my-bug-report-modal-overlay {
+    padding: 8px;
+  }
+
+  .my-bug-report-modal {
+    max-height: calc(100vh - 16px);
+    border-radius: 13px;
+  }
+
+  .my-bug-report-modal-header,
+  .my-bug-report-detail-section {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+  .my-bug-report-modal-status {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+  .my-bug-report-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .my-bug-report-detail-grid > div {
+    border-right: 0;
+    border-bottom: 1px solid #292f2d;
+  }
+
+  .my-bug-report-detail-grid > div:last-child {
+    border-bottom: 0;
+  }
+
+  .my-bug-report-admin-notes {
+    margin-left: 17px;
+    margin-right: 17px;
+  }
+
+  .my-bug-report-modal-footer {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+}
