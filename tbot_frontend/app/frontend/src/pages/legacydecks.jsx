@@ -15,6 +15,7 @@ import {
   parseDeckCards,
   buildCollectionMap,
   getDeckCollectionStatus,
+  getDeckKey,
 } from "../utils/deckFilters";
 
 import "../css/decklists.css";
@@ -108,9 +109,7 @@ function writeSessionCache(key, value) {
 
 function LegacyDecksPage() {
   const initialDecks = readSessionCache(STORAGE_KEYS.decks, []);
-
   const initialDeckCount = readSessionCache(STORAGE_KEYS.deckCount, null);
-
   const initialCards = readSessionCache(STORAGE_KEYS.cards, []);
 
   const hasCachedDecks = Array.isArray(initialDecks) && initialDecks.length > 0;
@@ -147,9 +146,6 @@ function LegacyDecksPage() {
     };
   }, []);
 
-  /*
-   * Load legacy decks.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -249,9 +245,6 @@ function LegacyDecksPage() {
     };
   }, []);
 
-  /*
-   * Load legacy deck count.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -279,7 +272,6 @@ function LegacyDecksPage() {
 
         if (Number.isFinite(count) && count >= 0) {
           setTotalDecks(count);
-
           writeSessionCache(STORAGE_KEYS.deckCount, count);
         }
       } catch (err) {
@@ -296,9 +288,6 @@ function LegacyDecksPage() {
     };
   }, []);
 
-  /*
-   * Load card information.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -327,7 +316,6 @@ function LegacyDecksPage() {
             : [];
 
         setAllCards(cards);
-
         writeSessionCache(STORAGE_KEYS.cards, cards);
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -343,27 +331,6 @@ function LegacyDecksPage() {
     };
   }, []);
 
-  /*
-   * Load the authenticated user's collection.
-   *
-   * The endpoint returns:
-   *
-   * {
-   *   authenticated: true,
-   *   profile_id: ...,
-   *   cards: [
-   *     {
-   *       id: ...,
-   *       card_name: "...",
-   *       quantity: 4,
-   *       card: {...}
-   *     }
-   *   ]
-   * }
-   *
-   * If the user is not authenticated, the collection
-   * filter simply remains hidden.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -381,6 +348,7 @@ function LegacyDecksPage() {
         if (!response.ok) {
           setIsAuthenticated(false);
           setCollectionCards([]);
+          setCollectionFilter([]);
           return;
         }
 
@@ -395,7 +363,13 @@ function LegacyDecksPage() {
 
         setIsAuthenticated(true);
 
-        setCollectionCards(Array.isArray(data?.cards) ? data.cards : []);
+        setCollectionCards(
+          Array.isArray(data?.cards)
+            ? data.cards
+            : Array.isArray(data?.results)
+              ? data.results
+              : [],
+        );
       } catch (err) {
         if (err.name === "AbortError") {
           return;
@@ -405,6 +379,7 @@ function LegacyDecksPage() {
 
         setIsAuthenticated(false);
         setCollectionCards([]);
+        setCollectionFilter([]);
       }
     };
 
@@ -415,37 +390,13 @@ function LegacyDecksPage() {
     };
   }, []);
 
-  /*
-   * Convert the user's collection into a normalized
-   * card-name -> quantity Map.
-   */
   const collectionMap = useMemo(() => {
+    if (!isAuthenticated) {
+      return new Map();
+    }
+
     return buildCollectionMap(collectionCards);
-  }, [collectionCards]);
-
-  /*
-   * Calculate collection status for every legacy deck.
-   */
-  const deckCollectionStatuses = useMemo(() => {
-    const statusMap = new Map();
-
-    decks.forEach((deck) => {
-      const deckId =
-        deck?.deckid ??
-        deck?.deckID ??
-        deck?.id ??
-        `${normalizeKey(deck?.side)}-${normalizeKey(
-          deck?.hero,
-        )}-${normalizeKey(deck?.name)}`;
-
-      statusMap.set(
-        String(deckId),
-        getDeckCollectionStatus(deck, collectionMap),
-      );
-    });
-
-    return statusMap;
-  }, [decks, collectionMap]);
+  }, [collectionCards, isAuthenticated]);
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -454,110 +405,8 @@ function LegacyDecksPage() {
 
     const selectedSide = normalizeKey(side);
 
-    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
+    return decks.filter((deck) => normalizeKey(deck?.side) === selectedSide);
   }, [decks, side]);
-
-  const heroOptions = useMemo(() => {
-    const heroMap = new Map();
-
-    sideFilteredDecks.forEach((deck) => {
-      const heroName = normalizeText(deck.hero);
-
-      if (!heroName) {
-        return;
-      }
-
-      const key = normalizeKey(heroName);
-
-      if (!heroMap.has(key)) {
-        heroMap.set(key, {
-          value: heroName,
-          label: heroName,
-          count: 0,
-          side: normalizeKey(deck.side),
-        });
-      }
-
-      heroMap.get(key).count += 1;
-    });
-
-    return Array.from(heroMap.values())
-      .map((option) => {
-        const matchedCard = allCards.find(
-          (card) =>
-            normalizeKey(card?.card_name) === normalizeKey(option.label),
-        );
-
-        return {
-          ...option,
-          description: matchedCard?.flavor_text || "",
-          image: matchedCard?.thumbnail || "",
-        };
-      })
-      .sort((a, b) =>
-        a.label.localeCompare(b.label, undefined, {
-          sensitivity: "base",
-        }),
-      );
-  }, [sideFilteredDecks, allCards]);
-
-  const categoryOptions = useMemo(() => {
-    const categoryMap = new Map();
-
-    sideFilteredDecks.forEach((deck) => {
-      const categories = parseCategories(deck.category);
-
-      categories.forEach((categoryName) => {
-        if (!CATEGORY_META[categoryName]) {
-          return;
-        }
-
-        if (!categoryMap.has(categoryName)) {
-          categoryMap.set(categoryName, {
-            value: categoryName,
-            label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
-            count: 0,
-            ...(CATEGORY_META[categoryName] || {}),
-          });
-        }
-
-        categoryMap.get(categoryName).count += 1;
-      });
-    });
-
-    return Array.from(categoryMap.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, undefined, {
-        sensitivity: "base",
-      }),
-    );
-  }, [sideFilteredDecks]);
-
-  const archetypeOptions = useMemo(() => {
-    const counts = {};
-
-    Object.keys(ARCHETYPE_META).forEach((key) => {
-      counts[key] = 0;
-    });
-
-    sideFilteredDecks.forEach((deck) => {
-      const deckArchetypes = parseArchetypes(deck.archetype);
-
-      Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
-        if (deckArchetypes.includes(archetypeName)) {
-          counts[archetypeName] += 1;
-        }
-      });
-    });
-
-    return Object.entries(ARCHETYPE_META)
-      .map(([value, meta]) => ({
-        value,
-        label: value.charAt(0).toUpperCase() + value.slice(1),
-        count: counts[value] || 0,
-        ...meta,
-      }))
-      .filter((option) => option.count > 0);
-  }, [sideFilteredDecks]);
 
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
@@ -597,121 +446,297 @@ function LegacyDecksPage() {
     });
   }, [decks]);
 
-  const filteredDecks = useMemo(() => {
-    const searchValue = normalizeKey(search);
+  const deckCollectionStatuses = useMemo(() => {
+    const statusMap = new Map();
 
-    const alias = HERO_ALIAS[searchValue]
-      ? normalizeKey(HERO_ALIAS[searchValue])
-      : "";
+    if (!isAuthenticated) {
+      return statusMap;
+    }
 
-    return sortedDecks.filter((deck) => {
-      const deckCards = parseDeckCards(deck.cards);
-
-      const searchableCardValues = deckCards.map((card) => normalizeKey(card));
-
-      const searchableValues = [
-        deck.name,
-        deck.creator,
-        deck.optimization,
-        deck.hero,
-        deck.archetype,
-        deck.category,
-      ]
-        .filter(Boolean)
-        .map((value) => normalizeKey(value));
-
-      searchableValues.push(...searchableCardValues);
-
-      const searchMatch =
-        !searchValue ||
-        (alias
-          ? normalizeKey(deck.hero).includes(alias)
-          : searchableValues.some((value) => value.includes(searchValue)));
-
-      const deckSide = normalizeKey(deck.side);
-
-      const sideMatch = side === "All" || deckSide === normalizeKey(side);
-
-      const heroMatch =
-        hero.length === 0 ||
-        hero.some(
-          (selectedHero) =>
-            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
-        );
-
-      const deckCategories = parseCategories(deck.category);
-
-      const categoryMatch =
-        category.length === 0 ||
-        category.every((selectedCategory) =>
-          deckCategories.includes(normalizeKey(selectedCategory.value)),
-        );
-
-      const deckArchetypes = parseArchetypes(deck.archetype);
-
-      const archetypeMatch =
-        archetype.length === 0 ||
-        archetype.every((selectedArchetype) =>
-          deckArchetypes.includes(normalizeKey(selectedArchetype.value)),
-        );
-
-      /*
-       * Collection filtering.
-       *
-       * A deck can only have one collection status:
-       *
-       * buildable
-       * OR
-       * close
-       *
-       * Therefore selecting multiple collection
-       * options uses OR logic.
-       */
-      let collectionMatch = true;
-
-      if (isAuthenticated && collectionFilter.length > 0) {
-        const deckId =
-          deck?.deckid ??
-          deck?.deckID ??
-          deck?.id ??
-          `${normalizeKey(deck?.side)}-${normalizeKey(
-            deck?.hero,
-          )}-${normalizeKey(deck?.name)}`;
-
-        const collectionStatus = deckCollectionStatuses.get(String(deckId));
-
-        collectionMatch = collectionFilter.some((selectedCollection) => {
-          if (selectedCollection.value === "buildable") {
-            return collectionStatus?.buildable === true;
-          }
-
-          if (selectedCollection.value === "close") {
-            return collectionStatus?.close === true;
-          }
-
-          return false;
-        });
-      }
-
-      return (
-        searchMatch &&
-        sideMatch &&
-        heroMatch &&
-        categoryMatch &&
-        archetypeMatch &&
-        collectionMatch
+    decks.forEach((deck) => {
+      statusMap.set(
+        getDeckKey(deck),
+        getDeckCollectionStatus(deck, collectionMap),
       );
     });
+
+    return statusMap;
+  }, [decks, collectionMap, isAuthenticated]);
+
+  const getDecksMatchingFilters = useMemo(() => {
+    return (sourceDecks, excludedFilter = null) => {
+      const searchValue = normalizeKey(search);
+
+      const alias = HERO_ALIAS[searchValue]
+        ? normalizeKey(HERO_ALIAS[searchValue])
+        : "";
+
+      return sourceDecks.filter((deck) => {
+        const deckCards = parseDeckCards(deck.cards);
+
+        const searchableCardValues = deckCards.map((card) =>
+          normalizeKey(card),
+        );
+
+        const searchableValues = [
+          deck.name,
+          deck.creator,
+          deck.optimization,
+          deck.hero,
+          deck.archetype,
+          deck.category,
+        ]
+          .filter(Boolean)
+          .map((value) => normalizeKey(value));
+
+        searchableValues.push(...searchableCardValues);
+
+        let searchMatch = true;
+
+        if (searchValue) {
+          searchMatch = alias
+            ? normalizeKey(deck.hero).includes(alias)
+            : searchableValues.some((value) => value.includes(searchValue));
+        }
+
+        const deckSide = normalizeKey(deck.side);
+
+        const sideMatch = side === "All" || deckSide === normalizeKey(side);
+
+        const heroMatch =
+          excludedFilter === "hero" ||
+          hero.length === 0 ||
+          hero.some(
+            (selectedHero) =>
+              normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
+          );
+
+        const deckCategories = parseCategories(deck.category);
+
+        const categoryMatch =
+          excludedFilter === "category" ||
+          category.length === 0 ||
+          category.every((selectedCategory) =>
+            deckCategories.includes(normalizeKey(selectedCategory.value)),
+          );
+
+        const deckArchetypes = parseArchetypes(deck.archetype);
+
+        const archetypeMatch =
+          excludedFilter === "archetype" ||
+          archetype.length === 0 ||
+          archetype.every((selectedArchetype) =>
+            deckArchetypes.includes(normalizeKey(selectedArchetype.value)),
+          );
+
+        let collectionMatch = true;
+
+        if (
+          excludedFilter !== "collection" &&
+          isAuthenticated &&
+          collectionFilter.length > 0
+        ) {
+          const status = deckCollectionStatuses.get(getDeckKey(deck));
+
+          collectionMatch = collectionFilter.some((selectedCollection) => {
+            if (selectedCollection.value === "buildable") {
+              return status?.buildable === true;
+            }
+
+            if (selectedCollection.value === "close") {
+              return status?.close === true;
+            }
+
+            return false;
+          });
+        }
+
+        return (
+          searchMatch &&
+          sideMatch &&
+          heroMatch &&
+          categoryMatch &&
+          archetypeMatch &&
+          collectionMatch
+        );
+      });
+    };
   }, [
-    sortedDecks,
     search,
     side,
     hero,
     category,
     archetype,
-    isAuthenticated,
     collectionFilter,
+    isAuthenticated,
     deckCollectionStatuses,
+  ]);
+
+  const filteredDecks = useMemo(() => {
+    return getDecksMatchingFilters(sortedDecks);
+  }, [sortedDecks, getDecksMatchingFilters]);
+
+  const heroOptions = useMemo(() => {
+    const availableDecks = getDecksMatchingFilters(sideFilteredDecks, "hero");
+
+    const heroMap = new Map();
+
+    availableDecks.forEach((deck) => {
+      const heroName = normalizeText(deck.hero);
+
+      if (!heroName) {
+        return;
+      }
+
+      const key = normalizeKey(heroName);
+
+      if (!heroMap.has(key)) {
+        heroMap.set(key, {
+          value: heroName,
+          label: heroName,
+          count: 0,
+          side: normalizeKey(deck.side),
+        });
+      }
+
+      heroMap.get(key).count += 1;
+    });
+
+    return Array.from(heroMap.values())
+      .map((option) => {
+        const matchedCard = allCards.find(
+          (card) =>
+            normalizeKey(card?.card_name) === normalizeKey(option.label),
+        );
+
+        return {
+          ...option,
+          description: matchedCard?.flavor_text || "",
+          image: matchedCard?.thumbnail || "",
+        };
+      })
+      .sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, {
+          sensitivity: "base",
+        }),
+      );
+  }, [sideFilteredDecks, allCards, getDecksMatchingFilters]);
+
+  const categoryOptions = useMemo(() => {
+    const availableDecks = getDecksMatchingFilters(
+      sideFilteredDecks,
+      "category",
+    );
+
+    const categoryMap = new Map();
+
+    availableDecks.forEach((deck) => {
+      const categories = parseCategories(deck.category);
+
+      categories.forEach((categoryName) => {
+        if (!CATEGORY_META[categoryName]) {
+          return;
+        }
+
+        if (!categoryMap.has(categoryName)) {
+          categoryMap.set(categoryName, {
+            value: categoryName,
+            label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
+            count: 0,
+            ...(CATEGORY_META[categoryName] || {}),
+          });
+        }
+
+        categoryMap.get(categoryName).count += 1;
+      });
+    });
+
+    return Array.from(categoryMap.values()).sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, {
+        sensitivity: "base",
+      }),
+    );
+  }, [sideFilteredDecks, getDecksMatchingFilters]);
+
+  const archetypeOptions = useMemo(() => {
+    const availableDecks = getDecksMatchingFilters(
+      sideFilteredDecks,
+      "archetype",
+    );
+
+    const counts = {};
+
+    Object.keys(ARCHETYPE_META).forEach((key) => {
+      counts[key] = 0;
+    });
+
+    availableDecks.forEach((deck) => {
+      const deckArchetypes = parseArchetypes(deck.archetype);
+
+      Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
+        if (deckArchetypes.includes(archetypeName)) {
+          counts[archetypeName] += 1;
+        }
+      });
+    });
+
+    return Object.entries(ARCHETYPE_META)
+      .map(([value, meta]) => ({
+        value,
+        label: value.charAt(0).toUpperCase() + value.slice(1),
+        count: counts[value] || 0,
+        ...meta,
+      }))
+      .filter((option) => option.count > 0);
+  }, [sideFilteredDecks, getDecksMatchingFilters]);
+
+  const collectionOptions = useMemo(() => {
+    if (!isAuthenticated) {
+      return COLLECTION_OPTIONS;
+    }
+
+    const availableDecks = getDecksMatchingFilters(
+      sideFilteredDecks,
+      "collection",
+    );
+
+    let buildableCount = 0;
+    let closeCount = 0;
+
+    availableDecks.forEach((deck) => {
+      const status = deckCollectionStatuses.get(getDeckKey(deck));
+
+      if (status?.buildable === true) {
+        buildableCount += 1;
+      }
+
+      if (status?.close === true) {
+        closeCount += 1;
+      }
+    });
+
+    return COLLECTION_OPTIONS.map((option) => {
+      if (option.value === "buildable") {
+        return {
+          ...option,
+          count: buildableCount,
+        };
+      }
+
+      if (option.value === "close") {
+        return {
+          ...option,
+          count: closeCount,
+        };
+      }
+
+      return option;
+    });
+  }, [
+    sideFilteredDecks,
+    isAuthenticated,
+    deckCollectionStatuses,
+    getDecksMatchingFilters,
   ]);
 
   const clearFilters = () => {
@@ -837,7 +862,7 @@ function LegacyDecksPage() {
               <div className="select-wrapper">
                 <FilterDropdown
                   label="Collection"
-                  options={COLLECTION_OPTIONS}
+                  options={collectionOptions}
                   value={collectionFilter}
                   onChange={setCollectionFilter}
                   multi

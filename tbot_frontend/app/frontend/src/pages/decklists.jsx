@@ -105,7 +105,6 @@ function DecklistsPage() {
 
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
-
   const [hero, setHero] = useState([]);
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
@@ -118,12 +117,6 @@ function DecklistsPage() {
   const [collectionLoading, setCollectionLoading] = useState(false);
   const [collectionLoaded, setCollectionLoaded] = useState(false);
 
-  /*
-   * --------------------------------------------------------------------------
-   * Document title
-   * --------------------------------------------------------------------------
-   */
-
   useEffect(() => {
     document.title = "Decklists";
 
@@ -131,12 +124,6 @@ function DecklistsPage() {
       document.title = "Tbot";
     };
   }, []);
-
-  /*
-   * --------------------------------------------------------------------------
-   * Load decks
-   * --------------------------------------------------------------------------
-   */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -226,12 +213,6 @@ function DecklistsPage() {
     };
   }, []);
 
-  /*
-   * --------------------------------------------------------------------------
-   * Check Discord authentication
-   * --------------------------------------------------------------------------
-   */
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -279,12 +260,6 @@ function DecklistsPage() {
     };
   }, []);
 
-  /*
-   * --------------------------------------------------------------------------
-   * Load all card information
-   * --------------------------------------------------------------------------
-   */
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -323,12 +298,6 @@ function DecklistsPage() {
       controller.abort();
     };
   }, []);
-
-  /*
-   * --------------------------------------------------------------------------
-   * Load deck count
-   * --------------------------------------------------------------------------
-   */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -373,12 +342,6 @@ function DecklistsPage() {
     };
   }, []);
 
-  /*
-   * --------------------------------------------------------------------------
-   * Load user collection ONLY after authentication succeeds
-   * --------------------------------------------------------------------------
-   */
-
   useEffect(() => {
     if (authLoading) {
       return undefined;
@@ -389,7 +352,6 @@ function DecklistsPage() {
       setCollectionLoading(false);
       setCollectionLoaded(false);
       setCollection(null);
-
       return undefined;
     }
 
@@ -451,32 +413,275 @@ function DecklistsPage() {
     };
   }, [discordUser, authLoading]);
 
-  /*
-   * --------------------------------------------------------------------------
-   * Side filtering
-   * --------------------------------------------------------------------------
-   */
+  const sortedDecks = useMemo(() => {
+    return [...decks].sort((a, b) => {
+      const sideOrder = {
+        plants: 0,
+        zombies: 1,
+      };
 
-  const sideFilteredDecks = useMemo(() => {
-    if (side === "All") {
-      return decks;
+      const sideA = normalizeSide(a.side);
+      const sideB = normalizeSide(b.side);
+
+      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
+
+      if (sideCompare !== 0) {
+        return sideCompare;
+      }
+
+      const heroCompare = normalizeText(a.hero).localeCompare(
+        normalizeText(b.hero),
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      );
+
+      if (heroCompare !== 0) {
+        return heroCompare;
+      }
+
+      return normalizeText(a.name).localeCompare(
+        normalizeText(b.name),
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      );
+    });
+  }, [decks]);
+
+  const collectionMap = useMemo(() => {
+    if (!collectionLoaded || collectionLoading || !discordUser) {
+      return new Map();
     }
 
-    const selectedSide = normalizeSide(side);
+    return buildCollectionMap(userCollection);
+  }, [userCollection, collectionLoaded, collectionLoading, discordUser]);
 
-    return decks.filter((deck) => normalizeSide(deck?.side) === selectedSide);
-  }, [decks, side]);
+  const deckCollectionStatus = useMemo(() => {
+    const statusMap = new Map();
 
-  /*
-   * --------------------------------------------------------------------------
-   * Hero options
-   * --------------------------------------------------------------------------
-   */
+    if (!discordUser || !collectionLoaded || collectionLoading) {
+      return statusMap;
+    }
+
+    sortedDecks.forEach((deck) => {
+      statusMap.set(
+        getDeckKey(deck),
+        getDeckCollectionStatus(deck, collectionMap),
+      );
+    });
+
+    return statusMap;
+  }, [
+    sortedDecks,
+    collectionMap,
+    discordUser,
+    collectionLoaded,
+    collectionLoading,
+  ]);
+
+  const getCollectionValues = (value) => {
+    if (Array.isArray(value)) {
+      return value
+        .filter(Boolean)
+        .map((item) => item?.value)
+        .filter(Boolean);
+    }
+
+    if (value?.value) {
+      return [value.value];
+    }
+
+    if (typeof value === "string" && value) {
+      return [value];
+    }
+
+    return [];
+  };
+
+  const matchesNonCollectionFilters = useMemo(() => {
+    return (deck, options = {}) => {
+      const {
+        exclude = null,
+        heroOption = null,
+        categoryOption = null,
+        archetypeOption = null,
+      } = options;
+
+      const searchValue = normalizeKey(search);
+
+      if (searchValue) {
+        const alias = HERO_ALIAS[searchValue]
+          ? normalizeKey(HERO_ALIAS[searchValue])
+          : "";
+
+        const deckCards = parseDeckCards(deck.cards);
+
+        const searchableCardValues = deckCards.map((card) =>
+          normalizeKey(card),
+        );
+
+        const searchableValues = [
+          deck.name,
+          deck.creator,
+          deck.optimization,
+          deck.hero,
+          deck.archetype,
+          deck.category,
+        ]
+          .filter(Boolean)
+          .map((value) => normalizeKey(value));
+
+        let searchMatch = false;
+
+        if (alias) {
+          searchMatch = normalizeKey(deck.hero).includes(alias);
+        } else {
+          const normalFieldMatch = searchableValues.some((value) =>
+            value.includes(searchValue),
+          );
+
+          const cardMatch = searchableCardValues.some((card) =>
+            card.includes(searchValue),
+          );
+
+          searchMatch = normalFieldMatch || cardMatch;
+        }
+
+        if (!searchMatch) {
+          return false;
+        }
+      }
+
+      if (side !== "All") {
+        if (normalizeSide(deck.side) !== normalizeSide(side)) {
+          return false;
+        }
+      }
+
+      if (exclude !== "hero") {
+        const selectedHeroes = heroOption !== null ? [heroOption] : hero;
+
+        if (selectedHeroes.length > 0) {
+          const heroMatch = selectedHeroes.some(
+            (selectedHero) =>
+              normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
+          );
+
+          if (!heroMatch) {
+            return false;
+          }
+        }
+      }
+
+      if (exclude !== "category") {
+        const selectedCategories =
+          categoryOption !== null ? [categoryOption] : category;
+
+        if (selectedCategories.length > 0) {
+          const categoryMatch = selectedCategories.some(
+            (selectedCategory) =>
+              normalizeKey(deck.category) ===
+              normalizeKey(selectedCategory.value),
+          );
+
+          if (!categoryMatch) {
+            return false;
+          }
+        }
+      }
+
+      if (exclude !== "archetype") {
+        const selectedArchetypes =
+          archetypeOption !== null
+            ? [...archetype, archetypeOption]
+            : archetype;
+
+        if (selectedArchetypes.length > 0) {
+          const deckArchetype = normalizeKey(deck.archetype);
+
+          const archetypeMatch = selectedArchetypes.every((selectedArchetype) =>
+            deckArchetype.includes(normalizeKey(selectedArchetype.value)),
+          );
+
+          if (!archetypeMatch) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    };
+  }, [search, side, hero, category, archetype]);
+
+  const deckMatchesFilters = useMemo(() => {
+    return (deck, options = {}) => {
+      const { exclude = null, collectionOption = null } = options;
+
+      if (
+        !matchesNonCollectionFilters(deck, {
+          exclude,
+        })
+      ) {
+        return false;
+      }
+
+      if (exclude !== "collection") {
+        const selectedCollection =
+          collectionOption !== null ? collectionOption : collection;
+
+        const collectionValues = getCollectionValues(selectedCollection);
+
+        if (collectionValues.length > 0) {
+          if (!discordUser || !collectionLoaded || collectionLoading) {
+            return false;
+          }
+
+          const status = deckCollectionStatus.get(getDeckKey(deck));
+
+          const collectionMatch = collectionValues.every((value) => {
+            if (value === "buildable") {
+              return status?.buildable === true;
+            }
+
+            if (value === "close") {
+              return status?.close === true;
+            }
+
+            return true;
+          });
+
+          if (!collectionMatch) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    };
+  }, [
+    matchesNonCollectionFilters,
+    collection,
+    discordUser,
+    collectionLoaded,
+    collectionLoading,
+    deckCollectionStatus,
+  ]);
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();
 
-    sideFilteredDecks.forEach((deck) => {
+    sortedDecks.forEach((deck) => {
+      if (
+        !deckMatchesFilters(deck, {
+          exclude: "hero",
+        })
+      ) {
+        return;
+      }
+
       const heroName = normalizeText(deck.hero);
 
       if (!heroName) {
@@ -516,18 +721,20 @@ function DecklistsPage() {
           sensitivity: "base",
         }),
       );
-  }, [sideFilteredDecks, allCards]);
-
-  /*
-   * --------------------------------------------------------------------------
-   * Category options
-   * --------------------------------------------------------------------------
-   */
+  }, [sortedDecks, allCards, deckMatchesFilters]);
 
   const categoryOptions = useMemo(() => {
     const categoryMap = new Map();
 
-    sideFilteredDecks.forEach((deck) => {
+    sortedDecks.forEach((deck) => {
+      if (
+        !deckMatchesFilters(deck, {
+          exclude: "category",
+        })
+      ) {
+        return;
+      }
+
       const categoryName = normalizeText(deck.category);
 
       if (!categoryName) {
@@ -553,287 +760,40 @@ function DecklistsPage() {
         sensitivity: "base",
       }),
     );
-  }, [sideFilteredDecks]);
-
-  /*
-   * --------------------------------------------------------------------------
-   * Archetype options
-   * --------------------------------------------------------------------------
-   */
+  }, [sortedDecks, deckMatchesFilters]);
 
   const archetypeOptions = useMemo(() => {
-    const counts = {};
+    const options = Object.entries(ARCHETYPE_META).map(([value, meta]) => ({
+      value,
+      label: value.charAt(0).toUpperCase() + value.slice(1),
+      count: 0,
+      ...meta,
+    }));
 
-    Object.keys(ARCHETYPE_META).forEach((key) => {
-      counts[key] = 0;
-    });
+    sortedDecks.forEach((deck) => {
+      if (
+        !deckMatchesFilters(deck, {
+          exclude: "archetype",
+        })
+      ) {
+        return;
+      }
 
-    sideFilteredDecks.forEach((deck) => {
       const deckArchetype = normalizeKey(deck.archetype);
 
       if (!deckArchetype) {
         return;
       }
 
-      Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
-        if (deckArchetype.includes(archetypeName)) {
-          counts[archetypeName] += 1;
+      options.forEach((option) => {
+        if (deckArchetype.includes(normalizeKey(option.value))) {
+          option.count += 1;
         }
       });
     });
 
-    return Object.entries(ARCHETYPE_META)
-      .map(([value, meta]) => ({
-        value,
-        label: value.charAt(0).toUpperCase() + value.slice(1),
-        count: counts[value] || 0,
-        ...meta,
-      }))
-      .filter((option) => option.count > 0);
-  }, [sideFilteredDecks]);
-
-  /*
-   * --------------------------------------------------------------------------
-   * Sorted decks
-   * --------------------------------------------------------------------------
-   */
-
-  const sortedDecks = useMemo(() => {
-    return [...decks].sort((a, b) => {
-      const sideOrder = {
-        plants: 0,
-        zombies: 1,
-      };
-
-      const sideA = normalizeSide(a.side);
-      const sideB = normalizeSide(b.side);
-
-      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
-
-      if (sideCompare !== 0) {
-        return sideCompare;
-      }
-
-      const heroCompare = normalizeText(a.hero).localeCompare(
-        normalizeText(b.hero),
-        undefined,
-        {
-          sensitivity: "base",
-        },
-      );
-
-      if (heroCompare !== 0) {
-        return heroCompare;
-      }
-
-      return normalizeText(a.name).localeCompare(
-        normalizeText(b.name),
-        undefined,
-        {
-          sensitivity: "base",
-        },
-      );
-    });
-  }, [decks]);
-
-  /*
-   * --------------------------------------------------------------------------
-   * Collection map
-   * --------------------------------------------------------------------------
-   */
-
-  const collectionMap = useMemo(() => {
-    if (!collectionLoaded || collectionLoading || !discordUser) {
-      return new Map();
-    }
-
-    return buildCollectionMap(userCollection);
-  }, [userCollection, collectionLoaded, collectionLoading, discordUser]);
-
-  /*
-   * --------------------------------------------------------------------------
-   * Deck collection status
-   * --------------------------------------------------------------------------
-   */
-
-  const deckCollectionStatus = useMemo(() => {
-    const statusMap = new Map();
-
-    if (!discordUser || !collectionLoaded || collectionLoading) {
-      return statusMap;
-    }
-
-    decks.forEach((deck) => {
-      statusMap.set(
-        getDeckKey(deck),
-        getDeckCollectionStatus(deck, collectionMap),
-      );
-    });
-
-    return statusMap;
-  }, [decks, collectionMap, discordUser, collectionLoaded, collectionLoading]);
-
-  /*
-   * --------------------------------------------------------------------------
-   * Filtered decks
-   * --------------------------------------------------------------------------
-   */
-
-  const filteredDecks = useMemo(() => {
-    const searchValue = normalizeKey(search);
-
-    const alias = HERO_ALIAS[searchValue]
-      ? normalizeKey(HERO_ALIAS[searchValue])
-      : "";
-
-    return sortedDecks.filter((deck) => {
-      const deckCards = parseDeckCards(deck.cards);
-
-      const searchableCardValues = deckCards.map((card) => normalizeKey(card));
-
-      const searchableValues = [
-        deck.name,
-        deck.creator,
-        deck.optimization,
-        deck.hero,
-        deck.archetype,
-        deck.category,
-      ]
-        .filter(Boolean)
-        .map((value) => normalizeKey(value));
-
-      /*
-       * Search
-       */
-
-      let searchMatch = true;
-
-      if (searchValue) {
-        if (alias) {
-          searchMatch = normalizeKey(deck.hero).includes(alias);
-        } else {
-          const normalFieldMatch = searchableValues.some((value) =>
-            value.includes(searchValue),
-          );
-
-          const cardMatch = searchableCardValues.some((card) =>
-            card.includes(searchValue),
-          );
-
-          searchMatch = normalFieldMatch || cardMatch;
-        }
-      }
-
-      /*
-       * Side
-       */
-
-      const deckSide = normalizeSide(deck.side);
-
-      const sideMatch = side === "All" || deckSide === normalizeSide(side);
-
-      /*
-       * Hero
-       */
-
-      const heroMatch =
-        hero.length === 0 ||
-        hero.some(
-          (selectedHero) =>
-            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
-        );
-
-      /*
-       * Category
-       */
-
-      const categoryMatch =
-        category.length === 0 ||
-        category.some(
-          (selectedCategory) =>
-            normalizeKey(deck.category) ===
-            normalizeKey(selectedCategory.value),
-        );
-
-      /*
-       * Archetype
-       */
-
-      const deckArchetype = normalizeKey(deck.archetype);
-
-      const archetypeMatch =
-        archetype.length === 0 ||
-        archetype.every((selectedArchetype) =>
-          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
-        );
-
-      /*
-       * Collection
-       */
-
-      let collectionMatch = true;
-
-      if (collection?.value) {
-        if (!discordUser || !collectionLoaded || collectionLoading) {
-          collectionMatch = false;
-        } else {
-          const status = deckCollectionStatus.get(getDeckKey(deck));
-
-          if (collection.value === "buildable") {
-            collectionMatch = status?.buildable === true;
-          } else if (collection.value === "close") {
-            collectionMatch = status?.close === true;
-          }
-        }
-      }
-
-      return (
-        searchMatch &&
-        sideMatch &&
-        heroMatch &&
-        categoryMatch &&
-        archetypeMatch &&
-        collectionMatch
-      );
-    });
-  }, [
-    sortedDecks,
-    search,
-    side,
-    hero,
-    category,
-    archetype,
-    collection,
-    deckCollectionStatus,
-    discordUser,
-    collectionLoaded,
-    collectionLoading,
-  ]);
-
-  /*
-   * --------------------------------------------------------------------------
-   * Clear filters
-   * --------------------------------------------------------------------------
-   */
-
-  const clearFilters = () => {
-    setSearch("");
-    setHero([]);
-    setCategory([]);
-    setArchetype([]);
-    setCollection(null);
-  };
-
-  const handleSideChange = (newSide) => {
-    setSide(newSide);
-    clearFilters();
-  };
-
-  /*
-   * --------------------------------------------------------------------------
-   * Collection dropdown counts
-   * --------------------------------------------------------------------------
-   */
+    return options.filter((option) => option.count > 0);
+  }, [sortedDecks, deckMatchesFilters]);
 
   const collectionOptions = useMemo(() => {
     if (!discordUser || authLoading || collectionLoading || !collectionLoaded) {
@@ -843,14 +803,18 @@ function DecklistsPage() {
     let buildableCount = 0;
     let closeCount = 0;
 
-    decks.forEach((deck) => {
-      const status = getDeckCollectionStatus(deck, collectionMap);
+    sortedDecks.forEach((deck) => {
+      if (!matchesNonCollectionFilters(deck)) {
+        return;
+      }
 
-      if (status.buildable) {
+      const status = deckCollectionStatus.get(getDeckKey(deck));
+
+      if (status?.buildable === true) {
         buildableCount += 1;
       }
 
-      if (status.close) {
+      if (status?.close === true) {
         closeCount += 1;
       }
     });
@@ -873,28 +837,38 @@ function DecklistsPage() {
       return option;
     });
   }, [
-    decks,
-    collectionMap,
+    sortedDecks,
+    matchesNonCollectionFilters,
+    deckCollectionStatus,
     discordUser,
     authLoading,
     collectionLoading,
     collectionLoaded,
   ]);
 
-  /*
-   * --------------------------------------------------------------------------
-   * Loading screen
-   * --------------------------------------------------------------------------
-   */
+  const filteredDecks = useMemo(() => {
+    return sortedDecks.filter((deck) => deckMatchesFilters(deck));
+  }, [sortedDecks, deckMatchesFilters]);
+
+  const clearFilters = () => {
+    setSearch("");
+    setHero([]);
+    setCategory([]);
+    setArchetype([]);
+    setCollection(null);
+  };
+
+  const handleSideChange = (newSide) => {
+    setSide(newSide);
+    clearFilters();
+  };
 
   if (loading) {
     return (
       <div className="loading-page">
         <div className="loading-card">
           <div className="loading-spinner" />
-
           <h2>Loading decklists</h2>
-
           <p>Preparing the deck browser and loading available decks.</p>
 
           <div className="loading-status">
@@ -908,12 +882,6 @@ function DecklistsPage() {
       </div>
     );
   }
-
-  /*
-   * --------------------------------------------------------------------------
-   * Render
-   * --------------------------------------------------------------------------
-   */
 
   return (
     <div className="deck-page">
@@ -1012,7 +980,7 @@ function DecklistsPage() {
                   options={collectionOptions}
                   value={collection}
                   onChange={setCollection}
-                  multi={false}
+                  multi
                 />
               </div>
             )}

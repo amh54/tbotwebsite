@@ -26,11 +26,8 @@ import {
 } from "../utils/deckFilters";
 
 import "../css/decklists.css";
-
 import "../css/navbar.css";
-
 import "../css/loading.css";
-
 import "../css/userdecklists.css";
 
 const getApiBaseUrl = () => {
@@ -68,7 +65,9 @@ function DeckbuilderDecks() {
   const [hero, setHero] = useState([]);
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
-  const [collection, setCollection] = useState(null);
+
+  // Collection is a MULTISELECT.
+  const [collection, setCollection] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -331,7 +330,7 @@ function DeckbuilderDecks() {
       setUserCollection([]);
       setCollectionLoading(false);
       setCollectionLoaded(false);
-      setCollection(null);
+      setCollection([]);
 
       return undefined;
     }
@@ -377,7 +376,7 @@ function DeckbuilderDecks() {
           console.error("Unable to load user collection:", err);
 
           setUserCollection([]);
-          setCollection(null);
+          setCollection([]);
           setCollectionLoaded(false);
         }
       } finally {
@@ -652,60 +651,20 @@ function DeckbuilderDecks() {
   }, [decks, collectionMap, discordUser, collectionLoaded, collectionLoading]);
 
   // --------------------------------------------------------------------------
-  // Collection dropdown counts
+  // Apply NON-COLLECTION filters
+  //
+  // This is intentionally separate from filteredDecks.
+  //
+  // Collection dropdown counts are based on these decks so that:
+  //
+  // Side -> Hero -> Category -> Archetype -> Search
+  //
+  // all change the Buildable / Close numbers.
+  //
+  // The currently selected Collection filter is NOT applied here.
   // --------------------------------------------------------------------------
 
-  const collectionOptions = useMemo(() => {
-    if (!discordUser || authLoading || collectionLoading || !collectionLoaded) {
-      return COLLECTION_OPTIONS;
-    }
-
-    let buildableCount = 0;
-    let closeCount = 0;
-
-    decks.forEach((deck) => {
-      const status = getDeckCollectionStatus(deck, collectionMap);
-
-      if (status.buildable) {
-        buildableCount += 1;
-      }
-
-      if (status.close) {
-        closeCount += 1;
-      }
-    });
-
-    return COLLECTION_OPTIONS.map((option) => {
-      if (option.value === "buildable") {
-        return {
-          ...option,
-          count: buildableCount,
-        };
-      }
-
-      if (option.value === "close") {
-        return {
-          ...option,
-          count: closeCount,
-        };
-      }
-
-      return option;
-    });
-  }, [
-    decks,
-    collectionMap,
-    discordUser,
-    authLoading,
-    collectionLoading,
-    collectionLoaded,
-  ]);
-
-  // --------------------------------------------------------------------------
-  // Filtered decks
-  // --------------------------------------------------------------------------
-
-  const filteredDecks = useMemo(() => {
+  const collectionCountBaseDecks = useMemo(() => {
     const searchValue = normalizeKey(search);
 
     const alias = HERO_ALIAS[searchValue]
@@ -713,6 +672,10 @@ function DeckbuilderDecks() {
       : "";
 
     return sortedDecks.filter((deck) => {
+      // ----------------------------------------------------------------------
+      // Search
+      // ----------------------------------------------------------------------
+
       const deckCards = parseDeckCards(deck.cards);
 
       const searchableCardValues = deckCards.map((card) => normalizeKey(card));
@@ -727,10 +690,6 @@ function DeckbuilderDecks() {
       ]
         .filter(Boolean)
         .map((value) => normalizeKey(value));
-
-      // ----------------------------------------------------------------------
-      // Search
-      // ----------------------------------------------------------------------
 
       let searchMatch = true;
 
@@ -793,42 +752,105 @@ function DeckbuilderDecks() {
           deckArchetype.includes(normalizeKey(selectedArchetype.value)),
         );
 
-      // ----------------------------------------------------------------------
+      return (
+        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
+      );
+    });
+  }, [sortedDecks, search, side, hero, category, archetype]);
+
+  // --------------------------------------------------------------------------
+  // Collection dropdown counts
+  //
+  // IMPORTANT:
+  // Counts use collectionCountBaseDecks, NOT filteredDecks.
+  //
+  // This means selecting Buildable does not make the Buildable count
+  // recursively change itself. Instead, Buildable and Close are calculated
+  // against the decks matching all OTHER filters.
+  // --------------------------------------------------------------------------
+
+  const collectionOptions = useMemo(() => {
+    if (!discordUser || authLoading || collectionLoading || !collectionLoaded) {
+      return COLLECTION_OPTIONS;
+    }
+
+    let buildableCount = 0;
+    let closeCount = 0;
+
+    collectionCountBaseDecks.forEach((deck) => {
+      const status = deckCollectionStatus.get(getDeckKey(deck));
+
+      if (status?.buildable) {
+        buildableCount += 1;
+      }
+
+      if (status?.close) {
+        closeCount += 1;
+      }
+    });
+
+    return COLLECTION_OPTIONS.map((option) => {
+      if (option.value === "buildable") {
+        return {
+          ...option,
+          count: buildableCount,
+        };
+      }
+
+      if (option.value === "close") {
+        return {
+          ...option,
+          count: closeCount,
+        };
+      }
+
+      return option;
+    });
+  }, [
+    collectionCountBaseDecks,
+    deckCollectionStatus,
+    discordUser,
+    authLoading,
+    collectionLoading,
+    collectionLoaded,
+  ]);
+
+  // --------------------------------------------------------------------------
+  // Filtered decks
+  // --------------------------------------------------------------------------
+
+  const filteredDecks = useMemo(() => {
+    return collectionCountBaseDecks.filter((deck) => {
+      // --------------------------------------------------------------------
       // Collection
-      // ----------------------------------------------------------------------
+      // --------------------------------------------------------------------
 
       let collectionMatch = true;
 
-      if (collection?.value) {
+      if (collection.length > 0) {
         if (!discordUser || !collectionLoaded || collectionLoading) {
           collectionMatch = false;
         } else {
           const status = deckCollectionStatus.get(getDeckKey(deck));
 
-          if (collection.value === "buildable") {
-            collectionMatch = status?.buildable === true;
-          } else if (collection.value === "close") {
-            collectionMatch = status?.close === true;
-          }
+          collectionMatch = collection.every((selectedCollection) => {
+            if (selectedCollection.value === "buildable") {
+              return status?.buildable === true;
+            }
+
+            if (selectedCollection.value === "close") {
+              return status?.close === true;
+            }
+
+            return true;
+          });
         }
       }
 
-      return (
-        searchMatch &&
-        sideMatch &&
-        heroMatch &&
-        categoryMatch &&
-        archetypeMatch &&
-        collectionMatch
-      );
+      return collectionMatch;
     });
   }, [
-    sortedDecks,
-    search,
-    side,
-    hero,
-    category,
-    archetype,
+    collectionCountBaseDecks,
     collection,
     deckCollectionStatus,
     discordUser,
@@ -845,8 +867,12 @@ function DeckbuilderDecks() {
     setHero([]);
     setCategory([]);
     setArchetype([]);
-    setCollection(null);
+    setCollection([]);
   };
+
+  // --------------------------------------------------------------------------
+  // Side change
+  // --------------------------------------------------------------------------
 
   const handleSideChange = (newSide) => {
     setSide(newSide);
@@ -1058,7 +1084,7 @@ function DeckbuilderDecks() {
                   options={collectionOptions}
                   value={collection}
                   onChange={setCollection}
-                  multi={false}
+                  multi
                 />
               </div>
             )}
@@ -1120,4 +1146,4 @@ function DeckbuilderDecks() {
   );
 }
 
-export default DeckbuilderDecks;
+export default DeckbuilderDecks;d
