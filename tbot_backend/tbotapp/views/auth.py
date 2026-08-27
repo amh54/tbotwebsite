@@ -27,6 +27,7 @@ from .permissions import is_discord_owner
 logger = logging.getLogger(__name__)
 
 
+
 # ============================================================
 # CSRF TOKEN
 # ============================================================
@@ -34,17 +35,9 @@ logger = logging.getLogger(__name__)
 @require_GET
 @ensure_csrf_cookie
 def csrf_token(request):
-    token = get_token(request)
-
-    response = JsonResponse(
-        {
-            "csrfToken": token,
-        }
-    )
-
-    response["Access-Control-Allow-Credentials"] = "true"
-
-    return response
+    return JsonResponse({
+        "csrfToken": get_token(request),
+    })
 # ============================================================
 # DISCORD LOGIN
 # ============================================================

@@ -259,55 +259,72 @@ const selectStyles = {
 };
 
 const getCookie = (name) => {
-  const cookies = document.cookie ? document.cookie.split(";") : [];
+  const cookies = document.cookie
+    ? document.cookie.split(";")
+    : [];
 
   for (const cookie of cookies) {
     const trimmed = cookie.trim();
 
     if (trimmed.startsWith(`${name}=`)) {
-      return decodeURIComponent(trimmed.substring(name.length + 1));
+      return decodeURIComponent(
+        trimmed.substring(name.length + 1),
+      );
     }
   }
 
   return null;
 };
-const ensureCsrfToken = async () => {
-  let token = getCsrfToken();
 
-  if (token) {
-    return token;
+const getCsrfToken = () => {
+  return getCookie("csrftoken");
+};
+
+const ensureCsrfToken = async () => {
+  const existingToken = getCsrfToken();
+
+  if (existingToken) {
+    return existingToken;
   }
 
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-    mode: "cors",
-    headers: {
-      Accept: "application/json",
+  const response = await fetch(
+    `${API_BASE_URL}/tbotapp/csrf/`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
     },
-  });
+  );
 
-  console.log("CSRF RESPONSE:", response.status);
-  console.log("SET COOKIE HEADER:", response.headers.get("set-cookie"));
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
 
   if (!response.ok) {
-    throw new Error("Unable to get CSRF cookie");
+    throw new Error(
+      data?.error ||
+        data?.detail ||
+        `Unable to get CSRF token (${response.status})`,
+    );
   }
 
-  // give browser time to save cookie
-  await new Promise((resolve) => setTimeout(resolve, 100));
-
-  token = getCsrfToken();
-
-  console.log("CSRF COOKIE AFTER FETCH:", token);
+  const token =
+    getCsrfToken() ||
+    data?.csrfToken ||
+    data?.csrf_token;
 
   if (!token) {
-    throw new Error("CSRF cookie was not created");
+    throw new Error("Unable to obtain CSRF token");
   }
 
   return token;
 };
-const getCsrfToken = () => getCookie("csrftoken");
 
 const requestJson = async (url, options = {}) => {
   const response = await fetch(url, {

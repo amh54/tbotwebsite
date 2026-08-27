@@ -371,6 +371,14 @@ CSRF_COOKIE_SAMESITE = "None"
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_DOMAIN = None
 
+# ============================================================
+# LOCAL DEVELOPMENT OVERRIDES
+# ============================================================
+
+if DEBUG:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
 
 # ============================================================
 # PROXY / HTTPS

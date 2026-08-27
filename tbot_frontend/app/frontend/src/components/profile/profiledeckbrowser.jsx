@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import DeckCard from "../deckcomponent";
+
 import FilterDropdown from "../filterdropdown";
 
 import {
@@ -225,6 +226,55 @@ function ProfileDeckBrowser({
 
   /*
    * --------------------------------------------------------------------------
+   * Collection dropdown counts
+   * --------------------------------------------------------------------------
+   *
+   * Counts are calculated from the decks currently belonging to the
+   * selected profile and the user's collection.
+   *
+   * Buildable = every card needed by the deck is owned.
+   * Close = the deck is close to being buildable according to
+   * getDeckCollectionStatus().
+   * --------------------------------------------------------------------------
+   */
+
+  const collectionOptions = useMemo(() => {
+    let buildableCount = 0;
+    let closeCount = 0;
+
+    decks.forEach((deck) => {
+      const status = getDeckCollectionStatus(deck, collectionMap);
+
+      if (status.buildable) {
+        buildableCount += 1;
+      }
+
+      if (status.close) {
+        closeCount += 1;
+      }
+    });
+
+    return COLLECTION_OPTIONS.map((option) => {
+      if (option.value === "buildable") {
+        return {
+          ...option,
+          count: buildableCount,
+        };
+      }
+
+      if (option.value === "close") {
+        return {
+          ...option,
+          count: closeCount,
+        };
+      }
+
+      return option;
+    });
+  }, [decks, collectionMap]);
+
+  /*
+   * --------------------------------------------------------------------------
    * Apply all filters
    * --------------------------------------------------------------------------
    */
@@ -239,6 +289,7 @@ function ProfileDeckBrowser({
     return sortedDecks.filter((deck) => {
       /*
        * Search
+       * ----------------------------------------------------------------------
        */
 
       const deckCards = parseDeckCards(deck.cards);
@@ -276,6 +327,7 @@ function ProfileDeckBrowser({
 
       /*
        * Side
+       * ----------------------------------------------------------------------
        */
 
       const deckSide = normalizeSide(deck.side);
@@ -284,6 +336,7 @@ function ProfileDeckBrowser({
 
       /*
        * Hero
+       * ----------------------------------------------------------------------
        */
 
       const heroMatch =
@@ -295,6 +348,7 @@ function ProfileDeckBrowser({
 
       /*
        * Category
+       * ----------------------------------------------------------------------
        */
 
       const deckCategories = parseCategories(deck.category);
@@ -307,6 +361,7 @@ function ProfileDeckBrowser({
 
       /*
        * Archetype
+       * ----------------------------------------------------------------------
        */
 
       const deckArchetypes = parseArchetypes(deck.archetype);
@@ -319,6 +374,7 @@ function ProfileDeckBrowser({
 
       /*
        * Collection
+       * ----------------------------------------------------------------------
        */
 
       const collectionMatch =
@@ -484,7 +540,7 @@ function ProfileDeckBrowser({
           <div className="select-wrapper">
             <FilterDropdown
               label="Collection"
-              options={COLLECTION_OPTIONS}
+              options={collectionOptions}
               value={collection}
               onChange={setCollection}
               multi
