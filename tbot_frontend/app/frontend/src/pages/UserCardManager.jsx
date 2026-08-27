@@ -259,17 +259,13 @@ const selectStyles = {
 };
 
 const getCookie = (name) => {
-  const cookies = document.cookie
-    ? document.cookie.split(";")
-    : [];
+  const cookies = document.cookie ? document.cookie.split(";") : [];
 
   for (const cookie of cookies) {
     const trimmed = cookie.trim();
 
     if (trimmed.startsWith(`${name}=`)) {
-      return decodeURIComponent(
-        trimmed.substring(name.length + 1),
-      );
+      return decodeURIComponent(trimmed.substring(name.length + 1));
     }
   }
 
@@ -287,16 +283,13 @@ const ensureCsrfToken = async () => {
     return existingToken;
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/tbotapp/csrf/`,
-    {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-      },
+  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
     },
-  );
+  });
 
   let data = null;
 
@@ -314,10 +307,7 @@ const ensureCsrfToken = async () => {
     );
   }
 
-  const token =
-    getCsrfToken() ||
-    data?.csrfToken ||
-    data?.csrf_token;
+  const token = getCsrfToken() || data?.csrfToken || data?.csrf_token;
 
   if (!token) {
     throw new Error("Unable to obtain CSRF token");
@@ -1032,17 +1022,15 @@ const UserCardManager = () => {
     clearMessages();
 
     try {
-      const csrfToken = getCsrfToken();
+      const csrfToken = await ensureCsrfToken();
 
       const data = await requestJson(
         `${API_BASE_URL}/tbotapp/user-cards/${card.id}/`,
         {
           method: "PATCH",
-          headers: csrfToken
-            ? {
-                "X-CSRFToken": csrfToken,
-              }
-            : {},
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
           body: JSON.stringify({
             quantity,
           }),
@@ -1094,17 +1082,15 @@ const UserCardManager = () => {
     clearMessages();
 
     try {
-      const csrfToken = getCsrfToken();
+      const csrfToken = await ensureCsrfToken();
 
       await requestJson(
         `${API_BASE_URL}/tbotapp/user-cards/${card.id}/delete/`,
         {
           method: "DELETE",
-          headers: csrfToken
-            ? {
-                "X-CSRFToken": csrfToken,
-              }
-            : {},
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
         },
       );
 
