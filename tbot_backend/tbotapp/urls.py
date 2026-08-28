@@ -14,6 +14,11 @@ from .views.cards import (
     hero_count,
 )
 
+from .views.user_deck_suggestions import (
+    user_deck_suggestion_create,
+    user_deck_suggestion_status,
+)
+
 from .views.keep_or_scrap import (
     keep_or_scrap,
     keep_or_scrap_count,
@@ -23,7 +28,7 @@ from .views.admin_keep_or_scrap import (
     admin_keep_or_scrap,
     admin_keep_or_scrap_detail,
     admin_keep_or_scrap_image_upload,
-    admin_keep_or_scrap_cloudinary_signature
+    admin_keep_or_scrap_cloudinary_signature,
 )
 
 from .views.auth import (
@@ -106,10 +111,13 @@ from .views.admin_bugs import (
     admin_bug_reports,
     admin_bug_report_detail,
 )
+
 from .views.user_bugs import (
     user_bug_reports,
     user_bug_report_detail,
 )
+
+
 urlpatterns = [
     path(
         "decklists/",
@@ -285,11 +293,12 @@ urlpatterns = [
         admin_keep_or_scrap_image_upload,
         name="admin-keep-or-scrap-image-upload",
     ),
-path(
-    "admin/keeporscrap/cloudinary-signature/",
-    admin_keep_or_scrap_cloudinary_signature,
-    name="admin-keep-or-scrap-cloudinary-signature",
-),
+    path(
+        "admin/keeporscrap/cloudinary-signature/",
+        admin_keep_or_scrap_cloudinary_signature,
+        name="admin-keep-or-scrap-cloudinary-signature",
+    ),
+
     path(
         "bug-reports/create/",
         bug_report_create,
@@ -305,16 +314,17 @@ path(
         admin_bug_report_detail,
         name="admin-bug-report-detail",
     ),
-path(
-    "user/bug-reports/",
-    user_bug_reports,
-    name="user-bug-reports",
-),
-path(
-    "user/bug-reports/<int:bug_id>/",
-    user_bug_report_detail,
-    name="user-bug-report-detail",
-),
+    path(
+        "user/bug-reports/",
+        user_bug_reports,
+        name="user-bug-reports",
+    ),
+    path(
+        "user/bug-reports/<int:bug_id>/",
+        user_bug_report_detail,
+        name="user-bug-report-detail",
+    ),
+
     path(
         "profile/me/",
         profile_me,
@@ -401,6 +411,17 @@ path(
         "user-decks/shared/<str:profile_slug>/<int:deck_id>/",
         shared_user_deck,
         name="shared_user_deck",
+    ),
+
+    path(
+        "user-deck-suggestions/create/",
+        user_deck_suggestion_create,
+        name="user_deck_suggestion_create",
+    ),
+    path(
+        "user-deck-suggestions/<int:suggestion_id>/status/",
+        user_deck_suggestion_status,
+        name="user_deck_suggestion_status",
     ),
 
     path(

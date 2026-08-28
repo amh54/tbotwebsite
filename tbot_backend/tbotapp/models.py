@@ -274,6 +274,162 @@ class UserDeck(models.Model):
     class Meta:
         db_table = "user_decks"
         managed = False
+class UserDeckSuggestion(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    deck_id = models.BigIntegerField()
+    deck_name = models.CharField(max_length=255)
+
+    hero = models.CharField(max_length=255)
+    side = models.CharField(max_length=255)
+    category = models.CharField(max_length=255)
+    archetype = models.CharField(max_length=255)
+
+    creator = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    description = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    image = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+    )
+
+    cost = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    aliases = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    cards = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    inspiration = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    optimization = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    suggested_date = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    updated_date = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    deck_doc = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    suggested_by_discord_id = models.CharField(
+        max_length=30,
+    )
+
+    suggested_by_profile_id = models.BigIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    suggested_by_username = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    suggested_by_display_name = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    suggested_by_profile_slug = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    suggested_by_avatar = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        default="pending",
+    )
+
+    consent_type = models.CharField(
+        max_length=30,
+        default="self_created",
+    )
+
+    consent_status = models.CharField(
+        max_length=30,
+        default="confirmed",
+    )
+
+    consent_creator_discord_id = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+    )
+
+    consent_given_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    consent_denied_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        db_default=Now(),
+    )
+
+    updated_at = models.DateTimeField(
+        db_default=Now(),
+    )
+
+    discord_thread_id = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        db_table = "user_deck_suggestions"
+        managed = False
 class UserCard(models.Model):
     id = models.BigAutoField(primary_key=True)
 

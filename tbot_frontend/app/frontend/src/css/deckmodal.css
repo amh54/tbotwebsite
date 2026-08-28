@@ -1,995 +1,865 @@
-/* ============================================================
-   DECK LISTING IMAGE
-   ============================================================ */
-
 .deck-card-image-only {
-  position: relative;
-  width: 100%;
-  max-width: 260px;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: transparent;
+position: relative;
+width: 100%;
+max-width: 260px;
+margin: 0;
+display: flex;
+flex-direction: column;
+align-items: center;
+background: transparent;
 }
-
-/* ============================================================
-   DECK LISTING CARD
-   ============================================================ */
 
 .deck-listing-card {
-  --hero-color-1: #15181b;
-  --hero-color-2: #15181b;
-
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: 14px;
-
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--hero-color-1) 35%, #15181b) 0%,
-    color-mix(in srgb, var(--hero-color-1) 20%, #15181b) 45%,
-    color-mix(in srgb, var(--hero-color-2) 20%, #15181b) 55%,
-    color-mix(in srgb, var(--hero-color-2) 35%, #15181b) 100%
-  );
-
-  border: 1px solid #23272b;
-  border-radius: 12px;
-  padding: 10px;
-  overflow: hidden;
-  min-width: 0;
+--hero-color-1: #15181b;
+--hero-color-2: #15181b;
+display: grid;
+grid-template-columns: 280px minmax(0, 1fr);
+gap: 14px;
+background: linear-gradient(
+90deg,
+color-mix(in srgb, var(--hero-color-1) 35%, #15181b) 0%,
+color-mix(in srgb, var(--hero-color-1) 20%, #15181b) 45%,
+color-mix(in srgb, var(--hero-color-2) 20%, #15181b) 55%,
+color-mix(in srgb, var(--hero-color-2) 35%, #15181b) 100%
+);
+border: 1px solid #23272b;
+border-radius: 12px;
+padding: 10px;
+overflow: hidden;
+min-width: 0;
 }
 
-/* ============================================================
-   DECK INFORMATION
-   ============================================================ */
-
 .deck-listing-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px 10px 8px 0;
-  min-width: 0;
-  overflow: hidden;
+display: flex;
+flex-direction: column;
+gap: 8px;
+padding: 8px 10px 8px 0;
+min-width: 0;
+overflow: hidden;
 }
 
 .deck-listing-info h3 {
-  margin: 0 0 8px;
-  font-size: 1.4rem;
-  font-weight: 800;
-  line-height: 1.2;
-  color: #ffffff;
-  overflow-wrap: break-word;
+margin: 0 0 8px;
+font-size: 1.4rem;
+font-weight: 800;
+line-height: 1.2;
+color: #ffffff;
+overflow-wrap: break-word;
 }
 
 .deck-listing-info p {
-  margin: 0;
-  color: #d5dde4;
-  line-height: 1.4;
-  font-size: 1.3rem;
-  white-space: normal;
-  min-width: 0;
-  overflow-wrap: break-word;
+margin: 0;
+color: #d5dde4;
+line-height: 1.4;
+font-size: 1.3rem;
+white-space: normal;
+min-width: 0;
+overflow-wrap: break-word;
 }
 
 .deck-listing-info p > span {
-  color: #8fe38b;
-  font-weight: 700;
-  white-space: nowrap;
+color: #8fe38b;
+font-weight: 700;
+white-space: nowrap;
 }
 
-/* ============================================================
-   CREATOR
-   ============================================================ */
-
 .creator-field {
-  display: block;
-  white-space: normal;
-  min-width: 0;
-  max-width: 100%;
-  overflow-wrap: break-word;
+display: block;
+white-space: normal;
+min-width: 0;
+max-width: 100%;
+overflow-wrap: break-word;
 }
 
 .creator-field .field-label {
-  color: #8fe38b;
-  font-weight: 700;
-  white-space: nowrap;
+color: #8fe38b;
+font-weight: 700;
+white-space: nowrap;
 }
 
 .creator-field .creator-value {
-  color: #d5dde4;
-  font-weight: 400;
-  font-size: 1.3rem;
-  white-space: normal;
-  overflow-wrap: break-word;
+color: #d5dde4;
+font-weight: 400;
+font-size: 1.3rem;
+white-space: normal;
+overflow-wrap: break-word;
 }
 
-/* ============================================================
-   HERO COLORS
-   ============================================================ */
-
 .hero-red-green {
-  --hero-color-1: #d94b4b;
-  --hero-color-2: #4caf50;
+--hero-color-1: #d94b4b;
+--hero-color-2: #4caf50;
 }
 
 .hero-green-yellow {
-  --hero-color-1: #4caf50;
-  --hero-color-2: #e0c341;
+--hero-color-1: #4caf50;
+--hero-color-2: #e0c341;
 }
 
 .hero-green-brown {
-  --hero-color-1: #4caf50;
-  --hero-color-2: #8b6b45;
+--hero-color-1: #4caf50;
+--hero-color-2: #8b6b45;
 }
 
 .hero-green-gray {
-  --hero-color-1: #4caf50;
-  --hero-color-2: #8b949e;
+--hero-color-1: #4caf50;
+--hero-color-2: #8b949e;
 }
 
 .hero-red-gray {
-  --hero-color-1: #d94b4b;
-  --hero-color-2: #8b949e;
+--hero-color-1: #d94b4b;
+--hero-color-2: #8b949e;
 }
 
 .hero-gray-yellow {
-  --hero-color-1: #8b949e;
-  --hero-color-2: #e0c341;
+--hero-color-1: #8b949e;
+--hero-color-2: #e0c341;
 }
 
 .hero-red-yellow {
-  --hero-color-1: #d94b4b;
-  --hero-color-2: #e0c341;
+--hero-color-1: #d94b4b;
+--hero-color-2: #e0c341;
 }
 
 .hero-red-brown {
-  --hero-color-1: #d94b4b;
-  --hero-color-2: #8b6b45;
+--hero-color-1: #d94b4b;
+--hero-color-2: #8b6b45;
 }
 
 .hero-brown-yellow {
-  --hero-color-1: #8b6b45;
-  --hero-color-2: #e0c341;
+--hero-color-1: #8b6b45;
+--hero-color-2: #e0c341;
 }
 
 .hero-brown-gray {
-  --hero-color-1: #8b6b45;
-  --hero-color-2: #8b949e;
+--hero-color-1: #8b6b45;
+--hero-color-2: #8b949e;
 }
 
 .hero-black-blue {
-  --hero-color-1: #292929;
-  --hero-color-2: #3f73b9;
+--hero-color-1: #292929;
+--hero-color-2: #3f73b9;
 }
 
 .hero-blue-purple {
-  --hero-color-1: #3f73b9;
-  --hero-color-2: #8b5fc7;
+--hero-color-1: #3f73b9;
+--hero-color-2: #8b5fc7;
 }
 
 .hero-pink-black {
-  --hero-color-1: #d96fae;
-  --hero-color-2: #292929;
+--hero-color-1: #d96fae;
+--hero-color-2: #292929;
 }
 
 .hero-pink-blue {
-  --hero-color-1: #d96fae;
-  --hero-color-2: #3f73b9;
+--hero-color-1: #d96fae;
+--hero-color-2: #3f73b9;
 }
 
 .hero-black-purple {
-  --hero-color-1: #292929;
-  --hero-color-2: #8b5fc7;
+--hero-color-1: #292929;
+--hero-color-2: #8b5fc7;
 }
 
 .hero-orange-black {
-  --hero-color-1: #d8873c;
-  --hero-color-2: #292929;
+--hero-color-1: #d8873c;
+--hero-color-2: #292929;
 }
 
 .hero-pink-purple {
-  --hero-color-1: #d96fae;
-  --hero-color-2: #8b5fc7;
+--hero-color-1: #d96fae;
+--hero-color-2: #8b5fc7;
 }
 
 .hero-pink-orange {
-  --hero-color-1: #d96fae;
-  --hero-color-2: #d8873c;
+--hero-color-1: #d96fae;
+--hero-color-2: #d8873c;
 }
 
 .hero-orange-blue {
-  --hero-color-1: #d8873c;
-  --hero-color-2: #3f73b9;
+--hero-color-1: #d8873c;
+--hero-color-2: #3f73b9;
 }
 
 .hero-orange-purple {
-  --hero-color-1: #d8873c;
-  --hero-color-2: #8b5fc7;
+--hero-color-1: #d8873c;
+--hero-color-2: #8b5fc7;
 }
-
-/* ============================================================
-   DECK IMAGE
-   ============================================================ */
 
 .deck-card-image-only img {
-  display: block;
-  width: 100%;
-  object-fit: cover;
-  object-position: center;
-  border-radius: 8px;
+display: block;
+width: 100%;
+object-fit: cover;
+object-position: center;
+border-radius: 8px;
 }
+
 .view-details-btn {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: #222;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+margin-top: 8px;
+padding: 8px 12px;
+background: #222;
+color: #fff;
+border: none;
+border-radius: 6px;
+cursor: pointer;
 }
 
 .view-details-btn:hover {
-  opacity: 0.95;
+opacity: 0.95;
 }
 
-/* ============================================================
-   MODAL OVERLAY
-   ============================================================ */
-
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-
-  background: rgba(0, 0, 0, 0.72);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 24px;
-  box-sizing: border-box;
-
-  z-index: 99999;
-
-  animation: deckModalFadeIn 0.16s ease;
+position: fixed;
+inset: 0;
+width: 100%;
+height: 100%;
+background: rgba(0, 0, 0, 0.72);
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 24px;
+box-sizing: border-box;
+z-index: 99999;
+animation: deckModalFadeIn 0.16s ease;
 }
 
 @keyframes deckModalFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+from {
+opacity: 0;
 }
 
-/* ============================================================
-   MODAL
-   ============================================================ */
+to {
+opacity: 1;
+}
+}
 
 .modal {
-  position: relative;
-
-  width: min(1100px, calc(100vw - 48px));
-  max-width: 1100px;
-  max-height: calc(100vh - 48px);
-
-  margin: 0;
-  padding: 24px;
-
-  box-sizing: border-box;
-  overflow: hidden;
-
-  border: 1px solid #333;
-  border-radius: 14px;
-
-  background: #0b0b0b;
-  color: #ffffff;
-
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.65);
-
-  animation: deckModalScaleIn 0.18s ease;
+position: relative;
+width: min(1100px, calc(100vw - 48px));
+max-width: 1100px;
+max-height: calc(100vh - 48px);
+margin: 0;
+padding: 24px;
+box-sizing: border-box;
+overflow: hidden;
+border: 1px solid #333;
+border-radius: 14px;
+background: #0b0b0b;
+color: #ffffff;
+box-shadow: 0 25px 80px rgba(0, 0, 0, 0.65);
+animation: deckModalScaleIn 0.18s ease;
 }
 
 @keyframes deckModalScaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
+from {
+opacity: 0;
+transform: scale(0.97);
+}
 
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+to {
+opacity: 1;
+transform: scale(1);
+}
 }
 
 .modal::backdrop {
-  background: transparent;
+background: transparent;
 }
-
-/* ============================================================
-   MODAL BACKGROUND
-   ============================================================ */
 
 .modal::before {
-  content: "";
-
-  position: absolute;
-  inset: 0;
-
-  background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center /
-    cover no-repeat;
-
-  filter: blur(12px);
-  opacity: 0.15;
-
-  transform: scale(1.1);
-
-  z-index: 0;
-  pointer-events: none;
+content: "";
+position: absolute;
+inset: 0;
+background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center /
+cover no-repeat;
+filter: blur(12px);
+opacity: 0.15;
+transform: scale(1.1);
+z-index: 0;
+pointer-events: none;
 }
-/* ============================================================
-   CARD MANAGER MODAL BACKGROUND
-   ============================================================ */
 
 .card-manager-modal {
-  position: relative;
-  overflow: hidden;
-  background: #15181b;
+position: relative;
+overflow: hidden;
+background: #15181b;
 }
 
-/* background image layer */
 .card-manager-modal::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center /
-    cover no-repeat;
-  filter: blur(12px);
-  opacity: 0.15;
-  transform: scale(1.1);
-  z-index: 0;
-  pointer-events: none;
+content: "";
+position: absolute;
+inset: 0;
+background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center /
+cover no-repeat;
+filter: blur(12px);
+opacity: 0.15;
+transform: scale(1.1);
+z-index: 0;
+pointer-events: none;
 }
 
-/* keep modal content above background */
 .card-manager-modal > * {
-  position: relative;
-  z-index: 1;
+position: relative;
+z-index: 1;
 }
-/* ============================================================
-   MODAL SCROLL
-   ============================================================ */
 
 .modal-scroll-content {
-  position: relative;
-  z-index: 1;
-
-  max-height: calc(100vh - 96px);
-
-  overflow-y: auto;
-
-  padding-right: 6px;
-
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+position: relative;
+z-index: 1;
+max-height: calc(100vh - 96px);
+overflow-y: auto;
+padding-right: 6px;
+scrollbar-width: thin;
+scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
 
 .modal-scroll-content::-webkit-scrollbar {
-  width: 6px;
+width: 6px;
 }
 
 .modal-scroll-content::-webkit-scrollbar-track {
-  background: transparent;
+background: transparent;
 }
 
 .modal-scroll-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
+background: rgba(255, 255, 255, 0.16);
+border-radius: 999px;
 }
 
 .modal-scroll-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.28);
+background: rgba(255, 255, 255, 0.28);
 }
 
-/* ============================================================
-   CLOSE BUTTON
-   ============================================================ */
-
 .modal-close {
-  position: absolute;
-
-  top: 8px;
-  right: 18px;
-
-  z-index: 20;
-
-  width: 44px;
-  height: 44px;
-
-  padding: 0;
-
-  border: 0;
-  background: transparent;
-
-  color: #ffffff;
-
-  font-size: 34px;
-  line-height: 44px;
-
-  text-align: center;
-
-  cursor: pointer;
+position: absolute;
+top: 8px;
+right: 18px;
+z-index: 20;
+width: 44px;
+height: 44px;
+padding: 0;
+border: 0;
+background: transparent;
+color: #ffffff;
+font-size: 34px;
+line-height: 44px;
+text-align: center;
+cursor: pointer;
 }
 
 .modal-close:hover {
-  color: #8fe38b;
+color: #8fe38b;
 }
-
-/* ============================================================
-   MODAL CONTENT
-   ============================================================ */
 
 .modal-content {
-  position: relative;
-  z-index: 1;
-
-  display: flex;
-  align-items: flex-start;
-
-  gap: 28px;
-
-  min-width: 0;
+position: relative;
+z-index: 1;
+display: flex;
+align-items: flex-start;
+gap: 28px;
+min-width: 0;
 }
 
-/* ============================================================
-   MODAL IMAGE COLUMN
-   ============================================================ */
-
 .modal-image {
-  flex: 0 0 min(430px, 42%);
-  width: min(430px, 42%);
-  max-width: 430px;
-  min-width: 0;
-
-  position: sticky;
-  top: 20px;
-  align-self: flex-start;
-  height: fit-content;
-  z-index: 5;
+flex: 0 0 min(430px, 42%);
+width: min(430px, 42%);
+max-width: 430px;
+min-width: 0;
+position: sticky;
+top: 20px;
+align-self: flex-start;
+height: fit-content;
+z-index: 5;
 }
 
 .modal-image > img {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 68vh;
-  object-fit: contain;
-  border-radius: 8px;
-  border: 2px solid transparent;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+display: block;
+width: 100%;
+height: auto;
+max-height: 68vh;
+object-fit: contain;
+border-radius: 8px;
+border: 2px solid transparent;
+transition:
+border-color 0.2s ease,
+box-shadow 0.2s ease;
 }
 
 .modal-image > img:hover {
-  border-color: #8fe38b;
-  box-shadow:
-    0 0 10px rgba(143, 227, 139, 0.45),
-    0 0 24px rgba(143, 227, 139, 0.3),
-    0 0 40px rgba(143, 227, 139, 0.18);
+border-color: #8fe38b;
+box-shadow:
+0 0 10px rgba(143, 227, 139, 0.45),
+0 0 24px rgba(143, 227, 139, 0.3),
+0 0 40px rgba(143, 227, 139, 0.18);
 }
 
-/* ============================================================
-   IMAGE META
-   ============================================================ */
-
 .image-meta {
-  margin-top: 12px;
-  padding: 12px;
-
-  border: 1px solid #333;
-  border-radius: 10px;
-
-  background: rgba(255, 255, 255, 0.04);
+margin-top: 12px;
+padding: 12px;
+border: 1px solid #333;
+border-radius: 10px;
+background: rgba(255, 255, 255, 0.04);
 }
 
 .image-meta p {
-  margin: 0;
-
-  color: #e5e9f0;
-
-  line-height: 1.35;
-  font-size: 0.95rem;
-
-  overflow-wrap: anywhere;
+margin: 0;
+color: #e5e9f0;
+line-height: 1.35;
+font-size: 0.95rem;
+overflow-wrap: anywhere;
 }
 
 .image-meta p + p {
-  margin-top: 6px;
+margin-top: 6px;
 }
 
 .image-meta span {
-  color: #ffffff;
-  font-weight: 700;
-  overflow-wrap: anywhere;
+color: #ffffff;
+font-weight: 700;
+overflow-wrap: anywhere;
 }
 
-/* ============================================================
-   MODAL ACTIONS
-   ============================================================ */
-
 .modal-actions {
-  display: flex;
-
-  gap: 10px;
-
-  margin-top: 12px;
-
-  flex-wrap: wrap;
+display: flex;
+gap: 10px;
+margin-top: 12px;
+flex-wrap: wrap;
 }
 
 .share-btn,
-.download-btn {
-  flex: 1;
-
-  min-width: 140px;
-
-  padding: 9px 12px;
-
-  background: #202020;
-
-  color: #ffffff;
-
-  border: 1px solid #444;
-
-  border-radius: 6px;
-
-  cursor: pointer;
-
-  font-size: 0.9rem;
-
-  transition:
-    border-color 0.2s ease,
-    color 0.2s ease,
-    background 0.2s ease;
+.download-btn,
+.suggest-deck-btn {
+flex: 1;
+min-width: 140px;
+padding: 9px 12px;
+background: #202020;
+color: #ffffff;
+border: 1px solid #444;
+border-radius: 6px;
+cursor: pointer;
+font-size: 0.9rem;
+transition:
+border-color 0.2s ease,
+color 0.2s ease,
+background 0.2s ease,
+opacity 0.2s ease;
 }
 
 .share-btn:hover,
-.download-btn:hover {
-  border-color: #8fe38b;
-  color: #8fe38b;
-  background: #242824;
+.download-btn:hover,
+.suggest-deck-btn:hover {
+border-color: #8fe38b;
+color: #8fe38b;
+background: #242824;
 }
 
-/* ============================================================
-   MODAL INFO
-   ============================================================ */
+.suggest-deck-btn {
+border-color: #8fe38b;
+color: #8fe38b;
+}
+
+.suggest-deck-btn:hover {
+background: rgba(143, 227, 139, 0.1);
+}
+
+.suggest-deck-btn:disabled {
+cursor: default;
+opacity: 0.7;
+}
+
+.suggest-deck-btn.suggesting {
+cursor: wait;
+opacity: 0.65;
+}
+
+.suggest-deck-btn.suggest-success {
+border-color: #8fe38b;
+background: rgba(143, 227, 139, 0.12);
+color: #8fe38b;
+}
+
+.suggest-deck-btn.suggest-already_suggested {
+border-color: #777;
+background: rgba(255, 255, 255, 0.06);
+color: #c7c7c7;
+}
+
+.suggest-deck-btn.suggest-cooldown {
+border-color: #777;
+background: rgba(255, 255, 255, 0.06);
+color: #c7c7c7;
+}
+
+.suggest-deck-message {
+margin-top: 0px;
+padding: 14px;
+border: 1px solid #333;
+border-radius: 10px;
+background: rgba(255, 255, 255, 0.04);
+color: #e5e9f0;
+line-height: 1.5;
+}
+
+.suggest-deck-message strong {
+display: block;
+margin-bottom: 6px;
+color: #ffffff;
+font-size: 0.95rem;
+}
+
+.suggest-deck-message p {
+margin: 0;
+color: #d5dde4;
+font-size: 0.9rem;
+line-height: 1.55;
+}
+
+.suggest-deck-message p + p {
+margin-top: 8px;
+}
+
+.suggest-message-success {
+border-color: rgba(143, 227, 139, 0.45);
+background: rgba(143, 227, 139, 0.08);
+}
+
+.suggest-message-success strong {
+color: #8fe38b;
+}
+
+.suggest-message-already_suggested {
+border-color: #444;
+}
+
+.suggest-message-already_suggested strong {
+color: #d5dde4;
+}
+
+.suggest-message-cooldown {
+border-color: #555;
+background: rgba(255, 255, 255, 0.05);
+}
+
+.suggest-message-cooldown strong {
+color: #e0c341;
+}
+
+.suggest-message-login {
+border-color: #555;
+}
+
+.suggest-message-login strong {
+color: #8fe38b;
+}
+
+.suggest-message-error {
+border-color: rgba(217, 75, 75, 0.55);
+background: rgba(217, 75, 75, 0.08);
+}
+
+.suggest-message-error strong {
+color: #d94b4b;
+}
 
 .modal-info {
-  flex: 1;
-
-  min-width: 0;
-
-  padding: 4px 8px;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 18px;
+flex: 1;
+min-width: 0;
+padding: 4px 8px;
+display: flex;
+flex-direction: column;
+gap: 18px;
 }
 
-/* ============================================================
-   MODAL HEADER
-   ============================================================ */
-
 .modal-header {
-  display: flex;
-
-  align-items: flex-start;
-
-  padding-right: 58px;
-
-  min-width: 0;
+display: flex;
+align-items: flex-start;
+padding-right: 58px;
+min-width: 0;
 }
 
 .modal-title-content {
-  display: flex;
-
-  flex-direction: column;
-  align-items: flex-start;
-
-  gap: 6px;
-
-  min-width: 0;
-  max-width: 100%;
-
-  width: 100%;
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+gap: 6px;
+min-width: 0;
+max-width: 100%;
+width: 100%;
 }
 
 .modal-title {
-  margin: 0;
-
-  color: #ffffff;
-
-  font-size: clamp(1.6rem, 2vw, 2.3rem);
-
-  font-weight: 800;
-
-  line-height: 1.15;
-
-  overflow-wrap: anywhere;
+margin: 0;
+color: #ffffff;
+font-size: clamp(1.6rem, 2vw, 2.3rem);
+font-weight: 800;
+line-height: 1.15;
+overflow-wrap: anywhere;
 }
 
 .deck-hero {
-  display: inline-block;
-
-  max-width: 100%;
-
-  padding: 5px 12px;
-
-  background: #000000;
-
-  color: #ffffff;
-
-  border: 1px solid #ffffff;
-
-  border-radius: 999px;
-
-  font-size: 14px;
-  line-height: 1.3;
-
-  font-weight: 600;
-
-  overflow-wrap: anywhere;
+display: inline-block;
+max-width: 100%;
+padding: 5px 12px;
+background: #000000;
+color: #ffffff;
+border: 1px solid #ffffff;
+border-radius: 999px;
+font-size: 14px;
+line-height: 1.3;
+font-weight: 600;
+overflow-wrap: anywhere;
 }
 
-/* ============================================================
-   MODAL SECTIONS
-   ============================================================ */
-
 .modal-section {
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 10px;
-
-  min-width: 0;
+display: flex;
+flex-direction: column;
+gap: 10px;
+min-width: 0;
 }
 
 .modal-section h3 {
-  margin: 0;
-
-  color: #f2f2f2;
-
-  font-size: 0.96rem;
-
-  font-weight: 700;
-
-  text-transform: uppercase;
-
-  letter-spacing: 0.04em;
+margin: 0;
+color: #f2f2f2;
+font-size: 0.96rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.04em;
 }
 
-/* ============================================================
-   DESCRIPTION
-   ============================================================ */
-
 .description-section {
-  padding: 14px;
-
-  background: rgba(255, 255, 255, 0.04);
-
-  border: 1px solid #333;
-
-  border-radius: 10px;
+padding: 14px;
+background: rgba(255, 255, 255, 0.04);
+border: 1px solid #333;
+border-radius: 10px;
 }
 
 .description {
-  margin: 0;
-
-  color: #e2e2e2;
-
-  line-height: 1.65;
-
-  white-space: pre-wrap;
-
-  overflow-wrap: anywhere;
+margin: 0;
+color: #e2e2e2;
+line-height: 1.65;
+white-space: pre-wrap;
+overflow-wrap: anywhere;
 }
 
-/* ============================================================
-   METADATA
-   ============================================================ */
-
 .modal-metadata {
-  display: grid;
-
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  gap: 12px;
-
-  min-width: 0;
+display: grid;
+grid-template-columns: repeat(2, minmax(0, 1fr));
+gap: 12px;
+min-width: 0;
 }
 
 .metadata-item {
-  display: grid;
-
-  gap: 6px;
-
-  min-width: 0;
-  min-height: 80px;
-
-  padding: 14px;
-
-  background: rgba(255, 255, 255, 0.04);
-
-  border: 1px solid #333;
-
-  border-radius: 10px;
-
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease;
+display: grid;
+gap: 6px;
+min-width: 0;
+min-height: 80px;
+padding: 14px;
+background: rgba(255, 255, 255, 0.04);
+border: 1px solid #333;
+border-radius: 10px;
+transition:
+border-color 0.2s ease,
+background 0.2s ease;
 }
 
 .metadata-item:hover {
-  border-color: #8fe38b;
-  background: rgba(143, 227, 139, 0.06);
+border-color: #8fe38b;
+background: rgba(143, 227, 139, 0.06);
 }
 
 .label {
-  color: #a6b4d3;
-
-  font-size: 0.85rem;
-
-  font-weight: 700;
+color: #a6b4d3;
+font-size: 0.85rem;
+font-weight: 700;
 }
 
 .value {
-  min-width: 0;
-
-  color: #e5e9f0;
-
-  line-height: 1.6;
-
-  white-space: pre-wrap;
-
-  overflow-wrap: anywhere;
+min-width: 0;
+color: #e5e9f0;
+line-height: 1.6;
+white-space: pre-wrap;
+overflow-wrap: anywhere;
 }
 
-/* ============================================================
-   COST
-   ============================================================ */
-
 .cost-item {
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 4px;
+display: flex;
+flex-direction: column;
+gap: 4px;
 }
 
 .cost-value {
-  color: #ffffff;
-
-  font-size: 1.5rem;
-
-  font-weight: 900;
-
-  line-height: 1;
+color: #ffffff;
+font-size: 1.5rem;
+font-weight: 900;
+line-height: 1;
 }
-
-/* ============================================================
-   SPARK
-   ============================================================ */
 
 .spark-icon {
-  width: 18px !important;
-  height: 18px !important;
-
-  object-fit: contain !important;
-
-  vertical-align: middle;
-
-  margin-left: 4px;
-
-  border-radius: 0 !important;
+width: 18px !important;
+height: 18px !important;
+object-fit: contain !important;
+vertical-align: middle;
+margin-left: 4px;
+border-radius: 0 !important;
 }
 
-/* ============================================================
-   DECK DOCUMENT
-   ============================================================ */
-
 .deck-doc-link {
-  color: #8fe38b;
-
-  text-decoration: underline;
-
-  font-weight: 600;
-
-  overflow-wrap: anywhere;
+color: #8fe38b;
+text-decoration: underline;
+font-weight: 600;
+overflow-wrap: anywhere;
 }
 
 .deck-doc-link:hover {
-  color: #b7f3b4;
+color: #b7f3b4;
 }
-
-/* ============================================================
-   IMAGE PLACEHOLDER
-   ============================================================ */
 
 .deck-image-placeholder {
-  width: 100%;
-
-  min-height: 160px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  background: #222;
-
-  color: #92999d;
-
-  border-radius: 6px;
+width: 100%;
+min-height: 160px;
+display: flex;
+align-items: center;
+justify-content: center;
+background: #222;
+color: #92999d;
+border-radius: 6px;
 }
-
-/* ============================================================
-   TABLET
-   ============================================================ */
 
 @media (max-width: 980px) {
-  .deck-listing-card {
-    grid-template-columns: minmax(130px, 43%) minmax(0, 1fr);
-
-    gap: 10px;
-
-    padding: 8px;
-
-    align-items: start;
-  }
-
-  .deck-listing-info {
-    gap: 6px;
-
-    padding: 2px 4px 2px 0;
-  }
-
-  .deck-listing-info h3 {
-    font-size: 1.35rem;
-  }
-
-  .deck-listing-info p {
-    font-size: 1rem;
-  }
-
-  .creator-field .creator-value {
-    font-size: 1rem;
-  }
-
-  .view-details-btn {
-    margin-top: 6px;
-
-    padding: 7px 10px;
-
-    font-size: 0.86rem;
-  }
-
-  .modal {
-    width: calc(100vw - 32px);
-
-    max-height: calc(100vh - 32px);
-
-    padding: 20px;
-  }
-
-  .modal-scroll-content {
-    max-height: calc(100vh - 72px);
-  }
-
-  .modal-content {
-    flex-direction: column;
-
-    gap: 20px;
-  }
-
-  .modal-image {
-    width: 100%;
-    max-width: 100%;
-    flex: none;
-    position: static;
-  }
-
-  .modal-image > img {
-    max-height: 60vh;
-  }
-
-  .modal-info {
-    width: 100%;
-
-    padding: 0;
-  }
+.deck-listing-card {
+grid-template-columns: minmax(130px, 43%) minmax(0, 1fr);
+gap: 10px;
+padding: 8px;
+align-items: start;
 }
 
-/* ============================================================
-   MOBILE
-   ============================================================ */
+.deck-listing-info {
+gap: 6px;
+padding: 2px 4px 2px 0;
+}
+
+.deck-listing-info h3 {
+font-size: 1.35rem;
+}
+
+.deck-listing-info p {
+font-size: 1rem;
+}
+
+.creator-field .creator-value {
+font-size: 1rem;
+}
+
+.view-details-btn {
+margin-top: 6px;
+padding: 7px 10px;
+font-size: 0.86rem;
+}
+
+.modal {
+width: calc(100vw - 32px);
+max-height: calc(100vh - 32px);
+padding: 20px;
+}
+
+.modal-scroll-content {
+max-height: calc(100vh - 72px);
+}
+
+.modal-content {
+flex-direction: column;
+gap: 20px;
+}
+
+.modal-image {
+width: 100%;
+max-width: 100%;
+flex: none;
+position: static;
+}
+
+.modal-image > img {
+max-height: 60vh;
+}
+
+.modal-info {
+width: 100%;
+padding: 0;
+}
+}
 
 @media (max-width: 560px) {
-  .deck-listing-card {
-    grid-template-columns: minmax(116px, 39%) minmax(0, 1fr);
+.deck-listing-card {
+grid-template-columns: minmax(116px, 39%) minmax(0, 1fr);
+gap: 8px;
+}
 
-    gap: 8px;
-  }
+.deck-listing-info h3 {
+font-size: 1.2rem;
+}
 
-  .deck-listing-info h3 {
-    font-size: 1.2rem;
-  }
+.deck-listing-info p {
+font-size: 0.95rem;
+}
 
-  .deck-listing-info p {
-    font-size: 0.95rem;
-  }
+.creator-field .creator-value {
+font-size: 0.95rem;
+}
 
-  .creator-field .creator-value {
-    font-size: 0.95rem;
-  }
+.modal-overlay {
+padding: 10px;
+}
 
-  .modal-overlay {
-    padding: 10px;
-  }
+.modal {
+width: 100%;
+max-height: calc(100vh - 20px);
+padding: 18px 14px;
+}
 
-  .modal {
-    width: 100%;
+.modal-scroll-content {
+max-height: calc(100vh - 56px);
+padding-right: 2px;
+}
 
-    max-height: calc(100vh - 20px);
+.modal-close {
+top: 4px;
+right: 8px;
+}
 
-    padding: 18px 14px;
-  }
+.modal-header {
+padding-right: 42px;
+}
 
-  .modal-scroll-content {
-    max-height: calc(100vh - 56px);
+.modal-title {
+font-size: 1.55rem;
+}
 
-    padding-right: 2px;
-  }
+.modal-metadata {
+grid-template-columns: 1fr;
+}
 
-  .modal-close {
-    top: 4px;
+.modal-actions {
+flex-direction: column;
+}
 
-    right: 8px;
-  }
+.modal-image {
+width: 100%;
+max-width: 100%;
+flex: none;
+position: static;
+}
 
-  .modal-header {
-    padding-right: 42px;
-  }
+.share-btn,
+.download-btn,
+.suggest-deck-btn {
+width: 100%;
+min-width: 0;
+}
 
-  .modal-title {
-    font-size: 1.55rem;
-  }
+.modal-image > img {
+max-height: 52vh;
+}
 
-  .modal-metadata {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-actions {
-    flex-direction: column;
-  }
-  .modal-image {
-    width: 100%;
-    max-width: 100%;
-    flex: none;
-    position: static;
-  }
-  .share-btn,
-  .download-btn {
-    width: 100%;
-  }
-  .modal-image > img {
-    max-height: 52vh;
-  }
+.suggest-deck-message {
+padding: 12px;
+}
 }

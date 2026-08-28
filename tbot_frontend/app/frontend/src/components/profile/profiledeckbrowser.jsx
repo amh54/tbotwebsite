@@ -546,6 +546,7 @@ function ProfileDeckBrowser({
               allCards={allCards}
               profileSlug={profileSlug}
               profileIsPublic={profileIsPublic}
+              showSuggestDeck={true}
             />
           ))}
         </div>
