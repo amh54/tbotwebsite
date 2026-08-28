@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import "../css/admin-keeporscrap.css";
@@ -270,7 +271,7 @@ function AdminKeepOrScrap() {
   const [entries, setEntries] = useState([]);
 
   const [side, setSide] = useState("Intro");
-
+  const [portalReady, setPortalReady] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [saving, setSaving] = useState(false);
@@ -300,7 +301,9 @@ function AdminKeepOrScrap() {
       document.title = "Tbot";
     };
   }, []);
-
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
   useEffect(() => {
     document.body.style.overflow = editorOpen || deleteTarget ? "hidden" : "";
 
@@ -1148,259 +1151,281 @@ function AdminKeepOrScrap() {
         )}
       </main>
 
-      {editorOpen && (
-        <div
-          className="admin-kos-modal-overlay"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeEditor();
-            }
-          }}
-        >
-          <div className="admin-kos-editor-modal">
-            <div className="admin-kos-modal-header">
-              <div>
-                <span>{editingEntry ? "EDIT ENTRY" : "NEW ENTRY"}</span>
+      {editorOpen &&
+        portalReady &&
+        createPortal(
+          <div
+            className="admin-kos-modal-overlay"
+            style={{
+              position: "fixed",
+              inset: 0,
+              width: "100vw",
+              height: "100vh",
+              zIndex: 99999,
+            }}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                closeEditor();
+              }
+            }}
+          >
+            <div className="admin-kos-editor-modal">
+              <div className="admin-kos-modal-header">
+                <div>
+                  <span>{editingEntry ? "EDIT ENTRY" : "NEW ENTRY"}</span>
 
-                <h2>
-                  {normalizeText(form.side) === "intro"
-                    ? editingEntry
-                      ? "Edit Introduction"
-                      : "Add Introduction"
-                    : editingEntry
-                      ? "Edit Recommendation"
-                      : "Add Recommendation"}
-                </h2>
+                  <h2>
+                    {normalizeText(form.side) === "intro"
+                      ? editingEntry
+                        ? "Edit Introduction"
+                        : "Add Introduction"
+                      : editingEntry
+                        ? "Edit Recommendation"
+                        : "Add Recommendation"}
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  className="admin-kos-modal-close"
+                  onClick={closeEditor}
+                  disabled={saving || uploading}
+                >
+                  ×
+                </button>
               </div>
 
-              <button
-                type="button"
-                className="admin-kos-modal-close"
-                onClick={closeEditor}
-                disabled={saving || uploading}
-              >
-                ×
-              </button>
-            </div>
+              <div className="admin-kos-editor-body">
+                <div className="admin-kos-form-grid">
+                  {!editingEntry && (
+                    <label>
+                      <span>Tier ID</span>
 
-            <div className="admin-kos-editor-body">
-              <div className="admin-kos-form-grid">
-                {!editingEntry && (
+                      <input
+                        type="number"
+                        value={form.tierid}
+                        onChange={(event) =>
+                          updateForm("tierid", event.target.value)
+                        }
+                        placeholder="Auto-generated"
+                      />
+                    </label>
+                  )}
+
                   <label>
-                    <span>Tier ID</span>
+                    <span>Side</span>
 
-                    <input
-                      type="number"
-                      value={form.tierid}
+                    <select
+                      value={form.side}
                       onChange={(event) =>
-                        updateForm("tierid", event.target.value)
+                        updateForm("side", event.target.value)
                       }
-                      placeholder="Auto-generated"
-                    />
+                    >
+                      <option value="Intro">Intro</option>
+
+                      <option value="Plants">Plants</option>
+
+                      <option value="Zombies">Zombies</option>
+                    </select>
                   </label>
-                )}
 
-                <label>
-                  <span>Side</span>
+                  {normalizeText(form.side) !== "intro" && (
+                    <label>
+                      <span>Card Class</span>
 
-                  <select
-                    value={form.side}
-                    onChange={(event) => updateForm("side", event.target.value)}
-                  >
-                    <option value="Intro">Intro</option>
+                      <input
+                        type="text"
+                        value={form.card_class}
+                        onChange={(event) =>
+                          updateForm("card_class", event.target.value)
+                        }
+                        placeholder="Example: Guardian"
+                      />
+                    </label>
+                  )}
 
-                    <option value="Plants">Plants</option>
+                  <div className="admin-kos-form-full">
+                    <div className="admin-kos-upload-heading">
+                      <div>
+                        <span>IMAGE</span>
 
-                    <option value="Zombies">Zombies</option>
-                  </select>
-                </label>
+                        <strong>Keep or Scrap Image</strong>
+                      </div>
 
-                {normalizeText(form.side) !== "intro" && (
-                  <label>
-                    <span>Card Class</span>
+                      <button
+                        type="button"
+                        className="admin-kos-upload-button"
+                        onClick={openCloudinaryUpload}
+                        disabled={uploading || saving}
+                      >
+                        {uploading ? "Uploading..." : "Upload to Cloudinary"}
+                      </button>
+                    </div>
+
+                    {hasValue(form.image) ? (
+                      <div className="admin-kos-upload-preview">
+                        <div className="admin-kos-upload-preview-image">
+                          <img src={form.image} alt="Keep or Scrap preview" />
+                        </div>
+
+                        <div className="admin-kos-upload-preview-info">
+                          <span>Cloudinary Image</span>
+
+                          <small>
+                            Image is stored in your Cloudinary account.
+                          </small>
+
+                          <button
+                            type="button"
+                            className="admin-kos-remove-image"
+                            onClick={removeImage}
+                          >
+                            Remove Image
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="admin-kos-upload-dropzone"
+                        onClick={openCloudinaryUpload}
+                      >
+                        <span className="admin-kos-upload-icon">↑</span>
+
+                        <strong>Upload Keep or Scrap Image</strong>
+
+                        <small>
+                          Choose an image from your computer using Cloudinary.
+                        </small>
+                      </button>
+                    )}
+                  </div>
+
+                  <label className="admin-kos-form-full">
+                    <span>
+                      {normalizeText(form.side) === "intro"
+                        ? "Introduction Markdown"
+                        : "Reasoning"}
+                    </span>
+
+                    <textarea
+                      value={form.reasoning}
+                      onChange={(event) =>
+                        updateForm("reasoning", event.target.value)
+                      }
+                      rows={14}
+                      placeholder={
+                        normalizeText(form.side) === "intro"
+                          ? "Write the Keep or Scrap introduction using Markdown..."
+                          : "Explain why these cards belong in this recommendation tier..."
+                      }
+                    />
+
+                    {normalizeText(form.side) === "intro" && (
+                      <small className="admin-kos-markdown-help">
+                        Markdown is supported. Use **bold**, headings, lists,
+                        and blockquotes.
+                      </small>
+                    )}
+                  </label>
+
+                  <label className="admin-kos-form-full">
+                    <span>Credits</span>
 
                     <input
                       type="text"
-                      value={form.card_class}
+                      value={form.creator}
                       onChange={(event) =>
-                        updateForm("card_class", event.target.value)
+                        updateForm("creator", event.target.value)
                       }
-                      placeholder="Example: Guardian"
+                      placeholder="Credit the author or source"
                     />
                   </label>
-                )}
-
-                <div className="admin-kos-form-full">
-                  <div className="admin-kos-upload-heading">
-                    <div>
-                      <span>IMAGE</span>
-
-                      <strong>Keep or Scrap Image</strong>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="admin-kos-upload-button"
-                      onClick={openCloudinaryUpload}
-                      disabled={uploading || saving}
-                    >
-                      {uploading ? "Uploading..." : "Upload to Cloudinary"}
-                    </button>
-                  </div>
-
-                  {hasValue(form.image) ? (
-                    <div className="admin-kos-upload-preview">
-                      <div className="admin-kos-upload-preview-image">
-                        <img src={form.image} alt="Keep or Scrap preview" />
-                      </div>
-
-                      <div className="admin-kos-upload-preview-info">
-                        <span>Cloudinary Image</span>
-
-                        <small>
-                          Image is stored in your Cloudinary account.
-                        </small>
-
-                        <button
-                          type="button"
-                          className="admin-kos-remove-image"
-                          onClick={removeImage}
-                        >
-                          Remove Image
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="admin-kos-upload-dropzone"
-                      onClick={openCloudinaryUpload}
-                    >
-                      <span className="admin-kos-upload-icon">↑</span>
-
-                      <strong>Upload Keep or Scrap Image</strong>
-
-                      <small>
-                        Choose an image from your computer using Cloudinary.
-                      </small>
-                    </button>
-                  )}
                 </div>
+              </div>
 
-                <label className="admin-kos-form-full">
-                  <span>
-                    {normalizeText(form.side) === "intro"
-                      ? "Introduction Markdown"
-                      : "Reasoning"}
-                  </span>
+              <div className="admin-kos-editor-footer">
+                <button
+                  type="button"
+                  className="admin-kos-secondary-button"
+                  onClick={closeEditor}
+                  disabled={saving || uploading}
+                >
+                  Cancel
+                </button>
 
-                  <textarea
-                    value={form.reasoning}
-                    onChange={(event) =>
-                      updateForm("reasoning", event.target.value)
-                    }
-                    rows={14}
-                    placeholder={
-                      normalizeText(form.side) === "intro"
-                        ? "Write the Keep or Scrap introduction using Markdown..."
-                        : "Explain why these cards belong in this recommendation tier..."
-                    }
-                  />
-
-                  {normalizeText(form.side) === "intro" && (
-                    <small className="admin-kos-markdown-help">
-                      Markdown is supported. Use **bold**, headings, lists, and
-                      blockquotes.
-                    </small>
-                  )}
-                </label>
-
-                <label className="admin-kos-form-full">
-                  <span>Credits</span>
-
-                  <input
-                    type="text"
-                    value={form.creator}
-                    onChange={(event) =>
-                      updateForm("creator", event.target.value)
-                    }
-                    placeholder="Credit the author or source"
-                  />
-                </label>
+                <button
+                  type="button"
+                  className="admin-kos-primary-button"
+                  onClick={saveEntry}
+                  disabled={saving || uploading}
+                >
+                  {saving
+                    ? "Saving..."
+                    : editingEntry
+                      ? "Save Changes"
+                      : "Create Entry"}
+                </button>
               </div>
             </div>
+          </div>,
+          document.body,
+        )}
 
-            <div className="admin-kos-editor-footer">
-              <button
-                type="button"
-                className="admin-kos-secondary-button"
-                onClick={closeEditor}
-                disabled={saving || uploading}
-              >
-                Cancel
-              </button>
+      {deleteTarget &&
+        portalReady &&
+        createPortal(
+          <div
+            className="admin-kos-modal-overlay"
+            style={{
+              position: "fixed",
+              inset: 0,
+              width: "100vw",
+              height: "100vh",
+              zIndex: 99999,
+            }}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                setDeleteTarget(null);
+              }
+            }}
+          >
+            <div className="admin-kos-delete-modal">
+              <div className="admin-kos-delete-icon">!</div>
 
-              <button
-                type="button"
-                className="admin-kos-primary-button"
-                onClick={saveEntry}
-                disabled={saving || uploading}
-              >
-                {saving
-                  ? "Saving..."
-                  : editingEntry
-                    ? "Save Changes"
-                    : "Create Entry"}
-              </button>
+              <h2>Delete Keep or Scrap Entry?</h2>
+
+              <p>
+                This will permanently delete tier{" "}
+                <strong>{deleteTarget.tierid}</strong>
+                .
+                <br />
+                This action cannot be undone.
+              </p>
+
+              <div className="admin-kos-delete-actions">
+                <button
+                  type="button"
+                  className="admin-kos-secondary-button"
+                  onClick={() => setDeleteTarget(null)}
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="admin-kos-danger-button"
+                  onClick={deleteEntry}
+                  disabled={saving}
+                >
+                  {saving ? "Deleting..." : "Delete Entry"}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {deleteTarget && (
-        <div
-          className="admin-kos-modal-overlay"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setDeleteTarget(null);
-            }
-          }}
-        >
-          <div className="admin-kos-delete-modal">
-            <div className="admin-kos-delete-icon">!</div>
-
-            <h2>Delete Keep or Scrap Entry?</h2>
-
-            <p>
-              This will permanently delete tier{" "}
-              <strong>{deleteTarget.tierid}</strong>
-              .
-              <br />
-              This action cannot be undone.
-            </p>
-
-            <div className="admin-kos-delete-actions">
-              <button
-                type="button"
-                className="admin-kos-secondary-button"
-                onClick={() => setDeleteTarget(null)}
-                disabled={saving}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                className="admin-kos-danger-button"
-                onClick={deleteEntry}
-                disabled={saving}
-              >
-                {saving ? "Deleting..." : "Delete Entry"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

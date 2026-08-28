@@ -368,3 +368,81 @@ def admin_keep_or_scrap_image_upload(request):
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+# ============================================================
+# ADMIN KEEP OR SCRAP CLOUDINARY SIGNATURE
+# ============================================================
+
+@api_view(["GET"])
+def admin_keep_or_scrap_cloudinary_signature(request):
+
+    if not is_discord_owner(request):
+        return Response(
+            {"error": "Unauthorized."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    cloud_name = getattr(settings, "CLOUDINARY_CLOUD_NAME", "")
+    api_key = getattr(settings, "CLOUDINARY_API_KEY", "")
+    api_secret = getattr(settings, "CLOUDINARY_API_SECRET", "")
+
+    if not cloud_name or not api_key or not api_secret:
+        return Response(
+            {"error": "Cloudinary is not configured on the server."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    timestamp = request.GET.get("timestamp")
+
+    if not timestamp:
+        return Response(
+            {"error": "Missing timestamp."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        timestamp = int(timestamp)
+    except (TypeError, ValueError):
+        return Response(
+            {"error": "Invalid timestamp."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    params_to_sign = {}
+
+    for key, value in request.GET.items():
+        if key == "signature":
+            continue
+
+        if value is not None and value != "":
+            params_to_sign[key] = value
+
+    params_to_sign["folder"] = "tbot/keep-or-scrap"
+    params_to_sign["timestamp"] = timestamp
+
+    try:
+        signature = cloudinary.utils.api_sign_request(
+            params_to_sign,
+            api_secret,
+        )
+
+        return Response(
+            {
+                "signature": signature,
+                "timestamp": timestamp,
+                "cloud_name": cloud_name,
+                "api_key": api_key,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as exc:
+        logger.exception(
+            "Cloudinary signature generation failed"
+        )
+
+        return Response(
+            {
+                "error": "Unable to generate Cloudinary signature.",
+                "error_type": exc.__class__.__name__,
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
