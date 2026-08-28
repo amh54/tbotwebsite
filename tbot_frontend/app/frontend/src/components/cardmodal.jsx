@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import "../css/cardmodal.css";
@@ -8,7 +9,6 @@ const MANUAL_STAT_IMAGE_LINKS = {
   health: "https://i.ibb.co/bMj86Wvg/health.webp",
   sun: "https://i.ibb.co/3mwp3d6s/sun.webp",
   healthstrength: "https://i.ibb.co/9344x8fP/healthstrength.webp",
-
   antihero: "https://i.ibb.co/zHmWTFLQ/anti-hero.webp",
   strikethrough: "https://i.ibb.co/99KG7vjj/strikethrough.webp",
   deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
@@ -20,7 +20,6 @@ const MANUAL_STAT_IMAGE_LINKS = {
   overshoot: "https://i.ibb.co/prbYt2DX/overshoot.webp",
   untrickable: "https://i.ibb.co/235QDZsg/untrickable.webp",
   doublestrike: "https://i.ibb.co/9HcptVCN/doublestrike.webp",
-
   guardian: "https://i.ibb.co/q339dYKK/guardian.webp",
   kabloom: "https://i.ibb.co/4gWkPT7f/kabloom.webp",
   megagrow: "https://i.ibb.co/svc6sx30/megagrow.webp",
@@ -44,7 +43,7 @@ const removeDiscordEmojis = (value) =>
 
 const normalizeTraitName = (trait) => {
   const value = removeDiscordEmojis(trait)
-    .replace(/[_~`]/g, "")
+    .replace(/[\_\~\`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -54,29 +53,22 @@ const normalizeTraitName = (trait) => {
     "anti hero": "Anti-Hero",
     "anti-hero": "Anti-Hero",
     antihero: "Anti-Hero",
-
     armored: "Armored",
     armour: "Armored",
-
     "splash damage": "Splash Damage",
     "splash-damage": "Splash Damage",
     splashdamage: "Splash Damage",
-
     bullseye: "Bullseye",
     deadly: "Deadly",
     freeze: "Freeze",
     frenzy: "Frenzy",
-
     "double strike": "Double Strike",
     "double-strike": "Double Strike",
     doublestrike: "Double Strike",
-
     overshoot: "Overshoot",
     special: "Special",
-
     strikethrough: "Strikethrough",
     "strike through": "Strikethrough",
-
     untrickable: "Untrickable",
   };
 
@@ -84,7 +76,6 @@ const normalizeTraitName = (trait) => {
 
   if (numberedMatch) {
     const baseTrait = numberedMatch[1];
-
     const number = numberedMatch[2];
 
     return `${canonicalTraits[baseTrait] || baseTrait} ${number}`;
@@ -127,18 +118,20 @@ const classNamesMatchTitle = (cardType, title) => {
   };
 
   const titleText = String(title).toLowerCase();
-
   const typeText = String(cardType).toLowerCase();
 
   return Object.values(classNames).some(
     (name) =>
-      typeText.includes(name) && titleText.includes(name.replace("-", "")),
+      typeText.includes(name) &&
+      titleText.includes(name.replace("-", "")),
   );
 };
 
 function CardModal({ card, allCards = [], close }) {
   const hasValue = (value) =>
-    value !== null && value !== undefined && String(value).trim() !== "";
+    value !== null &&
+    value !== undefined &&
+    String(value).trim() !== "";
 
   const [copied, setCopied] = useState(false);
 
@@ -151,7 +144,8 @@ function CardModal({ card, allCards = [], close }) {
 
     document.addEventListener("keydown", handleKeyDown);
 
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () =>
+      document.removeEventListener("keydown", handleKeyDown);
   }, [close]);
 
   const handleShare = async () => {
@@ -173,13 +167,17 @@ function CardModal({ card, allCards = [], close }) {
   };
 
   const getEmojiIcon = (emoji) => {
-    const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
+    const match = String(emoji || "").match(
+      /^<:([^:>]+):\d+>$/,
+    );
 
     if (!match) {
       return null;
     }
 
-    const emojiName = match[1].toLowerCase().replace(/[-_\s]/g, "");
+    const emojiName = match[1]
+      .toLowerCase()
+      .replace(/[-_\s]/g, "");
 
     const iconMap = {
       brainz: {
@@ -202,7 +200,6 @@ function CardModal({ card, allCards = [], close }) {
         url: MANUAL_STAT_IMAGE_LINKS.healthstrength,
         alt: "Health and Strength",
       },
-
       antihero: {
         url: MANUAL_STAT_IMAGE_LINKS.antihero,
         alt: "Anti-Hero",
@@ -247,7 +244,6 @@ function CardModal({ card, allCards = [], close }) {
         url: MANUAL_STAT_IMAGE_LINKS.doublestrike,
         alt: "Double Strike",
       },
-
       guardian: {
         url: MANUAL_STAT_IMAGE_LINKS.guardian,
         alt: "Guardian",
@@ -354,10 +350,12 @@ function CardModal({ card, allCards = [], close }) {
       return null;
     }
 
-    const text = String(title).replace(/\*\*/g, "").replace(/__/g, "").trim();
+    const text = String(title)
+      .replace(/\*\*/g, "")
+      .replace(/__/g, "")
+      .trim();
 
     const emojiPattern = /<:([^:>]+):\d+>/gi;
-
     const matches = [...text.matchAll(emojiPattern)];
 
     const classNameMap = {
@@ -381,9 +379,7 @@ function CardModal({ card, allCards = [], close }) {
 
     matches.forEach((match, index) => {
       const fullMatch = match[0];
-
       const emojiName = match[1];
-
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
@@ -407,7 +403,9 @@ function CardModal({ card, allCards = [], close }) {
         );
       }
 
-      const normalizedName = emojiName.toLowerCase().replace(/[-_\s]/g, "");
+      const normalizedName = emojiName
+        .toLowerCase()
+        .replace(/[-_\s]/g, "");
 
       if (classNameMap[normalizedName]) {
         classNames.push(classNameMap[normalizedName]);
@@ -417,15 +415,23 @@ function CardModal({ card, allCards = [], close }) {
     });
 
     if (lastIndex < text.length) {
-      titleParts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
+      titleParts.push(
+        <span key="title-end">
+          {text.slice(lastIndex)}
+        </span>,
+      );
     }
 
     return (
       <div className="card-modal-title-content">
         <div className="card-modal-title-name-row">
-          <span className="card-modal-title-name">{titleParts}</span>
+          <span className="card-modal-title-name">
+            {titleParts}
+          </span>
 
-          <span className="card-modal-title-icons">{classIcons}</span>
+          <span className="card-modal-title-icons">
+            {classIcons}
+          </span>
         </div>
 
         {classNames.length > 0 && (
@@ -443,9 +449,7 @@ function CardModal({ card, allCards = [], close }) {
     }
 
     const text = String(stats);
-
     const pattern = /(<:[^:>]+:\d+>)/gi;
-
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
@@ -457,7 +461,6 @@ function CardModal({ card, allCards = [], close }) {
 
     matches.forEach((match, index) => {
       const fullEmoji = match[1];
-
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
@@ -485,7 +488,11 @@ function CardModal({ card, allCards = [], close }) {
     });
 
     if (lastIndex < text.length) {
-      parts.push(<span key="stats-end">{text.slice(lastIndex)}</span>);
+      parts.push(
+        <span key="stats-end">
+          {text.slice(lastIndex)}
+        </span>,
+      );
     }
 
     return parts;
@@ -504,7 +511,14 @@ function CardModal({ card, allCards = [], close }) {
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
-      return <span>{text.replace(/<:([^:>]+):\d+>/gi, "$1")}</span>;
+      return (
+        <span>
+          {text.replace(
+            /<:([^:>]+):\d+>/gi,
+            "$1",
+          )}
+        </span>
+      );
     }
 
     const parts = [];
@@ -512,15 +526,20 @@ function CardModal({ card, allCards = [], close }) {
 
     matches.forEach((match, index) => {
       const fullMatch = match[0];
-
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
-        const normalText = text.slice(lastIndex, matchIndex);
+        const normalText = text.slice(
+          lastIndex,
+          matchIndex,
+        );
 
         parts.push(
           <span key={`ability-text-${index}`}>
-            {normalText.replace(/<:([^:>]+):\d+>/gi, "$1")}
+            {normalText.replace(
+              /<:([^:>]+):\d+>/gi,
+              "$1",
+            )}
           </span>,
         );
       }
@@ -552,10 +571,16 @@ function CardModal({ card, allCards = [], close }) {
         );
       } else if (match[4]) {
         parts.push(
-          <strong key={`bold-${index}`}>{match[4].slice(2, -2)}</strong>,
+          <strong key={`bold-${index}`}>
+            {match[4].slice(2, -2)}
+          </strong>,
         );
       } else if (match[5]) {
-        parts.push(<u key={`underline-${index}`}>{match[5].slice(2, -2)}</u>);
+        parts.push(
+          <u key={`underline-${index}`}>
+            {match[5].slice(2, -2)}
+          </u>,
+        );
       }
 
       lastIndex = matchIndex + fullMatch.length;
@@ -564,7 +589,12 @@ function CardModal({ card, allCards = [], close }) {
     if (lastIndex < text.length) {
       parts.push(
         <span key="ability-text-end">
-          {text.slice(lastIndex).replace(/<:([^:>]+):\d+>/gi, "$1")}
+          {text
+            .slice(lastIndex)
+            .replace(
+              /<:([^:>]+):\d+>/gi,
+              "$1",
+            )}
         </span>,
       );
     }
@@ -585,9 +615,16 @@ function CardModal({ card, allCards = [], close }) {
           const icon = getTraitIcon(trait);
 
           return (
-            <span key={`${trait}-${index}`} className="trait-rendered-item">
+            <span
+              key={`${trait}-${index}`}
+              className="trait-rendered-item"
+            >
               {icon?.url && (
-                <img src={icon.url} alt={icon.alt} className="trait-icon" />
+                <img
+                  src={icon.url}
+                  alt={icon.alt}
+                  className="trait-icon"
+                />
               )}
 
               <u>{trait}</u>
@@ -616,73 +653,105 @@ function CardModal({ card, allCards = [], close }) {
           segment.trim(),
         )
       ) {
-        return <strong key={`tribe-${index}`}>{segment}</strong>;
+        return (
+          <strong key={`tribe-${index}`}>
+            {segment}
+          </strong>
+        );
       }
 
-      return <span key={`tribe-${index}`}>{segment}</span>;
+      return (
+        <span key={`tribe-${index}`}>
+          {segment}
+        </span>
+      );
     });
   };
 
   /*
-   * Find the actual card objects for
-   * the four superpowers belonging to
-   * this card.
+   * Find the actual superpower card objects.
+   *
+   * We search the ENTIRE ability text rather than requiring
+   * an entire line to equal the card name.
+   *
+   * This handles cases where multiple superpowers appear
+   * on the same line, such as:
+   *
+   * Meteor Strike ... Slammin' Smackdown ...
    */
   const getSuperpowerCards = () => {
-    if (!card?.ability || !Array.isArray(allCards) || allCards.length === 0) {
+    if (
+      !card?.ability ||
+      !Array.isArray(allCards) ||
+      allCards.length === 0
+    ) {
       return [];
     }
 
-    const lines = String(card.ability)
-      .split(/\r?\n/)
-      .map((line) =>
-        line
-          .replace(/<:[^:>]+:\d+>/gi, "")
-          .replace(/\*\*/g, "")
-          .replace(/__/g, "")
-          .trim(),
-      )
-      .filter(Boolean);
+    const searchableAbility = normalizeText(
+      removeDiscordEmojis(card.ability)
+        .replace(/\*\*/g, "")
+        .replace(/__/g, "")
+        .replace(/`/g, ""),
+    );
 
-    const result = [];
-
-    for (const line of lines) {
-      const match = allCards.find(
+    /*
+     * Longest names are checked first so that a shorter
+     * card name cannot incorrectly win before a longer
+     * card name containing it.
+     */
+    const candidates = allCards
+      .filter(
         (candidate) =>
-          normalizeText(candidate.card_name) === normalizeText(line),
-      );
+          candidate &&
+          candidate.card_name &&
+          candidate.cardid !== card.cardid,
+      )
+      .map((candidate) => ({
+        card: candidate,
+        name: normalizeText(candidate.card_name),
+      }))
+      .filter(({ name }) => name.length > 0)
+      .sort((a, b) => b.name.length - a.name.length);
 
-      if (match && !result.some((item) => item.cardid === match.cardid)) {
-        result.push(match);
-      }
+    const found = [];
 
-      if (result.length === 4) {
-        break;
+    for (const { card: candidate, name } of candidates) {
+      if (searchableAbility.includes(name)) {
+        found.push(candidate);
+
+        if (found.length === 4) {
+          break;
+        }
       }
     }
 
-    return result;
+    /*
+     * Restore the order in which the names actually appear
+     * in the hero's ability text.
+     */
+    found.sort((a, b) => {
+      const aName = normalizeText(a.card_name);
+      const bName = normalizeText(b.card_name);
+
+      return (
+        searchableAbility.indexOf(aName) -
+        searchableAbility.indexOf(bName)
+      );
+    });
+
+    return found;
   };
 
   const superpowers = getSuperpowerCards();
 
   const openSuperpower = (superpower) => {
-    /*
-     * Replace the current modal card
-     * directly. This means:
-     *
-     * Hero
-     *   ↓
-     * Meteor Strike
-     *   ↓
-     * another card
-     *
-     * without needing a second modal
-     * stacked on top of the first.
-     */
     const url = new URL(window.location.href);
 
-    url.searchParams.set("card", superpower.card_name);
+    url.searchParams.set(
+      "card",
+      superpower.card_name,
+    );
 
     window.history.pushState(
       {
@@ -692,12 +761,6 @@ function CardModal({ card, allCards = [], close }) {
       url,
     );
 
-    /*
-     * The parent component owns the
-     * selectedCard state, so this
-     * event allows the modal to tell
-     * HeroInfo which card to open.
-     */
     window.dispatchEvent(
       new CustomEvent("tbot-open-card", {
         detail: superpower,
@@ -710,13 +773,21 @@ function CardModal({ card, allCards = [], close }) {
   }
 
   return (
-    <div className="card-modal-overlay" onClick={close} role="presentation">
+    <div
+      className="card-modal-overlay"
+      onClick={close}
+      role="presentation"
+    >
       <div
         className="card-modal"
-        onClick={(event) => event.stopPropagation()}
+        onClick={(event) =>
+          event.stopPropagation()
+        }
         role="dialog"
         aria-modal="true"
-        aria-label={card.card_name || "Card information"}
+        aria-label={
+          card.card_name || "Card information"
+        }
       >
         <button
           type="button"
@@ -728,6 +799,7 @@ function CardModal({ card, allCards = [], close }) {
         </button>
 
         <div className="card-modal-scroll-content">
+          {/* MAIN CARD IMAGE — KEPT */}
           <div className="card-modal-image-section">
             <img
               className="modal-card-image"
@@ -742,7 +814,9 @@ function CardModal({ card, allCards = [], close }) {
                 className="share-card-btn"
                 onClick={handleShare}
               >
-                {copied ? "Link Copied!" : "Share Card"}
+                {copied
+                  ? "Link Copied!"
+                  : "Share Card"}
               </button>
             </div>
           </div>
@@ -756,57 +830,37 @@ function CardModal({ card, allCards = [], close }) {
               </h2>
 
               {hasValue(card.card_type) &&
-                !classNamesMatchTitle(card.card_type, card.title) && (
-                  <span className="card-type">{card.card_type}</span>
+                !classNamesMatchTitle(
+                  card.card_type,
+                  card.title,
+                ) && (
+                  <span className="card-type">
+                    {card.card_type}
+                  </span>
                 )}
-            </div>
-
-            {/* ====================================================
-                SUPERPOWERS
-               ==================================================== */}
-
-            {superpowers.length > 0 && (
-              <section className="modal-section superpowers-modal-section">
-                <h3 className="label">Superpowers</h3>
-
-                <div className="modal-superpowers-grid">
-                  {superpowers.map((superpower) => (
-                    <button
-                      type="button"
-                      key={superpower.cardid}
-                      className="modal-superpower-card"
-                      onClick={() => openSuperpower(superpower)}
-                      title={superpower.card_name}
-                    >
-                      <img
-                        src={superpower.thumbnail}
-                        alt={superpower.card_name}
-                        loading="lazy"
-                        decoding="async"
-                      />
-
-                      <span>{superpower.card_name}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {(hasValue(card.description) || hasValue(card.stats)) && (
+            </div>         
+            {(hasValue(card.description) ||
+              hasValue(card.stats)) && (
               <div className="modal-top-row">
                 {hasValue(card.description) && (
                   <section className="modal-section description-section">
-                    <h3 className="label">Tribe</h3>
+                    <h3 className="label">
+                      Tribe
+                    </h3>
 
                     <p className="description-text">
-                      {renderTribeText(card.description)}
+                      {renderTribeText(
+                        card.description,
+                      )}
                     </p>
                   </section>
                 )}
 
                 {hasValue(card.stats) && (
                   <section className="modal-section stats-section">
-                    <h3 className="label">Stats</h3>
+                    <h3 className="label">
+                      Stats
+                    </h3>
 
                     <p className="value stats-value">
                       {renderStatsText(card.stats)}
@@ -820,18 +874,24 @@ function CardModal({ card, allCards = [], close }) {
               {hasValue(card.ability) && (
                 <div className="metadata-item">
                   <span className="label">
-                    {superpowers.length > 0 ? "Signature" : "Ability"}
+                    {superpowers.length > 0
+                      ? "Superpowers"
+                      : "Ability"}
                   </span>
 
                   <span className="value ability-value">
-                    {renderAbilityText(card.ability)}
+                    {renderAbilityText(
+                      card.ability,
+                    )}
                   </span>
                 </div>
               )}
 
               {hasValue(card.traits) && (
                 <div className="metadata-item trait-item">
-                  <span className="label">Traits</span>
+                  <span className="label">
+                    Traits
+                  </span>
 
                   <span className="value trait-value">
                     {renderTraitText(card.traits)}
@@ -841,17 +901,25 @@ function CardModal({ card, allCards = [], close }) {
 
               {hasValue(card.set_rarity) && (
                 <div className="metadata-item">
-                  <span className="label">Rarity</span>
+                  <span className="label">
+                    Rarity
+                  </span>
 
-                  <span className="value">{card.set_rarity}</span>
+                  <span className="value">
+                    {card.set_rarity}
+                  </span>
                 </div>
               )}
 
               {hasValue(card.flavor_text) && (
                 <div className="metadata-item full-width-item">
-                  <span className="label">Flavor Text</span>
+                  <span className="label">
+                    Flavor Text
+                  </span>
 
-                  <span className="value">{card.flavor_text}</span>
+                  <span className="value">
+                    {card.flavor_text}
+                  </span>
                 </div>
               )}
             </section>
