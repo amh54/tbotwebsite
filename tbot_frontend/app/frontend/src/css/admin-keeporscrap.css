@@ -1004,9 +1004,6 @@
   margin-top: 25px;
 }
 
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
 
 @media (max-width: 1250px) {
   .admin-kos-class-grid {
@@ -1026,10 +1023,6 @@
   .admin-kos-class-image img {
     max-width: 196px;
     max-height: 326px;
-  }
-
-  .admin-kos-class-main {
-    min-height: 350px;
   }
 }
 
