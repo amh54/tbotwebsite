@@ -1,5 +1,7 @@
+
 import logging
 import os
+import re
 
 import cloudinary
 import cloudinary.uploader
@@ -12,7 +14,6 @@ from rest_framework.response import Response
 
 from ..models import WebCards
 from ..serializers import WebCardSerializer
-
 from .helpers import include_error_detail
 from .permissions import is_discord_owner
 
@@ -215,12 +216,8 @@ def admin_cards(request):
         )
 
         payload = {
-            "error": (
-                "Database operation failed."
-            ),
-            "error_type": (
-                exc.__class__.__name__
-            ),
+            "error": "Database operation failed.",
+            "error_type": exc.__class__.__name__,
         }
 
         if include_error_detail():
@@ -350,12 +347,8 @@ def admin_card_detail(
         )
 
         payload = {
-            "error": (
-                "Database operation failed."
-            ),
-            "error_type": (
-                exc.__class__.__name__
-            ),
+            "error": "Database operation failed.",
+            "error_type": exc.__class__.__name__,
         }
 
         if include_error_detail():
@@ -367,13 +360,8 @@ def admin_card_detail(
         )
 
 
-# ============================================================
-# ADMIN CARD IMAGE UPLOAD
-# ============================================================
-
 @api_view(["POST"])
 def admin_card_image_upload(request):
-
     if not is_discord_owner(request):
         return Response(
             {
@@ -383,10 +371,6 @@ def admin_card_image_upload(request):
             },
             status=status.HTTP_403_FORBIDDEN,
         )
-
-    # --------------------------------------------------------
-    # CHECK CLOUDINARY CONFIGURATION
-    # --------------------------------------------------------
 
     cloud_name = os.environ.get(
         "CLOUDINARY_CLOUD_NAME",
@@ -404,58 +388,32 @@ def admin_card_image_upload(request):
     ).strip()
 
     if not cloud_name:
-        logger.error(
-            "CLOUDINARY_CLOUD_NAME is not configured."
-        )
-
         return Response(
             {
-                "error": (
-                    "Cloudinary cloud name "
-                    "is not configured."
-                ),
+                "error": "Cloudinary cloud name is not configured.",
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     if not api_key:
-        logger.error(
-            "CLOUDINARY_API_KEY is not configured."
-        )
-
         return Response(
             {
-                "error": (
-                    "Cloudinary API key "
-                    "is not configured."
-                ),
+                "error": "Cloudinary API key is not configured.",
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     if not api_secret:
-        logger.error(
-            "CLOUDINARY_API_SECRET is not configured."
-        )
-
         return Response(
             {
-                "error": (
-                    "Cloudinary API secret "
-                    "is not configured."
-                ),
+                "error": "Cloudinary API secret is not configured.",
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-    # --------------------------------------------------------
-    # GET IMAGE
-    # --------------------------------------------------------
-
     image = request.FILES.get("image")
 
     if not image:
-
         return Response(
             {
                 "error": "No image was provided.",
@@ -463,9 +421,17 @@ def admin_card_image_upload(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # --------------------------------------------------------
-    # VALIDATE IMAGE TYPE
-    # --------------------------------------------------------
+    card_name = str(
+        request.data.get("card_name", "")
+    ).strip()
+
+    if not card_name:
+        return Response(
+            {
+                "error": "Card name is required.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     allowed_types = {
         "image/jpeg",
@@ -475,16 +441,10 @@ def admin_card_image_upload(request):
     }
 
     content_type = (
-        getattr(
-            image,
-            "content_type",
-            "",
-        )
-        or ""
+        getattr(image, "content_type", "") or ""
     ).lower()
 
     if content_type not in allowed_types:
-
         return Response(
             {
                 "error": (
@@ -495,14 +455,9 @@ def admin_card_image_upload(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # --------------------------------------------------------
-    # VALIDATE IMAGE SIZE
-    # --------------------------------------------------------
-
     max_size = 10 * 1024 * 1024
 
     if image.size > max_size:
-
         return Response(
             {
                 "error": (
@@ -513,31 +468,25 @@ def admin_card_image_upload(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # --------------------------------------------------------
-    # UPLOAD TO CLOUDINARY
-    # --------------------------------------------------------
-
     try:
+        safe_name = " ".join(card_name.split())
 
         result = cloudinary.uploader.upload(
             image,
             folder="tbot/cards",
+            public_id=safe_name,
             resource_type="image",
+            overwrite=True,
+            use_filename=False,
+            unique_filename=False,
         )
 
-        secure_url = result.get(
-            "secure_url"
-        )
-
-        public_id = result.get(
-            "public_id"
-        )
+        secure_url = result.get("secure_url")
+        public_id = result.get("public_id")
 
         if not secure_url:
-
             logger.error(
-                "Cloudinary upload returned "
-                "no secure_url: %s",
+                "Cloudinary upload returned no secure_url: %s",
                 result,
             )
 
@@ -557,12 +506,12 @@ def admin_card_image_upload(request):
                 "url": secure_url,
                 "secure_url": secure_url,
                 "public_id": public_id,
+                "card_name": card_name,
             },
             status=status.HTTP_200_OK,
         )
 
     except Exception as exc:
-
         logger.exception(
             "Cloudinary card image upload failed."
         )
@@ -572,9 +521,7 @@ def admin_card_image_upload(request):
                 "Unable to upload image "
                 "to Cloudinary."
             ),
-            "error_type": (
-                exc.__class__.__name__
-            ),
+            "error_type": exc.__class__.__name__,
         }
 
         if include_error_detail():

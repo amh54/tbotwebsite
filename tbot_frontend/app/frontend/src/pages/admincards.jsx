@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import CardModal from "../components/cardmodal";
@@ -100,59 +101,6 @@ const getNextCardId = (cards) => {
   return Math.max(...ids) + 1;
 };
 
-/*
- * ------------------------------------------------------------
- * STATS HELPERS
- * ------------------------------------------------------------
- *
- * Your database stores stats in ONE field.
- *
- * Example:
- *
- * 1 <:sun:123456789> 12 <:strength:987654321> 3 <:health:555555555>
- *
- * We reuse the emoji IDs already found in an existing stats
- * value rather than asking you to manually enter them.
- */
-
-const extractDiscordEmoji = (stats, keyword) => {
-  const value = String(stats || "");
-
-  const regex = new RegExp(`<a?:${keyword}:([0-9]+)>`, "i");
-
-  const match = value.match(regex);
-
-  return match ? match[0] : "";
-};
-
-const extractStatEmoji = (stats, type) => {
-  const value = String(stats || "");
-
-  if (type === "cost") {
-    const matches = [/<a?:sun:([0-9]+)>/i, /<a?:brain:([0-9]+)>/i];
-
-    for (const regex of matches) {
-      const match = value.match(regex);
-
-      if (match) {
-        return match[0];
-      }
-    }
-
-    return "";
-  }
-
-  if (type === "strength") {
-    return extractDiscordEmoji(value, "strength");
-  }
-
-  if (type === "health") {
-    return extractDiscordEmoji(value, "health");
-  }
-
-  return "";
-};
-
 const extractStatValues = (stats) => {
   const value = String(stats || "").trim();
 
@@ -173,79 +121,21 @@ const extractStatValues = (stats) => {
   };
 };
 
-const buildStats = ({ existingStats, side, cost, strength, health }) => {
-  const existing = String(existingStats || "").trim();
-
-  const costValue = String(cost || "").trim();
-  const strengthValue = String(strength || "").trim();
-  const healthValue = String(health || "").trim();
-
-  /*
-   * Reuse emoji IDs already present in the existing stats.
-   */
-  let costEmoji = extractStatEmoji(existing, "cost");
-
-  let strengthEmoji = extractStatEmoji(existing, "strength");
-
-  let healthEmoji = extractStatEmoji(existing, "health");
-
-  /*
-   * If this is a new card and there is no existing stats
-   * value, we cannot magically know the Discord IDs.
-   *
-   * In that case the normal emoji names are used.
-   *
-   * Existing cards will retain their actual IDs.
-   */
-  if (!costEmoji) {
-    costEmoji = normalizeSide(side) === "Zombies" ? "<:brain>" : "<:sun>";
-  }
-
-  if (!strengthEmoji) {
-    strengthEmoji = "<:strength>";
-  }
-
-  if (!healthEmoji) {
-    healthEmoji = "<:health>";
-  }
-
-  const parts = [];
-
-  if (costValue) {
-    parts.push(costValue, costEmoji);
-  }
-
-  if (strengthValue) {
-    parts.push(strengthValue, strengthEmoji);
-  }
-
-  if (healthValue) {
-    parts.push(healthValue, healthEmoji);
-  }
-
-  return parts.join(" ").trim();
-};
-
 const formFromCard = (card) => {
   const stats = String(card?.stats || "");
-
   const extracted = extractStatValues(stats);
 
   return {
+    ...EMPTY_FORM,
     cardid: card?.cardid ?? "",
     card_type: card?.card_type ?? "",
     card_name: card?.card_name ?? "",
     side: normalizeSide(card?.side),
     title: card?.title ?? "",
-
     cost: extracted.cost,
-
     strength: extracted.strength,
-
     health: extracted.health,
-
     stats,
-
     description: card?.description ?? "",
     ability: card?.ability ?? "",
     thumbnail: card?.thumbnail ?? "",
@@ -262,48 +152,40 @@ const formFromCard = (card) => {
 
 function AdminCards() {
   const [cards, setCards] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-
   const [search, setSearch] = useState("");
   const [sideFilter, setSideFilter] = useState("All");
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
   const [editorOpen, setEditorOpen] = useState(false);
-
   const [editingCard, setEditingCard] = useState(null);
-
   const [form, setForm] = useState(EMPTY_FORM);
-
   const [selectedCard, setSelectedCard] = useState(null);
-
-  /*
-   * ----------------------------------------------------------
-   * LOAD CARDS
-   * ----------------------------------------------------------
-   */
 
   const loadCards = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/tbotapp/admin/cards/`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/tbotapp/admin/cards/`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
 
       if (response.status === 401 || response.status === 403) {
         throw new Error("You are not authorized to manage cards.");
       }
 
       if (!response.ok) {
-        throw new Error(`Unable to load cards (${response.status}).`);
+        throw new Error(
+          `Unable to load cards (${response.status}).`,
+        );
       }
 
       const data = await response.json();
@@ -317,7 +199,6 @@ function AdminCards() {
       );
     } catch (err) {
       console.error("Unable to load admin cards:", err);
-
       setError(err?.message || "Unable to load cards.");
     } finally {
       setLoading(false);
@@ -328,18 +209,13 @@ function AdminCards() {
     loadCards();
   }, [loadCards]);
 
-  /*
-   * ----------------------------------------------------------
-   * FILTERING
-   * ----------------------------------------------------------
-   */
-
   const filteredCards = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     return cards.filter((card) => {
       const matchesSide =
-        sideFilter === "All" || normalizeSide(card.side) === sideFilter;
+        sideFilter === "All" ||
+        normalizeSide(card.side) === sideFilter;
 
       if (!matchesSide) {
         return false;
@@ -364,12 +240,6 @@ function AdminCards() {
     });
   }, [cards, search, sideFilter]);
 
-  /*
-   * ----------------------------------------------------------
-   * EDITOR
-   * ----------------------------------------------------------
-   */
-
   const openAdd = () => {
     setEditingCard(null);
 
@@ -385,9 +255,7 @@ function AdminCards() {
 
   const openEdit = (card) => {
     setEditingCard(card);
-
     setForm(formFromCard(card));
-
     setError("");
     setSuccess("");
     setEditorOpen(true);
@@ -409,100 +277,101 @@ function AdminCards() {
       [field]: value,
     }));
   };
+const handleImageUpload = async (event) => {
+  const file = event.target.files?.[0];
 
-  /*
-   * ----------------------------------------------------------
-   * IMAGE UPLOAD
-   * ----------------------------------------------------------
-   */
+  if (!file) {
+    return;
+  }
 
-  const handleImageUpload = async (event) => {
-    const file = event.target.files?.[0];
+  if (!form.card_name?.trim()) {
+    setError("Card name is required before uploading an image.");
+    event.target.value = "";
+    return;
+  }
 
-    if (!file) {
-      return;
-    }
+  setUploadingImage(true);
+  setError("");
+  setSuccess("");
 
-    setUploadingImage(true);
-    setError("");
-    setSuccess("");
+  try {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+    ];
 
-    try {
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/gif",
-      ];
-
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error("Unsupported image type. Use JPEG, PNG, WebP, or GIF.");
-      }
-
-      const maxSize = 10 * 1024 * 1024;
-
-      if (file.size > maxSize) {
-        throw new Error("Image is too large. Maximum size is 10 MB.");
-      }
-
-      const csrfToken = await ensureCsrfToken();
-
-      const formData = new FormData();
-
-      formData.append("image", file);
-
-      const response = await fetch(
-        `${API_BASE_URL}/tbotapp/admin/cards/image-upload/`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
-          body: formData,
-        },
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(
+        "Unsupported image type. Use JPEG, PNG, WebP, or GIF.",
       );
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            data.detail ||
-            `Unable to upload image (${response.status}).`,
-        );
-      }
-
-      if (!data.secure_url && !data.url) {
-        throw new Error(
-          "Cloudinary upload succeeded, but no image URL was returned.",
-        );
-      }
-
-      const imageUrl = data.secure_url || data.url;
-
-      updateField("thumbnail", imageUrl);
-
-      setSuccess("Image uploaded to Cloudinary successfully.");
-    } catch (err) {
-      console.error("Unable to upload card image:", err);
-
-      setError(err?.message || "Unable to upload image.");
-    } finally {
-      setUploadingImage(false);
-
-      /*
-       * Allows selecting the same file again.
-       */
-      event.target.value = "";
     }
-  };
 
-  /*
-   * ----------------------------------------------------------
-   * SAVE
-   * ----------------------------------------------------------
-   */
+    const maxSize = 10 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      throw new Error(
+        "Image is too large. Maximum size is 10 MB.",
+      );
+    }
+
+    const csrfToken = await ensureCsrfToken();
+
+    const formData = new FormData();
+
+    formData.append("image", file);
+    formData.append(
+      "card_name",
+      String(form.card_name).trim(),
+    );
+
+    const response = await fetch(
+      `${API_BASE_URL}/tbotapp/admin/cards/image-upload/`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+      },
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          data.detail ||
+          `Unable to upload image (${response.status}).`,
+      );
+    }
+
+    if (!data.secure_url && !data.url) {
+      throw new Error(
+        "Cloudinary upload succeeded, but no image URL was returned.",
+      );
+    }
+
+    const imageUrl = data.secure_url || data.url;
+
+    updateField("thumbnail", imageUrl);
+
+    setSuccess(
+      `${form.card_name} image uploaded successfully.`,
+    );
+  } catch (err) {
+    console.error("Unable to upload card image:", err);
+
+    setError(
+      err?.message || "Unable to upload image.",
+    );
+  } finally {
+    setUploadingImage(false);
+    event.target.value = "";
+  }
+};
 
   const handleSave = async (event) => {
     event.preventDefault();
@@ -513,86 +382,37 @@ function AdminCards() {
 
     try {
       const csrfToken = await ensureCsrfToken();
-
-      /*
-       * Build the single database stats field.
-       *
-       * Existing Discord emoji IDs are reused from
-       * form.stats.
-       */
-      const finalStats = buildStats({
-        existingStats: form.stats,
-        side: form.side,
-        cost: form.cost,
-        strength: form.strength,
-        health: form.health,
-      });
-
-      const payload = {
-        cardid: Number(form.cardid),
-
-        card_type: form.card_type.trim(),
-
-        card_name: form.card_name.trim(),
-
-        side: normalizeSide(form.side),
-
-        title: form.title.trim(),
-
-        stats: finalStats,
-
-        description: form.description.trim(),
-
-        ability: form.ability.trim(),
-
-        thumbnail: form.thumbnail.trim(),
-
-        traits: form.traits.trim(),
-
-        set_rarity: form.set_rarity.trim(),
-
-        flavor_text: form.flavor_text.trim(),
-
-        aliases: form.aliases.trim(),
-
-        button: form.button.trim(),
-
-        button_emoji: form.button_emoji.trim(),
-
-        button2: form.button2.trim(),
-
-        button_emoji2: form.button_emoji2.trim(),
-      };
-
-      if (!payload.cardid) {
-        throw new Error("Card ID is required.");
-      }
-
-      if (!payload.card_type) {
-        throw new Error("Card type is required.");
-      }
-
-      if (!payload.card_name) {
-        throw new Error("Card name is required.");
-      }
-
       const isEditing = Boolean(editingCard);
 
-      const url = isEditing
-        ? `${API_BASE_URL}/tbotapp/admin/cards/${editingCard.cardid}/`
-        : `${API_BASE_URL}/tbotapp/admin/cards/create/`;
+      if (!isEditing) {
+        throw new Error(
+          "Adding new cards is disabled while image-only editing is enabled.",
+        );
+      }
+
+      const thumbnail = String(
+        form.thumbnail || "",
+      ).trim();
+
+      if (!thumbnail) {
+        throw new Error("Card image is required.");
+      }
+
+      const payload = {
+        thumbnail,
+      };
+
+      const url =
+        `${API_BASE_URL}/tbotapp/admin/cards/` +
+        `${editingCard.cardid}/`;
 
       const response = await fetch(url, {
-        method: isEditing ? "PATCH" : "POST",
-
+        method: "PATCH",
         credentials: "include",
-
         headers: {
           "Content-Type": "application/json",
-
           "X-CSRFToken": csrfToken,
         },
-
         body: JSON.stringify(payload),
       });
 
@@ -602,14 +422,12 @@ function AdminCards() {
         throw new Error(
           data.error ||
             data.detail ||
-            `Unable to save card (${response.status}).`,
+            `Unable to update card image (${response.status}).`,
         );
       }
 
       setSuccess(
-        isEditing
-          ? `${data.card_name || "Card"} updated successfully.`
-          : `${data.card_name || "Card"} added successfully.`,
+        `${data.card_name || editingCard.card_name || "Card"} image updated successfully.`,
       );
 
       setEditorOpen(false);
@@ -618,19 +436,15 @@ function AdminCards() {
 
       await loadCards();
     } catch (err) {
-      console.error("Unable to save card:", err);
+      console.error("Unable to update card image:", err);
 
-      setError(err?.message || "Unable to save card.");
+      setError(
+        err?.message || "Unable to update card image.",
+      );
     } finally {
       setSaving(false);
     }
   };
-
-  /*
-   * ----------------------------------------------------------
-   * DELETE
-   * ----------------------------------------------------------
-   */
 
   const handleDelete = async (card) => {
     const confirmed = window.confirm(
@@ -669,27 +483,28 @@ function AdminCards() {
         );
       }
 
-      if (selectedCard && Number(selectedCard.cardid) === Number(card.cardid)) {
+      if (
+        selectedCard &&
+        Number(selectedCard.cardid) === Number(card.cardid)
+      ) {
         setSelectedCard(null);
       }
 
-      setSuccess(`${card.card_name || "Card"} deleted successfully.`);
+      setSuccess(
+        `${card.card_name || "Card"} deleted successfully.`,
+      );
 
       await loadCards();
     } catch (err) {
       console.error("Unable to delete card:", err);
 
-      setError(err?.message || "Unable to delete card.");
+      setError(
+        err?.message || "Unable to delete card.",
+      );
     } finally {
       setDeleting(false);
     }
   };
-
-  /*
-   * ----------------------------------------------------------
-   * CARD MODAL
-   * ----------------------------------------------------------
-   */
 
   const openCardModal = (card) => {
     setSelectedCard(card);
@@ -699,28 +514,6 @@ function AdminCards() {
     setSelectedCard(null);
   };
 
-  /*
-   * ----------------------------------------------------------
-   * STATS PREVIEW
-   * ----------------------------------------------------------
-   */
-
-  const statsPreview = useMemo(() => {
-    return buildStats({
-      existingStats: form.stats,
-      side: form.side,
-      cost: form.cost,
-      strength: form.strength,
-      health: form.health,
-    });
-  }, [form.stats, form.side, form.cost, form.strength, form.health]);
-
-  /*
-   * ----------------------------------------------------------
-   * RENDER
-   * ----------------------------------------------------------
-   */
-
   return (
     <div className="admin-cards-page">
       <Navbar />
@@ -729,8 +522,9 @@ function AdminCards() {
         <div className="admin-cards-header">
           <div>
             <h1>Card Manager</h1>
-
-            <p>Add, edit, delete, and inspect Tbot cards.</p>
+            <p>
+              Add, edit, delete, and inspect Tbot cards.
+            </p>
           </div>
 
           <button
@@ -743,7 +537,9 @@ function AdminCards() {
         </div>
 
         {error && (
-          <div className="admin-cards-message admin-cards-error">{error}</div>
+          <div className="admin-cards-message admin-cards-error">
+            {error}
+          </div>
         )}
 
         {success && (
@@ -754,35 +550,43 @@ function AdminCards() {
 
         <section className="admin-cards-toolbar">
           <div className="admin-cards-search">
-            <label htmlFor="admin-card-search">Search Cards</label>
+            <label htmlFor="admin-card-search">
+              Search Cards
+            </label>
 
             <input
               id="admin-card-search"
               type="search"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
               placeholder="Search by name, ID, type, hero..."
             />
           </div>
 
           <div className="admin-cards-filter">
-            <label htmlFor="admin-card-side">Side</label>
+            <label htmlFor="admin-card-side">
+              Side
+            </label>
 
             <select
               id="admin-card-side"
               value={sideFilter}
-              onChange={(event) => setSideFilter(event.target.value)}
+              onChange={(event) =>
+                setSideFilter(event.target.value)
+              }
             >
               <option value="All">All</option>
-
               <option value="Plants">Plants</option>
-
               <option value="Zombies">Zombies</option>
             </select>
           </div>
 
           <div className="admin-cards-count">
-            <strong>{filteredCards.length}</strong>
+            <strong>
+              {filteredCards.length}
+            </strong>
 
             <span>shown</span>
           </div>
@@ -791,58 +595,81 @@ function AdminCards() {
         {loading ? (
           <div className="admin-cards-loading">
             <div className="admin-cards-spinner" />
-
             <p>Loading cards...</p>
           </div>
         ) : filteredCards.length === 0 ? (
           <div className="admin-cards-empty">
             <h2>No cards found</h2>
 
-            <p>Try changing your search or filter.</p>
+            <p>
+              Try changing your search or filter.
+            </p>
           </div>
         ) : (
           <section className="admin-cards-grid">
             {filteredCards.map((card) => (
-              <article key={card.cardid} className="admin-card-item">
+              <article
+                key={card.cardid}
+                className="admin-card-item"
+              >
                 <button
                   type="button"
                   className="admin-card-image-button"
-                  onClick={() => openCardModal(card)}
+                  onClick={() =>
+                    openCardModal(card)
+                  }
                   title={`View ${card.card_name}`}
                 >
                   {card.thumbnail ? (
                     <img
                       src={card.thumbnail}
-                      alt={card.card_name || "Card"}
+                      alt={
+                        card.card_name || "Card"
+                      }
                       loading="lazy"
                     />
                   ) : (
-                    <div className="admin-card-no-image">No Image</div>
+                    <div className="admin-card-no-image">
+                      No Image
+                    </div>
                   )}
                 </button>
 
                 <div className="admin-card-item-info">
                   <div className="admin-card-item-top">
-                    <span className="admin-card-id">#{card.cardid}</span>
+                    <span className="admin-card-id">
+                      #{card.cardid}
+                    </span>
 
                     <span
-                      className={`admin-card-side admin-card-side-${normalizeSide(
-                        card.side,
-                      ).toLowerCase()}`}
+                      className={
+                        `admin-card-side ` +
+                        `admin-card-side-${normalizeSide(
+                          card.side,
+                        ).toLowerCase()}`
+                      }
                     >
                       {normalizeSide(card.side)}
                     </span>
                   </div>
 
-                  <h2>{card.card_name || "Unnamed Card"}</h2>
+                  <h2>
+                    {card.card_name ||
+                      "Unnamed Card"}
+                  </h2>
 
-                  <p>{card.card_type || "No card type"}</p>
+                  <p>
+                    {card.card_type ||
+                      "No card type"}
+                  </p>
 
                   <div className="admin-card-item-actions">
                     <button
                       type="button"
                       className="admin-card-view-button"
-                      onClick={() => openCardModal(card)}
+                      onClick={() =>
+                        openCardModal(card)
+                      }
                     >
                       View
                     </button>
@@ -850,15 +677,19 @@ function AdminCards() {
                     <button
                       type="button"
                       className="admin-card-edit-button"
-                      onClick={() => openEdit(card)}
+                      onClick={() =>
+                        openEdit(card)
+                      }
                     >
-                      Edit
+                      Edit Image
                     </button>
 
                     <button
                       type="button"
                       className="admin-card-delete-button"
-                      onClick={() => handleDelete(card)}
+                      onClick={() =>
+                        handleDelete(card)
+                      }
                       disabled={deleting}
                     >
                       Delete
@@ -877,19 +708,25 @@ function AdminCards() {
         <div
           className="admin-card-editor-overlay"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
               closeEditor();
             }
           }}
         >
-          <form className="admin-card-editor" onSubmit={handleSave}>
+          <form
+            className="admin-card-editor"
+            onSubmit={handleSave}
+          >
             <div className="admin-card-editor-header">
               <div>
-                <h2>{editingCard ? "Edit Card" : "Add Card"}</h2>
+                <h2>Edit Card Image</h2>
 
                 <p>
                   {editingCard
-                    ? `Editing #${editingCard.cardid}`
+                    ? `Editing #${editingCard.cardid} — ${editingCard.card_name}`
                     : "Create a new card"}
                 </p>
               </div>
@@ -898,7 +735,10 @@ function AdminCards() {
                 type="button"
                 className="admin-card-editor-close"
                 onClick={closeEditor}
-                disabled={saving || uploadingImage}
+                disabled={
+                  saving ||
+                  uploadingImage
+                }
               >
                 ×
               </button>
@@ -906,169 +746,54 @@ function AdminCards() {
 
             <div className="admin-card-editor-body">
               <section className="admin-card-form-section">
-                <h3>Basic Information</h3>
-
-                <div className="admin-card-form-grid">
-                  <label>
-                    Card ID
-                    <input
-                      type="number"
-                      min="1"
-                      value={form.cardid}
-                      onChange={(event) =>
-                        updateField("cardid", event.target.value)
-                      }
-                      disabled={Boolean(editingCard)}
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    Card Name
-                    <input
-                      type="text"
-                      value={form.card_name}
-                      onChange={(event) =>
-                        updateField("card_name", event.target.value)
-                      }
-                      maxLength={200}
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    Side
-                    <select
-                      value={form.side}
-                      onChange={(event) =>
-                        updateField("side", event.target.value)
-                      }
-                    >
-                      <option value="Plants">Plants</option>
-
-                      <option value="Zombies">Zombies</option>
-                    </select>
-                  </label>
-
-                  <label>
-                    Card Type
-                    <input
-                      type="text"
-                      value={form.card_type}
-                      onChange={(event) =>
-                        updateField("card_type", event.target.value)
-                      }
-                      maxLength={50}
-                      required
-                    />
-                  </label>
-
-                  <label className="admin-card-form-full">
-                    Title
-                    <input
-                      type="text"
-                      value={form.title}
-                      onChange={(event) =>
-                        updateField("title", event.target.value)
-                      }
-                      maxLength={100}
-                    />
-                  </label>
-                </div>
-              </section>
-
-              <section className="admin-card-form-section">
-                <h3>Stats</h3>
-
-                <div className="admin-card-stat-editor">
-                  <label>
-                    <span>
-                      {form.side === "Zombies" ? "🧠 Cost" : "☀️ Cost"}
-                    </span>
-
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={form.cost}
-                      onChange={(event) =>
-                        updateField("cost", event.target.value)
-                      }
-                      placeholder="1"
-                    />
-                  </label>
-
-                  <label>
-                    <span>💪 Strength</span>
-
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={form.strength}
-                      onChange={(event) =>
-                        updateField("strength", event.target.value)
-                      }
-                      placeholder="12"
-                    />
-                  </label>
-
-                  <label>
-                    <span>❤️ Health</span>
-
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={form.health}
-                      onChange={(event) =>
-                        updateField("health", event.target.value)
-                      }
-                      placeholder="3"
-                    />
-                  </label>
-                </div>
-
-                <div className="admin-card-stats-preview">
-                  <span>Stats</span>
-
-                  <strong>{statsPreview || "Enter stats above"}</strong>
-                </div>
-
-                <input type="hidden" value={form.stats} readOnly />
-              </section>
-
-              <section className="admin-card-form-section">
-                <h3>Card Content</h3>
+                <h3>Card Image</h3>
 
                 <div className="admin-card-form-grid">
                   <div className="admin-card-form-full">
-                    <label>Thumbnail</label>
+                    <label>
+                      Thumbnail
+                    </label>
 
                     <div className="admin-card-image-upload">
                       <input
                         id="admin-card-image"
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/gif"
-                        onChange={handleImageUpload}
-                        disabled={uploadingImage || saving}
+                        onChange={
+                          handleImageUpload
+                        }
+                        disabled={
+                          uploadingImage ||
+                          saving
+                        }
                       />
 
                       <label
                         htmlFor="admin-card-image"
                         className="admin-card-upload-button"
                       >
-                        {uploadingImage ? "Uploading..." : "Choose Image"}
+                        {uploadingImage
+                          ? "Uploading..."
+                          : "Choose Image"}
                       </label>
 
                       {form.thumbnail && (
                         <div className="admin-card-upload-preview">
                           <img
-                            src={form.thumbnail}
+                            src={
+                              form.thumbnail
+                            }
                             alt="Card thumbnail preview"
                           />
 
                           <div>
-                            <strong>Uploaded</strong>
+                            <strong>
+                              Uploaded
+                            </strong>
 
-                            <span>Cloudinary image</span>
+                            <span>
+                              Cloudinary image
+                            </span>
                           </div>
                         </div>
                       )}
@@ -1076,141 +801,120 @@ function AdminCards() {
 
                     <input
                       type="text"
-                      value={form.thumbnail}
+                      value={
+                        form.thumbnail
+                      }
                       onChange={(event) =>
-                        updateField("thumbnail", event.target.value)
+                        updateField(
+                          "thumbnail",
+                          event.target.value,
+                        )
                       }
                       maxLength={330}
                       placeholder="Cloudinary URL"
                     />
                   </div>
-
-                  <label>
-                    Rarity
-                    <input
-                      type="text"
-                      value={form.set_rarity}
-                      onChange={(event) =>
-                        updateField("set_rarity", event.target.value)
-                      }
-                      maxLength={50}
-                    />
-                  </label>
-
-                  <label>
-                    Traits
-                    <input
-                      type="text"
-                      value={form.traits}
-                      onChange={(event) =>
-                        updateField("traits", event.target.value)
-                      }
-                      maxLength={150}
-                    />
-                  </label>
-
-                  <label>
-                    Aliases
-                    <input
-                      type="text"
-                      value={form.aliases}
-                      onChange={(event) =>
-                        updateField("aliases", event.target.value)
-                      }
-                      maxLength={160}
-                    />
-                  </label>
-
-                  <label className="admin-card-form-full">
-                    Tribe / Description
-                    <textarea
-                      value={form.description}
-                      onChange={(event) =>
-                        updateField("description", event.target.value)
-                      }
-                      maxLength={100}
-                      rows={3}
-                    />
-                  </label>
-
-                  <label className="admin-card-form-full">
-                    Ability
-                    <textarea
-                      value={form.ability}
-                      onChange={(event) =>
-                        updateField("ability", event.target.value)
-                      }
-                      maxLength={300}
-                      rows={5}
-                    />
-                  </label>
-
-                  <label className="admin-card-form-full">
-                    Flavor Text
-                    <textarea
-                      value={form.flavor_text}
-                      onChange={(event) =>
-                        updateField("flavor_text", event.target.value)
-                      }
-                      maxLength={300}
-                      rows={3}
-                    />
-                  </label>
                 </div>
               </section>
 
               <section className="admin-card-form-section">
-                <h3>Buttons</h3>
+                <h3>Existing Card Information</h3>
 
                 <div className="admin-card-form-grid">
                   <label>
-                    Button
+                    Card ID
+
                     <input
                       type="text"
-                      value={form.button}
-                      onChange={(event) =>
-                        updateField("button", event.target.value)
-                      }
-                      maxLength={130}
+                      value={form.cardid}
+                      readOnly
                     />
                   </label>
 
                   <label>
-                    Button Emoji
+                    Card Name
+
                     <input
                       type="text"
-                      value={form.button_emoji}
-                      onChange={(event) =>
-                        updateField("button_emoji", event.target.value)
+                      value={
+                        form.card_name
                       }
-                      maxLength={130}
+                      readOnly
                     />
                   </label>
 
                   <label>
-                    Button 2
+                    Side
+
                     <input
                       type="text"
-                      value={form.button2}
-                      onChange={(event) =>
-                        updateField("button2", event.target.value)
-                      }
-                      maxLength={130}
+                      value={form.side}
+                      readOnly
                     />
                   </label>
 
                   <label>
-                    Button Emoji 2
+                    Card Type
+
                     <input
                       type="text"
-                      value={form.button_emoji2}
-                      onChange={(event) =>
-                        updateField("button_emoji2", event.target.value)
+                      value={
+                        form.card_type
                       }
-                      maxLength={130}
+                      readOnly
+                    />
+                  </label>
+
+                  <label>
+                    Cost
+
+                    <input
+                      type="text"
+                      value={form.cost}
+                      readOnly
+                    />
+                  </label>
+
+                  <label>
+                    Strength
+
+                    <input
+                      type="text"
+                      value={
+                        form.strength
+                      }
+                      readOnly
+                    />
+                  </label>
+
+                  <label>
+                    Health
+
+                    <input
+                      type="text"
+                      value={
+                        form.health
+                      }
+                      readOnly
+                    />
+                  </label>
+
+                  <label className="admin-card-form-full">
+                    Stats
+
+                    <input
+                      type="text"
+                      value={form.stats}
+                      readOnly
                     />
                   </label>
                 </div>
+
+                <p>
+                  Only the thumbnail will be changed when
+                  you save. The existing stats and Discord
+                  emoji IDs will not be modified.
+                </p>
               </section>
             </div>
 
@@ -1219,7 +923,10 @@ function AdminCards() {
                 type="button"
                 className="admin-card-cancel-button"
                 onClick={closeEditor}
-                disabled={saving || uploadingImage}
+                disabled={
+                  saving ||
+                  uploadingImage
+                }
               >
                 Cancel
               </button>
@@ -1227,20 +934,26 @@ function AdminCards() {
               <button
                 type="submit"
                 className="admin-card-save-button"
-                disabled={saving || uploadingImage}
+                disabled={
+                  saving ||
+                  uploadingImage
+                }
               >
                 {saving
                   ? "Saving..."
-                  : editingCard
-                    ? "Save Changes"
-                    : "Add Card"}
+                  : "Save Image"}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {selectedCard && <CardModal card={selectedCard} close={closeCardModal} />}
+      {selectedCard && (
+        <CardModal
+          card={selectedCard}
+          close={closeCardModal}
+        />
+      )}
     </div>
   );
 }
