@@ -454,12 +454,24 @@ def discord_logout(request):
         )
 
     logger.info(
-        "Discord logout requested. User=%s",
+        "Discord logout requested. User=%s Authenticated=%s",
         request.user,
+        request.user.is_authenticated,
     )
 
+    # Completely destroy the authenticated Django session.
     logout(request)
 
-    return JsonResponse({
+    response = JsonResponse({
         "authenticated": False,
     })
+
+    # Explicitly remove the session cookie from the browser.
+    response.delete_cookie(
+        settings.SESSION_COOKIE_NAME,
+        path=settings.SESSION_COOKIE_PATH,
+        domain=settings.SESSION_COOKIE_DOMAIN,
+        samesite=settings.SESSION_COOKIE_SAMESITE,
+    )
+
+    return response

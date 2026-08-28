@@ -424,26 +424,31 @@ function Navbar() {
     setLoggingOut(true);
 
     try {
-      const csrfToken = await ensureCsrfToken();
-
       const response = await fetch(
         `${API_BASE_URL}/tbotapp/auth/discord/logout/`,
         {
           method: "POST",
           credentials: "include",
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
         },
       );
 
-      if (!response.ok) {
-        throw new Error(`Logout failed: ${response.status}`);
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
       }
 
+      if (!response.ok) {
+        throw new Error(
+          data.error || data.detail || `Logout failed: ${response.status}`,
+        );
+      }
+
+      // Immediately update the navbar UI.
       setUser(null);
       setProfile(null);
-
       closeMenus();
     } catch (error) {
       console.error("Unable to log out:", error);
