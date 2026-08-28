@@ -335,27 +335,17 @@ const getCardTypes = (card) => {
     }
   };
 
-  const sideValue = normalizeText(
-    card?.side || card?.faction || card?.team || "",
-  );
-
   const descriptionValue = normalizeText(
     removeDiscordEmojis(card?.description || ""),
   );
 
-  if (
-    sideValue === "plant" ||
-    sideValue === "plants" ||
-    sideValue.includes("plant")
-  ) {
+  // Card types are determined from the description,
+  // NOT from the card's faction/side.
+  if (/\bplants?\b/.test(descriptionValue)) {
     addType("Plants");
   }
 
-  if (
-    sideValue === "zombie" ||
-    sideValue === "zombies" ||
-    sideValue.includes("zombie")
-  ) {
+  if (/\bzombies?\b/.test(descriptionValue)) {
     addType("Zombies");
   }
 
@@ -1456,6 +1446,18 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
       const cardClasses = getClassNames(card.card_type);
       const cardTypes = getCardTypes(card);
+      console.log(
+        "TYPE DEBUG:",
+        card.card_name,
+        "side:",
+        card.side,
+        "description:",
+        card.description,
+        "types:",
+        cardTypes,
+        "selected:",
+        selectedTypes,
+      );
       const cardKeywords = getCardKeywords(card);
 
       const cardTribes = extractTribes(
@@ -1522,7 +1524,7 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
       const keywordMatch =
         selectedKeywords.length === 0 ||
-        selectedKeywords.every((selectedKeyword) =>
+        selectedKeywords.some((selectedKeyword) =>
           cardKeywords.some(
             (keyword) =>
               normalizeText(keyword) === normalizeText(selectedKeyword.value),
