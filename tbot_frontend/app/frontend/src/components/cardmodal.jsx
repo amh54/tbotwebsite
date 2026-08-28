@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import "../css/cardmodal.css";
 
 const MANUAL_STAT_IMAGE_LINKS = {
@@ -24,7 +25,7 @@ const MANUAL_STAT_IMAGE_LINKS = {
   kabloom: "https://i.ibb.co/4gWkPT7f/kabloom.webp",
   megagrow: "https://i.ibb.co/svc6sx30/megagrow.webp",
   smarty: "https://i.ibb.co/V0bL3RYk/smarty.webp",
-  solar: "https://i.ibb.co/YFMMD4DZ/solar.webp",
+  solar: "https://i.ibb.co/YFMMD4DZ/sun.webp",
   beastly: "https://i.ibb.co/xS6b10P5/beastly.webp",
   brainy: "https://i.ibb.co/d40zFh8r/Brainy.webp",
   crazy: "https://i.ibb.co/HTvzSsXX/crazy.webp",
@@ -83,6 +84,7 @@ const normalizeTraitName = (trait) => {
 
   if (numberedMatch) {
     const baseTrait = numberedMatch[1];
+
     const number = numberedMatch[2];
 
     return `${canonicalTraits[baseTrait] || baseTrait} ${number}`;
@@ -125,6 +127,7 @@ const classNamesMatchTitle = (cardType, title) => {
   };
 
   const titleText = String(title).toLowerCase();
+
   const typeText = String(cardType).toLowerCase();
 
   return Object.values(classNames).some(
@@ -133,9 +136,10 @@ const classNamesMatchTitle = (cardType, title) => {
   );
 };
 
-function CardModal({ card, close }) {
+function CardModal({ card, allCards = [], close }) {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
+
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -146,6 +150,7 @@ function CardModal({ card, close }) {
     };
 
     document.addEventListener("keydown", handleKeyDown);
+
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [close]);
 
@@ -158,12 +163,15 @@ function CardModal({ card, close }) {
 
     try {
       await navigator.clipboard.writeText(url.toString());
+
       setCopied(true);
+
       window.setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy card link", err);
     }
   };
+
   const getEmojiIcon = (emoji) => {
     const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
 
@@ -178,22 +186,18 @@ function CardModal({ card, close }) {
         url: MANUAL_STAT_IMAGE_LINKS.cost,
         alt: "Brainz",
       },
-
       strength: {
         url: MANUAL_STAT_IMAGE_LINKS.strength,
         alt: "Strength",
       },
-
       health: {
         url: MANUAL_STAT_IMAGE_LINKS.health,
         alt: "Health",
       },
-
       sun: {
         url: MANUAL_STAT_IMAGE_LINKS.sun,
         alt: "Sun",
       },
-
       healthstrength: {
         url: MANUAL_STAT_IMAGE_LINKS.healthstrength,
         alt: "Health and Strength",
@@ -203,52 +207,42 @@ function CardModal({ card, close }) {
         url: MANUAL_STAT_IMAGE_LINKS.antihero,
         alt: "Anti-Hero",
       },
-
       strikethrough: {
         url: MANUAL_STAT_IMAGE_LINKS.strikethrough,
         alt: "Strikethrough",
       },
-
       deadly: {
         url: MANUAL_STAT_IMAGE_LINKS.deadly,
         alt: "Deadly",
       },
-
       special: {
         url: MANUAL_STAT_IMAGE_LINKS.special,
         alt: "Special",
       },
-
       freeze: {
         url: MANUAL_STAT_IMAGE_LINKS.freeze,
         alt: "Freeze",
       },
-
       bullseye: {
         url: MANUAL_STAT_IMAGE_LINKS.bullseye,
         alt: "Bullseye",
       },
-
       frenzy: {
         url: MANUAL_STAT_IMAGE_LINKS.frenzy,
         alt: "Frenzy",
       },
-
       armored: {
         url: MANUAL_STAT_IMAGE_LINKS.armored,
         alt: "Armored",
       },
-
       overshoot: {
         url: MANUAL_STAT_IMAGE_LINKS.overshoot,
         alt: "Overshoot",
       },
-
       untrickable: {
         url: MANUAL_STAT_IMAGE_LINKS.untrickable,
         alt: "Untrickable",
       },
-
       doublestrike: {
         url: MANUAL_STAT_IMAGE_LINKS.doublestrike,
         alt: "Double Strike",
@@ -258,47 +252,38 @@ function CardModal({ card, close }) {
         url: MANUAL_STAT_IMAGE_LINKS.guardian,
         alt: "Guardian",
       },
-
       kabloom: {
         url: MANUAL_STAT_IMAGE_LINKS.kabloom,
         alt: "Kabloom",
       },
-
       megagrow: {
         url: MANUAL_STAT_IMAGE_LINKS.megagrow,
         alt: "Mega-Grow",
       },
-
       smarty: {
         url: MANUAL_STAT_IMAGE_LINKS.smarty,
         alt: "Smarty",
       },
-
       solar: {
         url: MANUAL_STAT_IMAGE_LINKS.solar,
         alt: "Solar",
       },
-
       beastly: {
         url: MANUAL_STAT_IMAGE_LINKS.beastly,
         alt: "Beastly",
       },
-
       brainy: {
         url: MANUAL_STAT_IMAGE_LINKS.brainy,
         alt: "Brainy",
       },
-
       crazy: {
         url: MANUAL_STAT_IMAGE_LINKS.crazy,
         alt: "Crazy",
       },
-
       hearty: {
         url: MANUAL_STAT_IMAGE_LINKS.hearty,
         alt: "Hearty",
       },
-
       sneaky: {
         url: MANUAL_STAT_IMAGE_LINKS.sneaky,
         alt: "Sneaky",
@@ -318,57 +303,46 @@ function CardModal({ card, close }) {
         url: MANUAL_STAT_IMAGE_LINKS.antihero,
         alt: "Anti-Hero",
       },
-
       Strikethrough: {
         url: MANUAL_STAT_IMAGE_LINKS.strikethrough,
         alt: "Strikethrough",
       },
-
       Deadly: {
         url: MANUAL_STAT_IMAGE_LINKS.deadly,
         alt: "Deadly",
       },
-
       Special: {
         url: MANUAL_STAT_IMAGE_LINKS.special,
         alt: "Special",
       },
-
       Freeze: {
         url: MANUAL_STAT_IMAGE_LINKS.freeze,
         alt: "Freeze",
       },
-
       Bullseye: {
         url: MANUAL_STAT_IMAGE_LINKS.bullseye,
         alt: "Bullseye",
       },
-
       Frenzy: {
         url: MANUAL_STAT_IMAGE_LINKS.frenzy,
         alt: "Frenzy",
       },
-
       Armored: {
         url: MANUAL_STAT_IMAGE_LINKS.armored,
         alt: "Armored",
       },
-
       Overshoot: {
         url: MANUAL_STAT_IMAGE_LINKS.overshoot,
         alt: "Overshoot",
       },
-
       Untrickable: {
         url: MANUAL_STAT_IMAGE_LINKS.untrickable,
         alt: "Untrickable",
       },
-
       "Double Strike": {
         url: MANUAL_STAT_IMAGE_LINKS.doublestrike,
         alt: "Double Strike",
       },
-
       "Splash Damage": null,
     };
 
@@ -383,6 +357,7 @@ function CardModal({ card, close }) {
     const text = String(title).replace(/\*\*/g, "").replace(/__/g, "").trim();
 
     const emojiPattern = /<:([^:>]+):\d+>/gi;
+
     const matches = [...text.matchAll(emojiPattern)];
 
     const classNameMap = {
@@ -406,7 +381,9 @@ function CardModal({ card, close }) {
 
     matches.forEach((match, index) => {
       const fullMatch = match[0];
+
       const emojiName = match[1];
+
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
@@ -466,7 +443,9 @@ function CardModal({ card, close }) {
     }
 
     const text = String(stats);
+
     const pattern = /(<:[^:>]+:\d+>)/gi;
+
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
@@ -478,6 +457,7 @@ function CardModal({ card, close }) {
 
     matches.forEach((match, index) => {
       const fullEmoji = match[1];
+
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
@@ -499,10 +479,6 @@ function CardModal({ card, close }) {
             className="ability-stat-icon"
           />,
         );
-      } else {
-        const emojiName = fullEmoji.replace(/^<:([^:>]+):\d+>$/, "$1");
-
-        parts.push(<span key={`stats-unknown-${index}`}>{emojiName}</span>);
       }
 
       lastIndex = matchIndex + fullEmoji.length;
@@ -536,6 +512,7 @@ function CardModal({ card, close }) {
 
     matches.forEach((match, index) => {
       const fullMatch = match[0];
+
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
@@ -560,10 +537,6 @@ function CardModal({ card, close }) {
               alt={icon.alt}
             />,
           );
-        } else {
-          const emojiName = match[1].replace(/^<:([^:>]+):\d+>$/, "$1");
-
-          parts.push(<span key={`ability-unknown-${index}`}>{emojiName}</span>);
         }
       } else if (match[2]) {
         parts.push(
@@ -650,6 +623,88 @@ function CardModal({ card, close }) {
     });
   };
 
+  /*
+   * Find the actual card objects for
+   * the four superpowers belonging to
+   * this card.
+   */
+  const getSuperpowerCards = () => {
+    if (!card?.ability || !Array.isArray(allCards) || allCards.length === 0) {
+      return [];
+    }
+
+    const lines = String(card.ability)
+      .split(/\r?\n/)
+      .map((line) =>
+        line
+          .replace(/<:[^:>]+:\d+>/gi, "")
+          .replace(/\*\*/g, "")
+          .replace(/__/g, "")
+          .trim(),
+      )
+      .filter(Boolean);
+
+    const result = [];
+
+    for (const line of lines) {
+      const match = allCards.find(
+        (candidate) =>
+          normalizeText(candidate.card_name) === normalizeText(line),
+      );
+
+      if (match && !result.some((item) => item.cardid === match.cardid)) {
+        result.push(match);
+      }
+
+      if (result.length === 4) {
+        break;
+      }
+    }
+
+    return result;
+  };
+
+  const superpowers = getSuperpowerCards();
+
+  const openSuperpower = (superpower) => {
+    /*
+     * Replace the current modal card
+     * directly. This means:
+     *
+     * Hero
+     *   ↓
+     * Meteor Strike
+     *   ↓
+     * another card
+     *
+     * without needing a second modal
+     * stacked on top of the first.
+     */
+    const url = new URL(window.location.href);
+
+    url.searchParams.set("card", superpower.card_name);
+
+    window.history.pushState(
+      {
+        card: superpower.card_name,
+      },
+      "",
+      url,
+    );
+
+    /*
+     * The parent component owns the
+     * selectedCard state, so this
+     * event allows the modal to tell
+     * HeroInfo which card to open.
+     */
+    window.dispatchEvent(
+      new CustomEvent("tbot-open-card", {
+        detail: superpower,
+      }),
+    );
+  };
+
   if (!card) {
     return null;
   }
@@ -706,6 +761,37 @@ function CardModal({ card, close }) {
                 )}
             </div>
 
+            {/* ====================================================
+                SUPERPOWERS
+               ==================================================== */}
+
+            {superpowers.length > 0 && (
+              <section className="modal-section superpowers-modal-section">
+                <h3 className="label">Superpowers</h3>
+
+                <div className="modal-superpowers-grid">
+                  {superpowers.map((superpower) => (
+                    <button
+                      type="button"
+                      key={superpower.cardid}
+                      className="modal-superpower-card"
+                      onClick={() => openSuperpower(superpower)}
+                      title={superpower.card_name}
+                    >
+                      <img
+                        src={superpower.thumbnail}
+                        alt={superpower.card_name}
+                        loading="lazy"
+                        decoding="async"
+                      />
+
+                      <span>{superpower.card_name}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {(hasValue(card.description) || hasValue(card.stats)) && (
               <div className="modal-top-row">
                 {hasValue(card.description) && (
@@ -733,7 +819,9 @@ function CardModal({ card, close }) {
             <section className="modal-metadata">
               {hasValue(card.ability) && (
                 <div className="metadata-item">
-                  <span className="label">Abilities</span>
+                  <span className="label">
+                    {superpowers.length > 0 ? "Signature" : "Ability"}
+                  </span>
 
                   <span className="value ability-value">
                     {renderAbilityText(card.ability)}
