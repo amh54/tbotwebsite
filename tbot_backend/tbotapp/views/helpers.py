@@ -49,6 +49,18 @@ def get_discord_user(request):
     discord_id = str(discord_id)
 
     # ============================================================
+    # CURRENT STORED PROFILE
+    # ============================================================
+
+    profile = (
+        UserProfile.objects
+        .filter(
+            discord_id=discord_id
+        )
+        .first()
+    )
+
+    # ============================================================
     # REFRESH DISCORD PROFILE
     # ============================================================
 
@@ -73,33 +85,53 @@ def get_discord_user(request):
 
                 current_discord_id = discord_data.get("id")
 
-                # Make sure the OAuth token belongs to
-                # the Discord account stored in this session.
+                # Make sure this token belongs to the
+                # Discord account stored in the session.
                 if (
                     current_discord_id
                     and str(current_discord_id) == discord_id
                 ):
-                    discord_username = (
-                        discord_data.get("username")
-                        or ""
-                    )
+                    discord_username = str(
+                        discord_data.get(
+                            "username",
+                            ""
+                        )
+                    ).strip()
 
                     discord_global_name = (
-                        discord_data.get("global_name")
+                        discord_data.get(
+                            "global_name"
+                        )
                         or discord_username
                         or f"discord_{discord_id}"
                     )
 
-                    avatar = (
+                    # ====================================================
+                    # DISCORD AVATAR
+                    # ====================================================
+                    #
+                    # Keep the RAW Discord avatar hash.
+                    #
+                    # Static:
+                    #     123456789
+                    #
+                    # Animated:
+                    #     a_123456789
+                    #
+                    # Do NOT build the CDN URL here.
+
+                    discord_avatar = (
                         discord_data.get("avatar")
-                        or ""
+                        or None
                     )
 
                     # ====================================================
                     # UPDATE SESSION
                     # ====================================================
 
-                    request.session["discord_id"] = discord_id
+                    request.session["discord_id"] = (
+                        discord_id
+                    )
 
                     request.session["discord_username"] = (
                         discord_username
@@ -109,26 +141,30 @@ def get_discord_user(request):
                         discord_global_name
                     )
 
-                    request.session["discord_avatar"] = avatar
+                    # Store exactly what Discord returned.
+                    #
+                    # This can be:
+                    #     "123456789"
+                    #     "a_123456789"
+                    #     None
+                    #
+                    # Do not leave an old avatar in the session
+                    # when Discord says the user currently has no
+                    # custom avatar.
 
-                    # ====================================================
-                    # UPDATE USER PROFILE
-                    # ====================================================
-
-                    profile = (
-                        UserProfile.objects
-                        .filter(
-                            discord_id=discord_id
-                        )
-                        .first()
+                    request.session["discord_avatar"] = (
+                        discord_avatar
                     )
+
+                    # ====================================================
+                    # UPDATE DATABASE
+                    # ====================================================
 
                     if profile:
                         changed = False
 
                         if (
-                            discord_username
-                            and profile.username
+                            profile.username
                             != discord_username
                         ):
                             profile.username = (
@@ -137,8 +173,7 @@ def get_discord_user(request):
                             changed = True
 
                         if (
-                            discord_global_name
-                            and profile.display_name
+                            profile.display_name
                             != discord_global_name
                         ):
                             profile.display_name = (
@@ -146,8 +181,21 @@ def get_discord_user(request):
                             )
                             changed = True
 
-                        if profile.avatar != avatar:
-                            profile.avatar = avatar
+                        # IMPORTANT:
+                        #
+                        # Always synchronize the avatar with Discord.
+                        #
+                        # This handles:
+                        #
+                        # NULL -> a_123456789
+                        # old hash -> a_123456789
+                        # a_old -> a_new
+                        # a_123456789 -> NULL
+                        #
+                        if profile.avatar != discord_avatar:
+                            profile.avatar = (
+                                discord_avatar
+                            )
                             changed = True
 
                         if changed:
@@ -164,11 +212,25 @@ def get_discord_user(request):
                                 ]
                             )
 
+                    # ====================================================
+                    # RETURN CURRENT DISCORD PROFILE
+                    # ====================================================
+
                     return {
                         "id": discord_id,
                         "username": discord_username,
-                        "global_name": discord_global_name,
-                        "avatar": avatar,
+                        "global_name": (
+                            discord_global_name
+                        ),
+                        "avatar": (
+                            discord_avatar
+                            or (
+                                profile.avatar
+                                if profile
+                                else ""
+                            )
+                            or ""
+                        ),
                     }
 
         except requests.RequestException:
@@ -185,12 +247,16 @@ def get_discord_user(request):
             )
 
     # ============================================================
-    # FALLBACK TO SESSION
+    # FALLBACK TO DATABASE / SESSION
     # ============================================================
 
     discord_username = request.session.get(
         "discord_username"
     )
+
+    if not discord_username:
+        if profile and profile.username:
+            discord_username = profile.username
 
     if not discord_username:
         if request.user.is_authenticated:
@@ -208,6 +274,12 @@ def get_discord_user(request):
     )
 
     if not discord_global_name:
+        if profile and profile.display_name:
+            discord_global_name = (
+                profile.display_name
+            )
+
+    if not discord_global_name:
         if request.user.is_authenticated:
             discord_global_name = (
                 request.user.first_name
@@ -220,9 +292,19 @@ def get_discord_user(request):
             or f"discord_{discord_id}"
         )
 
-    avatar = request.session.get(
-        "discord_avatar"
-    )
+    # Prefer the database avatar because it is the
+    # persistent source of truth.
+    avatar = ""
+
+    if profile and profile.avatar:
+        avatar = profile.avatar
+    else:
+        avatar = (
+            request.session.get(
+                "discord_avatar"
+            )
+            or ""
+        )
 
     return {
         "id": discord_id,
@@ -232,8 +314,9 @@ def get_discord_user(request):
         "global_name": str(
             discord_global_name or ""
         ),
-        "avatar": avatar or "",
+        "avatar": avatar,
     }
+
 
 
 MAX_CARD_RATIO = 4
