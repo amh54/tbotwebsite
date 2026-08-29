@@ -11,11 +11,6 @@ html {
 }
 
 body {
-  width: 100%;
-  min-height: 100%;
-}
-
-body {
   background: #101416;
   color: #ffffff;
   font-family: "Inter", sans-serif;

@@ -1,0 +1,572 @@
+
+/* ============================================================
+   TBOT INTERACTIVE TUTORIAL
+============================================================ */
+
+.tutorial-page {
+  min-height: 100vh;
+  background: #101416;
+  color: #ffffff;
+}
+
+.tutorial-main {
+  width: 100%;
+  min-height: calc(100vh - 80px);
+  padding: 50px 20px 70px;
+  box-sizing: border-box;
+}
+
+.tutorial-shell {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+
+/* ============================================================
+   HEADER
+============================================================ */
+
+.tutorial-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.tutorial-header-eyebrow {
+  margin: 0 0 6px;
+  color: #8fe38b;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tutorial-header h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.05;
+}
+
+.tutorial-exit-link {
+  flex-shrink: 0;
+  color: #c8d0d2;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tutorial-exit-link:hover {
+  color: #8fe38b;
+  transform: translateX(-2px);
+}
+
+
+/* ============================================================
+   PROGRESS
+============================================================ */
+
+.tutorial-progress {
+  margin-bottom: 22px;
+}
+
+.tutorial-progress-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 8px;
+  color: #9ca7aa;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.tutorial-progress-track {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  background: #20272a;
+  border-radius: 999px;
+}
+
+.tutorial-progress-bar {
+  height: 100%;
+  background: #8fe38b;
+  border-radius: inherit;
+  transition: width 0.25s ease;
+}
+
+
+/* ============================================================
+   MAIN CARD
+============================================================ */
+
+.tutorial-card {
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 55px 60px;
+  box-sizing: border-box;
+
+  background:
+    radial-gradient(
+      circle at top center,
+      rgba(143, 227, 139, 0.08),
+      transparent 45%
+    ),
+    #151a1d;
+
+  border: 1px solid #293134;
+  border-radius: 14px;
+
+  text-align: center;
+
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
+}
+
+.tutorial-icon {
+  width: 76px;
+  height: 76px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 25px;
+
+  background: #20282a;
+  border: 1px solid #344044;
+  border-radius: 18px;
+
+  font-size: 2.4rem;
+}
+
+.tutorial-content {
+  width: 100%;
+  max-width: 680px;
+}
+
+.tutorial-eyebrow {
+  margin: 0 0 10px;
+  color: #8fe38b;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tutorial-content h2 {
+  margin: 0 0 18px;
+  color: #ffffff;
+  font-size: clamp(1.8rem, 4vw, 2.65rem);
+  line-height: 1.1;
+}
+
+.tutorial-description {
+  margin: 0 auto;
+  color: #e3e8e9;
+  font-size: 1.15rem;
+  line-height: 1.65;
+}
+
+.tutorial-detail {
+  max-width: 650px;
+  margin: 25px auto 0;
+  padding: 17px 20px;
+
+  background: rgba(255, 255, 255, 0.035);
+  border-left: 3px solid #8fe38b;
+  border-radius: 0 8px 8px 0;
+
+  text-align: left;
+}
+
+.tutorial-detail p {
+  margin: 0;
+  color: #aeb8ba;
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+
+/* ============================================================
+   PAGE LINKS INSIDE TUTORIAL CARDS
+============================================================ */
+
+.tutorial-page-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 42px;
+  margin-top: 16px;
+  padding: 0 18px;
+
+  box-sizing: border-box;
+
+  color: #101416;
+  background: #8fe38b;
+  border: 1px solid #8fe38b;
+  border-radius: 8px;
+
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.tutorial-page-link:hover {
+  color: #101416;
+  background: #a4ed9f;
+  border-color: #a4ed9f;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.tutorial-page-link:active {
+  transform: translateY(1px);
+}
+
+
+/* ============================================================
+   STEP DOTS
+============================================================ */
+
+.tutorial-step-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 22px 0;
+}
+
+.tutorial-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+
+  background: #394245;
+  border: none;
+  border-radius: 50%;
+
+  cursor: pointer;
+
+  transition:
+    width 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tutorial-dot:hover {
+  background: #687477;
+  transform: scale(1.15);
+}
+
+.tutorial-dot-active {
+  width: 24px;
+  background: #8fe38b;
+  border-radius: 999px;
+}
+
+.tutorial-dot-complete {
+  background: #608f5e;
+}
+
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+
+.tutorial-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.tutorial-button {
+  min-height: 46px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 22px;
+  box-sizing: border-box;
+
+  border-radius: 8px;
+
+  font: inherit;
+  font-weight: 800;
+
+  text-decoration: none;
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.tutorial-button:active {
+  transform: translateY(1px);
+}
+
+.tutorial-button-primary {
+  color: #101416;
+  background: #8fe38b;
+  border: 1px solid #8fe38b;
+}
+
+.tutorial-button-primary:hover {
+  color: #101416;
+  background: #a4ed9f;
+  border-color: #a4ed9f;
+}
+
+.tutorial-button-secondary {
+  color: #d8dfe0;
+  background: #20272a;
+  border: 1px solid #343e41;
+}
+
+.tutorial-button-secondary:hover {
+  color: #ffffff;
+  background: #293235;
+  border-color: #465255;
+}
+
+.tutorial-button-secondary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tutorial-button-ghost {
+  color: #8fe38b;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.tutorial-button-ghost:hover {
+  color: #8fe38b;
+  background: rgba(143, 227, 139, 0.07);
+  border-color: rgba(143, 227, 139, 0.25);
+}
+
+
+/* ============================================================
+   COMPLETE STATE
+============================================================ */
+
+.tutorial-complete {
+  min-height: 440px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 55px 40px;
+  box-sizing: border-box;
+
+  background:
+    radial-gradient(
+      circle at top center,
+      rgba(143, 227, 139, 0.09),
+      transparent 48%
+    ),
+    #151a1d;
+
+  border: 1px solid #293134;
+  border-radius: 14px;
+
+  text-align: center;
+}
+
+.tutorial-complete-icon {
+  width: 82px;
+  height: 82px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 25px;
+
+  color: #101416;
+  background: #8fe38b;
+
+  border-radius: 50%;
+
+  font-size: 2.5rem;
+  font-weight: 900;
+}
+
+.tutorial-complete h2 {
+  margin: 0 0 15px;
+  color: #ffffff;
+  font-size: clamp(1.9rem, 4vw, 2.7rem);
+}
+
+.tutorial-complete > p:not(.tutorial-eyebrow) {
+  max-width: 620px;
+  margin: 0;
+  color: #aeb8ba;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.tutorial-complete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+
+/* ============================================================
+   FOOTER HELP
+============================================================ */
+
+.tutorial-help {
+  margin-top: 22px;
+  text-align: center;
+}
+
+.tutorial-help p {
+  margin: 0;
+  color: #707b7e;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 700px) {
+  .tutorial-main {
+    padding: 30px 15px 50px;
+  }
+
+  .tutorial-header {
+    align-items: flex-start;
+  }
+
+  .tutorial-header h1 {
+    font-size: 2rem;
+  }
+
+  .tutorial-exit-link {
+    padding-top: 4px;
+    font-size: 0.9rem;
+  }
+
+  .tutorial-card {
+    min-height: 470px;
+    padding: 40px 22px;
+  }
+
+  .tutorial-icon {
+    width: 66px;
+    height: 66px;
+    margin-bottom: 22px;
+    font-size: 2rem;
+  }
+
+  .tutorial-description {
+    font-size: 1.02rem;
+  }
+
+  .tutorial-detail {
+    padding: 15px 16px;
+    text-align: left;
+  }
+
+  .tutorial-detail p {
+    font-size: 0.92rem;
+  }
+
+  .tutorial-page-link {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .tutorial-navigation {
+    gap: 10px;
+  }
+
+  .tutorial-button {
+    flex: 1;
+    padding: 0 15px;
+  }
+
+  .tutorial-complete {
+    min-height: 470px;
+    padding: 40px 22px;
+  }
+
+  .tutorial-complete-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .tutorial-complete-actions .tutorial-button {
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   SMALL MOBILE
+============================================================ */
+
+@media (max-width: 420px) {
+  .tutorial-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tutorial-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .tutorial-card {
+    min-height: 500px;
+    padding: 35px 17px;
+  }
+
+  .tutorial-content h2 {
+    font-size: 1.75rem;
+  }
+
+  .tutorial-step-dots {
+    gap: 5px;
+  }
+
+  .tutorial-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .tutorial-dot-active {
+    width: 19px;
+  }
+}
