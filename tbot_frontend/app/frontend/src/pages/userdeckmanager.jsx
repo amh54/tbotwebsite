@@ -116,24 +116,17 @@ const getCookie = (name) => {
   return null;
 };
 
-/*
- * Always ask Django for a fresh CSRF token.
- *
- * Do NOT return the existing csrftoken cookie first.
- * The existing cookie can be stale and can cause:
- *
- * CSRF Failed: CSRF token from the 'X-Csrftoken' HTTP header incorrect.
- */
 const ensureCsrfToken = async () => {
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-      "Cache-Control": "no-cache",
+  const response = await fetch(
+    `${API_BASE_URL}/tbotapp/csrf/`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
     },
-    cache: "no-store",
-  });
+  );
 
   const responseText = await response.text();
 
@@ -153,16 +146,16 @@ const ensureCsrfToken = async () => {
     );
   }
 
-  /*
-   * Prefer the token Django explicitly returned.
-   * Fall back to the cookie only if necessary.
-   */
-  const csrfToken =
-    data?.csrfToken || data?.csrf_token || getCookie("csrftoken");
+  // Django's get_token(request) is the authoritative token.
+  const csrfToken = String(
+    data?.csrfToken ||
+      data?.csrf_token ||
+      "",
+  ).trim();
 
   if (!csrfToken) {
     throw new Error(
-      "CSRF token is missing. Please refresh the page and try again.",
+      "CSRF token was not returned by the server.",
     );
   }
 
@@ -735,172 +728,205 @@ function UserDeckManager() {
     }
   };
 
-  const handleSave = async (deck, form) => {
-    const deckId = deck?.deckid ?? deck?.deckID ?? deck?.id;
+ const handleSave = async (deck, form) => {
+  const deckId =
+    deck?.deckid ??
+    deck?.deckID ??
+    deck?.id;
 
-    if (!deckId) {
-      throw new Error("Deck ID is missing.");
-    }
+  if (!deckId) {
+    throw new Error("Deck ID is missing.");
+  }
 
-    setEditError("");
-    setEditSaving(true);
+  setEditError("");
+  setEditSaving(true);
 
-    try {
-      /*
-       * Get a FRESH Django CSRF token immediately before PATCH.
-       */
-      const csrfToken = await ensureCsrfToken();
+  try {
+    // Always get a fresh token from Django before PATCH.
+    const csrfToken = await ensureCsrfToken();
 
-      const url =
-        `${API_BASE_URL}/tbotapp/user-decks/` +
-        `${encodeURIComponent(deckId)}/`;
+    const url =
+      `${API_BASE_URL}/tbotapp/user-decks/` +
+      `${encodeURIComponent(deckId)}/`;
 
-      const hasImageFile = form?.image_file instanceof File;
+    const hasImageFile =
+      form?.image_file instanceof File;
 
-      let response;
+    let response;
 
-      if (hasImageFile) {
-        const formData = new FormData();
+    if (hasImageFile) {
+      const formData = new FormData();
 
-        formData.append("name", form.name ?? "");
-        formData.append("hero", form.hero ?? "");
-        formData.append("side", form.side ?? "");
-        formData.append("category", form.category ?? "");
-        formData.append("archetype", form.archetype ?? "");
-        formData.append("description", form.description ?? "");
+      formData.append("name", form.name ?? "");
+      formData.append("hero", form.hero ?? "");
+      formData.append("side", form.side ?? "");
+      formData.append("category", form.category ?? "");
+      formData.append("archetype", form.archetype ?? "");
+      formData.append("description", form.description ?? "");
 
-        /*
-         * Creator is allowed to be blank when editing.
-         */
-        formData.append("creator", normalizeText(form.creator));
-
-        formData.append("cost", form.cost ?? "");
-        formData.append("inspiration", form.inspiration ?? "");
-        formData.append("optimization", form.optimization ?? "");
-        formData.append("suggested_date", form.suggested_date ?? "");
-        formData.append("updated_date", form.updated_date ?? "");
-        formData.append("deck_doc", form.deck_doc ?? "");
-        formData.append("cards", form.cards ?? "");
-        formData.append("image_file", form.image_file);
-
-        response = await fetch(url, {
-          method: "PATCH",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-
-            /*
-             * IMPORTANT:
-             * Do not manually set Content-Type when using FormData.
-             * The browser must set multipart/form-data + boundary.
-             */
-            "X-CSRFToken": csrfToken,
-          },
-          body: formData,
-        });
-      } else {
-        response = await fetch(url, {
-          method: "PATCH",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken,
-          },
-          body: JSON.stringify({
-            name: form.name ?? "",
-            hero: form.hero ?? "",
-            side: form.side ?? "",
-            category: form.category ?? "",
-            archetype: form.archetype ?? "",
-            description: form.description ?? "",
-
-            /*
-             * Keep the existing image if the edit form
-             * does not provide a new one.
-             */
-            image: form.image ?? deck.image ?? "",
-
-            /*
-             * Creator can be blank.
-             */
-            creator: normalizeText(form.creator),
-
-            cost: form.cost ?? "",
-            inspiration: form.inspiration ?? "",
-            optimization: form.optimization ?? "",
-            suggested_date: form.suggested_date ?? "",
-            updated_date: form.updated_date ?? "",
-            deck_doc: form.deck_doc ?? "",
-            cards: form.cards ?? "",
-          }),
-        });
-      }
-
-      const responseText = await response.text();
-
-      let data = null;
-
-      try {
-        data = responseText ? JSON.parse(responseText) : null;
-      } catch {
-        data = null;
-      }
-
-      if (!response.ok) {
-        /*
-         * Give the actual Django error back to DeckCard.
-         */
-        const message =
-          data?.detail ||
-          data?.error ||
-          `Failed to save deck (${response.status}).`;
-
-        throw new Error(message);
-      }
-
-      const updatedDeck = data?.deck ?? data?.result ?? data;
-
-      /*
-       * If Django did not return the updated deck,
-       * reload the deck list exactly as before.
-       */
-      if (!updatedDeck) {
-        await loadDecks();
-        return null;
-      }
-
-      /*
-       * Update only the deck that was edited.
-       * Everything else stays untouched.
-       */
-      setDecks((currentDecks) =>
-        currentDecks.map((existingDeck) => {
-          const existingId =
-            existingDeck.deckid ?? existingDeck.deckID ?? existingDeck.id;
-
-          if (String(existingId) !== String(deckId)) {
-            return existingDeck;
-          }
-
-          return {
-            ...existingDeck,
-            ...updatedDeck,
-          };
-        }),
+      // Creator can be blank.
+      formData.append(
+        "creator",
+        normalizeText(form.creator),
       );
 
-      return updatedDeck;
-    } catch (error) {
-      console.error("Deck update failed:", error);
+      formData.append("cost", form.cost ?? "");
+      formData.append(
+        "inspiration",
+        form.inspiration ?? "",
+      );
+      formData.append(
+        "optimization",
+        form.optimization ?? "",
+      );
+      formData.append(
+        "suggested_date",
+        form.suggested_date ?? "",
+      );
+      formData.append(
+        "updated_date",
+        form.updated_date ?? "",
+      );
+      formData.append(
+        "deck_doc",
+        form.deck_doc ?? "",
+      );
+      formData.append(
+        "cards",
+        form.cards ?? "",
+      );
 
-      setEditError(error?.message || "Failed to save deck.");
+      formData.append(
+        "image_file",
+        form.image_file,
+      );
 
-      throw error;
-    } finally {
-      setEditSaving(false);
+      response = await fetch(url, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+      });
+    } else {
+      response = await fetch(url, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          name: form.name ?? "",
+          hero: form.hero ?? "",
+          side: form.side ?? "",
+          category: form.category ?? "",
+          archetype: form.archetype ?? "",
+          description: form.description ?? "",
+
+          image:
+            form.image ??
+            deck.image ??
+            "",
+
+          // Creator can be blank.
+          creator: normalizeText(form.creator),
+
+          cost: form.cost ?? "",
+
+          inspiration:
+            form.inspiration ?? "",
+
+          optimization:
+            form.optimization ?? "",
+
+          suggested_date:
+            form.suggested_date ?? "",
+
+          updated_date:
+            form.updated_date ?? "",
+
+          deck_doc:
+            form.deck_doc ?? "",
+
+          cards:
+            form.cards ?? "",
+        }),
+      });
     }
-  };
+
+    const responseText = await response.text();
+
+    let data = null;
+
+    try {
+      data = responseText
+        ? JSON.parse(responseText)
+        : null;
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
+      const message =
+        data?.detail ||
+        data?.error ||
+        `Failed to save deck (${response.status}).`;
+
+      throw new Error(message);
+    }
+
+    const updatedDeck =
+      data?.deck ??
+      data?.result ??
+      data;
+
+    if (!updatedDeck) {
+      await loadDecks();
+      return null;
+    }
+
+    setDecks((currentDecks) =>
+      currentDecks.map((existingDeck) => {
+        const existingId =
+          existingDeck.deckid ??
+          existingDeck.deckID ??
+          existingDeck.id;
+
+        if (
+          String(existingId) !==
+          String(deckId)
+        ) {
+          return existingDeck;
+        }
+
+        return {
+          ...existingDeck,
+          ...updatedDeck,
+        };
+      }),
+    );
+
+    return updatedDeck;
+  } catch (error) {
+    console.error(
+      "Deck update failed:",
+      error,
+    );
+
+    setEditError(
+      error?.message ||
+        "Failed to save deck.",
+    );
+
+    throw error;
+  } finally {
+    setEditSaving(false);
+  }
+};
 
   /*
    * DELETE DECK
