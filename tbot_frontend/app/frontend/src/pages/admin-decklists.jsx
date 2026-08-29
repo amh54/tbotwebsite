@@ -35,19 +35,6 @@ function normalizeKey(value) {
   return normalizeText(value).toLowerCase();
 }
 
-const getCookie = (name) => {
-  const cookies = document.cookie.split(";");
-
-  for (const cookie of cookies) {
-    const [key, ...valueParts] = cookie.trim().split("=");
-
-    if (key === name) {
-      return decodeURIComponent(valueParts.join("="));
-    }
-  }
-
-  return null;
-};
 
 const ensureCsrfToken = async () => {
   const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
