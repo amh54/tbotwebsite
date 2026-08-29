@@ -30,10 +30,10 @@ const getApiBaseUrl = () => {
 const API_BASE_URL = getApiBaseUrl();
 
 const getCookie = (name) => {
-  const cookies = document.cookie.split(";");
+  const cookies = document.cookie ? document.cookie.split("; ") : [];
 
   for (const cookie of cookies) {
-    const [key, ...valueParts] = cookie.trim().split("=");
+    const [key, ...valueParts] = cookie.split("=");
 
     if (key === name) {
       return decodeURIComponent(valueParts.join("="));
@@ -44,13 +44,9 @@ const getCookie = (name) => {
 };
 
 const ensureCsrfToken = async () => {
-  let token = getCookie("csrftoken");
-
-  if (token) {
-    return token;
-  }
-
+  // Always ask Django for the current CSRF cookie first.
   const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
+    method: "GET",
     credentials: "include",
     headers: {
       Accept: "application/json",
@@ -58,22 +54,37 @@ const ensureCsrfToken = async () => {
   });
 
   if (!response.ok) {
-    throw new Error("Unable to initialize CSRF protection.");
+    throw new Error(
+      "Unable to initialize CSRF protection. Please refresh the page.",
+    );
   }
 
+  // The cookie is the value Django will validate against.
+  const cookieToken = getCookie("csrftoken");
+
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+  // Fallback to the JSON response if the cookie is not readable.
   try {
     const data = await response.json();
 
-    token = data?.csrfToken || data?.csrf_token || getCookie("csrftoken");
+    const responseToken =
+      data?.csrfToken ||
+      data?.csrf_token ||
+      null;
+
+    if (responseToken) {
+      return responseToken;
+    }
   } catch {
-    token = getCookie("csrftoken");
+    // Ignore JSON parsing errors.
   }
 
-  if (!token) {
-    throw new Error("CSRF token is missing.");
-  }
-
-  return token;
+  throw new Error(
+    "CSRF token is missing. Please refresh the page and try again.",
+  );
 };
 
 const getApiErrorMessage = async (response, fallback) => {
@@ -187,12 +198,6 @@ function AdminLegacyDecks() {
     return () => {
       document.title = "Tbot";
     };
-  }, []);
-
-  useEffect(() => {
-    ensureCsrfToken().catch((err) => {
-      console.error("CSRF initialization failed:", err);
-    });
   }, []);
 
   useEffect(() => {
