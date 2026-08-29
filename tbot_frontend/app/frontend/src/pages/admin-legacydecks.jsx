@@ -43,11 +43,12 @@ const getCookie = (name) => {
   return null;
 };
 
+
 const ensureCsrfToken = async () => {
-  // Always ask Django for the current CSRF cookie first.
   const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
     method: "GET",
     credentials: "include",
+    cache: "no-store",
     headers: {
       Accept: "application/json",
     },
@@ -59,33 +60,19 @@ const ensureCsrfToken = async () => {
     );
   }
 
-  // The cookie is the value Django will validate against.
-  const cookieToken = getCookie("csrftoken");
+  const data = await response.json();
 
-  if (cookieToken) {
-    return cookieToken;
+  const token = data?.csrfToken;
+
+  if (!token) {
+    throw new Error(
+      "CSRF token is missing. Please refresh the page and try again.",
+    );
   }
 
-  // Fallback to the JSON response if the cookie is not readable.
-  try {
-    const data = await response.json();
-
-    const responseToken =
-      data?.csrfToken ||
-      data?.csrf_token ||
-      null;
-
-    if (responseToken) {
-      return responseToken;
-    }
-  } catch {
-    // Ignore JSON parsing errors.
-  }
-
-  throw new Error(
-    "CSRF token is missing. Please refresh the page and try again.",
-  );
+  return token;
 };
+
 
 const getApiErrorMessage = async (response, fallback) => {
   let message = fallback;
