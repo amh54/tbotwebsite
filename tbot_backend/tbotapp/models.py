@@ -420,7 +420,14 @@ class UserDeckSuggestion(models.Model):
     updated_at = models.DateTimeField(
         db_default=Now(),
     )
-
+    discord_message_id = models.CharField(
+    max_length=30,
+    blank=True,
+    null=True,
+    )
+    discord_update_pending = models.BooleanField(
+    default=False,
+)
     discord_thread_id = models.CharField(
         max_length=30,
         blank=True,

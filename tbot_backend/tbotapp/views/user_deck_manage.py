@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from ..models import UserDeck, UserProfile
+from ..models import UserDeck, UserProfile, UserDeckSuggestion
 from ..serializers import UserDeckSerializer
 from .helpers import (
     get_discord_user,
@@ -164,6 +164,7 @@ def user_deck_create(request):
 
 @api_view(["PATCH"])
 def user_deck_update(request, deck_id):
+
     profile, error = get_current_profile(request)
 
     if error:
@@ -230,6 +231,35 @@ def user_deck_update(request, deck_id):
             )
 
         deck.save()
+
+        # ========================================================
+        # CHECK FOR DISCORD SUBMISSION
+        # ========================================================
+
+        submission = (
+        UserDeckSuggestion.objects
+        .filter(
+        deck_id=deck.id,
+        status="pending",
+        consent_status="confirmed",
+        discord_thread_id__isnull=False,
+    )
+    .first()
+)
+
+        if submission:
+            submission.discord_update_pending = True
+            submission.save(
+                update_fields=["discord_update_pending"]
+        )
+
+            logger.info(
+                "User deck %s was updated and is linked "
+                "to Discord submission #%s. "
+                "Marked submission for Discord update.",
+                deck.id,
+                submission.id,
+            )
 
         serializer = UserDeckSerializer(deck)
 
