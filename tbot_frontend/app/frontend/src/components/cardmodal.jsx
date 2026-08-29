@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 import "../css/cardmodal.css";
@@ -122,16 +121,13 @@ const classNamesMatchTitle = (cardType, title) => {
 
   return Object.values(classNames).some(
     (name) =>
-      typeText.includes(name) &&
-      titleText.includes(name.replace("-", "")),
+      typeText.includes(name) && titleText.includes(name.replace("-", "")),
   );
 };
 
 function CardModal({ card, allCards = [], close }) {
   const hasValue = (value) =>
-    value !== null &&
-    value !== undefined &&
-    String(value).trim() !== "";
+    value !== null && value !== undefined && String(value).trim() !== "";
 
   const [copied, setCopied] = useState(false);
 
@@ -144,8 +140,7 @@ function CardModal({ card, allCards = [], close }) {
 
     document.addEventListener("keydown", handleKeyDown);
 
-    return () =>
-      document.removeEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [close]);
 
   const handleShare = async () => {
@@ -167,17 +162,13 @@ function CardModal({ card, allCards = [], close }) {
   };
 
   const getEmojiIcon = (emoji) => {
-    const match = String(emoji || "").match(
-      /^<:([^:>]+):\d+>$/,
-    );
+    const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
 
     if (!match) {
       return null;
     }
 
-    const emojiName = match[1]
-      .toLowerCase()
-      .replace(/[-_\s]/g, "");
+    const emojiName = match[1].toLowerCase().replace(/[-_\s]/g, "");
 
     const iconMap = {
       brainz: {
@@ -350,10 +341,7 @@ function CardModal({ card, allCards = [], close }) {
       return null;
     }
 
-    const text = String(title)
-      .replace(/\*\*/g, "")
-      .replace(/__/g, "")
-      .trim();
+    const text = String(title).replace(/\*\*/g, "").replace(/__/g, "").trim();
 
     const emojiPattern = /<:([^:>]+):\d+>/gi;
     const matches = [...text.matchAll(emojiPattern)];
@@ -403,9 +391,7 @@ function CardModal({ card, allCards = [], close }) {
         );
       }
 
-      const normalizedName = emojiName
-        .toLowerCase()
-        .replace(/[-_\s]/g, "");
+      const normalizedName = emojiName.toLowerCase().replace(/[-_\s]/g, "");
 
       if (classNameMap[normalizedName]) {
         classNames.push(classNameMap[normalizedName]);
@@ -415,23 +401,15 @@ function CardModal({ card, allCards = [], close }) {
     });
 
     if (lastIndex < text.length) {
-      titleParts.push(
-        <span key="title-end">
-          {text.slice(lastIndex)}
-        </span>,
-      );
+      titleParts.push(<span key="title-end">{text.slice(lastIndex)}</span>);
     }
 
     return (
       <div className="card-modal-title-content">
         <div className="card-modal-title-name-row">
-          <span className="card-modal-title-name">
-            {titleParts}
-          </span>
+          <span className="card-modal-title-name">{titleParts}</span>
 
-          <span className="card-modal-title-icons">
-            {classIcons}
-          </span>
+          <span className="card-modal-title-icons">{classIcons}</span>
         </div>
 
         {classNames.length > 0 && (
@@ -488,11 +466,7 @@ function CardModal({ card, allCards = [], close }) {
     });
 
     if (lastIndex < text.length) {
-      parts.push(
-        <span key="stats-end">
-          {text.slice(lastIndex)}
-        </span>,
-      );
+      parts.push(<span key="stats-end">{text.slice(lastIndex)}</span>);
     }
 
     return parts;
@@ -511,14 +485,7 @@ function CardModal({ card, allCards = [], close }) {
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
-      return (
-        <span>
-          {text.replace(
-            /<:([^:>]+):\d+>/gi,
-            "$1",
-          )}
-        </span>
-      );
+      return <span>{text.replace(/<:([^:>]+):\d+>/gi, "$1")}</span>;
     }
 
     const parts = [];
@@ -529,17 +496,11 @@ function CardModal({ card, allCards = [], close }) {
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
-        const normalText = text.slice(
-          lastIndex,
-          matchIndex,
-        );
+        const normalText = text.slice(lastIndex, matchIndex);
 
         parts.push(
           <span key={`ability-text-${index}`}>
-            {normalText.replace(
-              /<:([^:>]+):\d+>/gi,
-              "$1",
-            )}
+            {normalText.replace(/<:([^:>]+):\d+>/gi, "$1")}
           </span>,
         );
       }
@@ -571,16 +532,10 @@ function CardModal({ card, allCards = [], close }) {
         );
       } else if (match[4]) {
         parts.push(
-          <strong key={`bold-${index}`}>
-            {match[4].slice(2, -2)}
-          </strong>,
+          <strong key={`bold-${index}`}>{match[4].slice(2, -2)}</strong>,
         );
       } else if (match[5]) {
-        parts.push(
-          <u key={`underline-${index}`}>
-            {match[5].slice(2, -2)}
-          </u>,
-        );
+        parts.push(<u key={`underline-${index}`}>{match[5].slice(2, -2)}</u>);
       }
 
       lastIndex = matchIndex + fullMatch.length;
@@ -589,12 +544,7 @@ function CardModal({ card, allCards = [], close }) {
     if (lastIndex < text.length) {
       parts.push(
         <span key="ability-text-end">
-          {text
-            .slice(lastIndex)
-            .replace(
-              /<:([^:>]+):\d+>/gi,
-              "$1",
-            )}
+          {text.slice(lastIndex).replace(/<:([^:>]+):\d+>/gi, "$1")}
         </span>,
       );
     }
@@ -615,16 +565,9 @@ function CardModal({ card, allCards = [], close }) {
           const icon = getTraitIcon(trait);
 
           return (
-            <span
-              key={`${trait}-${index}`}
-              className="trait-rendered-item"
-            >
+            <span key={`${trait}-${index}`} className="trait-rendered-item">
               {icon?.url && (
-                <img
-                  src={icon.url}
-                  alt={icon.alt}
-                  className="trait-icon"
-                />
+                <img src={icon.url} alt={icon.alt} className="trait-icon" />
               )}
 
               <u>{trait}</u>
@@ -653,18 +596,10 @@ function CardModal({ card, allCards = [], close }) {
           segment.trim(),
         )
       ) {
-        return (
-          <strong key={`tribe-${index}`}>
-            {segment}
-          </strong>
-        );
+        return <strong key={`tribe-${index}`}>{segment}</strong>;
       }
 
-      return (
-        <span key={`tribe-${index}`}>
-          {segment}
-        </span>
-      );
+      return <span key={`tribe-${index}`}>{segment}</span>;
     });
   };
 
@@ -680,11 +615,7 @@ function CardModal({ card, allCards = [], close }) {
    * Meteor Strike ... Slammin' Smackdown ...
    */
   const getSuperpowerCards = () => {
-    if (
-      !card?.ability ||
-      !Array.isArray(allCards) ||
-      allCards.length === 0
-    ) {
+    if (!card?.ability || !Array.isArray(allCards) || allCards.length === 0) {
       return [];
     }
 
@@ -703,9 +634,7 @@ function CardModal({ card, allCards = [], close }) {
     const candidates = allCards
       .filter(
         (candidate) =>
-          candidate &&
-          candidate.card_name &&
-          candidate.cardid !== card.cardid,
+          candidate && candidate.card_name && candidate.cardid !== card.cardid,
       )
       .map((candidate) => ({
         card: candidate,
@@ -735,8 +664,7 @@ function CardModal({ card, allCards = [], close }) {
       const bName = normalizeText(b.card_name);
 
       return (
-        searchableAbility.indexOf(aName) -
-        searchableAbility.indexOf(bName)
+        searchableAbility.indexOf(aName) - searchableAbility.indexOf(bName)
       );
     });
 
@@ -748,10 +676,7 @@ function CardModal({ card, allCards = [], close }) {
   const openSuperpower = (superpower) => {
     const url = new URL(window.location.href);
 
-    url.searchParams.set(
-      "card",
-      superpower.card_name,
-    );
+    url.searchParams.set("card", superpower.card_name);
 
     window.history.pushState(
       {
@@ -773,21 +698,13 @@ function CardModal({ card, allCards = [], close }) {
   }
 
   return (
-    <div
-      className="card-modal-overlay"
-      onClick={close}
-      role="presentation"
-    >
+    <div className="card-modal-overlay" onClick={close} role="presentation">
       <div
         className="card-modal"
-        onClick={(event) =>
-          event.stopPropagation()
-        }
+        onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label={
-          card.card_name || "Card information"
-        }
+        aria-label={card.card_name || "Card information"}
       >
         <button
           type="button"
@@ -816,7 +733,9 @@ function CardModal({ card, allCards = [], close }) {
               >
                 {copied
                   ? "Link Copied!"
-                  : "Share Card"}
+                  : normalizeText(card.set_rarity) === "premium - hero"
+                    ? "Share Hero"
+                    : "Share Card"}
               </button>
             </div>
           </div>
@@ -830,37 +749,25 @@ function CardModal({ card, allCards = [], close }) {
               </h2>
 
               {hasValue(card.card_type) &&
-                !classNamesMatchTitle(
-                  card.card_type,
-                  card.title,
-                ) && (
-                  <span className="card-type">
-                    {card.card_type}
-                  </span>
+                !classNamesMatchTitle(card.card_type, card.title) && (
+                  <span className="card-type">{card.card_type}</span>
                 )}
-            </div>         
-            {(hasValue(card.description) ||
-              hasValue(card.stats)) && (
+            </div>
+            {(hasValue(card.description) || hasValue(card.stats)) && (
               <div className="modal-top-row">
                 {hasValue(card.description) && (
                   <section className="modal-section description-section">
-                    <h3 className="label">
-                      Tribe
-                    </h3>
+                    <h3 className="label">Tribe</h3>
 
                     <p className="description-text">
-                      {renderTribeText(
-                        card.description,
-                      )}
+                      {renderTribeText(card.description)}
                     </p>
                   </section>
                 )}
 
                 {hasValue(card.stats) && (
                   <section className="modal-section stats-section">
-                    <h3 className="label">
-                      Stats
-                    </h3>
+                    <h3 className="label">Stats</h3>
 
                     <p className="value stats-value">
                       {renderStatsText(card.stats)}
@@ -874,24 +781,18 @@ function CardModal({ card, allCards = [], close }) {
               {hasValue(card.ability) && (
                 <div className="metadata-item">
                   <span className="label">
-                    {superpowers.length > 0
-                      ? "Superpowers"
-                      : "Ability"}
+                    {superpowers.length > 0 ? "Superpowers" : "Ability"}
                   </span>
 
                   <span className="value ability-value">
-                    {renderAbilityText(
-                      card.ability,
-                    )}
+                    {renderAbilityText(card.ability)}
                   </span>
                 </div>
               )}
 
               {hasValue(card.traits) && (
                 <div className="metadata-item trait-item">
-                  <span className="label">
-                    Traits
-                  </span>
+                  <span className="label">Traits</span>
 
                   <span className="value trait-value">
                     {renderTraitText(card.traits)}
@@ -901,25 +802,17 @@ function CardModal({ card, allCards = [], close }) {
 
               {hasValue(card.set_rarity) && (
                 <div className="metadata-item">
-                  <span className="label">
-                    Rarity
-                  </span>
+                  <span className="label">Rarity</span>
 
-                  <span className="value">
-                    {card.set_rarity}
-                  </span>
+                  <span className="value">{card.set_rarity}</span>
                 </div>
               )}
 
               {hasValue(card.flavor_text) && (
                 <div className="metadata-item full-width-item">
-                  <span className="label">
-                    Flavor Text
-                  </span>
+                  <span className="label">Flavor Text</span>
 
-                  <span className="value">
-                    {card.flavor_text}
-                  </span>
+                  <span className="value">{card.flavor_text}</span>
                 </div>
               )}
             </section>
