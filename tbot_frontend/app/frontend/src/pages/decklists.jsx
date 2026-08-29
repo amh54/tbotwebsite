@@ -4,7 +4,7 @@ import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
-
+import useTemporaryMessage from "../utils/useTemporaryMessage";
 import {
   ARCHETYPE_META,
   CATEGORY_META,
@@ -91,7 +91,11 @@ function DecklistsPage() {
   const [decks, setDecks] = useState(
     Array.isArray(initialDecks) ? initialDecks : [],
   );
-
+  const {
+    visible: collectionLoginMessage,
+    show: showCollectionLoginMessage,
+    hide: hideCollectionLoginMessage,
+  } = useTemporaryMessage(4000);
   const [allCards, setAllCards] = useState(
     Array.isArray(initialCards) ? initialCards : [],
   );
@@ -602,10 +606,9 @@ function DecklistsPage() {
         if (selectedArchetypes.length > 0) {
           const deckArchetype = normalizeKey(deck.archetype);
 
-          const archetypeMatch = selectedArchetypes.every((selectedArchetype) =>
+          const archetypeMatch = selectedArchetypes.some((selectedArchetype) =>
             deckArchetype.includes(normalizeKey(selectedArchetype.value)),
           );
-
           if (!archetypeMatch) {
             return false;
           }
@@ -636,7 +639,7 @@ function DecklistsPage() {
 
         if (collectionValues.length > 0) {
           if (!discordUser || !collectionLoaded || collectionLoading) {
-            return false;
+            return true;
           }
 
           const status = deckCollectionStatus.get(getDeckKey(deck));
@@ -847,8 +850,34 @@ function DecklistsPage() {
   ]);
 
   const filteredDecks = useMemo(() => {
-    return sortedDecks.filter((deck) => deckMatchesFilters(deck));
-  }, [sortedDecks, deckMatchesFilters]);
+    const filtered = sortedDecks.filter((deck) => deckMatchesFilters(deck));
+    if (archetype.length > 1) {
+      const selectedArchetypes = archetype.map((selected) =>
+        normalizeKey(selected.value),
+      );
+
+      return [...filtered].sort((a, b) => {
+        const aArchetype = normalizeKey(a.archetype);
+        const bArchetype = normalizeKey(b.archetype);
+
+        const aMatchesAll = selectedArchetypes.every((selected) =>
+          aArchetype.includes(selected),
+        );
+
+        const bMatchesAll = selectedArchetypes.every((selected) =>
+          bArchetype.includes(selected),
+        );
+
+        if (aMatchesAll !== bMatchesAll) {
+          return aMatchesAll ? -1 : 1;
+        }
+
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [sortedDecks, deckMatchesFilters, archetype]);
 
   const clearFilters = () => {
     setSearch("");
@@ -941,7 +970,6 @@ function DecklistsPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-
           <div className="filters">
             <div className="select-wrapper">
               <FilterDropdown
@@ -973,17 +1001,21 @@ function DecklistsPage() {
               />
             </div>
 
-            {!authLoading && discordUser && (
-              <div className="select-wrapper">
-                <FilterDropdown
-                  label="Collection"
-                  options={collectionOptions}
-                  value={collection}
-                  onChange={setCollection}
-                  multi
-                />
-              </div>
-            )}
+            <div className="select-wrapper">
+              <FilterDropdown
+                label="Collection"
+                options={collectionOptions}
+                value={collection}
+                onChange={(value) => {
+                  setCollection(value);
+                  hideCollectionLoginMessage();
+                }}
+                requiresAuth
+                isAuthenticated={!authLoading && Boolean(discordUser)}
+                onAuthRequired={showCollectionLoginMessage}
+                multi
+              />
+            </div>
 
             <button
               type="button"
@@ -993,6 +1025,12 @@ function DecklistsPage() {
               Clear
             </button>
           </div>
+          {collectionLoginMessage && (
+            <div className="collection-login-message">
+              <strong>Discord login required</strong>
+              <span>Log in with Discord to use the Collection filter.</span>
+            </div>
+          )}
         </div>
 
         {error ? (

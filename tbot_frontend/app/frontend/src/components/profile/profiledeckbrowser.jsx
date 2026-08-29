@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import DeckCard from "../deckcomponent";
 import FilterDropdown from "../filterdropdown";
+import useTemporaryMessage from "../../utils/useTemporaryMessage";
 
 import {
   ARCHETYPE_META,
@@ -34,6 +35,17 @@ function ProfileDeckBrowser({
   const [archetype, setArchetype] = useState([]);
   const [collection, setCollection] = useState([]);
 
+  const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
+    useTemporaryMessage(4000);
+
+  /*
+   * userCards is the logged-in user's collection.
+   *
+   * If there is no collection available, treat the user as
+   * unauthenticated for purposes of the Collection filter.
+   */
+  const isAuthenticated = Array.isArray(userCards) && userCards.length > 0;
+
   const collectionMap = useMemo(
     () => buildCollectionMap(userCards),
     [userCards],
@@ -61,6 +73,7 @@ function ProfileDeckBrowser({
       : "";
 
     const deckCards = parseDeckCards(deck.cards);
+
     const searchableCardValues = deckCards.map((card) => normalizeKey(card));
 
     const searchableValues = [
@@ -113,13 +126,22 @@ function ProfileDeckBrowser({
 
     const deckArchetypes = parseArchetypes(deck.archetype);
 
-    return selectedArchetype.every((selected) =>
+    return selectedArchetype.some((selected) =>
       deckArchetypes.includes(normalizeKey(selected.value)),
     );
   };
 
   const matchesCollection = (deck, selectedCollection = collection) => {
     if (selectedCollection.length === 0) {
+      return true;
+    }
+
+    /*
+     * If the user is not authenticated, the Collection filter
+     * should not actually filter anything. The dropdown click
+     * is handled separately by handleCollectionChange().
+     */
+    if (!isAuthenticated) {
       return true;
     }
 
@@ -196,6 +218,7 @@ function ProfileDeckBrowser({
     archetype,
     collection,
     collectionMap,
+    isAuthenticated,
   ]);
 
   const categoryOptions = useMemo(() => {
@@ -237,7 +260,15 @@ function ProfileDeckBrowser({
         sensitivity: "base",
       }),
     );
-  }, [sideFilteredDecks, search, hero, archetype, collection, collectionMap]);
+  }, [
+    sideFilteredDecks,
+    search,
+    hero,
+    archetype,
+    collection,
+    collectionMap,
+    isAuthenticated,
+  ]);
 
   const archetypeOptions = useMemo(() => {
     const counts = {};
@@ -273,28 +304,50 @@ function ProfileDeckBrowser({
         ...meta,
       }))
       .filter((option) => option.count > 0);
-  }, [sideFilteredDecks, search, hero, category, collection, collectionMap]);
+  }, [
+    sideFilteredDecks,
+    search,
+    hero,
+    category,
+    collection,
+    collectionMap,
+    isAuthenticated,
+  ]);
 
   const collectionOptions = useMemo(() => {
-    const buildableCount = sideFilteredDecks.filter((deck) => {
-      return (
-        matchesSearch(deck) &&
-        matchesHero(deck) &&
-        matchesCategory(deck) &&
-        matchesArchetype(deck) &&
-        getDeckCollectionStatus(deck, collectionMap)?.buildable === true
-      );
-    }).length;
+    /*
+     * Always return the normal Collection options.
+     *
+     * When unauthenticated, the dropdown remains visible but
+     * clicking it triggers the temporary login message.
+     */
+    if (!isAuthenticated) {
+      return COLLECTION_OPTIONS;
+    }
 
-    const closeCount = sideFilteredDecks.filter((deck) => {
+    const availableDecks = sideFilteredDecks.filter((deck) => {
       return (
         matchesSearch(deck) &&
         matchesHero(deck) &&
         matchesCategory(deck) &&
-        matchesArchetype(deck) &&
-        getDeckCollectionStatus(deck, collectionMap)?.close === true
+        matchesArchetype(deck)
       );
-    }).length;
+    });
+
+    let buildableCount = 0;
+    let closeCount = 0;
+
+    availableDecks.forEach((deck) => {
+      const status = getDeckCollectionStatus(deck, collectionMap);
+
+      if (status?.buildable === true) {
+        buildableCount += 1;
+      }
+
+      if (status?.close === true) {
+        closeCount += 1;
+      }
+    });
 
     return COLLECTION_OPTIONS.map((option) => {
       if (option.value === "buildable") {
@@ -313,10 +366,39 @@ function ProfileDeckBrowser({
 
       return option;
     });
-  }, [sideFilteredDecks, search, hero, category, archetype, collectionMap]);
+  }, [
+    sideFilteredDecks,
+    isAuthenticated,
+    collectionMap,
+    search,
+    hero,
+    category,
+    archetype,
+  ]);
 
   const sortedDecks = useMemo(() => {
+    const selectedArchetypes = archetype.map((selectedArchetype) =>
+      normalizeKey(selectedArchetype.value),
+    );
+
     return [...decks].sort((a, b) => {
+      if (selectedArchetypes.length > 1) {
+        const archetypesA = parseArchetypes(a.archetype);
+        const archetypesB = parseArchetypes(b.archetype);
+
+        const matchesA = selectedArchetypes.filter((selected) =>
+          archetypesA.includes(selected),
+        ).length;
+
+        const matchesB = selectedArchetypes.filter((selected) =>
+          archetypesB.includes(selected),
+        ).length;
+
+        if (matchesA !== matchesB) {
+          return matchesB - matchesA;
+        }
+      }
+
       const sideOrder = {
         plants: 0,
         zombies: 1,
@@ -351,7 +433,7 @@ function ProfileDeckBrowser({
         },
       );
     });
-  }, [decks]);
+  }, [decks, archetype]);
 
   const filteredDecks = useMemo(() => {
     return sortedDecks.filter((deck) => {
@@ -394,6 +476,7 @@ function ProfileDeckBrowser({
     archetype,
     collection,
     collectionMap,
+    isAuthenticated,
   ]);
 
   const clearFilters = () => {
@@ -409,11 +492,21 @@ function ProfileDeckBrowser({
     clearFilters();
   };
 
+  const handleCollectionChange = (value) => {
+    if (!isAuthenticated) {
+      showCollectionLoginMessage();
+      return;
+    }
+
+    setCollection(value);
+  };
+
   return (
     <section className="profile-decks">
       <div className="profile-decks-header">
         <div>
           <h2>Decklists</h2>
+
           <p>
             {decks.length === 0
               ? "0 decklists"
@@ -506,8 +599,11 @@ function ProfileDeckBrowser({
               label="Collection"
               options={collectionOptions}
               value={collection}
-              onChange={setCollection}
+              onChange={handleCollectionChange}
               multi
+              requiresAuth
+              isAuthenticated={isAuthenticated}
+              onAuthRequired={showCollectionLoginMessage}
             />
           </div>
 
@@ -519,6 +615,14 @@ function ProfileDeckBrowser({
             Clear
           </button>
         </div>
+
+        {collectionLoginMessage && (
+          <div className="collection-login-message">
+            <strong>Discord login required</strong>
+
+            <span>Log in with Discord to use the Collection filter.</span>
+          </div>
+        )}
       </div>
 
       <div className="user-decklists-results-bar">
@@ -530,6 +634,7 @@ function ProfileDeckBrowser({
       {filteredDecks.length === 0 ? (
         <div className="user-decklists-empty">
           <h2>No decks found</h2>
+
           <p>This user hasn't added any decks matching these filters.</p>
         </div>
       ) : (

@@ -4,6 +4,7 @@ import DeckCard from "../components/deckcomponent";
 import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
+import useTemporaryMessage from "../utils/useTemporaryMessage";
 
 import {
   ARCHETYPE_META,
@@ -128,6 +129,7 @@ function LegacyDecksPage() {
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
   const [collectionFilter, setCollectionFilter] = useState([]);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [collectionCards, setCollectionCards] = useState([]);
 
@@ -138,6 +140,9 @@ function LegacyDecksPage() {
   const [loading, setLoading] = useState(!hasCachedDecks);
   const [error, setError] = useState("");
 
+  const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
+    useTemporaryMessage(4000);
+
   useEffect(() => {
     document.title = "Legacy Decks";
 
@@ -145,6 +150,12 @@ function LegacyDecksPage() {
       document.title = "Tbot";
     };
   }, []);
+
+  /*
+   * ============================================================
+   * LOAD LEGACY DECKS
+   * ============================================================
+   */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -245,6 +256,12 @@ function LegacyDecksPage() {
     };
   }, []);
 
+  /*
+   * ============================================================
+   * LOAD LEGACY DECK COUNT
+   * ============================================================
+   */
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -272,6 +289,7 @@ function LegacyDecksPage() {
 
         if (Number.isFinite(count) && count >= 0) {
           setTotalDecks(count);
+
           writeSessionCache(STORAGE_KEYS.deckCount, count);
         }
       } catch (err) {
@@ -287,6 +305,12 @@ function LegacyDecksPage() {
       controller.abort();
     };
   }, []);
+
+  /*
+   * ============================================================
+   * LOAD CARD INFORMATION
+   * ============================================================
+   */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -330,6 +354,12 @@ function LegacyDecksPage() {
       controller.abort();
     };
   }, []);
+
+  /*
+   * ============================================================
+   * LOAD USER COLLECTION
+   * ============================================================
+   */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -390,6 +420,12 @@ function LegacyDecksPage() {
     };
   }, []);
 
+  /*
+   * ============================================================
+   * COLLECTION MAP
+   * ============================================================
+   */
+
   const collectionMap = useMemo(() => {
     if (!isAuthenticated) {
       return new Map();
@@ -397,6 +433,12 @@ function LegacyDecksPage() {
 
     return buildCollectionMap(collectionCards);
   }, [collectionCards, isAuthenticated]);
+
+  /*
+   * ============================================================
+   * SIDE FILTER
+   * ============================================================
+   */
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
@@ -408,43 +450,11 @@ function LegacyDecksPage() {
     return decks.filter((deck) => normalizeKey(deck?.side) === selectedSide);
   }, [decks, side]);
 
-  const sortedDecks = useMemo(() => {
-    return [...decks].sort((a, b) => {
-      const sideOrder = {
-        plants: 0,
-        zombies: 1,
-      };
-
-      const sideA = normalizeKey(a.side);
-      const sideB = normalizeKey(b.side);
-
-      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
-
-      if (sideCompare !== 0) {
-        return sideCompare;
-      }
-
-      const heroCompare = normalizeText(a.hero).localeCompare(
-        normalizeText(b.hero),
-        undefined,
-        {
-          sensitivity: "base",
-        },
-      );
-
-      if (heroCompare !== 0) {
-        return heroCompare;
-      }
-
-      return normalizeText(a.name).localeCompare(
-        normalizeText(b.name),
-        undefined,
-        {
-          sensitivity: "base",
-        },
-      );
-    });
-  }, [decks]);
+  /*
+   * ============================================================
+   * DECK COLLECTION STATUS
+   * ============================================================
+   */
 
   const deckCollectionStatuses = useMemo(() => {
     const statusMap = new Map();
@@ -462,6 +472,12 @@ function LegacyDecksPage() {
 
     return statusMap;
   }, [decks, collectionMap, isAuthenticated]);
+
+  /*
+   * ============================================================
+   * FILTER FUNCTION
+   * ============================================================
+   */
 
   const getDecksMatchingFilters = useMemo(() => {
     return (sourceDecks, excludedFilter = null) => {
@@ -516,7 +532,7 @@ function LegacyDecksPage() {
         const categoryMatch =
           excludedFilter === "category" ||
           category.length === 0 ||
-          category.every((selectedCategory) =>
+          category.some((selectedCategory) =>
             deckCategories.includes(normalizeKey(selectedCategory.value)),
           );
 
@@ -525,7 +541,7 @@ function LegacyDecksPage() {
         const archetypeMatch =
           excludedFilter === "archetype" ||
           archetype.length === 0 ||
-          archetype.every((selectedArchetype) =>
+          archetype.some((selectedArchetype) =>
             deckArchetypes.includes(normalizeKey(selectedArchetype.value)),
           );
 
@@ -572,9 +588,90 @@ function LegacyDecksPage() {
     deckCollectionStatuses,
   ]);
 
+  /*
+   * ============================================================
+   * SORT DECKS
+   *
+   * When multiple archetypes are selected, decks that match
+   * more of the selected archetypes are placed first.
+   * ============================================================
+   */
+
+  const sortedDecks = useMemo(() => {
+    const selectedArchetypes = archetype.map((selectedArchetype) =>
+      normalizeKey(selectedArchetype.value),
+    );
+
+    return [...decks].sort((a, b) => {
+      if (selectedArchetypes.length > 1) {
+        const archetypesA = parseArchetypes(a.archetype);
+
+        const archetypesB = parseArchetypes(b.archetype);
+
+        const matchesA = selectedArchetypes.filter((selected) =>
+          archetypesA.includes(selected),
+        ).length;
+
+        const matchesB = selectedArchetypes.filter((selected) =>
+          archetypesB.includes(selected),
+        ).length;
+
+        if (matchesA !== matchesB) {
+          return matchesB - matchesA;
+        }
+      }
+
+      const sideOrder = {
+        plants: 0,
+        zombies: 1,
+      };
+
+      const sideA = normalizeKey(a.side);
+      const sideB = normalizeKey(b.side);
+
+      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
+
+      if (sideCompare !== 0) {
+        return sideCompare;
+      }
+
+      const heroCompare = normalizeText(a.hero).localeCompare(
+        normalizeText(b.hero),
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      );
+
+      if (heroCompare !== 0) {
+        return heroCompare;
+      }
+
+      return normalizeText(a.name).localeCompare(
+        normalizeText(b.name),
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      );
+    });
+  }, [decks, archetype]);
+
+  /*
+   * ============================================================
+   * FINAL FILTERED DECKS
+   * ============================================================
+   */
+
   const filteredDecks = useMemo(() => {
     return getDecksMatchingFilters(sortedDecks);
   }, [sortedDecks, getDecksMatchingFilters]);
+
+  /*
+   * ============================================================
+   * HERO OPTIONS
+   * ============================================================
+   */
 
   const heroOptions = useMemo(() => {
     const availableDecks = getDecksMatchingFilters(sideFilteredDecks, "hero");
@@ -622,6 +719,12 @@ function LegacyDecksPage() {
       );
   }, [sideFilteredDecks, allCards, getDecksMatchingFilters]);
 
+  /*
+   * ============================================================
+   * CATEGORY OPTIONS
+   * ============================================================
+   */
+
   const categoryOptions = useMemo(() => {
     const availableDecks = getDecksMatchingFilters(
       sideFilteredDecks,
@@ -658,6 +761,12 @@ function LegacyDecksPage() {
     );
   }, [sideFilteredDecks, getDecksMatchingFilters]);
 
+  /*
+   * ============================================================
+   * ARCHETYPE OPTIONS
+   * ============================================================
+   */
+
   const archetypeOptions = useMemo(() => {
     const availableDecks = getDecksMatchingFilters(
       sideFilteredDecks,
@@ -689,6 +798,12 @@ function LegacyDecksPage() {
       }))
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks, getDecksMatchingFilters]);
+
+  /*
+   * ============================================================
+   * COLLECTION OPTIONS
+   * ============================================================
+   */
 
   const collectionOptions = useMemo(() => {
     if (!isAuthenticated) {
@@ -739,6 +854,12 @@ function LegacyDecksPage() {
     getDecksMatchingFilters,
   ]);
 
+  /*
+   * ============================================================
+   * FILTER CONTROLS
+   * ============================================================
+   */
+
   const clearFilters = () => {
     setSearch("");
     setHero([]);
@@ -751,6 +872,21 @@ function LegacyDecksPage() {
     setSide(newSide);
     clearFilters();
   };
+
+  const handleCollectionChange = (value) => {
+    if (!isAuthenticated) {
+      showCollectionLoginMessage();
+      return;
+    }
+
+    setCollectionFilter(value);
+  };
+
+  /*
+   * ============================================================
+   * LOADING
+   * ============================================================
+   */
 
   if (loading) {
     return (
@@ -773,6 +909,12 @@ function LegacyDecksPage() {
       </div>
     );
   }
+
+  /*
+   * ============================================================
+   * PAGE
+   * ============================================================
+   */
 
   return (
     <div className="deck-page">
@@ -858,17 +1000,18 @@ function LegacyDecksPage() {
               />
             </div>
 
-            {isAuthenticated && (
-              <div className="select-wrapper">
-                <FilterDropdown
-                  label="Collection"
-                  options={collectionOptions}
-                  value={collectionFilter}
-                  onChange={setCollectionFilter}
-                  multi
-                />
-              </div>
-            )}
+            <div className="select-wrapper">
+              <FilterDropdown
+                label="Collection"
+                options={collectionOptions}
+                value={collectionFilter}
+                onChange={handleCollectionChange}
+                multi
+                requiresAuth
+                isAuthenticated={isAuthenticated}
+                onAuthRequired={showCollectionLoginMessage}
+              />
+            </div>
 
             <button
               type="button"
@@ -878,6 +1021,14 @@ function LegacyDecksPage() {
               Clear
             </button>
           </div>
+
+          {collectionLoginMessage && (
+            <div className="collection-login-message">
+              <strong>Discord login required</strong>
+
+              <span>Log in with Discord to use the Collection filter.</span>
+            </div>
+          )}
         </div>
 
         {error ? (

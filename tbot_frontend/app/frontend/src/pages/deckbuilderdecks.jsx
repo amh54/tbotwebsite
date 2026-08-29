@@ -10,6 +10,8 @@ import Navbar from "../components/navbar";
 
 import Footer from "../components/footer";
 
+import useTemporaryMessage from "../utils/useTemporaryMessage";
+
 import {
   ARCHETYPE_META,
   CATEGORY_META,
@@ -71,8 +73,11 @@ function DeckbuilderDecks() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [avatarError, setAvatarError] = useState(false);
+
+  // Temporary collection login message.
+  const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
+    useTemporaryMessage(4000);
 
   // --------------------------------------------------------------------------
   // Discord authentication
@@ -156,7 +161,6 @@ function DeckbuilderDecks() {
 
   useEffect(() => {
     const controller = new AbortController();
-
     const loadingStartTime = Date.now();
     const minimumLoadingTime = 1200;
 
@@ -188,7 +192,6 @@ function DeckbuilderDecks() {
         }
 
         setDeckbuilder(data?.deckbuilder || null);
-
         setDecks(Array.isArray(data?.decks) ? data.decks : []);
 
         const returnedCount = Number(data?.deck_count);
@@ -198,7 +201,6 @@ function DeckbuilderDecks() {
         }
 
         const elapsed = Date.now() - loadingStartTime;
-
         const remaining = Math.max(minimumLoadingTime - elapsed, 0);
 
         window.setTimeout(() => {
@@ -575,10 +577,6 @@ function DeckbuilderDecks() {
       .filter((option) => option.count > 0);
   }, [sideFilteredDecks]);
 
-  // --------------------------------------------------------------------------
-  // Sorted decks
-  // --------------------------------------------------------------------------
-
   const sortedDecks = useMemo(() => {
     return [...decks].sort((a, b) => {
       const sideOrder = {
@@ -652,8 +650,6 @@ function DeckbuilderDecks() {
 
   // --------------------------------------------------------------------------
   // Apply NON-COLLECTION filters
-  //
-  // This is intentionally separate from filteredDecks.
   //
   // Collection dropdown counts are based on these decks so that:
   //
@@ -740,15 +736,11 @@ function DeckbuilderDecks() {
             normalizeKey(selectedCategory.value),
         );
 
-      // ----------------------------------------------------------------------
-      // Archetype
-      // ----------------------------------------------------------------------
-
       const deckArchetype = normalizeKey(deck.archetype);
 
       const archetypeMatch =
         archetype.length === 0 ||
-        archetype.every((selectedArchetype) =>
+        archetype.some((selectedArchetype) =>
           deckArchetype.includes(normalizeKey(selectedArchetype.value)),
         );
 
@@ -757,17 +749,6 @@ function DeckbuilderDecks() {
       );
     });
   }, [sortedDecks, search, side, hero, category, archetype]);
-
-  // --------------------------------------------------------------------------
-  // Collection dropdown counts
-  //
-  // IMPORTANT:
-  // Counts use collectionCountBaseDecks, NOT filteredDecks.
-  //
-  // This means selecting Buildable does not make the Buildable count
-  // recursively change itself. Instead, Buildable and Close are calculated
-  // against the decks matching all OTHER filters.
-  // --------------------------------------------------------------------------
 
   const collectionOptions = useMemo(() => {
     if (!discordUser || authLoading || collectionLoading || !collectionLoaded) {
@@ -815,16 +796,8 @@ function DeckbuilderDecks() {
     collectionLoaded,
   ]);
 
-  // --------------------------------------------------------------------------
-  // Filtered decks
-  // --------------------------------------------------------------------------
-
   const filteredDecks = useMemo(() => {
-    return collectionCountBaseDecks.filter((deck) => {
-      // --------------------------------------------------------------------
-      // Collection
-      // --------------------------------------------------------------------
-
+    const matchingDecks = collectionCountBaseDecks.filter((deck) => {
       let collectionMatch = true;
 
       if (collection.length > 0) {
@@ -849,6 +822,32 @@ function DeckbuilderDecks() {
 
       return collectionMatch;
     });
+    if (archetype.length > 1) {
+      const selectedArchetypes = archetype
+        .map((selectedArchetype) => normalizeKey(selectedArchetype.value))
+        .filter(Boolean);
+
+      return [...matchingDecks].sort((a, b) => {
+        const archetypeA = normalizeKey(a.archetype);
+        const archetypeB = normalizeKey(b.archetype);
+
+        const matchesA = selectedArchetypes.every((selected) =>
+          archetypeA.includes(selected),
+        );
+
+        const matchesB = selectedArchetypes.every((selected) =>
+          archetypeB.includes(selected),
+        );
+
+        if (matchesA !== matchesB) {
+          return matchesA ? -1 : 1;
+        }
+
+        return 0;
+      });
+    }
+
+    return matchingDecks;
   }, [
     collectionCountBaseDecks,
     collection,
@@ -856,7 +855,21 @@ function DeckbuilderDecks() {
     discordUser,
     collectionLoaded,
     collectionLoading,
+    archetype,
   ]);
+
+  // --------------------------------------------------------------------------
+  // Collection change
+  // --------------------------------------------------------------------------
+
+  const handleCollectionChange = (value) => {
+    if (!discordUser) {
+      showCollectionLoginMessage();
+      return;
+    }
+
+    setCollection(value);
+  };
 
   // --------------------------------------------------------------------------
   // Clear filters
@@ -919,7 +932,6 @@ function DeckbuilderDecks() {
         <main className="deck-content">
           <div className="user-decklists-empty">
             <h2>Unable to load decklists</h2>
-
             <p>{error}</p>
           </div>
         </main>
@@ -1077,17 +1089,18 @@ function DeckbuilderDecks() {
               />
             </div>
 
-            {!authLoading && discordUser && (
-              <div className="select-wrapper">
-                <FilterDropdown
-                  label="Collection"
-                  options={collectionOptions}
-                  value={collection}
-                  onChange={setCollection}
-                  multi
-                />
-              </div>
-            )}
+            <div className="select-wrapper">
+              <FilterDropdown
+                label="Collection"
+                options={collectionOptions}
+                value={collection}
+                onChange={handleCollectionChange}
+                multi
+                requiresAuth
+                isAuthenticated={Boolean(discordUser)}
+                onAuthRequired={showCollectionLoginMessage}
+              />
+            </div>
 
             <button
               type="button"
@@ -1097,6 +1110,14 @@ function DeckbuilderDecks() {
               Clear
             </button>
           </div>
+
+          {collectionLoginMessage && (
+            <div className="collection-login-message">
+              <strong>Discord login required</strong>
+
+              <span>Log in with Discord to use the Collection filter.</span>
+            </div>
+          )}
         </div>
 
         <div className="user-decklists-results-bar">

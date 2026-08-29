@@ -299,6 +299,7 @@ const extractTribes = (description, side = "", cardType = "") => {
     "Professional",
     "Science",
     "Sports",
+    "Superpower",
   ];
 
   let match;
@@ -338,9 +339,6 @@ const getCardTypes = (card) => {
   const descriptionValue = normalizeText(
     removeDiscordEmojis(card?.description || ""),
   );
-
-  // Card types are determined from the description,
-  // NOT from the card's faction/side.
   if (/\bplants?\b/.test(descriptionValue)) {
     addType("Plants");
   }
@@ -355,10 +353,6 @@ const getCardTypes = (card) => {
 
   if (/\benvironment\b|\benvironments\b/.test(descriptionValue)) {
     addType("Environment");
-  }
-
-  if (/\bsuperpower\b|\bsuperpowers\b/.test(descriptionValue)) {
-    addType("Superpower");
   }
 
   return types;
@@ -1571,6 +1565,75 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
     });
 
     return result.sort((a, b) => {
+      // Cards matching more of the selected filter values come first.
+      const getFilterMatchScore = (card) => {
+        let score = 0;
+
+        const cardClasses = getClassNames(card.card_type);
+        const cardTypes = getCardTypes(card);
+        const cardKeywords = getCardKeywords(card);
+        const cardTribes = extractTribes(
+          card.description,
+          card.side,
+          card.card_type,
+        );
+
+        const stats = getCardStats(card.stats);
+
+        const countMatches = (selectedValues, cardValues) => {
+          if (!selectedValues.length) {
+            return 0;
+          }
+
+          return selectedValues.filter((selected) =>
+            cardValues.some(
+              (value) => normalizeText(value) === normalizeText(selected.value),
+            ),
+          ).length;
+        };
+
+        // More matching selected values = higher priority.
+        score += countMatches(selectedClasses, cardClasses);
+        score += countMatches(selectedTypes, cardTypes);
+        score += countMatches(selectedKeywords, cardKeywords);
+        score += countMatches(selectedTribes, cardTribes);
+
+        score += selectedCosts.filter(
+          (selected) => stats.cost === Number(selected.value),
+        ).length;
+
+        score += selectedAttacks.filter(
+          (selected) => stats.attack === Number(selected.value),
+        ).length;
+
+        score += selectedHealths.filter(
+          (selected) => stats.health === Number(selected.value),
+        ).length;
+
+        const cardSet = getSetName(card.set_rarity);
+        score += selectedSets.filter(
+          (selected) =>
+            normalizeText(cardSet) === normalizeText(selected.value),
+        ).length;
+
+        const cardRarity = getRarityName(card.set_rarity);
+        score += selectedRarities.filter(
+          (selected) =>
+            normalizeText(cardRarity) === normalizeText(selected.value),
+        ).length;
+
+        return score;
+      };
+
+      const aScore = getFilterMatchScore(a);
+      const bScore = getFilterMatchScore(b);
+
+      // Higher match score first.
+      if (aScore !== bScore) {
+        return bScore - aScore;
+      }
+
+      // Existing sorting below this point.
       const groupDifference = getCardGroup(a) - getCardGroup(b);
 
       if (groupDifference !== 0) {

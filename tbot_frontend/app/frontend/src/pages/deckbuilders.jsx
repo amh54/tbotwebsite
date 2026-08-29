@@ -537,22 +537,13 @@ function Deckbuilders() {
                   </div>
 
                   <div className="user-card-actions">
-                    {profileSlug ? (
-                      <Link
-                        to={`/profile/${encodeURIComponent(profileSlug)}`}
-                        className="user-profile-button"
-                      >
-                        View Profile
-                      </Link>
-                    ) : null}
-
-                    <Link
+                   <Link
                       to={`/deckbuilders/${encodeURIComponent(
                         deckbuilder.deckbuilder_name,
                       )}/decks`}
                       className="user-decklists-button"
                     >
-                      View Decks
+                      View Tbot Decks
                     </Link>
                   </div>
                 </article>

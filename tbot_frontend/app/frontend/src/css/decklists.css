@@ -3,7 +3,46 @@
   background: #101416;
   color: white;
 }
+.collection-login-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 20px 20px;
+  padding: 14px 16px;
+  background: #202020;
+  border: 1px solid #8fe38b;
+  border-radius: 8px;
+  color: #dde5ea;
+  flex-wrap: wrap;
+}
 
+.collection-login-message strong {
+  color: #8fe38b;
+}
+
+.collection-login-message span {
+  flex: 1;
+  min-width: 220px;
+}
+
+.collection-login-message button {
+  padding: 8px 14px;
+  background: #8fe38b;
+  color: #101416;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.collection-login-message button:hover {
+  opacity: 0.9;
+}
+
+.collection-login-message .collection-login-dismiss {
+  background: #333;
+  color: white;
+}
 .deck-content {
   padding: 40px;
 }

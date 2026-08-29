@@ -8,9 +8,14 @@ function FilterDropdown({
   value = [],
   onChange,
   multi = true,
+
+  // Optional authentication gate
+  requiresAuth = false,
+  isAuthenticated = true,
+  authMessage = "",
+  onAuthRequired,
 }) {
   const [open, setOpen] = useState(false);
-
   const ref = useRef(null);
 
   useEffect(() => {
@@ -53,14 +58,11 @@ function FilterDropdown({
         onChange([...selectedValues, option]);
       }
 
-      // Keep dropdown open for multi-select.
       setOpen(true);
-
       return;
     }
 
     onChange(isSelected(option) ? null : option);
-
     setOpen(false);
   };
 
@@ -72,6 +74,17 @@ function FilterDropdown({
   };
 
   const handleTriggerClick = () => {
+    // Authentication-gated dropdown
+    if (requiresAuth && !isAuthenticated) {
+      setOpen(false);
+
+      if (onAuthRequired) {
+        onAuthRequired();
+      }
+
+      return;
+    }
+
     setOpen((current) => !current);
   };
 
@@ -147,7 +160,6 @@ function FilterDropdown({
                 <div className="filter-item-text">
                   <div className="filter-item-title">
                     {option.label}
-
                     {typeof option.count === "number" && ` (${option.count})`}
                   </div>
 

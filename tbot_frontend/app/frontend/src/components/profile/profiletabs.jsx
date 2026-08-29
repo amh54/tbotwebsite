@@ -18,7 +18,7 @@ const ProfileTabs = ({ activeTab = "cards", onTabChange }) => {
         className={selectedTab === "cards" ? "active" : ""}
         onClick={() => handleTabChange("cards")}
       >
-        Cards
+        Card Collection
       </button>
 
       <button
@@ -26,7 +26,7 @@ const ProfileTabs = ({ activeTab = "cards", onTabChange }) => {
         className={selectedTab === "decks" ? "active" : ""}
         onClick={() => handleTabChange("decks")}
       >
-        Decks
+        Personal Decks
       </button>
     </div>
   );
