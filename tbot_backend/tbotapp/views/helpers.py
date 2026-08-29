@@ -2,7 +2,12 @@ import json
 import logging
 import os
 import re
+import logging
+import requests
 
+from django.utils import timezone
+
+from ..models import UserProfile
 import cloudinary.uploader
 
 from django.conf import settings
@@ -21,6 +26,12 @@ def include_error_detail():
     }
 
 
+
+
+
+logger = logging.getLogger(__name__)
+
+
 def get_discord_user(request):
     discord_id = request.session.get("discord_id")
 
@@ -34,6 +45,148 @@ def get_discord_user(request):
 
     if not discord_id:
         return None
+
+    discord_id = str(discord_id)
+
+    # ============================================================
+    # REFRESH DISCORD PROFILE
+    # ============================================================
+
+    access_token = request.session.get(
+        "discord_access_token"
+    )
+
+    if access_token:
+        try:
+            response = requests.get(
+                "https://discord.com/api/v10/users/@me",
+                headers={
+                    "Authorization": (
+                        f"Bearer {access_token}"
+                    ),
+                },
+                timeout=5,
+            )
+
+            if response.ok:
+                discord_data = response.json()
+
+                current_discord_id = discord_data.get("id")
+
+                # Make sure the OAuth token belongs to
+                # the Discord account stored in this session.
+                if (
+                    current_discord_id
+                    and str(current_discord_id) == discord_id
+                ):
+                    discord_username = (
+                        discord_data.get("username")
+                        or ""
+                    )
+
+                    discord_global_name = (
+                        discord_data.get("global_name")
+                        or discord_username
+                        or f"discord_{discord_id}"
+                    )
+
+                    avatar = (
+                        discord_data.get("avatar")
+                        or ""
+                    )
+
+                    # ====================================================
+                    # UPDATE SESSION
+                    # ====================================================
+
+                    request.session["discord_id"] = discord_id
+
+                    request.session["discord_username"] = (
+                        discord_username
+                    )
+
+                    request.session["discord_global_name"] = (
+                        discord_global_name
+                    )
+
+                    request.session["discord_avatar"] = avatar
+
+                    # ====================================================
+                    # UPDATE USER PROFILE
+                    # ====================================================
+
+                    profile = (
+                        UserProfile.objects
+                        .filter(
+                            discord_id=discord_id
+                        )
+                        .first()
+                    )
+
+                    if profile:
+                        changed = False
+
+                        if (
+                            discord_username
+                            and profile.username
+                            != discord_username
+                        ):
+                            profile.username = (
+                                discord_username
+                            )
+                            changed = True
+
+                        if (
+                            discord_global_name
+                            and profile.display_name
+                            != discord_global_name
+                        ):
+                            profile.display_name = (
+                                discord_global_name
+                            )
+                            changed = True
+
+                        if profile.avatar != avatar:
+                            profile.avatar = avatar
+                            changed = True
+
+                        if changed:
+                            profile.updated_at = (
+                                timezone.now()
+                            )
+
+                            profile.save(
+                                update_fields=[
+                                    "username",
+                                    "display_name",
+                                    "avatar",
+                                    "updated_at",
+                                ]
+                            )
+
+                    return {
+                        "id": discord_id,
+                        "username": discord_username,
+                        "global_name": discord_global_name,
+                        "avatar": avatar,
+                    }
+
+        except requests.RequestException:
+            logger.exception(
+                "Failed to refresh Discord user %s.",
+                discord_id,
+            )
+
+        except ValueError:
+            logger.exception(
+                "Invalid Discord response while refreshing "
+                "user %s.",
+                discord_id,
+            )
+
+    # ============================================================
+    # FALLBACK TO SESSION
+    # ============================================================
 
     discord_username = request.session.get(
         "discord_username"
@@ -72,14 +225,14 @@ def get_discord_user(request):
     )
 
     return {
-        "id": str(discord_id),
+        "id": discord_id,
         "username": str(
             discord_username or ""
         ),
         "global_name": str(
             discord_global_name or ""
         ),
-        "avatar": avatar,
+        "avatar": avatar or "",
     }
 
 

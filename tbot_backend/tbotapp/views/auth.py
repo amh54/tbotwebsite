@@ -314,16 +314,20 @@ def discord_callback(request):
     )
 
     request.session["discord_id"] = str(
-        discord_id
-    )
+    discord_id
+)
 
     request.session["discord_username"] = username
 
     request.session["discord_global_name"] = (
-        display_name
+    display_name
     )
 
     request.session["discord_avatar"] = avatar
+
+    request.session["discord_access_token"] = (
+    access_token
+    )
 
     request.session.save()
 
