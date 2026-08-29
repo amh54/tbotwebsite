@@ -4,6 +4,7 @@ import "./css/navbar.css";
 import { Link, Route, Routes } from "react-router-dom";
 
 import AdminKeepOrScrap from "./pages/admin-keeporscrap.jsx";
+import Tutorial from "./pages/tutorial.jsx";
 import StandaloneDeckPage from "./pages/standalonedeck.jsx";
 import AdminUserDecks from "./pages/admin-userdecks.jsx";
 import ScrollToTop from "./components/scrolltotop.jsx";
@@ -622,7 +623,7 @@ function App() {
         <Route path="/privacypolicy" element={<Privacy />} />
 
         <Route path="/users" element={<Users />} />
-
+        <Route path="/tutorial" element={<Tutorial />} />
         <Route path="/deckbuilders" element={<Deckbuilders />} />
 
         <Route path="/admin/cards" element={<AdminCards />} />
