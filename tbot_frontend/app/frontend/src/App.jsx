@@ -29,16 +29,11 @@ import UserCardManager from "./pages/UserCardManager.jsx";
 import AdminCards from "./pages/admincards";
 import AdminBugReports from "./pages/adminbugreports.jsx";
 import MyBugReports from "./pages/mybugreports.jsx";
-import Tutorial from "./pages/tutorial.jsx";
 
 function HomePage() {
   return (
     <div className="home">
       <Navbar />
-
-      {/* ============================================================
-          HERO
-      ============================================================ */}
 
       <section className="hero">
         <p className="eyebrow">Plants vs. Zombies Heroes</p>
@@ -48,36 +43,28 @@ function HomePage() {
         <h2>A community database for cards, heroes, decks, and strategy.</h2>
 
         <p>
-          Explore cards, discover decks, learn about heroes, and use Tbot's
-          tools to get more out of Plants vs. Zombies Heroes.
+          Tbot brings together the information you need to build decks, research
+          cards, learn about heroes, manage your collection, and make better
+          decisions while playing Plants vs. Zombies Heroes.
         </p>
       </section>
 
       <section className="features">
-        <div className="feature-command">
-          <h3>New to Tbot?</h3>
-          <p>
-            
-            Tbot has a lot of features. Take the interactive guide to learn how
-            profiles, personal decks, card collections, sharing, and other
-            features work together.
-          </p>
-          <Link to="/tutorial"> Take the Tbot Guide → </Link>
-        </div>
-        <h2>Explore Tbot</h2>
-
-        <p>
-          Everything you need to explore the Plants vs. Zombies Heroes community
-          in one place.
-        </p>
-
         <div className="feature-grid">
+          <div className="feature-command">
+            <h3>New to Tbot?</h3>
+            <p>
+              Learn how Tbot works, from browsing decks and cards to managing
+              your own profile, decks, and collection.
+            </p>
+            <Link to="/tutorial">Take the Tutorial →</Link>
+          </div>
           <div className="feature-command">
             <h3>Decklists</h3>
 
             <p>
-              Browse community decks and search by hero, class, archetype,
-              category, creator, card, and more.
+              Browse community decklists and find decks by hero, class,
+              archetype, category, name, and other information.
             </p>
 
             <Link to="/decklists">Explore Decklists →</Link>
@@ -87,8 +74,8 @@ function HomePage() {
             <h3>Card Information</h3>
 
             <p>
-              Search Plant and Zombie cards and explore their stats, abilities,
-              traits, sets, and rarities.
+              Search through Plant and Zombie cards using detailed filters for
+              class, cost, attack, health, keywords, tribes, set, and rarity.
             </p>
 
             <Link to="/cardinfo">Explore Cards →</Link>
@@ -98,8 +85,8 @@ function HomePage() {
             <h3>Hero Information</h3>
 
             <p>
-              Learn about every hero, including their classes, abilities,
-              traits, stats, and cards.
+              Browse Plant and Zombie heroes and view their classes, abilities,
+              traits, stats, and complete card details.
             </p>
 
             <Link to="/heroinfo">Explore Heroes →</Link>
@@ -109,8 +96,8 @@ function HomePage() {
             <h3>Keep or Scrap</h3>
 
             <p>
-              Get recommendations to help decide which cards may be worth
-              keeping and which may be worth scrapping.
+              Use class-by-class recommendations to help decide which cards are
+              worth keeping and which cards may be worth scrapping.
             </p>
 
             <Link to="/keeporscrap">View Keep or Scrap →</Link>
@@ -120,8 +107,8 @@ function HomePage() {
             <h3>Legacy Decks</h3>
 
             <p>
-              Browse the older Tbot deck database and explore its historic
-              community decklists.
+              Explore the older Tbot deck database and browse legacy community
+              decklists alongside the current deck collection.
             </p>
 
             <Link to="/legacydecks">Explore Legacy Decks →</Link>
@@ -140,9 +127,388 @@ function HomePage() {
         </div>
       </section>
 
-      {/* ============================================================
-          DISCORD
-      ============================================================ */}
+      <section className="about">
+        <h2>Build your own Tbot profile</h2>
+
+        <p>
+          Tbot isn't just a database. You can create your own profile, build
+          personal decklists, manage your card collection, and share your decks
+          with other players.
+        </p>
+
+        <div className="quick-answer-grid">
+          <div className="quick-answer-card">
+            <h3>Personal Decklists</h3>
+
+            <p>
+              Create and manage your own Plants and Zombies decks. Add cards,
+              choose your hero, organize your decks, and keep your personal deck
+              collection in one place.
+            </p>
+
+            <Link to="/dashboard/decks">Manage Your Decks →</Link>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Card Collection</h3>
+
+            <p>
+              Keep track of the cards you own through your personal collection.
+              Once your collection is entered, Tbot can help you identify decks
+              you can build and decks that are close to being buildable.
+            </p>
+
+            <Link to="/dashboard/card-manager">Manage Your Collection →</Link>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Your Profile</h3>
+
+            <p>
+              Customize your profile with a display name, profile URL, avatar,
+              and bio. Your profile provides a central place for other players
+              to discover your shared decklists.
+            </p>
+
+            <Link to="/dashboard">Open Your Dashboard →</Link>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Public or Private</h3>
+
+            <p>
+              You control whether your profile is public or private. A public
+              profile gives other players a page where they can view your
+              profile, cards, and decklists. A private profile keeps your
+              profile page from being publicly viewable, while you can still
+              share individual decks directly with others.
+            </p>
+
+            <Link to="/dashboard">Manage Your Profile →</Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="about">
+        <h2>Your Tbot profile and personal decks</h2>
+
+        <p>
+          Your Tbot profile gives you a personal space to create, organize, and
+          share your own Plants vs. Zombies Heroes decks. Your personal decks
+          are separate from the main Tbot community deck database, so you can
+          create and manage your own decks without automatically adding them to
+          the community collection.
+        </p>
+
+        <div className="quick-answer-grid">
+          <div className="quick-answer-card">
+            <h3>1. Create Your Profile</h3>
+
+            <p>
+              Log in with Discord to create and manage your Tbot profile. You
+              can customize your display name, profile URL, avatar, bio, and
+              profile visibility. Your profile becomes the home for the personal
+              decks you create on Tbot.
+            </p>
+
+            <Link to="/dashboard">Create or Manage Your Profile →</Link>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>2. Build Personal Decks</h3>
+
+            <p>
+              From your dashboard, you can create your own Plant and Zombie
+              decks. Choose a hero, add cards, give the deck a name, and save it
+              to your personal deck collection. Your decks can be edited later
+              from your dashboard.
+            </p>
+
+            <Link to="/dashboard/decks">Manage Your Decks →</Link>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>3. Public or Private Profile</h3>
+
+            <p>
+              Your profile can be public or private. A public profile can be
+              visited by other players, allowing them to see your profile
+              information and personal decks. A private profile cannot be
+              publicly browsed.
+            </p>
+
+            <Link to="/dashboard">Manage Profile Visibility →</Link>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>4. Share Individual Decks</h3>
+
+            <p>
+              Your profile does not have to be public for you to share one of
+              your decks. Personal decks have their own shareable links, so you
+              can send a specific deck directly to another player.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>5. What Happens When Someone Opens a Deck?</h3>
+
+            <p>
+              A shared deck can be opened directly from its deck link. If the
+              deck belongs to a public profile, the player can also discover it
+              through your profile. If your profile is private, the individual
+              deck can still be opened using its direct link.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>6. Personal Decks vs. Community Decks</h3>
+
+            <p>
+              Personal decks are the decks you create and manage on your own
+              profile. Community decks are part of the main Tbot deck database.
+              Keeping these systems separate lets you experiment with your own
+              decks while still browsing the larger community collection.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="about">
+        <h2>How the collection system works</h2>
+
+        <p>
+          The Card Collection feature is designed to make the deck database more
+          useful for players who want to know which decks they can actually
+          build.
+        </p>
+
+        <div className="quick-answer-grid">
+          <div className="quick-answer-card">
+            <h3>1. Add Your Cards</h3>
+
+            <p>
+              Open the Card Manager from your dashboard and enter the cards you
+              currently have in your collection.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>2. Browse Decklists</h3>
+
+            <p>
+              Go to the Decklists page and use the Collection filter to find
+              decks that match your collection.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>3. Find Buildable Decks</h3>
+
+            <p>
+              The Buildable filter shows decks for which your collection
+              contains the required cards.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>4. Find Almost-Buildable Decks</h3>
+
+            <p>
+              The Close filter helps find decks where you are missing only a
+              small number of cards, giving you ideas for what to work toward.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="about">
+        <h2>Suggesting a community deck</h2>
+
+        <p>
+          Tbot also gives the community a way to highlight personal decks that
+          deserve more attention. If you find a deck on another player's profile
+          that you think would be useful to the wider community, you can submit
+          a deck suggestion.
+        </p>
+
+        <div className="quick-answer-grid">
+          <div className="quick-answer-card">
+            <h3>What Does "Suggest a Deck" Mean?</h3>
+
+            <p>
+              Suggesting a deck does not immediately add the deck to the main
+              Tbot deck database. Instead, it tells Tbot that you think a
+              personal deck is worth considering for inclusion in the community
+              deck collection.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>How Do I Suggest One?</h3>
+
+            <p>
+              Open a personal deck from another player's profile and open its
+              deck details window. If the deck is eligible for suggestions, you
+              will see a <strong>Suggest Deck</strong> button. You must be
+              logged in with Discord to submit a suggestion.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>What Happens After I Suggest It?</h3>
+
+            <p>
+              Tbot records the suggestion for review. Depending on the deck and
+              the circumstances, the deck creator may need to approve the
+              suggestion through Discord before the suggestion can be confirmed.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Why Suggest Someone Else's Deck?</h3>
+
+            <p>
+              Suggestions give the community a way to highlight personal decks
+              that deserve to be easier for other players to discover. If you
+              find a particularly useful, competitive, creative, or interesting
+              deck, suggesting it can help bring it to the attention of the
+              wider Tbot community.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Does the Creator Lose Their Deck?</h3>
+
+            <p>
+              No. Suggesting a personal deck does not remove it from the
+              creator's profile. The creator can continue to manage their
+              original personal deck independently.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Do I Have to Suggest My Own Deck?</h3>
+
+            <p>
+              No. Suggestions are primarily useful for highlighting decks
+              created by other players. You can share your own decks directly,
+              while other community members can suggest your deck if they think
+              it deserves consideration.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="about">
+        <h2>Share your decks</h2>
+
+        <p>
+          Every personal deck can be shared with other players. Your profile's
+          visibility determines how your shared deck experience works, but
+          sharing an individual deck does not require you to make your entire
+          profile public.
+        </p>
+
+        <div className="quick-answer-grid">
+          <div className="quick-answer-card">
+            <h3>Public Profile</h3>
+
+            <p>
+              A public profile gives other players access to your profile page,
+              where they can browse your profile information, personal decks,
+              and card collection through your profile.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Private Profile</h3>
+
+            <p>
+              A private profile keeps your profile from being publicly
+              browsable. You can still share an individual deck directly with
+              someone using its deck link.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Share Individual Decks</h3>
+
+            <p>
+              You don't need to make your entire profile public just to share a
+              deck. Individual deck links can be sent to other players.
+            </p>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Community Decks</h3>
+
+            <p>
+              Personal decks and the main Tbot deck database serve different
+              purposes. Your personal decks let you manage your own creations,
+              while community decks provide a larger collection of decks for
+              everyone to browse.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="about">
+        <h2>Guides and help</h2>
+
+        <p>
+          New to Tbot? The website is designed to be useful whether you are
+          looking for a single card, researching a hero, building a deck, or
+          managing a complete personal collection.
+        </p>
+
+        <div className="quick-answer-grid">
+          <div className="quick-answer-card">
+            <h3>Find a Deck</h3>
+
+            <p>
+              Use the Decklists filters to narrow decks by side, hero, category,
+              archetype, or collection status. You can also search by deck,
+              creator, hero, or card.
+            </p>
+
+            <Link to="/decklists">Find a Deck →</Link>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Research a Card</h3>
+
+            <p>
+              Search the card database to check stats, classes, abilities,
+              traits, sets, rarities, and other card information.
+            </p>
+
+            <Link to="/cardinfo">Search Cards →</Link>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Learn About Heroes</h3>
+
+            <p>
+              Explore each hero's classes, abilities, traits, stats, and cards
+              to understand what makes different heroes unique.
+            </p>
+
+            <Link to="/heroinfo">Explore Heroes →</Link>
+          </div>
+
+          <div className="quick-answer-card">
+            <h3>Manage Your Account</h3>
+
+            <p>
+              Log in with Discord to access your dashboard, manage your decks,
+              maintain your card collection, and customize your profile.
+            </p>
+
+            <Link to="/dashboard">Open Dashboard →</Link>
+          </div>
+        </div>
+      </section>
 
       <section className="discord">
         <h2>Join the Tbot Discord</h2>
@@ -159,17 +525,13 @@ function HomePage() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Join the Tbot Discord →
+            Join the Tbot Discord
           </a>
         </p>
       </section>
 
-      {/* ============================================================
-          QUICK ANSWERS
-      ============================================================ */}
-
       <section className="quick-answers">
-        <h2>Quick Answers</h2>
+        <h2>Quick answers</h2>
 
         <div className="quick-answer-grid">
           <div className="quick-answer-card">
@@ -177,7 +539,9 @@ function HomePage() {
 
             <p>
               Tbot is a Plants vs. Zombies Heroes community website and Discord
-              bot focused on cards, heroes, decks, collections, and strategy.
+              bot that brings together decklists, card information, hero
+              information, card recommendations, personal decks, and collection
+              tools.
             </p>
           </div>
 
@@ -186,7 +550,9 @@ function HomePage() {
 
             <p>
               No. You can browse the public card, hero, and deck databases
-              without an account. Personal features require Discord login.
+              without an account. A Discord login is required for personal
+              features such as your card collection, personal decklists, profile
+              management, and deck suggestions.
             </p>
           </div>
 
@@ -194,18 +560,36 @@ function HomePage() {
             <h3>Can I contribute?</h3>
 
             <p>
-              Yes. Deck submissions, ideas, corrections, bug reports, and
-              feedback are welcome through the Tbot community.
+              Yes. Deck submissions, ideas, corrections, bug reports, deck
+              suggestions, and feedback are welcome through the Tbot community.
+              <br />
+              <br />
+              <a
+                href="https://discord.gg/E5XzKf2PjN"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Join the Tbot Discord
+              </a>
             </p>
           </div>
 
           <div className="quick-answer-card">
-            <h3>Need help?</h3>
+            <h3>How can I support Tbot?</h3>
 
             <p>
-              The interactive tutorial explains how the different parts of Tbot
-              work together.
+              If you find the website or Discord bot useful, you can help
+              support continued development and maintenance through Buy Me a
+              Coffee.
             </p>
+
+            <a
+              href="https://buymeacoffee.com/pvzhtbot"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Support Tbot
+            </a>
           </div>
         </div>
       </section>
@@ -221,10 +605,6 @@ function App() {
       <ScrollToTop />
 
       <Routes>
-        {/* ============================================================
-            PUBLIC PAGES
-        ============================================================ */}
-
         <Route path="/" element={<HomePage />} />
 
         <Route path="/decklists" element={<DecklistsPage />} />
@@ -245,20 +625,12 @@ function App() {
 
         <Route path="/deckbuilders" element={<Deckbuilders />} />
 
+        <Route path="/admin/cards" element={<AdminCards />} />
+
         <Route
           path="/deckbuilders/:deckbuilder_name/decks"
           element={<DeckbuilderDecks />}
         />
-
-        {/* ============================================================
-            TUTORIAL
-        ============================================================ */}
-
-        <Route path="/tutorial" element={<Tutorial />} />
-
-        {/* ============================================================
-            PROFILES / SHARED DECKS
-        ============================================================ */}
 
         <Route path="/profile/:profile_slug" element={<Profile />} />
 
@@ -267,15 +639,15 @@ function App() {
           element={<StandaloneDeckPage />}
         />
 
-        {/* ============================================================
-            USER DASHBOARD
-        ============================================================ */}
+        <Route path="/admin/bugs" element={<AdminBugReports />} />
 
         <Route path="/dashboard" element={<UserDashboard />} />
 
         <Route path="/dashboard/decks" element={<UserDeckManager />} />
 
         <Route path="/dashboard/decks/add" element={<UserDeckManager />} />
+
+        <Route path="/admin/keeporscrap" element={<AdminKeepOrScrap />} />
 
         <Route
           path="/dashboard/decks/:deckId/edit"
@@ -286,17 +658,7 @@ function App() {
 
         <Route path="/my-bug-reports" element={<MyBugReports />} />
 
-        {/* ============================================================
-            ADMIN
-        ============================================================ */}
-
         <Route path="/admin" element={<Admin />} />
-
-        <Route path="/admin/cards" element={<AdminCards />} />
-
-        <Route path="/admin/bugs" element={<AdminBugReports />} />
-
-        <Route path="/admin/keeporscrap" element={<AdminKeepOrScrap />} />
 
         <Route path="/admin/decklists" element={<AdminDecklists />} />
 
@@ -308,10 +670,7 @@ function App() {
 
         <Route path="/admin/user-decks" element={<AdminUserDecks />} />
 
-        {/* ============================================================
-            404
-        ============================================================ */}
-
+        {/* 404 */}
         <Route
           path="*"
           element={

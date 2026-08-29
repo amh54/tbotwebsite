@@ -8,6 +8,7 @@ const NAVIGATION = [
     label: "Website Info",
     links: [
       { label: "Home", path: "/" },
+      {label: "Tutorial", path: "/tutorial"},
       { label: "Users", path: "/users" },
       { label: "Terms of Service", path: "/termsofservice" },
       { label: "Privacy Policy", path: "/privacypolicy" },
