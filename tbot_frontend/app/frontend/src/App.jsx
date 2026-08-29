@@ -148,9 +148,9 @@ function HomePage() {
             <p>
               You control whether your profile is public or private. A public
               profile gives other players a page where they can view your
-              profile your cards and decklists. A private profile keeps your profile
-              page from being publicly viewable, while you can still share
-              individual decks and your profile directly with others.
+              profile your cards and decklists. A private profile keeps your
+              profile page from being publicly viewable, while you can still
+              share individual decks and your profile directly with others.
             </p>
             <Link to="/dashboard">Manage Your Profile →</Link>
           </div>
@@ -214,8 +214,8 @@ function HomePage() {
             <h3>Public Profile</h3>
             <p>
               A public profile gives other players access to your profile page,
-              where they can browse the decklists you have made available and your card collection
-              through your profile.
+              where they can browse the decklists you have made available and
+              your card collection through your profile.
             </p>
           </div>
 
@@ -223,8 +223,8 @@ function HomePage() {
             <h3>Private Profile</h3>
             <p>
               A private profile keeps your profile from being publicly
-              browsable. You can still share an individual deck and a profile directly with
-              someone using its deck link.
+              browsable. You can still share an individual deck and a profile
+              directly with someone using its deck link.
             </p>
           </div>
 
@@ -265,6 +265,18 @@ function HomePage() {
               creator, hero, or card.
             </p>
             <Link to="/decklists">Find a Deck →</Link>
+          </div>
+          <div className="quick-answer-card">
+            <h3>Suggest a Deck</h3>
+            <p>
+              If you find a community deckfrom a user's profile that you think deserves more
+              attention, you can suggest it through the deck's details window with the suggest deck button.
+              You must be logged in with Discord to submit a suggestion.
+            </p>
+            <p>
+              Some suggestions require approval from the deck creator through
+              Discord before they can be confirmed.
+            </p>
           </div>
 
           <div className="quick-answer-card">
