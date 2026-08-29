@@ -27,7 +27,30 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
-
+const HERO_COLOR_MAP = {
+   "Beta-Carrotina": ["brown", "gray"],
+  Citron: ["brown", "gray"],
+  "Captain Combustible": ["red", "green"],
+  Chompzilla: ["green", "yellow"],
+  "Grass Knuckles": ["green", "brown"],
+  "Green Shadow": ["green", "gray"],
+  "Night Cap": ["red", "gray"],
+  Rose: ["gray", "yellow"],
+  "Solar Flare": ["red", "yellow"],
+  Spudow: ["red", "brown"],
+  "Wall-Knight": ["brown", "yellow"],
+  "Brain Freeze": ["black", "blue"],
+  "Electric Boogaloo": ["blue", "purple"],
+  "Huge-Gigantacus": ["pink", "black"],
+  "Super Brainz": ["pink", "black"],
+  Immorticia: ["pink", "blue"],
+  Impfinity: ["black", "purple"],
+  Neptuna: ["orange", "black"],
+  "Professor Brainstorm": ["pink", "purple"],
+  Rustbolt: ["pink", "orange"],
+  "The Smash": ["orange", "blue"],
+  "Z-mech": ["orange", "purple"],
+};
 const STAT_ICON_LINKS = {
   cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
   strength: "https://i.ibb.co/GQt785K6/strength.webp",
@@ -823,12 +846,24 @@ function HeroInfo() {
       return cardSide === "zombie" || cardSide === "zombies";
     });
   }, [cards, side]);
+  const getHeroColors = (hero) => {
+    const heroName = String(hero?.card_name || hero?.title || "").trim();
 
+    return HERO_COLOR_MAP[heroName] || ["#15181b", "#15181b"];
+  };
   const renderCard = (card) => {
     const superpowers = getSuperpowerCards(card);
+    const [heroColor1, heroColor2] = getHeroColors(card);
 
     return (
-      <div className="card-item" key={card.cardid}>
+      <div
+        className="card-item hero-colored-card"
+        key={card.cardid}
+        style={{
+          "--hero-color-1": heroColor1,
+          "--hero-color-2": heroColor2,
+        }}
+      >
         <div className="card-item-media">
           <img
             src={card.thumbnail}
