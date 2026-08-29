@@ -354,13 +354,6 @@ function Navbar() {
       formData.append("priority", bugPriority);
       formData.append("browser", getBrowser());
       formData.append("operating_system", getOperatingSystem());
-
-      /*
-       * These identify the user who submitted the report.
-       *
-       * The Django backend should still verify these values
-       * against the authenticated Discord session.
-       */
       formData.append("discord_id", String(user.id));
 
       formData.append("discord_username", user.username || "");

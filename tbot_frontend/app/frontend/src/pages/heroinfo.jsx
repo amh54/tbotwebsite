@@ -389,7 +389,7 @@ function HeroInfo() {
             key={`stats-icon-${index}`}
             src={icon.url}
             alt={icon.alt}
-            className="card-stat-icon"
+            className="card-title-icon"
           />,
         );
       } else {
