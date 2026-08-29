@@ -90,6 +90,54 @@ body {
   color: #8fe38b;
   text-decoration: none;
 }
+/* =========================
+   TUTORIAL LINK
+========================= */
+
+/* .tutorial-link is nested inside .hero, so it should fill .hero's
+   content box (already inset by .hero's own padding) rather than
+   recalculating its own left/right inset on top of that. */
+.tutorial-link {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.tutorial-link a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 64px;
+  padding: 16px 24px;
+  box-sizing: border-box;
+
+  background: #8fe38b;
+  border: 1px solid #8fe38b;
+  border-radius: 8px;
+
+  color: #101416;
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-decoration: none;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.tutorial-link a:hover {
+  background: #a4ed9f;
+  border-color: #a4ed9f;
+  color: #101416;
+  text-decoration: none;
+  transform: translateY(-2px);
+}
+
+.tutorial-link a:active {
+  transform: translateY(1px);
+}
 
 /* =========================
    GENERAL SECTIONS
@@ -243,7 +291,6 @@ body {
 .about {
   padding-top: 8px;
 }
-
 
 .discord {
   width: calc(100% - 80px);

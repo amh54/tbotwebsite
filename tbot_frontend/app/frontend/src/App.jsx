@@ -48,18 +48,13 @@ function HomePage() {
           cards, learn about heroes, manage your collection, and make better
           decisions while playing Plants vs. Zombies Heroes.
         </p>
+        <section className="tutorial-link">
+          <Link to="/tutorial">New to Tbot? Take the Tutorial →</Link>
+        </section>
       </section>
 
       <section className="features">
         <div className="feature-grid">
-          <div className="feature-command">
-            <h3>New to Tbot?</h3>
-            <p>
-              Learn how Tbot works, from browsing decks and cards to managing
-              your own profile, decks, and collection.
-            </p>
-            <Link to="/tutorial">Take the Tutorial →</Link>
-          </div>
           <div className="feature-command">
             <h3>Decklists</h3>
 

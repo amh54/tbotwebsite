@@ -59,9 +59,9 @@ const TUTORIAL_STEPS = [
     id: "profile",
     eyebrow: "Step 3",
     title: "Set up your profile.",
-    description: "Your profile gives you a public identity on Tbot.",
+    description: "Your profile is your public identity on Tbot.",
     detail:
-      "You can customize your display name, profile URL, avatar, and bio. Your profile can also provide a central place for other players to find the personal decks you choose to share.",
+      "From your dashboard you can set a display name, choose a profile URL, upload an avatar, and write a bio. Your profile page then becomes the central hub where other players can find you — it lists the personal decks you've chosen to share, so think of it as the storefront for your deckbuilding.",
     icon: "👤",
     link: "/dashboard",
     linkText: "Manage Your Profile →",
@@ -70,11 +70,11 @@ const TUTORIAL_STEPS = [
   {
     id: "privacy",
     eyebrow: "Step 4",
-    title: "Choose Public or Private.",
+    title: "Public or private — you decide.",
     description:
-      "Your profile visibility controls whether other people can browse your profile.",
+      "Your profile's visibility controls who can browse it, but it doesn't limit deck sharing.",
     detail:
-      "A public profile can be visited by other players. A private profile cannot be publicly browsed, but you can still share individual decks directly with other people.",
+      "A public profile can be visited by anyone, who'll see your bio, avatar, and the decks you display on it. A private profile hides that page from public browsing entirely — but you can still hand anyone a link to one of your decks. That's because a profile link and a deck link are different things: a profile link opens your whole profile, while a deck link opens just that one deck, whether your profile is public or private.",
     icon: "🔒",
     link: "/dashboard",
     linkText: "Manage Your Profile →",
@@ -87,45 +87,20 @@ const TUTORIAL_STEPS = [
     description:
       "Your dashboard lets you create personal Plants and Zombies decks.",
     detail:
-      "Choose a hero, add cards, give the deck a name, and organize your personal deck collection. These decks are yours and are separate from the main community deck database.",
+      "Choose a hero, add cards, give the deck a name, and organize your personal deck collection. These decks are yours and are separate from the main community deck database — building or editing one never affects the community decklists.",
     icon: "🃏",
     link: "/dashboard/decks",
     linkText: "Manage Your Decks →",
   },
 
   {
-    id: "share",
-    eyebrow: "Step 6",
-    title: "Share individual decks.",
-    description:
-      "You don't have to make your entire profile public to share a deck.",
-    detail:
-      "Personal decks can be shared using an individual deck link. This means you can send a specific deck directly to another player even when your profile itself is private.",
-    icon: "🔗",
-    link: "/dashboard/decks",
-    linkText: "View Your Decks →",
-  },
-
-  {
-    id: "profile-sharing",
-    eyebrow: "Step 7",
-    title: "Profiles and deck links work differently.",
-    description: "A profile link and a deck link are not the same thing.",
-    detail:
-      "A profile link takes someone to your profile. An individual deck link takes someone directly to a specific deck. Your profile's visibility affects how the profile can be browsed, while individual decks can still be shared directly.",
-    icon: "🧭",
-    link: "/dashboard",
-    linkText: "Manage Your Profile →",
-  },
-
-  {
     id: "suggest",
-    eyebrow: "Step 8",
+    eyebrow: "Step 6",
     title: "Suggest someone else's deck.",
     description:
       "Found a personal deck that deserves more attention? You can suggest it.",
     detail:
-      "Open a community user's profile, select one of their decks, open the deck details, and use the Suggest Deck button. You must be logged in with Discord to submit a suggestion.",
+      "Open a community user's profile, select one of their decks, open the deck details, and use the Suggest Deck button. You must be logged in with Discord to submit a suggestion, and suggesting a deck doesn't remove it from the creator's profile.",
     icon: "⭐",
     link: "/users",
     linkText: "Find Community Users →",
@@ -133,7 +108,7 @@ const TUTORIAL_STEPS = [
 
   {
     id: "approval",
-    eyebrow: "Step 9",
+    eyebrow: "Step 7",
     title: "Some suggestions require approval.",
     description:
       "A deck suggestion does not necessarily become confirmed immediately.",
@@ -144,119 +119,45 @@ const TUTORIAL_STEPS = [
 
   {
     id: "collection",
-    eyebrow: "Step 10",
+    eyebrow: "Step 8",
     title: "Add your card collection.",
-    description:
-      "Tbot can compare the cards you own against the cards required by decks.",
+    description: "Your collection is what powers Tbot's buildability tools.",
     detail:
-      "Open Card Manager from your dashboard and record how many copies of each card you own. You can update your collection whenever it changes.",
+      "Open Card Manager from your dashboard and record how many copies of each card you own. This is a one-time setup you can update any time your collection changes — once it's entered, Tbot can compare it against every community deck.",
     icon: "📚",
     link: "/dashboard/card-manager",
     linkText: "Manage Your Collection →",
   },
 
   {
-    id: "buildable",
-    eyebrow: "Step 11",
-    title: "Find decks you can build.",
+    id: "collection-filter",
+    eyebrow: "Step 9",
+    title: "Use the collection dropdown.",
     description:
-      "Your collection can be used to identify decks you already have the cards for.",
+      "The Decklists page has a Collection dropdown that puts your collection to work.",
     detail:
-      "Go to the Decklists page and use the Collection filters. Buildable shows decks for which your collection contains the required cards.",
+      "Once your collection is entered, the Decklists page shows a Collection filter with a few options. All shows every deck, ignoring your collection. Buildable shows only decks where you already own every required card. Close shows decks where you're missing just a small number of cards — useful for figuring out what to work toward next. Switching between these options is the fastest way to go from 'browsing decks' to 'finding a deck I can actually play right now.'",
     icon: "🛠️",
     link: "/decklists",
-    linkText: "Find Buildable Decks →",
+    linkText: "Try the Collection Filter →",
   },
 
   {
-    id: "close",
-    eyebrow: "Step 12",
-    title: "Find decks you're close to building.",
-    description: "You don't need to own every card to find useful decks.",
-    detail:
-      "The Close filter helps identify decks where you are only missing a small number of cards. These decks can show you what cards might be worth working toward.",
-    icon: "🎯",
-    link: "/decklists",
-    linkText: "Find Decks →",
-  },
-
-  {
-    id: "decklists",
-    eyebrow: "Step 13",
-    title: "Use the Decklists database.",
+    id: "explore",
+    eyebrow: "Step 10",
+    title: "Explore the rest of the databases.",
     description:
-      "The Decklists page is where you can search and explore community decks.",
+      "Decklists, Card Information, and Hero Information are pretty self-explanatory.",
     detail:
-      "You can narrow the results by side, hero, category, archetype, creator, card, and collection status. Open a deck to see its details and cards.",
-    icon: "📋",
+      "Decklists lets you search and filter community decks by side, hero, class, archetype, and creator. Card Information lets you look up any card's stats, class, and abilities. Hero Information covers each hero's classes, traits, and abilities. Beyond those, Keep or Scrap gives class-by-class keep/scrap recommendations, Legacy Decks preserves the older deck archive, and Deckbuilders lets you browse decks by the people who made them.",
+    icon: "🔎",
     link: "/decklists",
-    linkText: "Explore Decklists →",
-  },
-
-  {
-    id: "cards",
-    eyebrow: "Step 14",
-    title: "Research individual cards.",
-    description: "The Card Information page is your card reference.",
-    detail:
-      "Search and filter cards by class, cost, attack, health, traits, tribes, set, rarity, and other information. Use it when you want to understand a card or find cards matching specific criteria.",
-    icon: "🃏",
-    link: "/cardinfo",
-    linkText: "Search Cards →",
-  },
-
-  {
-    id: "heroes",
-    eyebrow: "Step 15",
-    title: "Learn about heroes.",
-    description:
-      "The Hero Information page helps you understand what makes each hero unique.",
-    detail:
-      "Explore hero classes, abilities, traits, stats, and associated cards. This can help when deciding which heroes or deck strategies you want to explore.",
-    icon: "🦸",
-    link: "/heroinfo",
-    linkText: "Explore Heroes →",
-  },
-
-  {
-    id: "keep-scrap",
-    eyebrow: "Step 16",
-    title: "Use Keep or Scrap.",
-    description: "Not sure what to do with a card in your collection?",
-    detail:
-      "Keep or Scrap provides class-by-class recommendations to help you decide which cards may be worth keeping and which cards may be candidates for scrapping.",
-    icon: "⚖️",
-    link: "/keeporscrap",
-    linkText: "View Keep or Scrap →",
-  },
-
-  {
-    id: "legacy",
-    eyebrow: "Step 17",
-    title: "Explore Legacy Decks.",
-    description: "Tbot also preserves an older deck database.",
-    detail:
-      "Legacy Decks lets you browse older community decklists that are separate from the current deck collection.",
-    icon: "📜",
-    link: "/legacydecks",
-    linkText: "Explore Legacy Decks →",
-  },
-
-  {
-    id: "deckbuilders",
-    eyebrow: "Step 18",
-    title: "Find Deckbuilders.",
-    description: "You can browse the people who have submitted decks to Tbot.",
-    detail:
-      "The Deckbuilders section lets you find deckbuilders and explore the decks associated with them.",
-    icon: "👥",
-    link: "/deckbuilders",
-    linkText: "Explore Deckbuilders →",
+    linkText: "Start Exploring →",
   },
 
   {
     id: "community",
-    eyebrow: "Step 19",
+    eyebrow: "Step 11",
     title: "Tbot is built around the community.",
     description: "The website and Discord work together.",
     detail:
