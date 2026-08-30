@@ -381,6 +381,7 @@ const getCardKey = (card) => {
 const UserCardManager = () => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCardData, setSelectedCardData] = useState({});
   const [loadingCards, setLoadingCards] = useState(false);
   const [savingCardId, setSavingCardId] = useState(null);
   const [deletingCardId, setDeletingCardId] = useState(null);
@@ -413,24 +414,53 @@ const UserCardManager = () => {
       return;
     }
 
-    const nextSelected = {};
-    const nextQuantities = {
-      ...selectedQuantities,
-    };
+    setSelectedCards((current) => {
+      const nextSelected = { ...current };
 
-    availableCards.forEach((card) => {
-      const key = getCardKey(card);
+      availableCards.forEach((card) => {
+        const key = getCardKey(card);
 
-      if (card.already_owned) {
-        return;
-      }
+        if (card.already_owned) {
+          return;
+        }
 
-      nextSelected[key] = true;
-      nextQuantities[key] = MAX_QUANTITY;
+        nextSelected[key] = true;
+      });
+
+      return nextSelected;
     });
 
-    setSelectedCards(nextSelected);
-    setSelectedQuantities(nextQuantities);
+    setSelectedCardData((current) => {
+      const nextSelectedCardData = { ...current };
+
+      availableCards.forEach((card) => {
+        const key = getCardKey(card);
+
+        if (card.already_owned) {
+          return;
+        }
+
+        nextSelectedCardData[key] = card;
+      });
+
+      return nextSelectedCardData;
+    });
+
+    setSelectedQuantities((current) => {
+      const nextQuantities = { ...current };
+
+      availableCards.forEach((card) => {
+        const key = getCardKey(card);
+
+        if (card.already_owned) {
+          return;
+        }
+
+        nextQuantities[key] = MAX_QUANTITY;
+      });
+
+      return nextQuantities;
+    });
   };
   const loadCollection = useCallback(async () => {
     setLoading(true);
@@ -805,6 +835,7 @@ const UserCardManager = () => {
     setClasses([]);
     setAvailableCards([]);
     setSelectedCards({});
+    setSelectedCardData({});
     setSelectedQuantities({});
   };
 
@@ -825,21 +856,20 @@ const UserCardManager = () => {
 
   const handleSideChange = (side) => {
     clearMessages();
-
     setSelectedSide(side);
     setSelectedClass("");
     setSearch("");
-
     setSelectedCards({});
+    setSelectedCardData({});
     setSelectedQuantities({});
     setAvailableCards([]);
   };
 
   const handleClassChange = (cardClass) => {
     clearMessages();
-
     setSelectedClass(cardClass);
     setSelectedCards({});
+    setSelectedCardData({});
     setSelectedQuantities({});
     setAvailableCards([]);
   };
@@ -851,10 +881,27 @@ const UserCardManager = () => {
 
     const key = getCardKey(card);
 
-    setSelectedCards((current) => ({
-      ...current,
-      [key]: !current[key],
-    }));
+    setSelectedCards((current) => {
+      const isCurrentlySelected = Boolean(current[key]);
+
+      return {
+        ...current,
+        [key]: !isCurrentlySelected,
+      };
+    });
+
+    setSelectedCardData((current) => {
+      if (current[key]) {
+        const next = { ...current };
+        delete next[key];
+        return next;
+      }
+
+      return {
+        ...current,
+        [key]: card,
+      };
+    });
 
     setSelectedQuantities((current) => {
       if (current[key] !== undefined) {
@@ -909,36 +956,66 @@ const UserCardManager = () => {
       return;
     }
 
-    const nextSelected = {};
-    const nextQuantities = {
-      ...selectedQuantities,
-    };
+    setSelectedCards((current) => {
+      const nextSelected = { ...current };
 
-    availableCards.forEach((card) => {
-      const key = getCardKey(card);
+      availableCards.forEach((card) => {
+        const key = getCardKey(card);
 
-      if (card.already_owned) {
-        return;
-      }
+        if (card.already_owned) {
+          return;
+        }
 
-      nextSelected[key] = true;
+        nextSelected[key] = true;
+      });
 
-      if (nextQuantities[key] === undefined) {
-        nextQuantities[key] = 1;
-      }
+      return nextSelected;
     });
 
-    setSelectedCards(nextSelected);
-    setSelectedQuantities(nextQuantities);
+    setSelectedCardData((current) => {
+      const nextSelectedCardData = { ...current };
+
+      availableCards.forEach((card) => {
+        const key = getCardKey(card);
+
+        if (card.already_owned) {
+          return;
+        }
+
+        nextSelectedCardData[key] = card;
+      });
+
+      return nextSelectedCardData;
+    });
+
+    setSelectedQuantities((current) => {
+      const nextQuantities = { ...current };
+
+      availableCards.forEach((card) => {
+        const key = getCardKey(card);
+
+        if (card.already_owned) {
+          return;
+        }
+
+        if (nextQuantities[key] === undefined) {
+          nextQuantities[key] = 1;
+        }
+      });
+
+      return nextQuantities;
+    });
   };
 
   const clearSelectedCards = () => {
     setSelectedCards({});
+    setSelectedCardData({});
+    setSelectedQuantities({});
   };
 
   const handleAddSelected = async () => {
-    const selected = availableCards.filter(
-      (card) => selectedCards[getCardKey(card)] && !card.already_owned,
+    const selected = Object.values(selectedCardData).filter(
+      (card) => !card.already_owned,
     );
 
     if (!selected.length) {
