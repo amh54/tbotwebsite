@@ -160,7 +160,23 @@ const formatCost = (value) => {
 
   return raw;
 };
+const formatDeckDate = (value) => {
+  if (!value) {
+    return "";
+  }
 
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 const toExternalUrl = (value) => {
   const raw = String(value || "").trim();
 
@@ -932,10 +948,10 @@ function DeckCard({
 
         shareUrl.searchParams.set("deck", shareDeckKey);
       } else if (resolvedProfileSlug) {
-      /*
-       * Private profile:
-       * /deck/slug/name-id
-       */
+        /*
+         * Private profile:
+         * /deck/slug/name-id
+         */
         shareUrl = new URL(
           `/deck/${encodeURIComponent(
             resolvedProfileSlug,
@@ -1206,11 +1222,12 @@ function DeckCard({
                         )}
 
                         {hasValue(deck.suggested_date) && (
-                          <p>Suggested on {deck.suggested_date}</p>
+                          <p>
+                            Suggested on {formatDeckDate(deck.suggested_date)}
+                          </p>
                         )}
-
                         {hasValue(deck.updated_date) && (
-                          <p>Updated on {deck.updated_date}</p>
+                          <p>Updated on {formatDeckDate(deck.updated_date)}</p>
                         )}
                       </div>
                     )}

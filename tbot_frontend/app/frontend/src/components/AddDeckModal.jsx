@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Select from "react-select";
 import { calculateDeckCost } from "../utils/deckCost";
 import "../css/deckmodal.css";
@@ -122,6 +122,57 @@ const sumCardRatios = (options) =>
     (sum, option) => sum + (Number(option?.count) || 0),
     0,
   );
+
+const isValidDeckTutorialUrl = (value) => {
+  const url = String(value ?? "").trim();
+
+  if (!url) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    if (parsed.protocol !== "https:") {
+      return false;
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+
+    // Google Docs
+    if (
+      hostname === "docs.google.com" ||
+      hostname.endsWith(".docs.google.com")
+    ) {
+      return true;
+    }
+
+    // YouTube
+    if (
+      hostname === "youtube.com" ||
+      hostname === "www.youtube.com" ||
+      hostname === "m.youtube.com" ||
+      hostname === "youtu.be"
+    ) {
+      return true;
+    }
+
+    // Microsoft Word / Office
+    if (
+      hostname === "word.office.com" ||
+      hostname === "office.com" ||
+      hostname.endsWith(".office.com") ||
+      hostname === "1drv.ms" ||
+      hostname.endsWith(".sharepoint.com")
+    ) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+};
 
 const selectStyles = {
   control: (base, state) => ({
@@ -402,9 +453,210 @@ function CardRatioEditor({ options, onChange, disabled, total, error }) {
   );
 }
 
+function DatePicker({
+  label,
+  value,
+  onChange,
+  pickerId,
+  openPicker,
+  setOpenPicker,
+}) {
+  const open = openPicker === pickerId;
+  const [viewDate, setViewDate] = useState(() => {
+    if (value) {
+      const [year, month, day] = value.split("-").map(Number);
+      if (year && month && day) return new Date(year, month - 1, day);
+    }
+    return new Date();
+  });
+
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setOpenPicker(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  useEffect(() => {
+    if (value) {
+      const [year, month, day] = value.split("-").map(Number);
+      if (year && month && day) {
+        setViewDate(new Date(year, month - 1, 1));
+      }
+    }
+  }, [value]);
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const days = [];
+  for (let i = 0; i < firstDay; i += 1) days.push(null);
+  for (let day = 1; day <= daysInMonth; day += 1) days.push(day);
+
+  const selectedDate = value
+    ? (() => {
+        const [y, m, d] = value.split("-").map(Number);
+        return y && m && d ? new Date(y, m - 1, d) : null;
+      })()
+    : null;
+
+  const today = new Date();
+
+  const isSameDate = (a, b) =>
+    a &&
+    b &&
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const formatDate = (date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+      date.getDate(),
+    ).padStart(2, "0")}`;
+
+  const displayValue = selectedDate
+    ? selectedDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "";
+
+  const selectDay = (day) => {
+    onChange(formatDate(new Date(year, month, day)));
+    setOpenPicker(null);
+  };
+
+  return (
+    <div className="admin-modal-field custom-date-picker" ref={wrapperRef}>
+      <span className="admin-modal-label">{label}</span>
+
+      <button
+        type="button"
+        className={`custom-date-input${open ? " is-open" : ""}${
+          value ? " has-value" : ""
+        }`}
+        onClick={() =>
+          setOpenPicker((current) => (current === pickerId ? null : pickerId))
+        }
+        aria-haspopup="dialog"
+        aria-expanded={open}
+      >
+        <span>{displayValue || "Select date..."}</span>
+        <span className="custom-date-calendar-icon" aria-hidden="true">
+          📅
+        </span>
+      </button>
+
+      {open && (
+        <div className="custom-date-calendar" role="dialog" aria-label={label}>
+          <div className="custom-date-calendar-header">
+            <button
+              type="button"
+              className="custom-date-nav"
+              onClick={() => setViewDate(new Date(year, month - 1, 1))}
+              aria-label="Previous month"
+            >
+              ‹
+            </button>
+
+            <strong>
+              {viewDate.toLocaleDateString("en-US", {
+                month: "long",
+                year: "numeric",
+              })}
+            </strong>
+
+            <button
+              type="button"
+              className="custom-date-nav"
+              onClick={() => setViewDate(new Date(year, month + 1, 1))}
+              aria-label="Next month"
+            >
+              ›
+            </button>
+          </div>
+
+          <div className="custom-date-weekdays">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+              <span key={day}>{day}</span>
+            ))}
+          </div>
+
+          <div className="custom-date-grid">
+            {days.map((day, index) =>
+              day === null ? (
+                <span key={`empty-${index}`} className="custom-date-empty" />
+              ) : (
+                <button
+                  key={day}
+                  type="button"
+                  className={`custom-date-day${
+                    selectedDate &&
+                    isSameDate(new Date(year, month, day), selectedDate)
+                      ? " selected"
+                      : ""
+                  }${
+                    isSameDate(new Date(year, month, day), today)
+                      ? " today"
+                      : ""
+                  }`}
+                  onClick={() => selectDay(day)}
+                >
+                  {day}
+                </button>
+              ),
+            )}
+          </div>
+
+          <div className="custom-date-calendar-footer">
+            <button
+              type="button"
+              className="custom-date-clear"
+              onClick={() => {
+                onChange("");
+                setOpenPicker(null);
+              }}
+            >
+              Clear
+            </button>
+
+            <button
+              type="button"
+              className="custom-date-today"
+              onClick={() => {
+                const current = new Date();
+
+                onChange(formatDate(current));
+
+                setViewDate(
+                  new Date(current.getFullYear(), current.getMonth(), 1),
+                );
+
+                setOpenPicker(null);
+              }}
+            >
+              Today
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
   const [saving, setSaving] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [openDatePicker, setOpenDatePicker] = useState(null);
   const [validationError, setValidationError] = useState(null);
 
   const [form, setForm] = useState({
@@ -420,7 +672,6 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
     // CREATOR IS REQUIRED
     creator: "",
 
-    cost: "",
     inspiration: "",
     optimization: "",
     suggested_date: "",
@@ -596,15 +847,6 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
     () => calculateDeckCost(form.cardsSelected, allCards),
     [form.cardsSelected, allCards],
   );
-  useEffect(() => {
-    if (calculatedDeckCost > 0 && !String(form.cost || "").trim()) {
-      setForm((previous) => ({
-        ...previous,
-        cost: calculatedDeckCost,
-      }));
-    }
-  }, [calculatedDeckCost, form.cost]);
-
   const selectedHero =
     heroOptions.find(
       (option) =>
@@ -835,35 +1077,13 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       };
     }
 
-    const numericCost = Number(form.cost);
-
-    if (!Number.isFinite(numericCost) || numericCost < 0) {
+    if (!isValidDeckTutorialUrl(form.deck_doc)) {
       return {
-        field: "cost",
-        message: "Deck cost must be a valid number.",
+        field: "deck tutorial url",
+        message:
+          "Tutorial URL must be a Google Docs, Microsoft Word, or YouTube link.",
       };
     }
-
-    if (calculatedDeckCost > 0 && numericCost !== calculatedDeckCost) {
-      return {
-        field: "cost",
-        message: `Incorrect cost. Expected ${calculatedDeckCost} sparks.`,
-      };
-    }
-
-    if (!Number.isFinite(numericCost) || numericCost < 0) {
-      return {
-        field: "cost",
-        message: "Deck cost must be a valid number.",
-      };
-    }
-
-    /*
-     * CREATOR IS REQUIRED.
-     *
-     * This check happens BEFORE onAdd() is called.
-     * Empty strings and whitespace-only values are rejected.
-     */
     const creator = String(form.creator ?? "").trim();
 
     if (!creator) {
@@ -962,7 +1182,7 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
         // CREATOR CANNOT BE EMPTY
         creator,
 
-        cost: Number(form.cost),
+        cost: Number(calculatedDeckCost),
 
         inspiration: String(form.inspiration ?? "").trim(),
 
@@ -1233,15 +1453,6 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
 
                 <section className="modal-metadata">
                   <TextField
-                    label="Cost"
-                    type="number"
-                    value={form.cost}
-                    onChange={(value) => handleChange("cost", value)}
-                    required
-                    error={fieldError("cost")}
-                  />
-
-                  <TextField
                     label="Creator"
                     value={form.creator}
                     onChange={(value) => handleChange("creator", value)}
@@ -1261,22 +1472,29 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                     onChange={(value) => handleChange("inspiration", value)}
                   />
 
-                  <TextField
+                  <DatePicker
                     label="Suggested Date"
                     value={form.suggested_date}
                     onChange={(value) => handleChange("suggested_date", value)}
+                    pickerId="suggested"
+                    openPicker={openDatePicker}
+                    setOpenPicker={setOpenDatePicker}
                   />
 
-                  <TextField
+                  <DatePicker
                     label="Updated Date"
                     value={form.updated_date}
                     onChange={(value) => handleChange("updated_date", value)}
+                    pickerId="updated"
+                    openPicker={openDatePicker}
+                    setOpenPicker={setOpenDatePicker}
                   />
 
                   <TextField
                     label="Deck Tutorial URL"
                     value={form.deck_doc}
                     onChange={(value) => handleChange("deck_doc", value)}
+                    error={fieldError("deck tutorial url")}
                   />
 
                   <div
