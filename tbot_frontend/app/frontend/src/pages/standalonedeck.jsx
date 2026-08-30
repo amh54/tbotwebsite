@@ -78,15 +78,6 @@ function StandaloneDeckPage() {
         }
 
         const sharedDeckKey = String(deckId).trim();
-
-        // URL format:
-        // /deck/:profile_slug/:deck-name-:deck-id
-        //
-        // Example:
-        // /deck/anthony/my-awesome-deck-42
-        //
-        // The API only needs:
-        // 42
         const deckIdMatch = sharedDeckKey.match(/-(\d+)$/);
 
         if (!deckIdMatch) {
