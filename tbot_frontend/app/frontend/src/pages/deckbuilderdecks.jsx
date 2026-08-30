@@ -999,17 +999,6 @@ function DeckbuilderDecks() {
               </p>
             </div>
           </div>
-
-          <div className="user-decklists-header-actions">
-            {profile?.profile_slug && (
-              <Link
-                to={`/profile/${encodeURIComponent(profile.profile_slug)}`}
-                className="user-decklists-share"
-              >
-                View Profile
-              </Link>
-            )}
-          </div>
         </div>
 
         <div className="deck-browser">
