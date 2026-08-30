@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 import Navbar from "../components/navbar.jsx";
 import Footer from "../components/footer.jsx";
@@ -49,13 +49,16 @@ const getProfileCacheKey = (slug) => `tbot_profile_cache_${normalizeKey(slug)}`;
 
 function Profile() {
   const { profile_slug } = useParams();
+  const [searchParams] = useSearchParams();
 
   const [userCards, setUserCards] = useState([]);
   const [profile, setProfile] = useState(null);
   const [decks, setDecks] = useState([]);
   const [allCards, setAllCards] = useState([]);
 
-  const [activeTab, setActiveTab] = useState("cards");
+  const [activeTab, setActiveTab] = useState(() =>
+  searchParams.has("deck") ? "decks" : "cards",
+);
 
   const [isOwner, setIsOwner] = useState(false);
   const [isSiteOwner, setIsSiteOwner] = useState(false);
