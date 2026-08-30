@@ -164,9 +164,6 @@
   margin: 0 0 16px;
 }
 
-.kos-intro-text p:last-child {
-  margin-bottom: 0;
-}
 
 .kos-intro-text h1,
 .kos-intro-text h2,
@@ -455,10 +452,6 @@
   border-bottom: 1px solid #292e31;
 }
 
-.kos-tier-item:last-child {
-  border-bottom: none;
-}
-
 .kos-tier-item strong {
   color: #ffffff;
   font-weight: 800;
@@ -479,12 +472,6 @@
 .kos-tier-item p:last-child {
   margin-bottom: 0;
 }
-
-.kos-tier-item strong {
-  color: #ffffff;
-  font-weight: 800;
-}
-
 .kos-tier-item em {
   color: #c5cbcd;
 }
