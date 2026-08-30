@@ -821,12 +821,6 @@ function DeckCard({
     };
   }, [showSuggestDeck, isLoggedIn, suggestionId, suggestStatus]);
 
-  /*
-   * ------------------------------------------------------------
-   * SHARE
-   * ------------------------------------------------------------
-   */
-
   const handleShare = async () => {
     if (isAdmin) {
       return;
@@ -836,12 +830,20 @@ function DeckCard({
       return;
     }
 
+    const deckName = String(deck.name || "deck")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const shareDeckKey = deckName ? `${deckName}-${deckKey}` : deckKey;
+
     let shareUrl;
 
     if (deckbuilder || decklists || legacy) {
       shareUrl = new URL(window.location.pathname, window.location.origin);
 
-      shareUrl.searchParams.set("deck", deckKey);
+      shareUrl.searchParams.set("deck", shareDeckKey);
     } else {
       const resolvedProfileSlug = String(
         profileSlug || deck.profile_slug || deck.profileSlug || "",
@@ -860,19 +862,18 @@ function DeckCard({
           window.location.origin,
         );
 
-        shareUrl.searchParams.set("deck", deckKey);
+        shareUrl.searchParams.set("deck", shareDeckKey);
       } else if (resolvedProfileSlug) {
         shareUrl = new URL(
           `/deck/${encodeURIComponent(
             resolvedProfileSlug,
-          )}/${encodeURIComponent(deckKey)}`,
+          )}/${encodeURIComponent(shareDeckKey)}`,
           window.location.origin,
         );
       } else {
         console.error(
           "Unable to create deck share link: profile slug is missing.",
         );
-
         return;
       }
     }
