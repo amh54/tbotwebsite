@@ -145,7 +145,7 @@ def user_deck_suggestion_create(request):
             status=status.HTTP_409_CONFLICT,
         )
 
-    # ------------------------------------------------------------
+        # ------------------------------------------------------------
     # COOLDOWN
     # ------------------------------------------------------------
 
@@ -159,36 +159,34 @@ def user_deck_suggestion_create(request):
     )
 
     if previous_suggestion:
-        if previous_suggestion.status == "pending":
-            cooldown_until = (
-                previous_suggestion.created_at
-                + timedelta(days=COOLDOWN_DAYS)
+        cooldown_until = (
+            previous_suggestion.created_at
+            + timedelta(days=COOLDOWN_DAYS)
+        )
+
+        now = timezone.now()
+
+        if now < cooldown_until:
+            return Response(
+                {
+                    "success": False,
+                    "reason": "cooldown",
+                    "suggestion_id": previous_suggestion.id,
+                    "consent_status": (
+                        previous_suggestion.consent_status
+                    ),
+                    "status": previous_suggestion.status,
+                    "message": (
+                        "You recently suggested a deck. "
+                        "You must wait until your cooldown "
+                        "expires before suggesting another deck."
+                    ),
+                    "cooldown_until": (
+                        cooldown_until.isoformat()
+                    ),
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
-
-            now = timezone.now()
-
-            if now < cooldown_until:
-                return Response(
-                    {
-                        "success": False,
-                        "reason": "cooldown",
-                        "suggestion_id": previous_suggestion.id,
-                        "consent_status": (
-                            previous_suggestion.consent_status
-                        ),
-                        "status": previous_suggestion.status,
-                        "message": (
-                            "You already have a pending deck "
-                            "suggestion. You must wait until "
-                            "your cooldown expires before "
-                            "suggesting another deck."
-                        ),
-                        "cooldown_until": (
-                            cooldown_until.isoformat()
-                        ),
-                    },
-                    status=status.HTTP_429_TOO_MANY_REQUESTS,
-                )
 
     # ------------------------------------------------------------
     # DETERMINE DECK OWNER
