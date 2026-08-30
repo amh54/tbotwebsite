@@ -115,10 +115,11 @@
   gap: 50px;
   align-items: start;
   padding: 35px 0;
-  border-bottom: 1px solid #292e31;
   box-sizing: border-box;
 }
-
+.kos-intro-item:not(:last-child) {
+  border-bottom: 1px solid #292e31;
+}
 .kos-intro-media {
   width: 320px;
   aspect-ratio: 1 / 1;
