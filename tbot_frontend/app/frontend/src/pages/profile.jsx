@@ -57,9 +57,8 @@ function Profile() {
   const [allCards, setAllCards] = useState([]);
 
   const [activeTab, setActiveTab] = useState(() =>
-  searchParams.has("deck") ? "decks" : "cards",
-);
-
+    searchParams.has("deck") ? "decks" : "cards",
+  );
   const [isOwner, setIsOwner] = useState(false);
   const [isSiteOwner, setIsSiteOwner] = useState(false);
 
@@ -342,13 +341,11 @@ function Profile() {
       controller.abort();
     };
   }, [profile_slug]);
-
-  /*
-   * --------------------------------------------------------------------------
-   * Edit profile
-   * --------------------------------------------------------------------------
-   */
-
+  useEffect(() => {
+    if (searchParams.has("deck")) {
+      setActiveTab("decks");
+    }
+  }, [searchParams]);
   const openEditProfile = () => {
     if (!profile) {
       return;
@@ -633,6 +630,7 @@ function Profile() {
               userCards={userCards}
               profileSlug={profile_slug}
               profileIsPublic={Boolean(profile.is_public)}
+              sharedDeckKey={searchParams.get("deck") || ""}
             />
           )}
         </div>

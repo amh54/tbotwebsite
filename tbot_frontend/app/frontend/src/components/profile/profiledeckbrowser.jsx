@@ -27,6 +27,7 @@ function ProfileDeckBrowser({
   userCards = [],
   profileSlug,
   profileIsPublic,
+  sharedDeckKey = "",
 }) {
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
@@ -34,10 +35,8 @@ function ProfileDeckBrowser({
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
   const [collection, setCollection] = useState([]);
-
   const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
     useTemporaryMessage(4000);
-
   /*
    * userCards is the logged-in user's collection.
    *
@@ -639,21 +638,42 @@ function ProfileDeckBrowser({
         </div>
       ) : (
         <div className="deck-grid">
-          {filteredDecks.map((deck) => (
-            <DeckCard
-              key={
-                deck.deckid ||
-                deck.deckID ||
-                deck.id ||
-                `${normalizeSide(deck.side)}-${normalizeKey(deck.name)}`
-              }
-              decklist={deck}
-              allCards={allCards}
-              profileSlug={profileSlug}
-              profileIsPublic={profileIsPublic}
-              showSuggestDeck={true}
-            />
-          ))}
+          {filteredDecks.map((deck) => {
+            const deckId =
+    deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? "";
+
+  const deckName = String(deck.name || "deck")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  const shareDeckKey = deckName
+    ? `${deckName}-${deckId}`
+    : String(deckId);
+
+  const isSharedDeck =
+    Boolean(sharedDeckKey) &&
+    (String(sharedDeckKey) === String(deckId) ||
+      String(sharedDeckKey) === shareDeckKey);
+
+  return (
+    <DeckCard
+      key={
+        deck.deckid ||
+        deck.deckID ||
+        deck.id ||
+        `${normalizeSide(deck.side)}-${normalizeKey(deck.name)}`
+      }
+      decklist={deck}
+      allCards={allCards}
+      profileSlug={profileSlug}
+      profileIsPublic={profileIsPublic}
+      showSuggestDeck={true}
+      autoOpen={isSharedDeck}
+    />
+  )
+          })}
         </div>
       )}
     </section>

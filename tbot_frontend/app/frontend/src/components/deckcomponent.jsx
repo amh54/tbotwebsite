@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+
 import { useSearchParams } from "react-router-dom";
+
 import AddDeckModal from "./AddDeckModal";
 import EditDeckModal from "./EditDeckModal";
+
 import "../css/deckmodal.css";
 
 const HERO_COLORS = {
@@ -229,6 +232,31 @@ const formatCardsDisplay = (value) => {
   return entries.map((entry) => `${entry.name} x${entry.count}`).join(", ");
 };
 
+/*
+ * Keep all deck-share formats compatible:
+ *
+ * Old:
+ *   ?deck=123
+ *
+ * New:
+ *   ?deck=deck-name-123
+ *
+ * Public profile:
+ *   /profile/user-name?deck=deck-name-123
+ *
+ * Private profile:
+ *   /deck/user-name/deck-name-123
+ */
+const normalizeDeckShareValue = (value) => {
+  try {
+    return decodeURIComponent(String(value || "").trim()).toLowerCase();
+  } catch {
+    return String(value || "")
+      .trim()
+      .toLowerCase();
+  }
+};
+
 function DeckCard({
   decklist,
   admin = false,
@@ -256,7 +284,7 @@ function DeckCard({
 
   const deckId = deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? "";
 
-  const deckKey = String(deckId || deck.name || "");
+  const deckKey = String(deckId || deck.name || "").trim();
 
   const deckName = String(deck.name || "deck")
     .trim()
@@ -264,21 +292,37 @@ function DeckCard({
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+  /*
+   * This is the canonical new share key.
+   *
+   * We intentionally keep deckKey as the raw ID because existing
+   * shared links using ?deck=123 must continue to work.
+   */
   const shareDeckKey = deckName ? `${deckName}-${deckKey}` : deckKey;
+
   const isDeckUrlMatch = (urlDeck) => {
-    if (!urlDeck) {
+    const normalizedUrlDeck = normalizeDeckShareValue(urlDeck);
+
+    if (!normalizedUrlDeck) {
       return false;
     }
 
-    const value = String(urlDeck).trim();
+    const normalizedDeckKey = normalizeDeckShareValue(deckKey);
+    const normalizedShareDeckKey = normalizeDeckShareValue(shareDeckKey);
 
-    return value === deckKey || value === shareDeckKey;
+    return (
+      normalizedUrlDeck === normalizedDeckKey ||
+      normalizedUrlDeck === normalizedShareDeckKey
+    );
   };
+
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [open, setOpen] = useState(addMode || autoOpen);
+  const [open, setOpen] = useState(addMode);
   const [editing, setEditing] = useState(false);
+
   const [imgError, setImgError] = useState(false);
+
   const [copied, setCopied] = useState(false);
 
   const [editImageFile, setEditImageFile] = useState(null);
@@ -355,7 +399,6 @@ function DeckCard({
       } catch (error) {
         if (!cancelled) {
           console.error("Unable to check Discord login status:", error);
-
           setIsLoggedIn(false);
         }
       } finally {
@@ -372,6 +415,15 @@ function DeckCard({
     };
   }, [showSuggestDeck]);
 
+  /*
+   * SHARE-LINK AUTO OPEN
+   *
+   * This supports BOTH:
+   *   ?deck=123
+   *   ?deck=deck-name-123
+   *
+   * It also does not interfere with the normal modal behavior.
+   */
   useEffect(() => {
     if (addMode || autoOpen) {
       setOpen(true);
@@ -382,8 +434,11 @@ function DeckCard({
       return;
     }
 
-    if (isDeckUrlMatch(searchParams.get("deck"))) {
+    const urlDeck = searchParams.get("deck");
+
+    if (isDeckUrlMatch(urlDeck)) {
       setOpen(true);
+      setEditing(false);
     }
   }, [searchParams, deckKey, shareDeckKey, addMode, autoOpen]);
 
@@ -448,7 +503,15 @@ function DeckCard({
     }
 
     const next = new URLSearchParams(searchParams);
-    next.set("deck", deckKey);
+
+    /*
+     * Normal clicks use the canonical name-ID share key.
+     *
+     * This does NOT affect old links, because the auto-open matcher
+     * still accepts the raw ID.
+     */
+    next.set("deck", shareDeckKey);
+
     setSearchParams(next);
   };
 
@@ -477,13 +540,18 @@ function DeckCard({
       return;
     }
 
-    if (!deckKey) {
-      return;
-    }
+    /*
+     * IMPORTANT:
+     * Remove the URL parameter whether it contains the old ID
+     * or the new name-ID share key.
+     *
+     * The previous version only removed it when it exactly matched
+     * deckKey, which left ?deck=name-id in the URL.
+     */
+    const currentDeck = searchParams.get("deck");
 
-    const next = new URLSearchParams(searchParams);
-
-    if (next.get("deck") === deckKey) {
+    if (currentDeck && isDeckUrlMatch(currentDeck)) {
+      const next = new URLSearchParams(searchParams);
       next.delete("deck");
       setSearchParams(next);
     }
@@ -630,13 +698,10 @@ function DeckCard({
           data?.status === "success")
       ) {
         setSuggestionId(data?.suggestion_id || null);
-
         setSuggestStatus("success");
-
         setSuggestMessage(
           data?.message || "Your deck suggestion was submitted successfully!",
         );
-
         return;
       }
 
@@ -647,28 +712,23 @@ function DeckCard({
         data?.consent_status === "awaiting_creator"
       ) {
         setSuggestionId(data?.suggestion_id || null);
-
         setSuggestStatus("awaiting_creator");
-
         setSuggestMessage(
           data?.message ||
             data?.detail ||
             "The deck creator must approve this suggestion in Discord before it can be confirmed.",
         );
-
         return;
       }
 
       if (response.status === 401) {
         setIsLoggedIn(false);
         setSuggestStatus("login");
-
         setSuggestMessage(
           data?.message ||
             data?.detail ||
             "You must be logged in with Discord to suggest a deck.",
         );
-
         return;
       }
 
@@ -678,13 +738,11 @@ function DeckCard({
         data?.reason === "already_suggested"
       ) {
         setSuggestStatus("already_suggested");
-
         setSuggestMessage(
           data?.message ||
             data?.detail ||
             "You have already suggested this deck.",
         );
-
         return;
       }
 
@@ -694,7 +752,6 @@ function DeckCard({
         data?.reason === "cooldown"
       ) {
         setSuggestStatus("cooldown");
-
         setSuggestMessage(
           data?.message ||
             data?.detail ||
@@ -718,18 +775,15 @@ function DeckCard({
         data?.consent_status === "denied"
       ) {
         setSuggestStatus("denied");
-
         setSuggestMessage(
           data?.message ||
             data?.detail ||
             "The deck creator did not approve this suggestion.",
         );
-
         return;
       }
 
       setSuggestStatus("error");
-
       setSuggestMessage(
         data?.message ||
           data?.detail ||
@@ -737,14 +791,13 @@ function DeckCard({
       );
     } catch (error) {
       console.error("Unable to suggest deck:", error);
-
       setSuggestStatus("error");
-
       setSuggestMessage("Unable to connect to the server. Please try again.");
     } finally {
       setSuggesting(false);
     }
   };
+
   useEffect(() => {
     if (
       !showSuggestDeck ||
@@ -818,7 +871,6 @@ function DeckCard({
           setSuggestMessage(
             "The deck creator did not approve this suggestion.",
           );
-          return;
         }
       } catch (error) {
         if (!cancelled) {
@@ -847,6 +899,11 @@ function DeckCard({
     }
 
     let shareUrl;
+
+    /*
+     * Legacy, normal Decklists, and Deckbuilder pages keep their
+     * existing same-page sharing behavior.
+     */
     if (deckbuilder || decklists || legacy) {
       shareUrl = new URL(window.location.pathname, window.location.origin);
 
@@ -863,6 +920,10 @@ function DeckCard({
             deck.profile_is_public === true ||
             deck.profileIsPublic === true;
 
+      /*
+       * Public profile:
+       * /profile/slug?deck=name-id
+       */
       if (resolvedProfileIsPublic && resolvedProfileSlug) {
         shareUrl = new URL(
           `/profile/${encodeURIComponent(resolvedProfileSlug)}`,
@@ -871,6 +932,10 @@ function DeckCard({
 
         shareUrl.searchParams.set("deck", shareDeckKey);
       } else if (resolvedProfileSlug) {
+      /*
+       * Private profile:
+       * /deck/slug/name-id
+       */
         shareUrl = new URL(
           `/deck/${encodeURIComponent(
             resolvedProfileSlug,
@@ -898,12 +963,6 @@ function DeckCard({
     }
   };
 
-  /*
-   * ------------------------------------------------------------
-   * DOWNLOAD
-   * ------------------------------------------------------------
-   */
-
   const handleDownload = async () => {
     const imageUrl = getImageUrl(deck.image);
 
@@ -921,19 +980,15 @@ function DeckCard({
       }
 
       const blob = await response.blob();
-
       const blobUrl = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
 
       link.href = blobUrl;
-
       link.download = `${deck.name || "decklist"}.png`.replace(/\s+/g, "_");
 
       document.body.appendChild(link);
-
       link.click();
-
       link.remove();
 
       URL.revokeObjectURL(blobUrl);
@@ -943,12 +998,6 @@ function DeckCard({
       window.open(imageUrl, "_blank", "noopener,noreferrer");
     }
   };
-
-  /*
-   * ------------------------------------------------------------
-   * COMPLETION
-   * ------------------------------------------------------------
-   */
 
   const handleAddComplete = (result) => {
     setOpen(false);
@@ -967,12 +1016,6 @@ function DeckCard({
     setEditing(false);
   };
 
-  /*
-   * ------------------------------------------------------------
-   * ADD MODE
-   * ------------------------------------------------------------
-   */
-
   if (addMode) {
     if (!open) {
       return null;
@@ -990,12 +1033,6 @@ function DeckCard({
   }
 
   const editImage = getImageUrl(editImagePreview);
-
-  /*
-   * ------------------------------------------------------------
-   * CARD
-   * ------------------------------------------------------------
-   */
 
   return (
     <>
@@ -1311,11 +1348,12 @@ function DeckCard({
                           </span>
                         </div>
                       </div>
+
                       <section className="modal-section description-section">
                         <h3>Description</h3>
-
                         <p className="description">{description}</p>
                       </section>
+
                       <section className="modal-metadata">
                         {hasValue(toExternalUrl(deck.deck_doc)) && (
                           <div className="metadata-item">
@@ -1366,6 +1404,7 @@ function DeckCard({
                           </div>
                         )}
                       </section>
+
                       {isAdmin && (
                         <section className="modal-section admin-cards-section">
                           <h3>Cards</h3>
@@ -1383,10 +1422,6 @@ function DeckCard({
                           className={`suggest-deck-message suggest-message-${suggestStatus}`}
                           role="status"
                         >
-                          {/*
-                           * CONFIRMED
-                           */}
-
                           {(suggestStatus === "success" ||
                             suggestStatus === "confirmed") && (
                             <>
@@ -1412,10 +1447,6 @@ function DeckCard({
                               </p>
                             </>
                           )}
-
-                          {/*
-                           * AWAITING CREATOR APPROVAL
-                           */}
 
                           {suggestStatus === "awaiting_creator" && (
                             <>
@@ -1452,10 +1483,6 @@ function DeckCard({
                             </>
                           )}
 
-                          {/*
-                           * ALREADY SUGGESTED
-                           */}
-
                           {suggestStatus === "already_suggested" && (
                             <>
                               <strong>This deck was already suggested.</strong>
@@ -1474,10 +1501,6 @@ function DeckCard({
                               </p>
                             </>
                           )}
-
-                          {/*
-                           * COOLDOWN
-                           */}
 
                           {suggestStatus === "cooldown" && (
                             <>
@@ -1508,10 +1531,6 @@ function DeckCard({
                             </>
                           )}
 
-                          {/*
-                           * CREATOR DENIED
-                           */}
-
                           {suggestStatus === "denied" && (
                             <>
                               <strong>Suggestion not approved.</strong>
@@ -1526,6 +1545,7 @@ function DeckCard({
                           {suggestStatus === "login" && (
                             <>
                               <strong>Discord login required.</strong>
+
                               <p>
                                 You must log in with Discord before you can
                                 suggest a deck.
