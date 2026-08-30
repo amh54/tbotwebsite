@@ -258,6 +258,22 @@ function DeckCard({
 
   const deckKey = String(deckId || deck.name || "");
 
+  const deckName = String(deck.name || "deck")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  const shareDeckKey = deckName ? `${deckName}-${deckKey}` : deckKey;
+  const isDeckUrlMatch = (urlDeck) => {
+    if (!urlDeck) {
+      return false;
+    }
+
+    const value = String(urlDeck).trim();
+
+    return value === deckKey || value === shareDeckKey;
+  };
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [open, setOpen] = useState(addMode || autoOpen);
@@ -366,10 +382,10 @@ function DeckCard({
       return;
     }
 
-    if (searchParams.get("deck") === deckKey) {
+    if (isDeckUrlMatch(searchParams.get("deck"))) {
       setOpen(true);
     }
-  }, [searchParams, deckKey, addMode, autoOpen]);
+  }, [searchParams, deckKey, shareDeckKey, addMode, autoOpen]);
 
   useEffect(() => {
     if (!open) {
@@ -830,16 +846,7 @@ function DeckCard({
       return;
     }
 
-    const deckName = String(deck.name || "deck")
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-
-    const shareDeckKey = deckName ? `${deckName}-${deckKey}` : deckKey;
-
     let shareUrl;
-
     if (deckbuilder || decklists || legacy) {
       shareUrl = new URL(window.location.pathname, window.location.origin);
 
