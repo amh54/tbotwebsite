@@ -77,10 +77,28 @@ function StandaloneDeckPage() {
           throw new Error("Invalid deck link.");
         }
 
+        const sharedDeckKey = String(deckId).trim();
+
+        // URL format:
+        // /deck/:profile_slug/:deck-name-:deck-id
+        //
+        // Example:
+        // /deck/anthony/my-awesome-deck-42
+        //
+        // The API only needs:
+        // 42
+        const deckIdMatch = sharedDeckKey.match(/-(\d+)$/);
+
+        if (!deckIdMatch) {
+          throw new Error("Invalid deck link.");
+        }
+
+        const actualDeckId = deckIdMatch[1];
+
         const url =
           `${API_BASE_URL}/tbotapp/user-decks/shared/` +
           `${encodeURIComponent(profile_slug)}/` +
-          `${encodeURIComponent(deckId)}/`;
+          `${encodeURIComponent(actualDeckId)}/`;
 
         const response = await fetch(url, {
           method: "GET",
