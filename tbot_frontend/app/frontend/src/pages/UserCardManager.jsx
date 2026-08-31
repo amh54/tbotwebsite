@@ -941,16 +941,6 @@ const UserCardManager = () => {
     });
   };
 
-  const setSelectedQuantity = (card, value) => {
-    const key = getCardKey(card);
-    const quantity = getSelectedQuantity(value);
-
-    setSelectedQuantities((current) => ({
-      ...current,
-      [key]: quantity,
-    }));
-  };
-
   const selectAllVisible = () => {
     if (!availableCards.length) {
       return;

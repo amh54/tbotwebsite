@@ -9,6 +9,7 @@ const NAVIGATION = [
     links: [
       { label: "Home", path: "/" },
       {label: "Tutorial", path: "/tutorial"},
+      {label: "Site Donations", path: "https://buymeacoffee.com/pvzhtbot"},
       { label: "Users", path: "/users" },
       { label: "Terms of Service", path: "/termsofservice" },
       { label: "Privacy Policy", path: "/privacypolicy" },
