@@ -426,6 +426,9 @@ function DeckCard({
     if (isDeckUrlMatch(urlDeck)) {
       setOpen(true);
       setEditing(false);
+    } else {
+      setOpen(false);
+      setEditing(false);
     }
   }, [searchParams, deckKey, shareDeckKey, addMode, autoOpen]);
 
