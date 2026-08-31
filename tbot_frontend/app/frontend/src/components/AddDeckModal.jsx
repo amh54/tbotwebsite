@@ -652,8 +652,22 @@ function DatePicker({
     </div>
   );
 }
+const getTodayDate = () => {
+  const today = new Date();
 
-function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
+    2,
+    "0",
+  )}-${String(today.getDate()).padStart(2, "0")}`;
+};
+function AddDeckModal({
+  open,
+  allCards = [],
+  onAdd,
+  onClose,
+  onComplete,
+  isAdmin = false,
+}) {
   const [saving, setSaving] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [openDatePicker, setOpenDatePicker] = useState(null);
@@ -675,7 +689,6 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
     inspiration: "",
     optimization: "",
     suggested_date: "",
-    updated_date: "",
     deck_doc: "",
     cards: "",
     categorySelected: [],
@@ -1124,10 +1137,6 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
       return;
     }
 
-    /*
-     * IMPORTANT:
-     * Validate BEFORE creating/sending the payload.
-     */
     const error = validateForm();
 
     if (error) {
@@ -1144,16 +1153,8 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
 
     try {
       setSaving(true);
-
       const hasNewImage = form.image_file instanceof File;
-
       const creator = String(form.creator ?? "").trim();
-
-      /*
-       * Extra safety check immediately before submission.
-       * Even if something changes in the form state,
-       * an empty creator can never be submitted.
-       */
       if (!creator) {
         setValidationError({
           field: "creator",
@@ -1178,19 +1179,16 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
         image: hasNewImage ? "" : String(form.image || "").trim(),
 
         image_file: hasNewImage ? form.image_file : null,
-
-        // CREATOR CANNOT BE EMPTY
         creator,
-
         cost: Number(calculatedDeckCost),
 
         inspiration: String(form.inspiration ?? "").trim(),
 
         optimization: String(form.optimization ?? "").trim(),
 
-        suggested_date: String(form.suggested_date ?? "").trim(),
-
-        updated_date: String(form.updated_date ?? "").trim(),
+        suggested_date: isAdmin
+          ? String(form.suggested_date ?? "").trim()
+          : getTodayDate(),
 
         deck_doc: String(form.deck_doc ?? "").trim(),
 
@@ -1472,23 +1470,21 @@ function AddDeckModal({ open, allCards = [], onAdd, onClose, onComplete }) {
                     onChange={(value) => handleChange("inspiration", value)}
                   />
 
-                  <DatePicker
-                    label="Suggested Date"
-                    value={form.suggested_date}
-                    onChange={(value) => handleChange("suggested_date", value)}
-                    pickerId="suggested"
-                    openPicker={openDatePicker}
-                    setOpenPicker={setOpenDatePicker}
-                  />
+                  {isAdmin && (
+                    <>
+                      <DatePicker
+                        label="Suggested Date"
+                        value={form.suggested_date}
+                        onChange={(value) =>
+                          handleChange("suggested_date", value)
+                        }
+                        pickerId="suggested"
+                        openPicker={openDatePicker}
+                        setOpenPicker={setOpenDatePicker}
+                      />
 
-                  <DatePicker
-                    label="Updated Date"
-                    value={form.updated_date}
-                    onChange={(value) => handleChange("updated_date", value)}
-                    pickerId="updated"
-                    openPicker={openDatePicker}
-                    setOpenPicker={setOpenDatePicker}
-                  />
+                    </>
+                  )}
 
                   <TextField
                     label="Deck Tutorial URL"

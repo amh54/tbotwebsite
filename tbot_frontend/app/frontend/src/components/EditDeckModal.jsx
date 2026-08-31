@@ -7,9 +7,9 @@ import {
   useRef,
   useState,
 } from "react";
+
 import { calculateDeckCost } from "../utils/deckCost";
 import Select from "react-select";
-
 import "../css/adminmodal.css";
 import "../css/deckmodal.css";
 
@@ -121,7 +121,6 @@ const parseCardRatioLines = (value) =>
       const [namePart, countPart] = line.split("|");
       const name = String(namePart || "").trim();
       const parsedCount = Number(countPart);
-
       const count =
         Number.isFinite(parsedCount) && parsedCount > 0
           ? Math.min(parsedCount, MAX_CARD_RATIO)
@@ -157,6 +156,7 @@ const cardRatioLinesToOptions = (value, options = []) => {
     })
     .filter(Boolean);
 };
+
 const cardOptionsToRatioLines = (options) =>
   (options || [])
     .map((option) => {
@@ -181,11 +181,16 @@ const sumCardRatios = (options) =>
 const isValidDeckTutorialUrl = (value) => {
   const url = String(value ?? "").trim();
 
-  if (!url) return true;
+  if (!url) {
+    return true;
+  }
 
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== "https:") return false;
+
+    if (parsed.protocol !== "https:") {
+      return false;
+    }
 
     const hostname = parsed.hostname.toLowerCase();
 
@@ -218,6 +223,16 @@ const getDeckIdentity = (deck) =>
       "",
   );
 
+const getTodayDate = () => {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
 const selectStyles = {
   control: (base, state) => ({
     ...base,
@@ -231,7 +246,6 @@ const selectStyles = {
       borderColor: "#646d76",
     },
   }),
-
   menu: (base) => ({
     ...base,
     backgroundColor: "#1b1f23",
@@ -240,7 +254,6 @@ const selectStyles = {
     overflow: "hidden",
     zIndex: 100000,
   }),
-
   menuList: (base) => ({
     ...base,
     scrollbarWidth: "none",
@@ -249,7 +262,6 @@ const selectStyles = {
       display: "none",
     },
   }),
-
   option: (base, state) => ({
     ...base,
     backgroundColor: state.isSelected
@@ -261,7 +273,6 @@ const selectStyles = {
     cursor: "pointer",
     padding: "10px 12px",
   }),
-
   valueContainer: (base) => ({
     ...base,
     gap: "6px",
@@ -269,7 +280,6 @@ const selectStyles = {
     minWidth: 0,
     overflow: "hidden",
   }),
-
   multiValue: (base) => ({
     ...base,
     backgroundColor: "#303740",
@@ -280,7 +290,6 @@ const selectStyles = {
     maxWidth: "100%",
     flexShrink: 0,
   }),
-
   multiValueLabel: (base) => ({
     ...base,
     color: "#d7dce1",
@@ -290,7 +299,6 @@ const selectStyles = {
     whiteSpace: "nowrap",
     overflow: "visible",
   }),
-
   multiValueRemove: (base) => ({
     ...base,
     color: "#aeb5bc",
@@ -302,7 +310,6 @@ const selectStyles = {
       color: "#ffffff",
     },
   }),
-
   singleValue: (base) => ({
     ...base,
     position: "static",
@@ -323,24 +330,20 @@ const selectStyles = {
     margin: 0,
     flexShrink: 1,
   }),
-
   placeholder: (base) => ({
     ...base,
     color: "#7d858e",
     fontSize: "0.9rem",
   }),
-
   input: (base) => ({
     ...base,
     color: "#ffffff",
     margin: 0,
     padding: 0,
   }),
-
   indicatorSeparator: () => ({
     display: "none",
   }),
-
   dropdownIndicator: (base) => ({
     ...base,
     color: "#737b84",
@@ -350,7 +353,6 @@ const selectStyles = {
       color: "#c7cbd1",
     },
   }),
-
   clearIndicator: (base) => ({
     ...base,
     color: "#aeb5bc",
@@ -373,7 +375,6 @@ function AdminModalField({ label, value, onChange, type = "text" }) {
   return (
     <label className="admin-modal-field">
       <span className="admin-modal-label">{label}</span>
-
       <input
         type={type}
         value={value ?? ""}
@@ -387,7 +388,6 @@ function AdminModalTextArea({ label, value, onChange }) {
   return (
     <label className="admin-modal-field admin-modal-textarea-field">
       {label && <span className="admin-modal-label">{label}</span>}
-
       <textarea
         className="admin-modal-textarea"
         value={value ?? ""}
@@ -450,253 +450,6 @@ function CardRatioEditor({ options, onChange, disabled, total }) {
   );
 }
 
-function DatePicker({ label, value, onChange, isOpen, onOpenChange }) {
-  const [viewDate, setViewDate] = useState(() => {
-    if (value) {
-      const [year, month, day] = value.split("-").map(Number);
-
-      if (year && month && day) {
-        return new Date(year, month - 1, day);
-      }
-    }
-
-    return new Date();
-  });
-
-  const wrapperRef = useRef(null);
-
-  // Close this calendar when clicking outside of it.
-  useEffect(() => {
-    const handleOutsideClick = (event) => {
-      if (
-        isOpen &&
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target)
-      ) {
-        onOpenChange(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleOutsideClick);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
-  }, [isOpen, onOpenChange]);
-
-  // When the selected value changes, move the calendar
-  // to the selected date's month.
-  useEffect(() => {
-    if (value) {
-      const [year, month, day] = value.split("-").map(Number);
-
-      if (year && month && day) {
-        setViewDate(new Date(year, month - 1, 1));
-      }
-    }
-  }, [value]);
-
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const days = [];
-
-  for (let i = 0; i < firstDay; i += 1) {
-    days.push(null);
-  }
-
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    days.push(day);
-  }
-
-  const selectedDate = value
-    ? (() => {
-        const [y, m, d] = value.split("-").map(Number);
-
-        return y && m && d ? new Date(y, m - 1, d) : null;
-      })()
-    : null;
-
-  const today = new Date();
-
-  const isSameDate = (a, b) =>
-    a &&
-    b &&
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-
-  const formatDate = (date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-      2,
-      "0",
-    )}-${String(date.getDate()).padStart(2, "0")}`;
-
-  const displayValue = selectedDate
-    ? selectedDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "";
-
-  const selectDay = (day) => {
-    onChange(formatDate(new Date(year, month, day)));
-
-    // Close this calendar after selecting a date.
-    onOpenChange(false);
-  };
-
-  return (
-    <div
-      className="admin-modal-field custom-date-picker"
-      ref={wrapperRef}
-    >
-      <span className="admin-modal-label">{label}</span>
-
-      <button
-        type="button"
-        className={`custom-date-input${isOpen ? " is-open" : ""}${
-          value ? " has-value" : ""
-        }`}
-        onClick={() => onOpenChange(!isOpen)}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen}
-      >
-        <span>{displayValue || "Select date..."}</span>
-
-        <span
-          className="custom-date-calendar-icon"
-          aria-hidden="true"
-        >
-          📅
-        </span>
-      </button>
-
-      {isOpen && (
-        <div
-          className="custom-date-calendar"
-          role="dialog"
-          aria-label={label}
-        >
-          <div className="custom-date-calendar-header">
-            <button
-              type="button"
-              className="custom-date-nav"
-              onClick={() =>
-                setViewDate(new Date(year, month - 1, 1))
-              }
-              aria-label="Previous month"
-            >
-              ‹
-            </button>
-
-            <strong>
-              {viewDate.toLocaleDateString("en-US", {
-                month: "long",
-                year: "numeric",
-              })}
-            </strong>
-
-            <button
-              type="button"
-              className="custom-date-nav"
-              onClick={() =>
-                setViewDate(new Date(year, month + 1, 1))
-              }
-              aria-label="Next month"
-            >
-              ›
-            </button>
-          </div>
-
-          <div className="custom-date-weekdays">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-              (day) => (
-                <span key={day}>{day}</span>
-              ),
-            )}
-          </div>
-
-          <div className="custom-date-grid">
-            {days.map((day, index) =>
-              day === null ? (
-                <span
-                  key={`empty-${index}`}
-                  className="custom-date-empty"
-                />
-              ) : (
-                <button
-                  key={day}
-                  type="button"
-                  className={`custom-date-day${
-                    selectedDate &&
-                    isSameDate(
-                      new Date(year, month, day),
-                      selectedDate,
-                    )
-                      ? " selected"
-                      : ""
-                  }${
-                    isSameDate(
-                      new Date(year, month, day),
-                      today,
-                    )
-                      ? " today"
-                      : ""
-                  }`}
-                  onClick={() => selectDay(day)}
-                >
-                  {day}
-                </button>
-              ),
-            )}
-          </div>
-
-          <div className="custom-date-calendar-footer">
-            <button
-              type="button"
-              className="custom-date-clear"
-              onClick={() => {
-                onChange("");
-                onOpenChange(false);
-              }}
-            >
-              Clear
-            </button>
-
-            <button
-              type="button"
-              className="custom-date-today"
-              onClick={() => {
-                const current = new Date();
-
-                onChange(formatDate(current));
-
-                setViewDate(
-                  new Date(
-                    current.getFullYear(),
-                    current.getMonth(),
-                    1,
-                  ),
-                );
-
-                onOpenChange(false);
-              }}
-            >
-              Today
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
 const EditDeckModal = forwardRef(function EditDeckModal(
   {
     deck,
@@ -710,9 +463,9 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   ref,
 ) {
   const [cardsError, setCardsError] = useState("");
-  const [openDatePicker, setOpenDatePicker] = useState(null);
   const cardsInitializedRef = useRef(false);
   const initializedDeckRef = useRef("");
+  const originalFormRef = useRef(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -726,10 +479,9 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     cost: "",
     inspiration: "",
     optimization: "",
-    suggested_date: "",
-    updated_date: "",
     deck_doc: "",
     cards: "",
+    suggested_date: "",
     categorySelected: [],
     archetypeSelected: [],
     cardsSelected: [],
@@ -741,6 +493,7 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     if (!deck) {
       initializedDeckRef.current = "";
       cardsInitializedRef.current = false;
+      originalFormRef.current = null;
       return;
     }
 
@@ -750,10 +503,9 @@ const EditDeckModal = forwardRef(function EditDeckModal(
 
     initializedDeckRef.current = deckIdentity;
     cardsInitializedRef.current = false;
-
     setCardsError("");
 
-    setForm({
+    const initialForm = {
       name: deck?.name ?? "",
       hero: deck?.hero ?? "",
       side: normalizeSide(deck?.side ?? ""),
@@ -762,16 +514,35 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       description: deck?.description ?? "",
       image: deck?.image ?? "",
       creator: deck?.creator ?? "",
+      cost: deck?.cost ?? "",
       inspiration: deck?.inspiration ?? "",
       optimization: deck?.optimization ?? "",
-      suggested_date: deck?.suggested_date ?? "",
-      updated_date: deck?.updated_date ?? "",
       deck_doc: deck?.deck_doc ?? "",
       cards: deck?.cards ?? "",
+      suggested_date: deck?.suggested_date ?? "",
       categorySelected: valuesToOptions(deck?.category ?? ""),
       archetypeSelected: valuesToOptions(deck?.archetype ?? ""),
       cardsSelected: [],
-    });
+    };
+
+    originalFormRef.current = {
+      name: String(initialForm.name ?? "").trim(),
+      hero: String(initialForm.hero ?? "").trim(),
+      side: normalizeSide(initialForm.side),
+      category: optionsToCombinedValue(initialForm.categorySelected),
+      archetype: optionsToCombinedValue(initialForm.archetypeSelected),
+      description: String(initialForm.description ?? ""),
+      image: String(initialForm.image ?? "").trim(),
+      creator: String(initialForm.creator ?? "").trim(),
+      cost: String(initialForm.cost ?? ""),
+      inspiration: String(initialForm.inspiration ?? ""),
+      optimization: String(initialForm.optimization ?? ""),
+      deck_doc: String(initialForm.deck_doc ?? "").trim(),
+      cards: String(initialForm.cards ?? "").trim(),
+      suggested_date: String(initialForm.suggested_date ?? "").trim(),
+    };
+
+    setForm(initialForm);
   }, [deck, deckIdentity]);
 
   useEffect(() => {
@@ -952,10 +723,12 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     () => sumCardRatios(form.cardsSelected),
     [form.cardsSelected],
   );
+
   const calculatedDeckCost = useMemo(
     () => calculateDeckCost(form.cardsSelected, allCards),
     [form.cardsSelected, allCards],
   );
+
   const selectedHero =
     heroOptions.find(
       (option) =>
@@ -1100,11 +873,36 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     setCardsError("");
   }, []);
 
+  const hasActualChanges = useCallback((payload) => {
+    const original = originalFormRef.current;
+
+    if (!original) {
+      return true;
+    }
+
+    return (
+      String(payload.name ?? "").trim() !== original.name ||
+      String(payload.hero ?? "").trim() !== original.hero ||
+      normalizeSide(payload.side) !== original.side ||
+      String(payload.category ?? "").trim() !== original.category ||
+      String(payload.archetype ?? "").trim() !== original.archetype ||
+      String(payload.description ?? "") !== original.description ||
+      String(payload.image ?? "").trim() !== original.image ||
+      String(payload.creator ?? "").trim() !== original.creator ||
+      String(payload.inspiration ?? "") !== original.inspiration ||
+      String(payload.optimization ?? "") !== original.optimization ||
+      String(payload.deck_doc ?? "").trim() !== original.deck_doc ||
+      String(payload.cards ?? "").trim() !== original.cards ||
+      String(payload.cost ?? "") !== String(original.cost ?? "")
+    );
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (typeof onSave !== "function") {
       setCardsError("Save handler is unavailable.");
       return null;
     }
+
     if (!isValidDeckTutorialUrl(form.deck_doc)) {
       setCardsError(
         "Tutorial URL must be a Google Docs, Word, or YouTube link.",
@@ -1133,7 +931,6 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       setCardsError(
         `Card ratios must add up to ${TARGET_CARD_RATIO_TOTAL} (currently ${ratioTotal}).`,
       );
-
       return null;
     }
 
@@ -1167,11 +964,20 @@ const EditDeckModal = forwardRef(function EditDeckModal(
         cost: String(calculatedDeckCost),
         inspiration: form.inspiration ?? "",
         optimization: form.optimization ?? "",
-        suggested_date: form.suggested_date ?? "",
-        updated_date: form.updated_date ?? "",
         deck_doc: form.deck_doc ?? "",
         cards: cardsValue,
+        suggested_date: String(
+          originalFormRef.current?.suggested_date ?? deck?.suggested_date ?? "",
+        ).trim(),
       };
+
+      const changed = hasActualChanges(payload);
+
+      if (changed) {
+        payload.updated_date = getTodayDate();
+      } else if (deck?.updated_date) {
+        payload.updated_date = deck.updated_date;
+      }
 
       const result = await onSave(deck, payload);
 
@@ -1187,9 +993,7 @@ const EditDeckModal = forwardRef(function EditDeckModal(
       return result;
     } catch (error) {
       console.error("Failed to save deck:", error);
-
       setCardsError(error?.message || "Failed to save deck.");
-
       return null;
     } finally {
       onSavingChange?.(false);
@@ -1204,6 +1008,8 @@ const EditDeckModal = forwardRef(function EditDeckModal(
     form,
     cardOptions,
     normalizedFormSide,
+    calculatedDeckCost,
+    hasActualChanges,
   ]);
 
   useImperativeHandle(
@@ -1338,24 +1144,6 @@ const EditDeckModal = forwardRef(function EditDeckModal(
             label="Inspiration"
             value={form.inspiration}
             onChange={(value) => handleChange("inspiration", value)}
-          />
-
-          <DatePicker
-            label="Suggested Date"
-            value={form.suggested_date}
-            onChange={(value) => handleChange("suggested_date", value)}
-            isOpen={openDatePicker === "suggested"}
-            onOpenChange={(open) =>
-              setOpenDatePicker(open ? "suggested" : null)
-            }
-          />
-
-          <DatePicker
-            label="Updated Date"
-            value={form.updated_date}
-            onChange={(value) => handleChange("updated_date", value)}
-            isOpen={openDatePicker === "updated"}
-            onOpenChange={(open) => setOpenDatePicker(open ? "updated" : null)}
           />
 
           <AdminModalField

@@ -966,6 +966,7 @@ function AdminDecklists() {
             onComplete={() => {
               setAddingDeck(false);
             }}
+            adminForm={true}
           />
         )}
 

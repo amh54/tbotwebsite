@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-
 import { useSearchParams } from "react-router-dom";
-
 import AddDeckModal from "./AddDeckModal";
 import EditDeckModal from "./EditDeckModal";
-
 import "../css/deckmodal.css";
 
 const HERO_COLORS = {
@@ -40,11 +37,9 @@ const normalizeHeroName = (hero) =>
 
 const getHeroColors = (hero) => {
   const normalizedHero = normalizeHeroName(hero);
-
   const entry = Object.entries(HERO_COLORS).find(
     ([name]) => normalizeHeroName(name) === normalizedHero,
   );
-
   return entry?.[1] || ["default", "default"];
 };
 
@@ -160,6 +155,7 @@ const formatCost = (value) => {
 
   return raw;
 };
+
 const formatDeckDate = (value) => {
   if (!value) {
     return "";
@@ -177,6 +173,7 @@ const formatDeckDate = (value) => {
     year: "numeric",
   });
 };
+
 const toExternalUrl = (value) => {
   const raw = String(value || "").trim();
 
@@ -248,21 +245,6 @@ const formatCardsDisplay = (value) => {
   return entries.map((entry) => `${entry.name} x${entry.count}`).join(", ");
 };
 
-/*
- * Keep all deck-share formats compatible:
- *
- * Old:
- *   ?deck=123
- *
- * New:
- *   ?deck=deck-name-123
- *
- * Public profile:
- *   /profile/user-name?deck=deck-name-123
- *
- * Private profile:
- *   /deck/user-name/deck-name-123
- */
 const normalizeDeckShareValue = (value) => {
   try {
     return decodeURIComponent(String(value || "").trim()).toLowerCase();
@@ -278,6 +260,7 @@ function DeckCard({
   admin = false,
   adminMode = false,
   addMode = false,
+  adminForm = false,
   onDelete,
   onSave,
   onAdd,
@@ -293,9 +276,7 @@ function DeckCard({
   showSuggestDeck = false,
 }) {
   const deck = decklist ?? {};
-
   const isAdmin = admin || adminMode;
-
   const [heroColor1, heroColor2] = getHeroColors(deck.hero);
 
   const deckId = deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? "";
@@ -308,12 +289,6 @@ function DeckCard({
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-  /*
-   * This is the canonical new share key.
-   *
-   * We intentionally keep deckKey as the raw ID because existing
-   * shared links using ?deck=123 must continue to work.
-   */
   const shareDeckKey = deckName ? `${deckName}-${deckKey}` : deckKey;
 
   const isDeckUrlMatch = (urlDeck) => {
@@ -333,24 +308,17 @@ function DeckCard({
   };
 
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [open, setOpen] = useState(addMode);
   const [editing, setEditing] = useState(false);
-
   const [imgError, setImgError] = useState(false);
-
   const [copied, setCopied] = useState(false);
-
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState("");
   const [editImgError, setEditImgError] = useState(false);
   const [editSavingLocal, setEditSavingLocal] = useState(false);
-
   const editModalRef = useRef(null);
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [checkingLogin, setCheckingLogin] = useState(true);
-
   const [suggesting, setSuggesting] = useState(false);
   const [suggestStatus, setSuggestStatus] = useState(null);
   const [suggestMessage, setSuggestMessage] = useState("");
@@ -431,15 +399,6 @@ function DeckCard({
     };
   }, [showSuggestDeck]);
 
-  /*
-   * SHARE-LINK AUTO OPEN
-   *
-   * This supports BOTH:
-   *   ?deck=123
-   *   ?deck=deck-name-123
-   *
-   * It also does not interfere with the normal modal behavior.
-   */
   useEffect(() => {
     if (addMode || autoOpen) {
       setOpen(true);
@@ -519,15 +478,7 @@ function DeckCard({
     }
 
     const next = new URLSearchParams(searchParams);
-
-    /*
-     * Normal clicks use the canonical name-ID share key.
-     *
-     * This does NOT affect old links, because the auto-open matcher
-     * still accepts the raw ID.
-     */
     next.set("deck", shareDeckKey);
-
     setSearchParams(next);
   };
 
@@ -556,14 +507,6 @@ function DeckCard({
       return;
     }
 
-    /*
-     * IMPORTANT:
-     * Remove the URL parameter whether it contains the old ID
-     * or the new name-ID share key.
-     *
-     * The previous version only removed it when it exactly matched
-     * deckKey, which left ?deck=name-id in the URL.
-     */
     const currentDeck = searchParams.get("deck");
 
     if (currentDeck && isDeckUrlMatch(currentDeck)) {
@@ -916,10 +859,6 @@ function DeckCard({
 
     let shareUrl;
 
-    /*
-     * Legacy, normal Decklists, and Deckbuilder pages keep their
-     * existing same-page sharing behavior.
-     */
     if (deckbuilder || decklists || legacy) {
       shareUrl = new URL(window.location.pathname, window.location.origin);
 
@@ -936,10 +875,6 @@ function DeckCard({
             deck.profile_is_public === true ||
             deck.profileIsPublic === true;
 
-      /*
-       * Public profile:
-       * /profile/slug?deck=name-id
-       */
       if (resolvedProfileIsPublic && resolvedProfileSlug) {
         shareUrl = new URL(
           `/profile/${encodeURIComponent(resolvedProfileSlug)}`,
@@ -948,10 +883,6 @@ function DeckCard({
 
         shareUrl.searchParams.set("deck", shareDeckKey);
       } else if (resolvedProfileSlug) {
-        /*
-         * Private profile:
-         * /deck/slug/name-id
-         */
         shareUrl = new URL(
           `/deck/${encodeURIComponent(
             resolvedProfileSlug,
@@ -997,7 +928,6 @@ function DeckCard({
 
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
-
       const link = document.createElement("a");
 
       link.href = blobUrl;
@@ -1044,11 +974,15 @@ function DeckCard({
         onAdd={onAdd}
         onClose={closeModal}
         onComplete={handleAddComplete}
+        isAdmin={adminForm}
       />
     );
   }
 
   const editImage = getImageUrl(editImagePreview);
+
+  const dateLabel =
+    decklists || deckbuilder || legacy || admin ? "Suggested on" : "Added on";
 
   return (
     <>
@@ -1223,9 +1157,10 @@ function DeckCard({
 
                         {hasValue(deck.suggested_date) && (
                           <p>
-                            Suggested on {formatDeckDate(deck.suggested_date)}
+                            {dateLabel} {formatDeckDate(deck.suggested_date)}
                           </p>
                         )}
+
                         {hasValue(deck.updated_date) && (
                           <p>Updated on {formatDeckDate(deck.updated_date)}</p>
                         )}
