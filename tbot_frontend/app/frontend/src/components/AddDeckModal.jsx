@@ -1186,7 +1186,13 @@ function AddDeckModal({
         optimization: String(form.optimization ?? "").trim(),
 
         suggested_date: isAdmin
-          ? String(form.suggested_date ?? "").trim()
+          ? (() => {
+              const value = String(form.suggested_date ?? "").trim();
+              if (!value) return "";
+
+              const [year, month, day] = value.split("-");
+              return `${Number(month)}/${Number(day)}/${String(year).slice(-2)}`;
+            })()
           : getTodayDate(),
 
         deck_doc: String(form.deck_doc ?? "").trim(),
@@ -1481,7 +1487,6 @@ function AddDeckModal({
                         openPicker={openDatePicker}
                         setOpenPicker={setOpenDatePicker}
                       />
-
                     </>
                   )}
 
