@@ -159,37 +159,30 @@ function cardToOg(card) {
     "Unknown Card";
 
   const parts = [];
-
-  // Card type
   if (card.card_type) {
     parts.push(
-      `Type: ${stripDiscordFormatting(card.card_type)}`,
+      `Class: ${stripDiscordFormatting(card.card_type)}`,
     );
   }
 
-  // Plant/Zombie side
   if (card.side) {
     parts.push(
       `Side: ${stripDiscordFormatting(card.side)}`,
     );
   }
 
-  // Cost + attack + health, already supplied by the API
-  // in the stats field.
   if (card.stats) {
     parts.push(
       `Stats: ${stripDiscordFormatting(card.stats)}`,
     );
   }
 
-  // Card description / classification.
   if (card.description) {
     parts.push(
       `Description: ${stripDiscordFormatting(card.description)}`,
     );
   }
 
-  // Ability, when present.
   if (card.ability) {
     parts.push(
       `Ability: ${stripDiscordFormatting(card.ability)}`,
@@ -243,7 +236,6 @@ const RESOLVERS = [
   },
 
   {
-    // /profile/{slug}?deck={key}
     test: (pathname, params) =>
       pathname.startsWith("/profile/") &&
       params.has("deck")
@@ -269,9 +261,6 @@ const RESOLVERS = [
   },
 
   {
-    // /decklists?deck={key}
-    // /legacy-decklists?deck={key}
-    // /deckbuilders/{name}?deck={key}
     test: (pathname, params) => {
       if (!params.has("deck")) return null;
 

@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
+
 import "./css/App.css";
 import "./css/navbar.css";
 
 import { Link, Route, Routes } from "react-router-dom";
+
 import SiteUpdates from "./pages/SiteUpdates";
 import AdminKeepOrScrap from "./pages/admin-keeporscrap.jsx";
 import Tutorial from "./pages/tutorial.jsx";
@@ -31,7 +34,42 @@ import AdminCards from "./pages/admincards";
 import AdminBugReports from "./pages/adminbugreports.jsx";
 import MyBugReports from "./pages/mybugreports.jsx";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 function HomePage() {
+  const [profileSlug, setProfileSlug] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/profile/me/`, {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!cancelled && data?.profile_exists && data?.profile?.profile_slug) {
+          setProfileSlug(data.profile.profile_slug);
+        }
+      } catch {
+        // User may simply not be logged in.
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="home">
       <Navbar />
@@ -48,6 +86,7 @@ function HomePage() {
           cards, learn about heroes, manage your collection, and make better
           decisions while playing Plants vs. Zombies Heroes.
         </p>
+
         <section className="tutorial-link">
           <Link to="/tutorial">New to Tbot? Take the Tutorial →</Link>
         </section>
@@ -166,7 +205,13 @@ function HomePage() {
               to discover your shared decklists.
             </p>
 
-            <Link to="/dashboard">Open Your Dashboard →</Link>
+            {profileSlug ? (
+              <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
+                Manage Your Profile →
+              </Link>
+            ) : (
+              <Link to="/dashboard">Create Your Profile →</Link>
+            )}
           </div>
 
           <div className="quick-answer-card">
@@ -175,12 +220,18 @@ function HomePage() {
             <p>
               You control whether your profile is public or private. A public
               profile gives other players a page where they can view your
-              profile, cards, and decklists. A private profile keeps your
-              profile page from being publicly viewable, while you can still
-              share individual decks directly with others.
+              profile and decklists. A private profile keeps your profile page
+              from being publicly viewable, while you can still share individual
+              decks directly with others.
             </p>
 
-            <Link to="/dashboard">Manage Your Profile →</Link>
+            {profileSlug ? (
+              <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
+                Manage Your Profile →
+              </Link>
+            ) : (
+              <Link to="/dashboard">Create Your Profile →</Link>
+            )}
           </div>
         </div>
       </section>
@@ -207,7 +258,13 @@ function HomePage() {
               decks you create on Tbot.
             </p>
 
-            <Link to="/dashboard">Create or Manage Your Profile →</Link>
+            {profileSlug ? (
+              <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
+                Manage Your Profile →
+              </Link>
+            ) : (
+              <Link to="/dashboard">Create or Manage Your Profile →</Link>
+            )}
           </div>
 
           <div className="quick-answer-card">
@@ -233,7 +290,13 @@ function HomePage() {
               publicly browsed.
             </p>
 
-            <Link to="/dashboard">Manage Profile Visibility →</Link>
+            {profileSlug ? (
+              <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
+                Manage Profile Visibility →
+              </Link>
+            ) : (
+              <Link to="/dashboard">Create Your Profile →</Link>
+            )}
           </div>
 
           <div className="quick-answer-card">
@@ -412,8 +475,7 @@ function HomePage() {
 
             <p>
               A public profile gives other players access to your profile page,
-              where they can browse your profile information, personal decks,
-              and card collection through your profile.
+              where they can browse your profile information and personal decks.
             </p>
           </div>
 
@@ -618,7 +680,9 @@ function App() {
         <Route path="/privacypolicy" element={<Privacy />} />
 
         <Route path="/users" element={<Users />} />
+
         <Route path="/tutorial" element={<Tutorial />} />
+
         <Route path="/deckbuilders" element={<Deckbuilders />} />
 
         <Route path="/admin/cards" element={<AdminCards />} />
@@ -653,7 +717,9 @@ function App() {
         <Route path="/dashboard/card-manager" element={<UserCardManager />} />
 
         <Route path="/my-bug-reports" element={<MyBugReports />} />
+
         <Route path="/updates" element={<SiteUpdates />} />
+
         <Route path="/admin" element={<Admin />} />
 
         <Route path="/admin/decklists" element={<AdminDecklists />} />
@@ -666,7 +732,6 @@ function App() {
 
         <Route path="/admin/user-decks" element={<AdminUserDecks />} />
 
-        {/* 404 */}
         <Route
           path="*"
           element={
