@@ -4,6 +4,7 @@ from .models import (
     Decklist,
     WebCards,
     KeepOrScrap,
+    SiteUpdate
 )
 
 
@@ -77,4 +78,32 @@ class KeepOrScrapAdmin(admin.ModelAdmin):
     list_filter = (
         "side",
         "card_class",
+    )
+@admin.register(SiteUpdate)
+class SiteUpdateAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "category",
+        "published",
+        "published_at",
+        "updated_at",
+    )
+
+    list_filter = (
+        "category",
+        "published",
+    )
+
+    search_fields = (
+        "title",
+        "content",
+    )
+
+    prepopulated_fields = {
+        "slug": ("title",),
+    }
+
+    ordering = (
+        "-published_at",
+        "-created_at",
     )

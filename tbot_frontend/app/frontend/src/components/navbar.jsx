@@ -10,6 +10,7 @@ const NAVIGATION = [
       { label: "Home", path: "/" },
       {label: "Tutorial", path: "/tutorial"},
       {label: "Site Donations", path: "https://buymeacoffee.com/pvzhtbot"},
+      { label: "Site Updates", path: "/updates" },
       { label: "Users", path: "/users" },
       { label: "Terms of Service", path: "/termsofservice" },
       { label: "Privacy Policy", path: "/privacypolicy" },

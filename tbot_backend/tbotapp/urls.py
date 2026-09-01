@@ -6,7 +6,7 @@ from .views.decklists import (
     legacy_decklist_count,
     decklist_count,
 )
-
+from .views.site_updates import site_updates
 from .views.cards import (
     card_info,
     card_count,
@@ -464,4 +464,5 @@ urlpatterns = [
         user_card_delete,
         name="user_card_delete",
     ),
+    path("site-updates/", site_updates, name="site-updates"),
 ]

@@ -2,7 +2,7 @@ import "./css/App.css";
 import "./css/navbar.css";
 
 import { Link, Route, Routes } from "react-router-dom";
-
+import SiteUpdates from "./pages/SiteUpdates";
 import AdminKeepOrScrap from "./pages/admin-keeporscrap.jsx";
 import Tutorial from "./pages/tutorial.jsx";
 import StandaloneDeckPage from "./pages/standalonedeck.jsx";
@@ -653,7 +653,7 @@ function App() {
         <Route path="/dashboard/card-manager" element={<UserCardManager />} />
 
         <Route path="/my-bug-reports" element={<MyBugReports />} />
-
+        <Route path="/updates" element={<SiteUpdates />} />
         <Route path="/admin" element={<Admin />} />
 
         <Route path="/admin/decklists" element={<AdminDecklists />} />
