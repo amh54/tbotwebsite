@@ -3,10 +3,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Navbar from "../components/navbar";
+
 import Footer from "../components/footer";
 
 import "../css/users.css";
+
 import "../css/navbar.css";
+
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
@@ -51,7 +54,6 @@ const readSessionCache = (key, fallback) => {
     return JSON.parse(value);
   } catch (error) {
     console.warn(`Unable to read session cache "${key}":`, error);
-
     return fallback;
   }
 };
@@ -76,7 +78,6 @@ const getDiscordAvatarUrl = (profile) => {
     if (discordId) {
       try {
         const numericId = BigInt(discordId);
-
         const defaultAvatarIndex = Number((numericId >> 22n) % 6n);
 
         return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
@@ -111,7 +112,6 @@ const getDiscordAvatarUrl = (profile) => {
 
 function Users() {
   const initialProfiles = readSessionCache(STORAGE_KEYS.profiles, []);
-
   const initialUserCount = readSessionCache(STORAGE_KEYS.userCount, null);
 
   const hasCachedProfiles =
@@ -126,9 +126,7 @@ function Users() {
   );
 
   const [search, setSearch] = useState("");
-
   const [loading, setLoading] = useState(!hasCachedProfiles);
-
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -162,12 +160,10 @@ function Users() {
         }
 
         const data = await response.json();
-
         const count = Number(data?.count);
 
         if (Number.isFinite(count) && count >= 0) {
           setTotalUsers(count);
-
           writeSessionCache(STORAGE_KEYS.userCount, count);
         }
       } catch (err) {
@@ -230,7 +226,6 @@ function Users() {
 
         if (totalUsers === null || totalUsers === 0) {
           setTotalUsers(results.length);
-
           writeSessionCache(STORAGE_KEYS.userCount, results.length);
         }
 
@@ -249,7 +244,6 @@ function Users() {
         }
 
         setError(err.message || "Unable to load users right now.");
-
         setLoading(false);
       }
     };
@@ -301,11 +295,8 @@ function Users() {
 
     return sortedProfiles.filter((profile) => {
       const displayName = normalizeText(profile.display_name).toLowerCase();
-
       const username = normalizeText(profile.username).toLowerCase();
-
       const profileSlug = normalizeText(profile.profile_slug).toLowerCase();
-
       const bio = normalizeText(profile.bio).toLowerCase();
 
       return (
@@ -377,7 +368,6 @@ function Users() {
         {error ? (
           <div className="users-error">
             <h2>Unable to load users</h2>
-
             <p>{error}</p>
           </div>
         ) : filteredProfiles.length === 0 ? (
@@ -402,18 +392,16 @@ function Users() {
                 "Tbot User";
 
               const username = normalizeText(profile.username);
-
               const profileSlug = normalizeText(profile.profile_slug);
-
               const bio = normalizeText(profile.bio);
-
               const avatar = getDiscordAvatarUrl(profile);
 
-              return (
-                <article
-                  className="user-card"
-                  key={profile.id || profile.profile_slug || profile.username}
-                >
+              const profileUrl = profileSlug
+                ? `/profile/${encodeURIComponent(profileSlug)}`
+                : null;
+
+              const cardContent = (
+                <>
                   <div className="user-card-top">
                     <div className="user-avatar">
                       {avatar ? (
@@ -435,7 +423,6 @@ function Users() {
 
                                 if (event.currentTarget.src !== fallbackUrl) {
                                   event.currentTarget.src = fallbackUrl;
-
                                   return;
                                 }
                               } catch {}
@@ -447,7 +434,6 @@ function Users() {
 
                             if (parent) {
                               parent.classList.add("user-avatar-fallback");
-
                               parent.textContent = displayName
                                 .charAt(0)
                                 .toUpperCase();
@@ -479,21 +465,24 @@ function Users() {
                       </p>
                     )}
                   </div>
+                </>
+              );
 
-                  <div className="user-card-actions">
-                    {profileSlug ? (
-                      <Link
-                        to={`/profile/${encodeURIComponent(profileSlug)}`}
-                        className="user-profile-button"
-                      >
-                        View Profile
-                      </Link>
-                    ) : (
-                      <span className="user-card-unavailable">
-                        Profile link unavailable
-                      </span>
-                    )}
-                  </div>
+              return profileUrl ? (
+                <Link
+                  key={profile.id || profile.profile_slug || profile.username}
+                  to={profileUrl}
+                  className="user-card user-card-link"
+                  aria-label={`View ${displayName}'s profile`}
+                >
+                  {cardContent}
+                </Link>
+              ) : (
+                <article
+                  className="user-card"
+                  key={profile.id || profile.profile_slug || profile.username}
+                >
+                  {cardContent}
                 </article>
               );
             })}

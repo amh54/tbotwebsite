@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+
 import AddDeckModal from "./AddDeckModal";
 import EditDeckModal from "./EditDeckModal";
 import "../css/deckmodal.css";
@@ -37,9 +38,11 @@ const normalizeHeroName = (hero) =>
 
 const getHeroColors = (hero) => {
   const normalizedHero = normalizeHeroName(hero);
+
   const entry = Object.entries(HERO_COLORS).find(
     ([name]) => normalizeHeroName(name) === normalizedHero,
   );
+
   return entry?.[1] || ["default", "default"];
 };
 
@@ -288,6 +291,7 @@ function DeckCard({
   showSuggestDeck = false,
 }) {
   const deck = decklist ?? {};
+
   const isAdmin = admin || adminMode;
   const [heroColor1, heroColor2] = getHeroColors(deck.hero);
 
@@ -320,17 +324,23 @@ function DeckCard({
   };
 
   const [searchParams, setSearchParams] = useSearchParams();
+
   const [open, setOpen] = useState(addMode);
   const [editing, setEditing] = useState(false);
+
   const [imgError, setImgError] = useState(false);
   const [copied, setCopied] = useState(false);
+
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState("");
   const [editImgError, setEditImgError] = useState(false);
   const [editSavingLocal, setEditSavingLocal] = useState(false);
+
   const editModalRef = useRef(null);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [checkingLogin, setCheckingLogin] = useState(true);
+
   const [suggesting, setSuggesting] = useState(false);
   const [suggestStatus, setSuggestStatus] = useState(null);
   const [suggestMessage, setSuggestMessage] = useState("");
@@ -603,11 +613,7 @@ function DeckCard({
   };
 
   const handleSuggestDeck = async () => {
-    if (!showSuggestDeck) {
-      return;
-    }
-
-    if (suggesting) {
+    if (!showSuggestDeck || suggesting) {
       return;
     }
 
@@ -765,6 +771,7 @@ function DeckCard({
       );
     } catch (error) {
       console.error("Unable to suggest deck:", error);
+
       setSuggestStatus("error");
       setSuggestMessage("Unable to connect to the server. Please try again.");
     } finally {
@@ -864,11 +871,7 @@ function DeckCard({
   }, [showSuggestDeck, isLoggedIn, suggestionId, suggestStatus]);
 
   const handleShare = async () => {
-    if (isAdmin) {
-      return;
-    }
-
-    if (!deckKey) {
+    if (isAdmin || !deckKey) {
       return;
     }
 
@@ -943,6 +946,7 @@ function DeckCard({
 
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
+
       const link = document.createElement("a");
 
       link.href = blobUrl;
@@ -1001,14 +1005,22 @@ function DeckCard({
 
   return (
     <>
-      <div className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}>
-        <div
-          className="deck-card-image-only"
-          onClick={openModal}
-          style={{
-            cursor: "pointer",
-          }}
-        >
+      <div
+        className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}
+        onClick={openModal}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openModal();
+          }
+        }}
+        style={{
+          cursor: "pointer",
+        }}
+      >
+        <div className="deck-card-image-only">
           {deckImage && !imgError ? (
             <img
               src={deckImage}
@@ -1018,18 +1030,6 @@ function DeckCard({
           ) : (
             <div className="deck-image-placeholder">No image</div>
           )}
-
-          <button
-            type="button"
-            className="view-details-btn"
-            onClick={(event) => {
-              event.stopPropagation();
-              openModal();
-            }}
-            aria-label={`View details for ${deck.name || "deck"}`}
-          >
-            View Details
-          </button>
         </div>
 
         <div className="deck-listing-info">

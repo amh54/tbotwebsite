@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+
 import Select from "react-select";
+
 import CardModal from "../components/cardmodal";
 
 import "../css/cardinfo.css";
@@ -25,9 +27,12 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
 const CARD_CACHE_KEY = "tbot_card_info_cache";
+
 let cardCountMemoryCache = null;
 let cardInfoMemoryCache = null;
+
 const STAT_ICON_LINKS = {
   cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
   strength: "https://i.ibb.co/GQt785K6/strength.webp",
@@ -243,7 +248,7 @@ const extractTribes = (description, side = "", cardType = "") => {
 
   const cleaned = removeDiscordEmojis(source)
     .replace(/\*\*/g, "")
-    .replace(/__/g, "")
+    .replace(/\_\_/g, "")
     .trim();
 
   const tribes = [];
@@ -339,6 +344,7 @@ const getCardTypes = (card) => {
   const descriptionValue = normalizeText(
     removeDiscordEmojis(card?.description || ""),
   );
+
   if (/\bplants?\b/.test(descriptionValue)) {
     addType("Plants");
   }
@@ -403,6 +409,7 @@ const getRarityName = (setRarity) => {
 
 const getCardStats = (stats) => {
   const cleanStats = removeDiscordEmojis(stats).replace(/\s+/g, " ").trim();
+
   const numbers = cleanStats.match(/\d+/g) || [];
 
   return {
@@ -414,7 +421,6 @@ const getCardStats = (stats) => {
 
 const isHeroCard = (card) => {
   const rarity = normalizeText(getRarityName(card?.set_rarity));
-
   return rarity === "hero";
 };
 
@@ -423,7 +429,6 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
     value !== null && value !== undefined && String(value).trim() !== "";
 
   const getInitialCards = () => {
-    // User collection data must always come from the parent.
     if (userCollection) {
       return providedCards
         .filter((userCard) => userCard.card)
@@ -434,12 +439,10 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         }));
     }
 
-    // First use the in-memory cache.
     if (Array.isArray(cardInfoMemoryCache) && cardInfoMemoryCache.length > 0) {
       return cardInfoMemoryCache;
     }
 
-    // Then try sessionStorage.
     try {
       const cachedCards = sessionStorage.getItem(CARD_CACHE_KEY);
 
@@ -466,10 +469,8 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
     !userCollection && initialCards.length === 0,
   );
   const [selectedCard, setSelectedCard] = useState(null);
-
   const [side, setSide] = useState("Plants");
   const [search, setSearch] = useState("");
-
   const [typeFilter, setTypeFilter] = useState([]);
   const [classFilter, setClassFilter] = useState([]);
   const [costFilter, setCostFilter] = useState([]);
@@ -779,7 +780,6 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
           {traitNames.map((trait, index) => (
             <span key={`${trait}-${index}`} className="trait-rendered-item">
               <u>{trait}</u>
-
               {index < traitNames.length - 1 && ", "}
             </span>
           ))}
@@ -798,7 +798,7 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         const textBeforeIcon = rawText
           .slice(lastIndex, matchIndex)
           .replace(/\*\*/g, "")
-          .replace(/__/g, "")
+          .replace(/\_\_/g, "")
           .trim();
 
         if (textBeforeIcon) {
@@ -830,7 +830,7 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
       const remainingText = rawText
         .slice(lastIndex)
         .replace(/\*\*/g, "")
-        .replace(/__/g, "")
+        .replace(/\_\_/g, "")
         .trim();
 
       if (remainingText) {
@@ -854,7 +854,6 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
     if (value.length > maxLength) {
       let cut = value.slice(0, maxLength);
-
       const lastEmojiStart = cut.lastIndexOf("<:");
       const lastEmojiEnd = cut.lastIndexOf(">");
 
@@ -866,7 +865,7 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
     }
 
     const pattern =
-      /(<:[^:>]+:\d+>)|(\*\*__[\s\S]*?__\*\*)|(__\*\*[\s\S]*?\*\*__)|(\*\*[\s\S]*?\*\*)|(__[\s\S]*?__)/gi;
+      /(<:[^:>]+:\d+>)|(\*\*\_\_[\s\S]*?\_\_\*\*)|(\_\_\*\*[\s\S]*?\*\*\_\_)|(\*\*[\s\S]*?\*\*)|(\_\_[\s\S]*?\_\_)/gi;
 
     const matches = [...value.matchAll(pattern)];
 
@@ -964,6 +963,23 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
     return 2;
   };
+
+  const openCardModal = (card) => {
+    setSelectedCard(card);
+
+    const url = new URL(window.location.href);
+
+    url.searchParams.set("card", card.card_name);
+
+    window.history.pushState(
+      {
+        card: card.card_name,
+      },
+      "",
+      url,
+    );
+  };
+
   useEffect(() => {
     if (cardCountMemoryCache !== null) {
       setTotalCards(cardCountMemoryCache);
@@ -987,11 +1003,9 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         }
 
         const data = await response.json();
-
         const count = Number(data?.count) || 0;
 
         cardCountMemoryCache = count;
-
         setTotalCards(count);
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -1004,13 +1018,12 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
     return () => controller.abort();
   }, []);
+
   useEffect(() => {
     if (userCollection) {
       return;
     }
 
-    // Cards already exist in memory/sessionStorage.
-    // Do not fetch them again.
     if (cards.length > 0) {
       setLoading(false);
       return;
@@ -1067,13 +1080,10 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         }
 
         const data = JSON.parse(responseText);
-
         const loadedCards = Array.isArray(data) ? data : [];
 
-        // Store in memory.
         cardInfoMemoryCache = loadedCards;
 
-        // Store in sessionStorage.
         try {
           sessionStorage.setItem(CARD_CACHE_KEY, JSON.stringify(loadedCards));
         } catch (error) {
@@ -1133,7 +1143,6 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
     };
 
     const initialParams = new URLSearchParams(window.location.search);
-
     const initialMatch = findCardByQuery(initialParams.get("card"));
 
     if (initialMatch) {
@@ -1142,7 +1151,6 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
-
       const match = findCardByQuery(params.get("card"));
 
       setSelectedCard(match);
@@ -1152,8 +1160,10 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
     return () => window.removeEventListener("popstate", handlePopState);
   }, [cards]);
+
   useEffect(() => {
     document.title = "Card Info";
+
     return () => {
       document.title = "Tbot";
     };
@@ -1161,11 +1171,6 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
   const normalCards = useMemo(() => {
     return cards.filter((card) => {
-      console.log("CARD:", card.card_name);
-      console.log("SIDE:", card.side);
-      console.log("RARITY:", card.set_rarity);
-      console.log("IS HERO:", isHeroCard(card));
-
       const cardSide = normalizeText(card?.side);
       const selectedSide = normalizeText(side);
 
@@ -1177,8 +1182,6 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
           : cardSide === "zombie" ||
             cardSide === "zombies" ||
             cardSide.includes("zombie");
-
-      console.log("SIDE MATCH:", sideMatches);
 
       if (!sideMatches) {
         return false;
@@ -1277,21 +1280,13 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
     return {
       classes: [...classes].sort((a, b) => a.localeCompare(b)),
-
       types: sortedTypes,
-
       costs: [...costs].sort((a, b) => a - b),
-
       attacks: [...attacks].sort((a, b) => a - b),
-
       healths: [...healths].sort((a, b) => a - b),
-
       keywords: [...keywords.values()].sort((a, b) => a.localeCompare(b)),
-
       tribes: sortedTribes,
-
       sets: [...sets].sort((a, b) => a.localeCompare(b)),
-
       rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
     };
   }, [normalCards]);
@@ -1352,17 +1347,14 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         borderColor: "#8fe38b",
       },
     }),
-
     menuPortal: (base) => ({
       ...base,
       zIndex: 9999,
     }),
-
     menu: (base) => ({
       ...base,
       backgroundColor: "#202020",
     }),
-
     menuList: (base) => ({
       ...base,
       scrollbarWidth: "none",
@@ -1371,24 +1363,20 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         display: "none",
       },
     }),
-
     option: (base, state) => ({
       ...base,
       backgroundColor: state.isFocused ? "#333" : "#202020",
       color: "white",
       cursor: "pointer",
     }),
-
     multiValue: (base) => ({
       ...base,
       backgroundColor: "#333",
     }),
-
     multiValueLabel: (base) => ({
       ...base,
       color: "white",
     }),
-
     multiValueRemove: (base) => ({
       ...base,
       color: "#aaa",
@@ -1397,17 +1385,14 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         color: "white",
       },
     }),
-
     singleValue: (base) => ({
       ...base,
       color: "white",
     }),
-
     placeholder: (base) => ({
       ...base,
       color: "#888",
     }),
-
     input: (base) => ({
       ...base,
       color: "white",
@@ -1437,21 +1422,8 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
 
     const result = normalCards.filter((card) => {
       const stats = getCardStats(card.stats);
-
       const cardClasses = getClassNames(card.card_type);
       const cardTypes = getCardTypes(card);
-      console.log(
-        "TYPE DEBUG:",
-        card.card_name,
-        "side:",
-        card.side,
-        "description:",
-        card.description,
-        "types:",
-        cardTypes,
-        "selected:",
-        selectedTypes,
-      );
       const cardKeywords = getCardKeywords(card);
 
       const cardTribes = extractTribes(
@@ -1565,13 +1537,13 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
     });
 
     return result.sort((a, b) => {
-      // Cards matching more of the selected filter values come first.
       const getFilterMatchScore = (card) => {
         let score = 0;
 
         const cardClasses = getClassNames(card.card_type);
         const cardTypes = getCardTypes(card);
         const cardKeywords = getCardKeywords(card);
+
         const cardTribes = extractTribes(
           card.description,
           card.side,
@@ -1592,7 +1564,6 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
           ).length;
         };
 
-        // More matching selected values = higher priority.
         score += countMatches(selectedClasses, cardClasses);
         score += countMatches(selectedTypes, cardTypes);
         score += countMatches(selectedKeywords, cardKeywords);
@@ -1611,12 +1582,14 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         ).length;
 
         const cardSet = getSetName(card.set_rarity);
+
         score += selectedSets.filter(
           (selected) =>
             normalizeText(cardSet) === normalizeText(selected.value),
         ).length;
 
         const cardRarity = getRarityName(card.set_rarity);
+
         score += selectedRarities.filter(
           (selected) =>
             normalizeText(cardRarity) === normalizeText(selected.value),
@@ -1628,12 +1601,10 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
       const aScore = getFilterMatchScore(a);
       const bScore = getFilterMatchScore(b);
 
-      // Higher match score first.
       if (aScore !== bScore) {
         return bScore - aScore;
       }
 
-      // Existing sorting below this point.
       const groupDifference = getCardGroup(a) - getCardGroup(b);
 
       if (groupDifference !== 0) {
@@ -1685,11 +1656,7 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
     setFilter,
     rarityFilter,
   ]);
-  useEffect(() => {
-    console.log("CARDS STATE:", cards);
-    console.log("NORMAL CARDS:", normalCards);
-    console.log("FILTERED CARDS:", filteredCards);
-  }, [cards, normalCards, filteredCards]);
+
   const clearFilters = () => {
     setSearch("");
     setTypeFilter([]);
@@ -1918,6 +1885,15 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
                   className="card-item"
                   data-rarity={getRarityName(card.set_rarity)}
                   key={card.cardid}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openCardModal(card)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openCardModal(card);
+                    }
+                  }}
                 >
                   <div className="card-item-media">
                     <img
@@ -1993,27 +1969,6 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
                         </span>
                       </p>
                     )}
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedCard(card);
-
-                        const url = new URL(window.location.href);
-
-                        url.searchParams.set("card", card.card_name);
-
-                        window.history.pushState(
-                          {
-                            card: card.card_name,
-                          },
-                          "",
-                          url,
-                        );
-                      }}
-                    >
-                      View Details
-                    </button>
                   </div>
                 </div>
               ))}

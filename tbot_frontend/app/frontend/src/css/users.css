@@ -9,7 +9,20 @@
   margin: 0 auto;
   padding: 50px 0 70px;
 }
+.user-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
 
+.user-card-link:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+.user-card-link .user-card {
+  cursor: pointer;
+}
 .users-header {
   display: flex;
   align-items: flex-end;
@@ -80,10 +93,7 @@
 
 .users-grid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(300px, 1fr)
-  );
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
 }
 

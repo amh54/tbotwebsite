@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+
 import "../css/keeporscrap.css";
 import "../css/loading.css";
+
 import ReactMarkdown from "react-markdown";
+
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 
@@ -34,11 +37,13 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
 let keepOrScrapCache = {
   loaded: false,
   entries: [],
   totalEntries: null,
 };
+
 const SIDES = [
   {
     key: "Intro",
@@ -64,6 +69,7 @@ const isIntroEntry = (entry) => {
 
   return sideValue === "intro" || sideValue === "intro/explanation";
 };
+
 const renderBoldText = (text) => {
   if (!hasValue(text)) {
     return null;
@@ -93,7 +99,6 @@ const renderBoldText = (text) => {
 
     if (matchIndex > lastIndex) {
       const textBefore = rawText.slice(lastIndex, matchIndex);
-
       const lines = textBefore.split(/\r?\n/);
 
       lines.forEach((line, lineIndex) => {
@@ -125,6 +130,7 @@ const renderBoldText = (text) => {
 
   return parts;
 };
+
 const renderIntroText = (text) => {
   if (!hasValue(text)) {
     return null;
@@ -158,6 +164,7 @@ const renderIntroText = (text) => {
     </ReactMarkdown>
   );
 };
+
 const renderCreatorText = (text) => {
   if (!hasValue(text)) {
     return null;
@@ -165,14 +172,14 @@ const renderCreatorText = (text) => {
 
   const rawText = String(text).trim();
 
-  const headingMatch = rawText.match(/^([^:]+:)\s*\*/);
+  const headingMatch = rawText.match(/^([^:]+:)\s\*\*/);
 
   const heading = headingMatch ? headingMatch[1] : null;
 
   const rest = headingMatch ? rawText.slice(headingMatch[0].length) : rawText;
 
   const items = rest
-    .replace(/^-\s*\*/, "")
+    .replace(/^-\s\*\*/, "")
     .split(/\s+-\s+/)
     .map((item) => item.trim())
     .filter(Boolean);
@@ -196,13 +203,19 @@ const renderCreatorText = (text) => {
 
 function KeepOrScrap() {
   const [entries, setEntries] = useState(keepOrScrapCache.entries);
+
   const [side, setSide] = useState("Intro");
+
   const [selectedGroup, setSelectedGroup] = useState(null);
+
   const [loading, setLoading] = useState(!keepOrScrapCache.loaded);
+
   const [error, setError] = useState("");
+
   const [totalEntries, setTotalEntries] = useState(
     keepOrScrapCache.totalEntries,
   );
+
   useEffect(() => {
     document.title = "Keep or Scrap";
 
@@ -210,152 +223,152 @@ function KeepOrScrap() {
       document.title = "Tbot";
     };
   }, []);
+
   useEffect(() => {
-  if (keepOrScrapCache.loaded) {
-    return;
-  }
-
-  const controller = new AbortController();
-
-  const fetchCount = async () => {
-    try {
-      const endpoint = `${API_BASE_URL}/tbotapp/keeporscrap/count/`;
-
-      const response = await fetch(endpoint, {
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Count request failed with status ${response.status}`,
-        );
-      }
-
-      const data = await response.json();
-
-      const apiCount = Number(data?.count);
-
-      if (!Number.isFinite(apiCount)) {
-        setTotalEntries(0);
-        return;
-      }
-
-      const actualCount = Math.max(0, apiCount - 1);
-
-      keepOrScrapCache.totalEntries = actualCount;
-
-      setTotalEntries(actualCount);
-    } catch (fetchError) {
-      if (fetchError.name === "AbortError") {
-        return;
-      }
-
-      console.error("Keep or Scrap count loading failed:", fetchError);
-      setTotalEntries(null);
+    if (keepOrScrapCache.loaded) {
+      return;
     }
-  };
 
-  fetchCount();
+    const controller = new AbortController();
 
-  return () => {
-    controller.abort();
-  };
-}, []);
-  useEffect(() => {
-  if (keepOrScrapCache.loaded) {
-    setLoading(false);
-    return;
-  }
+    const fetchCount = async () => {
+      try {
+        const endpoint = `${API_BASE_URL}/tbotapp/keeporscrap/count/`;
 
-  const controller = new AbortController();
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+        });
 
-  const fetchEntries = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const endpoint = `${API_BASE_URL}/tbotapp/keeporscrap/`;
-
-      const response = await fetch(endpoint, {
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        let message = `Request failed with status ${response.status}`;
-
-        try {
-          const errorPayload = await response.json();
-
-          if (errorPayload?.detail) {
-            message += `: ${errorPayload.detail}`;
-          } else if (errorPayload?.error) {
-            message += `: ${errorPayload.error}`;
-          }
-        } catch {
-          // Ignore JSON parsing errors.
-        }
-
-        throw new Error(message);
-      }
-
-      const contentType = (
-        response.headers.get("content-type") || ""
-      ).toLowerCase();
-
-      const responseText = await response.text();
-
-      if (!contentType.includes("application/json")) {
-        if (responseText.trim().startsWith("<")) {
+        if (!response.ok) {
           throw new Error(
-            `Received HTML instead of JSON from ${endpoint}.`,
+            `Count request failed with status ${response.status}`,
           );
         }
 
-        throw new Error(
-          `Unexpected response type ${
-            contentType || "unknown"
-          } from ${endpoint}.`,
-        );
+        const data = await response.json();
+
+        const apiCount = Number(data?.count);
+
+        if (!Number.isFinite(apiCount)) {
+          setTotalEntries(0);
+          return;
+        }
+
+        const actualCount = Math.max(0, apiCount - 1);
+
+        keepOrScrapCache.totalEntries = actualCount;
+
+        setTotalEntries(actualCount);
+      } catch (fetchError) {
+        if (fetchError.name === "AbortError") {
+          return;
+        }
+
+        console.error("Keep or Scrap count loading failed:", fetchError);
+
+        setTotalEntries(null);
       }
+    };
 
-      const data = JSON.parse(responseText);
+    fetchCount();
 
-      const loadedEntries = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-          ? data.results
-          : [];
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
-      // Cache the successful response.
-      keepOrScrapCache.entries = loadedEntries;
-      keepOrScrapCache.loaded = true;
-
-      setEntries(loadedEntries);
-    } catch (fetchError) {
-      if (fetchError.name === "AbortError") {
-        return;
-      }
-
-      console.error("Keep or Scrap loading failed:", fetchError);
-
-      setError(
-        `Unable to load Keep or Scrap right now. ${
-          fetchError.message || ""
-        }`.trim(),
-      );
-    } finally {
-      if (!controller.signal.aborted) {
-        setLoading(false);
-      }
+  useEffect(() => {
+    if (keepOrScrapCache.loaded) {
+      setLoading(false);
+      return;
     }
-  };
 
-  fetchEntries();
+    const controller = new AbortController();
 
-  return () => {
-    controller.abort();
-  };
-}, []);
+    const fetchEntries = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const endpoint = `${API_BASE_URL}/tbotapp/keeporscrap/`;
+
+        const response = await fetch(endpoint, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          let message = `Request failed with status ${response.status}`;
+
+          try {
+            const errorPayload = await response.json();
+
+            if (errorPayload?.detail) {
+              message += `: ${errorPayload.detail}`;
+            } else if (errorPayload?.error) {
+              message += `: ${errorPayload.error}`;
+            }
+          } catch {
+            // Ignore JSON parsing errors.
+          }
+
+          throw new Error(message);
+        }
+
+        const contentType = (
+          response.headers.get("content-type") || ""
+        ).toLowerCase();
+
+        const responseText = await response.text();
+
+        if (!contentType.includes("application/json")) {
+          if (responseText.trim().startsWith("<")) {
+            throw new Error(`Received HTML instead of JSON from ${endpoint}.`);
+          }
+
+          throw new Error(
+            `Unexpected response type ${
+              contentType || "unknown"
+            } from ${endpoint}.`,
+          );
+        }
+
+        const data = JSON.parse(responseText);
+
+        const loadedEntries = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+            ? data.results
+            : [];
+
+        keepOrScrapCache.entries = loadedEntries;
+        keepOrScrapCache.loaded = true;
+
+        setEntries(loadedEntries);
+      } catch (fetchError) {
+        if (fetchError.name === "AbortError") {
+          return;
+        }
+
+        console.error("Keep or Scrap loading failed:", fetchError);
+
+        setError(
+          `Unable to load Keep or Scrap right now. ${
+            fetchError.message || ""
+          }`.trim(),
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchEntries();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = selectedGroup ? "hidden" : "";
@@ -369,17 +382,16 @@ function KeepOrScrap() {
     setSide(newSide);
     setSelectedGroup(null);
   };
+
   const introEntries = useMemo(() => {
     return entries.filter(isIntroEntry).sort((a, b) => {
       const aName = normalizeText(a.name);
       const bName = normalizeText(b.name);
 
       const aIsPlant = aName.includes("plant");
-
       const bIsPlant = bName.includes("plant");
 
       const aIsZombie = aName.includes("zombie");
-
       const bIsZombie = bName.includes("zombie");
 
       if (aIsPlant && !bIsPlant) {
@@ -401,6 +413,7 @@ function KeepOrScrap() {
       return aName.localeCompare(bName);
     });
   }, [entries]);
+
   const groupedClasses = useMemo(() => {
     const filtered = entries.filter(
       (entry) => !isIntroEntry(entry) && hasValue(entry.card_class),
@@ -425,6 +438,7 @@ function KeepOrScrap() {
     return [...groups.values()]
       .map((group) => ({
         ...group,
+
         entries: group.entries.sort(
           (a, b) => Number(a.tierid) - Number(b.tierid),
         ),
@@ -448,6 +462,7 @@ function KeepOrScrap() {
         return a.name.localeCompare(b.name);
       });
   }, [entries]);
+
   if (loading) {
     return (
       <div className="loading-page">
@@ -480,6 +495,7 @@ function KeepOrScrap() {
       </div>
     );
   }
+
   return (
     <div className="keep-or-scrap-page">
       <Navbar />
@@ -549,7 +565,19 @@ function KeepOrScrap() {
                 const firstEntry = group.entries[0];
 
                 return (
-                  <section className="kos-class-section" key={group.name}>
+                  <section
+                    className="kos-class-section"
+                    key={group.name}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedGroup(group)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedGroup(group);
+                      }
+                    }}
+                  >
                     <div className="kos-class-header">
                       <h2>{group.name}</h2>
                     </div>
@@ -569,14 +597,6 @@ function KeepOrScrap() {
                             </li>
                           ))}
                         </ul>
-
-                        <button
-                          type="button"
-                          className="kos-view-details"
-                          onClick={() => setSelectedGroup(group)}
-                        >
-                          View Details
-                        </button>
                       </div>
                     </div>
                   </section>

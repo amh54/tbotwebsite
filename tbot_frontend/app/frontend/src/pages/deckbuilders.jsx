@@ -105,7 +105,6 @@ const readCache = (key) => {
     return JSON.parse(cached);
   } catch (error) {
     console.warn(`Unable to read ${key} from sessionStorage:`, error);
-
     return null;
   }
 };
@@ -120,11 +119,9 @@ const writeCache = (key, value) => {
 
 function Deckbuilders() {
   const cachedDeckbuilders = readCache(DECKBUILDERS_CACHE_KEY);
-
   const cachedCount = readCache(DECKBUILDERS_COUNT_CACHE_KEY);
 
   const hasCachedDeckbuilders = Array.isArray(cachedDeckbuilders);
-
   const hasCachedCount = Number.isFinite(Number(cachedCount));
 
   const [deckbuilders, setDeckbuilders] = useState(
@@ -136,18 +133,7 @@ function Deckbuilders() {
   );
 
   const [search, setSearch] = useState("");
-
-  /*
-   * IMPORTANT:
-   *
-   * If we already have cached data, do NOT show
-   * the loading page again.
-   *
-   * This is what prevents the page from flashing
-   * the loading screen whenever you navigate back.
-   */
   const [loading, setLoading] = useState(!hasCachedDeckbuilders);
-
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -158,12 +144,6 @@ function Deckbuilders() {
     };
   }, []);
 
-  /*
-   * Load deckbuilder count.
-   *
-   * Cached count is used immediately.
-   * The API is still checked in the background.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -185,12 +165,10 @@ function Deckbuilders() {
         }
 
         const data = await response.json();
-
         const count = Number(data?.count);
 
         if (Number.isFinite(count)) {
           setTotalDeckbuilders(count);
-
           writeCache(DECKBUILDERS_COUNT_CACHE_KEY, count);
         }
       } catch (err) {
@@ -207,40 +185,27 @@ function Deckbuilders() {
     };
   }, []);
 
-  /*
-   * Load deckbuilders.
-   *
-   * Cached data is displayed immediately.
-   *
-   * If there is no cache:
-   *   show loading screen.
-   *
-   * If there IS cache:
-   *   keep the existing page visible while
-   *   silently refreshing from Django.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
     const loadDeckbuilders = async () => {
       try {
-        /*
-         * Only show loading when we don't already
-         * have deckbuilder data.
-         */
         if (!hasCachedDeckbuilders) {
           setLoading(true);
         }
 
         setError("");
 
-        const response = await fetch(`${API_BASE_URL}/tbotapp/deckbuilders/`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/deckbuilders/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
           },
-          signal: controller.signal,
-        });
+        );
 
         const data = await response.json().catch(() => null);
 
@@ -258,22 +223,10 @@ function Deckbuilders() {
               ? data.results
               : [];
 
-        /*
-         * Update React state with the fresh data.
-         */
         setDeckbuilders(results);
 
-        /*
-         * Save fresh data so navigating away and
-         * coming back does not require another
-         * visible reload.
-         */
         writeCache(DECKBUILDERS_CACHE_KEY, results);
 
-        /*
-         * Only use the result length as the count
-         * if the count endpoint has not supplied one.
-         */
         setTotalDeckbuilders((currentCount) => {
           if (currentCount !== null) {
             return currentCount;
@@ -284,9 +237,6 @@ function Deckbuilders() {
           return results.length;
         });
 
-        /*
-         * We have data now.
-         */
         setLoading(false);
       } catch (err) {
         if (err.name === "AbortError") {
@@ -295,15 +245,8 @@ function Deckbuilders() {
 
         console.error("Unable to load deckbuilders:", err);
 
-        /*
-         * If cached data exists, KEEP showing it.
-         *
-         * Do not replace the page with an error just
-         * because the background refresh failed.
-         */
         if (!hasCachedDeckbuilders) {
           setError(err.message || "Unable to load deckbuilders right now.");
-
           setLoading(false);
         }
       }
@@ -350,13 +293,10 @@ function Deckbuilders() {
 
     return sortedDeckbuilders.filter((deckbuilder) => {
       const name = normalizeText(deckbuilder.display_name).toLowerCase();
-
       const deckbuilderName = normalizeText(
         deckbuilder.deckbuilder_name,
       ).toLowerCase();
-
       const username = normalizeText(deckbuilder.username).toLowerCase();
-
       const bio = normalizeText(deckbuilder.bio).toLowerCase();
 
       return (
@@ -368,10 +308,6 @@ function Deckbuilders() {
     });
   }, [sortedDeckbuilders, search]);
 
-  /*
-   * Only show the full loading page when we truly
-   * have no data to display.
-   */
   if (loading && deckbuilders.length === 0) {
     return (
       <div className="loading-page">
@@ -434,13 +370,11 @@ function Deckbuilders() {
         {error ? (
           <div className="users-error">
             <h2>Unable to load deckbuilders</h2>
-
             <p>{error}</p>
           </div>
         ) : filteredDeckbuilders.length === 0 ? (
           <div className="users-empty">
             <h2>No deckbuilders found</h2>
-
             <p>Try a different search.</p>
           </div>
         ) : (
@@ -452,19 +386,22 @@ function Deckbuilders() {
                 "Tbot Deckbuilder";
 
               const username = normalizeText(deckbuilder.username);
-
               const bio = normalizeText(deckbuilder.bio);
-
-              const profileSlug = normalizeText(deckbuilder.profile_slug);
-
               const avatar = getDiscordAvatarUrl(deckbuilder);
-
               const deckCount = getDeckCount(deckbuilder);
 
+              const deckbuilderUrl = `/deckbuilders/${encodeURIComponent(
+                deckbuilder.deckbuilder_name,
+              )}/decks`;
+
               return (
-                <article
-                  className="user-card"
-                  key={deckbuilder.user_id || deckbuilder.deckbuilder_name}
+                <Link
+                  to={deckbuilderUrl}
+                  className="user-card user-card-link"
+                  key={
+                    deckbuilder.user_id ||
+                    deckbuilder.deckbuilder_name
+                  }
                 >
                   <div className="user-card-top">
                     <div className="user-avatar">
@@ -485,9 +422,11 @@ function Deckbuilders() {
                                   Math.floor(numericId / 4194304) % 6
                                 }.png`;
 
-                                if (event.currentTarget.src !== fallbackUrl) {
+                                if (
+                                  event.currentTarget.src !==
+                                  fallbackUrl
+                                ) {
                                   event.currentTarget.src = fallbackUrl;
-
                                   return;
                                 }
                               }
@@ -495,10 +434,13 @@ function Deckbuilders() {
 
                             event.currentTarget.style.display = "none";
 
-                            const parent = event.currentTarget.parentElement;
+                            const parent =
+                              event.currentTarget.parentElement;
 
                             if (parent) {
-                              parent.classList.add("user-avatar-fallback");
+                              parent.classList.add(
+                                "user-avatar-fallback",
+                              );
 
                               parent.textContent = displayName
                                 .charAt(0)
@@ -507,7 +449,9 @@ function Deckbuilders() {
                           }}
                         />
                       ) : (
-                        <span>{displayName.charAt(0).toUpperCase()}</span>
+                        <span>
+                          {displayName.charAt(0).toUpperCase()}
+                        </span>
                       )}
                     </div>
 
@@ -515,7 +459,9 @@ function Deckbuilders() {
                       <h2>{displayName}</h2>
 
                       {username ? (
-                        <p className="user-card-username">@{username}</p>
+                        <p className="user-card-username">
+                          @{username}
+                        </p>
                       ) : (
                         <p className="user-card-slug">Deckbuilder</p>
                       )}
@@ -535,18 +481,7 @@ function Deckbuilders() {
                       <strong>{deckCount}</strong> Tbot Decks
                     </p>
                   </div>
-
-                  <div className="user-card-actions">
-                   <Link
-                      to={`/deckbuilders/${encodeURIComponent(
-                        deckbuilder.deckbuilder_name,
-                      )}/decks`}
-                      className="user-decklists-button"
-                    >
-                      View Tbot Decks
-                    </Link>
-                  </div>
-                </article>
+                </Link>
               );
             })}
           </div>

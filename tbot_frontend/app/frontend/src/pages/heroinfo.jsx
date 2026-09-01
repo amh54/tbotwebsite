@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 
 import CardModal from "../components/cardmodal";
+
 import Navbar from "../components/navbar.jsx";
+
 import Footer from "../components/footer.jsx";
 
 import "../css/cardinfo.css";
+
 import "../css/navbar.css";
+
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
@@ -27,8 +31,9 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
 const HERO_COLOR_MAP = {
-   "Beta-Carrotina": ["brown", "gray"],
+  "Beta-Carrotina": ["brown", "gray"],
   Citron: ["brown", "gray"],
   "Captain Combustible": ["red", "green"],
   Chompzilla: ["green", "yellow"],
@@ -51,6 +56,7 @@ const HERO_COLOR_MAP = {
   "The Smash": ["orange", "blue"],
   "Z-mech": ["orange", "purple"],
 };
+
 const STAT_ICON_LINKS = {
   cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
   strength: "https://i.ibb.co/GQt785K6/strength.webp",
@@ -88,7 +94,6 @@ const CLASS_ICON_LINKS = {
 
 const HERO_CACHE_KEY = "tbot_hero_info_cache";
 const CARD_CACHE_KEY = "tbot_card_info_cache";
-
 const HERO_CACHE_DURATION = 24 * 60 * 60 * 1000;
 
 const normalizeText = (value) =>
@@ -129,31 +134,43 @@ const getCachedData = (key) => {
     return parsed;
   } catch (error) {
     console.warn(`Unable to read ${key}:`, error);
-
     return null;
   }
 };
 
 function HeroInfo() {
   const initialHeroCache = getCachedData(HERO_CACHE_KEY);
-
   const initialCardCache = getCachedData(CARD_CACHE_KEY);
 
   const [cards, setCards] = useState(initialHeroCache?.results || []);
-
   const [allCards, setAllCards] = useState(initialCardCache?.results || []);
-
   const [side, setSide] = useState("Plants");
-
   const [selectedCard, setSelectedCard] = useState(null);
-
   const [loading, setLoading] = useState(!initialHeroCache?.results?.length);
-
   const [error, setError] = useState("");
 
   const [totalHeroes, setTotalHeroes] = useState(
     Number(initialHeroCache?.count) || initialHeroCache?.results?.length || 0,
   );
+
+  const openCardModal = (card) => {
+    if (!card) {
+      return;
+    }
+
+    setSelectedCard(card);
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("card", card.card_name);
+
+    window.history.pushState(
+      {
+        card: card.card_name,
+      },
+      "",
+      url,
+    );
+  };
 
   const getEmojiIcon = (emoji) => {
     const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
@@ -169,127 +186,102 @@ function HeroInfo() {
         url: STAT_ICON_LINKS.cost,
         alt: "Brainz",
       },
-
       strength: {
         url: STAT_ICON_LINKS.strength,
         alt: "Strength",
       },
-
       health: {
         url: STAT_ICON_LINKS.health,
         alt: "Health",
       },
-
       sun: {
         url: STAT_ICON_LINKS.sun,
         alt: "Sun",
       },
-
       healthstrength: {
         url: STAT_ICON_LINKS.healthstrength,
         alt: "Health and Strength",
       },
-
       deadly: {
         url: TRAIT_ICON_LINKS.deadly,
         alt: "Deadly",
       },
-
       freeze: {
         url: TRAIT_ICON_LINKS.freeze,
         alt: "Freeze",
       },
-
       antihero: {
         url: TRAIT_ICON_LINKS.antihero,
         alt: "Anti-Hero",
       },
-
       strikethrough: {
         url: TRAIT_ICON_LINKS.strikethrough,
         alt: "Strikethrough",
       },
-
       special: {
         url: TRAIT_ICON_LINKS.special,
         alt: "Special",
       },
-
       bullseye: {
         url: TRAIT_ICON_LINKS.bullseye,
         alt: "Bullseye",
       },
-
       frenzy: {
         url: TRAIT_ICON_LINKS.frenzy,
         alt: "Frenzy",
       },
-
       armored: {
         url: TRAIT_ICON_LINKS.armored,
         alt: "Armored",
       },
-
       overshoot: {
         url: TRAIT_ICON_LINKS.overshoot,
         alt: "Overshoot",
       },
-
       untrickable: {
         url: TRAIT_ICON_LINKS.untrickable,
         alt: "Untrickable",
       },
-
       doublestrike: {
         url: TRAIT_ICON_LINKS.doublestrike,
         alt: "Double Strike",
       },
-
       guardian: {
         url: CLASS_ICON_LINKS.guardian,
         alt: "Guardian",
       },
-
       kabloom: {
         url: CLASS_ICON_LINKS.kabloom,
         alt: "Kabloom",
       },
-
       megagrow: {
         url: CLASS_ICON_LINKS.megagrow,
         alt: "Mega-Grow",
       },
-
       smarty: {
         url: CLASS_ICON_LINKS.smarty,
         alt: "Smarty",
       },
-
       solar: {
         url: CLASS_ICON_LINKS.solar,
         alt: "Solar",
       },
-
       beastly: {
         url: CLASS_ICON_LINKS.beastly,
         alt: "Beastly",
       },
-
       brainy: {
         url: CLASS_ICON_LINKS.brainy,
         alt: "Brainy",
       },
-
       crazy: {
         url: CLASS_ICON_LINKS.crazy,
         alt: "Crazy",
       },
-
       hearty: {
         url: CLASS_ICON_LINKS.hearty,
         alt: "Hearty",
       },
-
       sneaky: {
         url: CLASS_ICON_LINKS.sneaky,
         alt: "Sneaky",
@@ -307,7 +299,7 @@ function HeroInfo() {
     const text = String(title);
 
     const pattern =
-      /(<:[^:>]+:\d+>)|(\*\*__[\s\S]*?__\*\*)|(__\*\*[\s\S]*?\*\*__)|(\*\*[\s\S]*?\*\*)|(__[\s\S]*?__)/gi;
+      /(<:[^:>]+:\d+>)|(\*\*\_[\s\S]*?\_\*\*)|(\_\*\*[\s\S]*?\*\*\_)|(\*\*[\s\S]*?\*\*)|(\_\_[\s\S]*?\_\_)/gi;
 
     const matches = [...text.matchAll(pattern)];
 
@@ -382,7 +374,6 @@ function HeroInfo() {
 
     const text = String(stats);
     const pattern = /(<:[^:>]+:\d+>)/gi;
-
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
@@ -467,14 +458,6 @@ function HeroInfo() {
       "sneaky",
     ]);
 
-    /*
-     * Normalize text specifically for matching card names.
-     *
-     * This also makes straight and curly apostrophes equivalent:
-     *
-     *   Slammin' Smackdown
-     *   Slammin’ Smackdown
-     */
     const normalizeCardName = (value) =>
       String(value ?? "")
         .replace(/[’‘]/g, "'")
@@ -486,9 +469,6 @@ function HeroInfo() {
         .trim()
         .toLowerCase();
 
-    /*
-     * Return true when an emoji is one of the ten PvZH classes.
-     */
     const isClassEmoji = (emojiName) => {
       const normalized = String(emojiName || "")
         .toLowerCase()
@@ -497,12 +477,6 @@ function HeroInfo() {
       return CLASS_EMOJI_NAMES.has(normalized);
     };
 
-    /*
-     * We want the longest card names first.
-     *
-     * This prevents a shorter card name from being selected when
-     * another card has a longer matching name.
-     */
     const sortedCards = [...allCards]
       .filter((card) => card?.card_name)
       .sort(
@@ -512,23 +486,7 @@ function HeroInfo() {
       );
 
     const result = [];
-
     const ability = String(hero.ability);
-
-    /*
-     * Examine each line individually.
-     *
-     * A superpower heading is identified by a class emoji appearing
-     * immediately after its name.
-     *
-     * This works for both:
-     *
-     *   Heroic Health <:Hearty:...>
-     *
-     * and:
-     *
-     *   A Zombie gets +2 Health. Slammin' Smackdown <:Hearty:...><:Beastly:...>
-     */
     const lines = ability.split(/\r?\n/);
 
     for (const line of lines) {
@@ -536,14 +494,8 @@ function HeroInfo() {
         continue;
       }
 
-      /*
-       * Find every Discord emoji on this line.
-       */
       const emojiMatches = [...line.matchAll(/<:([^:>]+):\d+>/gi)];
 
-      /*
-       * Only inspect positions where the emoji is a class emoji.
-       */
       const classEmojiMatches = emojiMatches.filter((match) =>
         isClassEmoji(match[1]),
       );
@@ -552,19 +504,6 @@ function HeroInfo() {
         continue;
       }
 
-      /*
-       * Each class emoji can mark the end of a superpower heading.
-       *
-       * For example:
-       *
-       * "A Zombie gets +2 Health. Slammin' Smackdown <:Hearty:...>"
-       *
-       * The text before the emoji is:
-       *
-       * "A Zombie gets +2 Health. Slammin' Smackdown"
-       *
-       * We then check whether that text ENDS with a known card name.
-       */
       for (const emojiMatch of classEmojiMatches) {
         const emojiIndex = emojiMatch.index;
 
@@ -573,13 +512,8 @@ function HeroInfo() {
         }
 
         const textBeforeEmoji = line.slice(0, emojiIndex);
-
         const normalizedBeforeEmoji = normalizeCardName(textBeforeEmoji);
 
-        /*
-         * Find the card whose name is the suffix of the text
-         * immediately before the class emoji.
-         */
         const matchingCard = sortedCards.find((card) => {
           const normalizedName = normalizeCardName(card.card_name);
 
@@ -591,10 +525,6 @@ function HeroInfo() {
             return false;
           }
 
-          /*
-           * Make sure the card name starts at a sensible word
-           * boundary rather than matching the tail of another word.
-           */
           const startIndex =
             normalizedBeforeEmoji.length - normalizedName.length;
 
@@ -614,9 +544,6 @@ function HeroInfo() {
           result.push(matchingCard);
         }
 
-        /*
-         * Heroes have four superpowers.
-         */
         if (result.length === 4) {
           return result;
         }
@@ -642,6 +569,7 @@ function HeroInfo() {
           hasCachedHeroes = true;
 
           setCards(cachedHeroes.results);
+
           setTotalHeroes(
             Number(cachedHeroes.count) || cachedHeroes.results.length,
           );
@@ -651,11 +579,7 @@ function HeroInfo() {
           const age = Date.now() - Number(cachedHeroes.timestamp || 0);
 
           if (age < HERO_CACHE_DURATION) {
-            /*
-             * Heroes are fresh, but we still
-             * need all card data if it isn't
-             * already cached.
-             */
+            // Cached hero data is still fresh.
           }
         }
 
@@ -759,6 +683,7 @@ function HeroInfo() {
         if (!hasCachedHeroes) {
           setCards([]);
           setTotalHeroes(0);
+
           setError(
             `Unable to load heroes right now. ${err.message || ""}`.trim(),
           );
@@ -783,7 +708,6 @@ function HeroInfo() {
     cards
       .filter((card) => {
         const cardSide = normalizeText(card.side);
-
         const selectedSide = normalizeText(side);
 
         if (selectedSide === "plants") {
@@ -798,7 +722,6 @@ function HeroInfo() {
         }
 
         const image = new Image();
-
         image.src = card.thumbnail;
       });
   }, [cards, side]);
@@ -846,11 +769,13 @@ function HeroInfo() {
       return cardSide === "zombie" || cardSide === "zombies";
     });
   }, [cards, side]);
+
   const getHeroColors = (hero) => {
     const heroName = String(hero?.card_name || hero?.title || "").trim();
 
     return HERO_COLOR_MAP[heroName] || ["#15181b", "#15181b"];
   };
+
   const renderCard = (card) => {
     const superpowers = getSuperpowerCards(card);
     const [heroColor1, heroColor2] = getHeroColors(card);
@@ -862,6 +787,15 @@ function HeroInfo() {
         style={{
           "--hero-color-1": heroColor1,
           "--hero-color-2": heroColor2,
+        }}
+        role="button"
+        tabIndex={0}
+        onClick={() => openCardModal(card)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openCardModal(card);
+          }
         }}
       >
         <div className="card-item-media">
@@ -917,20 +851,9 @@ function HeroInfo() {
                     key={superpower.cardid}
                     className="card-superpower-button"
                     title={superpower.card_name}
-                    onClick={() => {
-                      setSelectedCard(superpower);
-
-                      const url = new URL(window.location.href);
-
-                      url.searchParams.set("card", superpower.card_name);
-
-                      window.history.pushState(
-                        {
-                          card: superpower.card_name,
-                        },
-                        "",
-                        url,
-                      );
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openCardModal(superpower);
                     }}
                   >
                     <img
@@ -944,27 +867,6 @@ function HeroInfo() {
               </div>
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedCard(card);
-
-              const url = new URL(window.location.href);
-
-              url.searchParams.set("card", card.card_name);
-
-              window.history.pushState(
-                {
-                  card: card.card_name,
-                },
-                "",
-                url,
-              );
-            }}
-          >
-            View Details
-          </button>
         </div>
       </div>
     );
