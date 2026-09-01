@@ -481,6 +481,7 @@
 
   .tutorial-card {
     min-height: 470px;
+    touch-action: pan-y;
     padding: 40px 22px;
   }
 

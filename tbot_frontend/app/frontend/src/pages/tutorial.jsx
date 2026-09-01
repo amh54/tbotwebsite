@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Link } from "react-router-dom";
 
@@ -179,6 +179,8 @@ const TUTORIAL_STEPS = [
 function Tutorial() {
   const [currentStep, setCurrentStep] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
 
   const step = TUTORIAL_STEPS[currentStep];
 
@@ -217,6 +219,38 @@ function Tutorial() {
   const restart = () => {
     setCurrentStep(0);
     setCompleted(false);
+  };
+
+  const handleTouchStart = (event) => {
+    const touch = event.touches[0];
+
+    touchStartX.current = touch.clientX;
+    touchStartY.current = touch.clientY;
+  };
+
+  const handleTouchEnd = (event) => {
+    if (touchStartX.current === null || touchStartY.current === null) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+
+    const deltaX = touch.clientX - touchStartX.current;
+    const deltaY = touch.clientY - touchStartY.current;
+
+    touchStartX.current = null;
+    touchStartY.current = null;
+
+    // Ignore short gestures and normal vertical scrolling.
+    if (Math.abs(deltaX) < 60 || Math.abs(deltaX) <= Math.abs(deltaY)) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      goNext();
+    } else {
+      goBack();
+    }
   };
 
   return (
@@ -261,7 +295,11 @@ function Tutorial() {
                 </div>
               </div>
 
-              <section className="tutorial-card">
+              <section
+                className="tutorial-card"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
                 <div className="tutorial-icon" aria-hidden="true">
                   {step.icon}
                 </div>
