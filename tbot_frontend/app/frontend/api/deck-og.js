@@ -98,8 +98,6 @@ function deckToOg(deck) {
   const category = stripDiscordFormatting(deck.category);
   const archetype = stripDiscordFormatting(deck.archetype);
   const description = stripDiscordFormatting(deck.description);
-
-  // Most important deck information comes first.
   if (creator) {
     parts.push(`Creator: ${creator}`);
   }
@@ -111,9 +109,6 @@ function deckToOg(deck) {
   if (archetype) {
     parts.push(`Archetype: ${archetype}`);
   }
-
-  // Description is intentionally last because it is
-  // less important than the deck's identifying information.
   if (description) {
     parts.push(description);
   }
