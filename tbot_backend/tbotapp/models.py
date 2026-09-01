@@ -573,22 +573,34 @@ class SiteUpdate(models.Model):
         ("announcement", "Announcement"),
     ]
 
+    id = models.BigAutoField(primary_key=True)
+
     title = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255, unique=True)
+
     content = models.TextField()
+
     category = models.CharField(
         max_length=20,
         choices=CATEGORY_CHOICES,
         default="improvement",
     )
+
+    page_url = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+    )
+
     published = models.BooleanField(default=True)
+
     published_at = models.DateTimeField()
+
     created_at = models.DateTimeField(auto_now_add=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "site_updates"
-        managed = False
         ordering = ["-published_at", "-created_at"]
 
     def __str__(self):

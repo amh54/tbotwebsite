@@ -22,7 +22,7 @@ def site_updates(request):
             {
                 "id": update.id,
                 "title": update.title,
-                "slug": update.slug,
+                "page_url": update.page_url,
                 "content": update.content,
                 "category": update.category,
                 "published": update.published,

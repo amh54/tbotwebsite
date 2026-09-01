@@ -99,10 +99,6 @@ class SiteUpdateAdmin(admin.ModelAdmin):
         "content",
     )
 
-    prepopulated_fields = {
-        "slug": ("title",),
-    }
-
     ordering = (
         "-published_at",
         "-created_at",
