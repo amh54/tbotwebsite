@@ -1,13 +1,9 @@
 import { rewrite } from "@vercel/edge";
 
 export const config = {
-  matcher: [
-    "/deck/:path*",
-    "/profile/:path*",
-    "/decklists",
-    "/legacy-decklists",
-    "/deckbuilders/:path*",
-  ],
+  // match everything except static assets and the api routes themselves
+  matcher:
+    "/((?!api/|.*\\.(?:ico|png|jpg|jpeg|svg|webp|css|js|map|woff2?)$).*)",
 };
 
 const BOT_UA_REGEX =
@@ -17,10 +13,12 @@ export default function middleware(request) {
   const ua = request.headers.get("user-agent") || "";
   const url = new URL(request.url);
 
-  const hasDeckTarget =
-    url.pathname.startsWith("/deck/") || url.searchParams.has("deck");
+  const hasShareableTarget =
+    url.pathname.startsWith("/deck/") ||
+    url.searchParams.has("deck") ||
+    url.searchParams.has("card");
 
-  if (BOT_UA_REGEX.test(ua) && hasDeckTarget) {
+  if (BOT_UA_REGEX.test(ua) && hasShareableTarget) {
     const target = new URL("/api/deck-og", url.origin);
     target.searchParams.set("path", url.pathname + url.search);
     return rewrite(target);
