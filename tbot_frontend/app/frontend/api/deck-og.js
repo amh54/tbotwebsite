@@ -115,11 +115,7 @@ function deckToOg(deck) {
 
   return {
     title: `${deck.name || "Untitled Deck"} — TBOT Deck`,
-    description: truncate(
-      parts.join(" • ") ||
-        "A Plants vs. Zombies Heroes deck",
-      500,
-    ),
+   description: truncate(parts.join("\n"), 500),
     image: resolveImageUrl(deck.image),
   };
 }
@@ -200,32 +196,21 @@ function cardToOg(card) {
     );
   }
 
-  // Traits, when present.
   if (card.traits) {
     parts.push(
       `Traits: ${stripDiscordFormatting(card.traits)}`,
     );
   }
 
-  // Set and rarity.
   if (card.set_rarity) {
     parts.push(
       `Set/Rarity: ${stripDiscordFormatting(card.set_rarity)}`,
     );
   }
 
-  // flavor_text is intentionally NOT included.
-  //
-  // aliases, button, button_emoji, button2, and button_emoji2
-  // are also intentionally NOT included.
-
   return {
     title: `${name} — TBOT Card Info`,
-    description: truncate(
-      parts.join(" • ") ||
-        "A Plants vs. Zombies Heroes card",
-      500,
-    ),
+   description: truncate(parts.join("\n"), 500),
     image: resolveImageUrl(card.thumbnail),
   };
 }
