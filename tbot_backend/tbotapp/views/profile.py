@@ -420,3 +420,20 @@ def profile_update(request):
         },
         status=status.HTTP_200_OK,
     )
+@api_view(["GET"])
+def profile_me_cards(request):
+    profile, error = get_current_profile(request)
+
+    if error:
+        return error
+
+    cards = profile.cards.all().order_by("card_name")
+
+    return Response(
+        {
+            "authenticated": True,
+            "profile": profile.profile_slug,
+            "cards": cards,
+        },
+        status=status.HTTP_200_OK,
+    )

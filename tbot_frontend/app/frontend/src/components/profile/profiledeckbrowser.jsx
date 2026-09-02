@@ -25,9 +25,11 @@ function ProfileDeckBrowser({
   decks = [],
   allCards = [],
   userCards = [],
+  viewerCards = [],
   profileSlug,
   profileIsPublic,
   sharedDeckKey = "",
+  isAuthenticated = false,
 }) {
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
@@ -37,19 +39,11 @@ function ProfileDeckBrowser({
   const [collection, setCollection] = useState([]);
   const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
     useTemporaryMessage(4000);
-  /*
-   * userCards is the logged-in user's collection.
-   *
-   * If there is no collection available, treat the user as
-   * unauthenticated for purposes of the Collection filter.
-   */
-  const isAuthenticated = Array.isArray(userCards) && userCards.length > 0;
 
   const collectionMap = useMemo(
-    () => buildCollectionMap(userCards),
-    [userCards],
-  );
-
+  () => buildCollectionMap(viewerCards),
+  [viewerCards],
+);
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
@@ -131,33 +125,28 @@ function ProfileDeckBrowser({
   };
 
   const matchesCollection = (deck, selectedCollection = collection) => {
-    if (selectedCollection.length === 0) {
-      return true;
+  if (selectedCollection.length === 0) {
+    return true;
+  }
+
+  if (!isAuthenticated) {
+    return false;
+  }
+
+  const status = getDeckCollectionStatus(deck, collectionMap);
+
+  return selectedCollection.some((selected) => {
+    if (selected.value === "buildable") {
+      return status?.buildable === true;
     }
 
-    /*
-     * If the user is not authenticated, the Collection filter
-     * should not actually filter anything. The dropdown click
-     * is handled separately by handleCollectionChange().
-     */
-    if (!isAuthenticated) {
-      return true;
+    if (selected.value === "close") {
+      return status?.close === true;
     }
 
-    const status = getDeckCollectionStatus(deck, collectionMap);
-
-    return selectedCollection.some((selected) => {
-      if (selected.value === "buildable") {
-        return status?.buildable === true;
-      }
-
-      if (selected.value === "close") {
-        return status?.close === true;
-      }
-
-      return false;
-    });
-  };
+    return false;
+  });
+};
 
   const heroOptions = useMemo(() => {
     const heroMap = new Map();

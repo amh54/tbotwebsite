@@ -3,20 +3,31 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
 import Navbar from "../components/navbar.jsx";
+
 import Footer from "../components/footer.jsx";
 
 import ProfileHeader from "../components/profile/profileheader.jsx";
+
 import ProfileTabs from "../components/profile/profiletabs.jsx";
+
 import ProfileCardBrowser from "../components/profile/profilecardbrowser.jsx";
+
 import ProfileDeckBrowser from "../components/profile/profiledeckbrowser.jsx";
+
 import ProfileShareMessage from "../components/profile/profilesharemessage.jsx";
+
 import ProfileEditModal from "../components/profile/profileeditmodal.jsx";
 
 import "../css/profile.css";
+
 import "../css/decklists.css";
+
 import "../css/navbar.css";
+
 import "../css/loading.css";
+
 import "../css/profilecards.css";
+
 import "../css/userdecklists.css";
 
 const getApiBaseUrl = () => {
@@ -49,24 +60,35 @@ const getProfileCacheKey = (slug) => `tbot_profile_cache_${normalizeKey(slug)}`;
 
 function Profile() {
   const { profile_slug } = useParams();
+
   const [searchParams] = useSearchParams();
 
   const [userCards, setUserCards] = useState([]);
+  const [viewerCards, setViewerCards] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   const [profile, setProfile] = useState(null);
+
   const [decks, setDecks] = useState([]);
+
   const [allCards, setAllCards] = useState([]);
 
   const [activeTab, setActiveTab] = useState(() =>
     searchParams.has("deck") ? "decks" : "cards",
   );
+
   const [isOwner, setIsOwner] = useState(false);
+
   const [isSiteOwner, setIsSiteOwner] = useState(false);
 
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
 
   const [editOpen, setEditOpen] = useState(false);
+
   const [saving, setSaving] = useState(false);
+
   const [editError, setEditError] = useState("");
 
   const [editDisplayName, setEditDisplayName] = useState("");
@@ -79,12 +101,74 @@ function Profile() {
 
   const [shareMessage, setShareMessage] = useState("");
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadViewer = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/profile/me/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          credentials: "include",
+          signal: controller.signal,
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data?.authenticated) {
+          setIsAuthenticated(false);
+          setViewerCards([]);
+          return;
+        }
+
+        setIsAuthenticated(true);
+
+        const cardsResponse = await fetch(
+          `${API_BASE_URL}/tbotapp/profile/me/cards/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+            signal: controller.signal,
+          },
+        );
+
+        const cardsData = await cardsResponse.json().catch(() => null);
+
+        const loadedViewerCards = cardsResponse.ok
+          ? Array.isArray(cardsData)
+            ? cardsData
+            : Array.isArray(cardsData?.cards)
+              ? cardsData.cards
+              : []
+          : [];
+
+        setViewerCards(loadedViewerCards);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load viewer:", err);
+          setIsAuthenticated(false);
+          setViewerCards([]);
+        }
+      }
+    };
+
+    loadViewer();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
   /*
    * --------------------------------------------------------------------------
    * Load profile
    * --------------------------------------------------------------------------
    */
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -107,7 +191,6 @@ function Profile() {
          * Load cached profile first
          * --------------------------------------------------------------
          */
-
         try {
           const cached = sessionStorage.getItem(cacheKey);
 
@@ -127,8 +210,11 @@ function Profile() {
               hasCachedData = true;
 
               setProfile(parsed.profile);
+
               setDecks(parsed.decks);
+
               setUserCards(parsed.userCards);
+
               setAllCards(parsed.allCards);
 
               setIsOwner(Boolean(parsed.isOwner));
@@ -149,15 +235,9 @@ function Profile() {
          * First load / expired cache
          * --------------------------------------------------------------
          */
-
         setLoading(true);
 
         const encodedSlug = encodeURIComponent(profile_slug);
-
-        /*
-         * All requests happen simultaneously.
-         */
-
         const [profileResponse, deckResponse, cardsResponse, allCardsResponse] =
           await Promise.all([
             fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/`, {
@@ -183,6 +263,7 @@ function Profile() {
               headers: {
                 Accept: "application/json",
               },
+              credentials: "include",
               signal: controller.signal,
             }),
 
@@ -200,7 +281,6 @@ function Profile() {
          * Profile
          * --------------------------------------------------------------
          */
-
         const profileData = await profileResponse.json().catch(() => null);
 
         if (!profileResponse.ok) {
@@ -218,7 +298,6 @@ function Profile() {
          * Decks
          * --------------------------------------------------------------
          */
-
         const deckData = await deckResponse.json().catch(() => null);
 
         if (!deckResponse.ok) {
@@ -236,7 +315,6 @@ function Profile() {
          * User cards
          * --------------------------------------------------------------
          */
-
         const cardsData = await cardsResponse.json().catch(() => null);
 
         const loadedUserCards = cardsResponse.ok
@@ -252,7 +330,6 @@ function Profile() {
          * All cards
          * --------------------------------------------------------------
          */
-
         const allCardsData = await allCardsResponse.json().catch(() => null);
 
         const loadedAllCards = allCardsResponse.ok
@@ -268,17 +345,20 @@ function Profile() {
          * Update state
          * --------------------------------------------------------------
          */
-
         const loadedIsOwner = Boolean(profileData?.is_owner);
 
         const loadedIsSiteOwner = Boolean(profileData?.is_site_owner);
 
         setProfile(loadedProfile);
+
         setDecks(loadedDecks);
+
         setUserCards(loadedUserCards);
+
         setAllCards(loadedAllCards);
 
         setIsOwner(loadedIsOwner);
+
         setIsSiteOwner(loadedIsSiteOwner);
 
         /*
@@ -286,7 +366,6 @@ function Profile() {
          * Save everything to session cache
          * --------------------------------------------------------------
          */
-
         try {
           sessionStorage.setItem(
             cacheKey,
@@ -318,14 +397,17 @@ function Profile() {
          * If cached data was already displayed,
          * don't destroy it because the refresh failed.
          */
-
         if (!hasCachedData) {
           setProfile(null);
+
           setDecks([]);
+
           setUserCards([]);
+
           setAllCards([]);
 
           setIsOwner(false);
+
           setIsSiteOwner(false);
 
           setError(err.message || "Unable to load profile.");
@@ -341,11 +423,23 @@ function Profile() {
       controller.abort();
     };
   }, [profile_slug]);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Handle shared deck links
+   * --------------------------------------------------------------------------
+   */
   useEffect(() => {
     if (searchParams.has("deck")) {
       setActiveTab("decks");
     }
   }, [searchParams]);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Edit profile
+   * --------------------------------------------------------------------------
+   */
   const openEditProfile = () => {
     if (!profile) {
       return;
@@ -360,6 +454,7 @@ function Profile() {
     setEditIsPublic(Boolean(profile.is_public));
 
     setEditError("");
+
     setEditOpen(true);
   };
 
@@ -369,6 +464,7 @@ function Profile() {
     }
 
     setEditOpen(false);
+
     setEditError("");
   };
 
@@ -386,6 +482,7 @@ function Profile() {
     }
 
     setSaving(true);
+
     setEditError("");
 
     try {
@@ -398,11 +495,8 @@ function Profile() {
         credentials: "include",
         body: JSON.stringify({
           display_name: editDisplayName.trim(),
-
           profile_slug: editProfileSlug.trim().toLowerCase(),
-
           bio: editBio,
-
           is_public: editIsPublic,
         }),
       });
@@ -422,13 +516,14 @@ function Profile() {
       }
 
       setProfile(updatedProfile);
+
       setEditOpen(false);
+
       setEditError("");
 
       /*
        * Update the current browser URL if the slug changed.
        */
-
       const newSlug = normalizeText(updatedProfile.profile_slug);
 
       if (newSlug && newSlug !== profile_slug) {
@@ -442,7 +537,6 @@ function Profile() {
       /*
        * Update cached profile.
        */
-
       try {
         const cacheKey = getProfileCacheKey(newSlug || profile_slug);
 
@@ -477,7 +571,6 @@ function Profile() {
    * Share profile
    * --------------------------------------------------------------------------
    */
-
   const handleShareProfile = async () => {
     const currentSlug = normalizeText(profile?.profile_slug) || profile_slug;
 
@@ -496,13 +589,17 @@ function Profile() {
         const textArea = document.createElement("textarea");
 
         textArea.value = profileUrl;
+
         textArea.style.position = "fixed";
+
         textArea.style.left = "-9999px";
+
         textArea.style.top = "0";
 
         document.body.appendChild(textArea);
 
         textArea.focus();
+
         textArea.select();
 
         document.execCommand("copy");
@@ -527,7 +624,6 @@ function Profile() {
    * Loading
    * --------------------------------------------------------------------------
    */
-
   if (loading) {
     return (
       <div className="loading-page">
@@ -560,7 +656,6 @@ function Profile() {
    * Error
    * --------------------------------------------------------------------------
    */
-
   if (error) {
     return (
       <div>
@@ -580,7 +675,6 @@ function Profile() {
    * Missing profile
    * --------------------------------------------------------------------------
    */
-
   if (!profile) {
     return (
       <div>
@@ -602,7 +696,6 @@ function Profile() {
    * Render
    * --------------------------------------------------------------------------
    */
-
   return (
     <div className="profile-page-wrapper">
       <Navbar />
@@ -628,9 +721,11 @@ function Profile() {
               decks={decks}
               allCards={allCards}
               userCards={userCards}
+              viewerCards={viewerCards}
               profileSlug={profile_slug}
               profileIsPublic={Boolean(profile.is_public)}
               sharedDeckKey={searchParams.get("deck") || ""}
+              isAuthenticated={isAuthenticated}
             />
           )}
         </div>
