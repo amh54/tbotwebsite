@@ -1059,7 +1059,7 @@ function DeckCard({
           {hasValue(deck.creator) && (
             <p className="creator-field">
               <span className="field-label">Creator:</span>
-              <span className="creator-value">{deck.creator}</span>
+              <span className="creator-value"> {deck.creator}</span>
             </p>
           )}
 
