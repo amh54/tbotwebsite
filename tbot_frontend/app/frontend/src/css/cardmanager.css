@@ -39,21 +39,9 @@
   color: #101416;
   border-color: #8fe38b;
 }
-.collection-filters {
-  min-width: 0;
-}
 
 .collection-filters > * {
   min-width: 0;
-}
-
-.card-manager-section-header {
-  min-width: 0;
-}
-
-.secondary-add-button {
-  flex-shrink: 0;
-  white-space: nowrap;
 }
 .user-card-manager-back-admin:active {
   transform: translateY(1px);
@@ -89,6 +77,7 @@
   grid-template-columns: repeat(5, minmax(150px, 1fr));
   gap: 16px;
   margin-bottom: 25px;
+  min-width: 0;
 }
 
 .card-manager-grid {
@@ -257,6 +246,7 @@
   justify-content: space-between;
   gap: 20px;
   padding: 20px 22px;
+  min-width: 0;
   border-bottom: 1px solid #292f33;
 }
 
@@ -276,6 +266,8 @@
   background: #242a2d;
   color: #ffffff;
   font-size: 14px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .secondary-add-button:hover {
