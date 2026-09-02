@@ -350,7 +350,24 @@
   background: #211919;
   color: #ff8b8b;
 }
+.site-update-page-link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 24px;
+  padding: 10px 16px;
+  border: 1px solid #8fe38b;
+  border-radius: 8px;
+  color: #8fe38b;
+  background: rgba(143, 227, 139, 0.08);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
 
+.site-update-page-link:hover {
+  background: #8fe38b;
+  color: #101416;
+}
 /* ============================================================
    MOBILE
    ============================================================ */

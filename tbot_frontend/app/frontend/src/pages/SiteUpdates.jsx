@@ -49,18 +49,13 @@ function SiteUpdates() {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/site-updates/`,
-          {
-            method: "GET",
-            credentials: "include",
-          },
-        );
+        const response = await fetch(`${API_BASE_URL}/tbotapp/site-updates/`, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!response.ok) {
-          throw new Error(
-            `Unable to load site updates: ${response.status}`,
-          );
+          throw new Error(`Unable to load site updates: ${response.status}`);
         }
 
         const data = await response.json();
@@ -102,8 +97,7 @@ function SiteUpdates() {
             <h1>Site Updates</h1>
 
             <p>
-              See what's new, what's improved, and what we've fixed across
-              Tbot.
+              See what's new, what's improved, and what we've fixed across Tbot.
             </p>
           </div>
         </section>
@@ -157,9 +151,7 @@ function SiteUpdates() {
                       )}
                     </div>
 
-                    <span className="site-update-number">
-                      #{update.id}
-                    </span>
+                    <span className="site-update-number">#{update.id}</span>
                   </div>
 
                   <div className="site-update-card-body">
@@ -180,6 +172,16 @@ function SiteUpdates() {
                         {update.content || ""}
                       </ReactMarkdown>
                     </div>
+                    {update.page_url && (
+                      <a
+                        className="site-update-page-link"
+                        href={update.page_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View related page →
+                      </a>
+                    )}
                   </div>
                 </article>
               ))}
