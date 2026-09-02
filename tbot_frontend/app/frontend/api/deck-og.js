@@ -260,50 +260,55 @@ const RESOLVERS = [
     },
   },
 
-  {
-    test: (pathname, params) => {
-      if (!params.has("deck")) return null;
+ {
+  test: (pathname, params) => {
+    if (!params.has("deck")) return null;
 
-      if (pathname === "/decklists") {
-        return ["decklists"];
-      }
+    if (pathname === "/decklists") {
+      return ["decklists"];
+    }
 
-      if (pathname === "/legacy-decklists") {
-        return ["legacy-decklists"];
-      }
+    // Actual legacy deck page URL:
+    // /legacydecks?deck=heal-midrose-265
+    if (
+      pathname === "/legacydecks" ||
+      pathname === "/legacy-decklists"
+    ) {
+      return ["legacy-decklists"];
+    }
 
-      const dbMatch =
-        /^\/deckbuilders\/([^/]+)/.exec(pathname);
+    const dbMatch =
+      /^\/deckbuilders\/([^/]+)/.exec(pathname);
 
-      if (dbMatch) {
-        return ["deckbuilders", dbMatch[1]];
-      }
+    if (dbMatch) {
+      return ["deckbuilders", dbMatch[1]];
+    }
 
-      return null;
-    },
-
-    resolve: async (match, params) => {
-      const listUrl =
-        match[0] === "decklists"
-          ? `${API}/tbotapp/decklists/`
-          : match[0] === "legacy-decklists"
-            ? `${API}/tbotapp/legacy-decklists/`
-            : `${API}/tbotapp/deckbuilders/${encodeURIComponent(
-                match[1],
-              )}/decks/`;
-
-      const r = await fetch(listUrl);
-
-      if (!r.ok) return null;
-
-      return deckToOg(
-        findDeckInList(
-          await r.json(),
-          params.get("deck"),
-        ),
-      );
-    },
+    return null;
   },
+
+  resolve: async (match, params) => {
+    const listUrl =
+      match[0] === "decklists"
+        ? `${API}/tbotapp/decklists/`
+        : match[0] === "legacy-decklists"
+          ? `${API}/tbotapp/legacy-decklists/`
+          : `${API}/tbotapp/deckbuilders/${encodeURIComponent(
+              match[1],
+            )}/decks/`;
+
+    const r = await fetch(listUrl);
+
+    if (!r.ok) return null;
+
+    return deckToOg(
+      findDeckInList(
+        await r.json(),
+        params.get("deck"),
+      ),
+    );
+  },
+},
 
   {
     // ANY page ?card={card_name}
