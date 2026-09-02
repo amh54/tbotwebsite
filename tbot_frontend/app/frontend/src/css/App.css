@@ -23,6 +23,14 @@ body {
   width: 100%;
   color: #ffffff;
   padding-bottom: 60px;
+  z-index: 0;
+}
+
+.home::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
 
   background-image:
     linear-gradient(
@@ -34,7 +42,6 @@ body {
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
-  background-attachment: fixed;
 }
 /* =========================
    HERO
@@ -427,9 +434,6 @@ a:hover {
   .quick-answers p {
     max-width: 100%;
     margin-bottom: 30px;
-  }
- .home {
-    background-attachment: scroll;
   }
   .feature-grid {
     grid-template-columns: 1fr;
