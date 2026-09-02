@@ -198,6 +198,26 @@ const selectStyles = {
     },
   }),
 
+  valueContainer: (base) => ({
+    ...base,
+    minWidth: 0,
+    maxHeight: "42px",
+    overflowY: "auto",
+    overflowX: "hidden",
+    flexWrap: "wrap",
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+    "::-webkit-scrollbar": {
+      display: "none",
+    },
+  }),
+
+  indicatorsContainer: (base) => ({
+    ...base,
+    alignSelf: "flex-start",
+    flexShrink: 0,
+  }),
+
   menuPortal: (base) => ({
     ...base,
     zIndex: 9999,
@@ -227,11 +247,15 @@ const selectStyles = {
   multiValue: (base) => ({
     ...base,
     backgroundColor: "#333",
+    maxWidth: "100%",
   }),
 
   multiValueLabel: (base) => ({
     ...base,
     color: "white",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   }),
 
   multiValueRemove: (base) => ({

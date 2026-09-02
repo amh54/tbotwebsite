@@ -39,7 +39,22 @@
   color: #101416;
   border-color: #8fe38b;
 }
+.collection-filters {
+  min-width: 0;
+}
 
+.collection-filters > * {
+  min-width: 0;
+}
+
+.card-manager-section-header {
+  min-width: 0;
+}
+
+.secondary-add-button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 .user-card-manager-back-admin:active {
   transform: translateY(1px);
 }
