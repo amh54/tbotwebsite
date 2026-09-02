@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-
+from django.db.models.functions import Trim
 from ..models import (
     WebDeckbuilder,
     UserProfile,
@@ -14,7 +14,15 @@ from ..serializers import (
     PublicDeckbuilderSerializer,
     PublicDeckSerializer,
 )
+def _get_deckbuilder(deckbuilder_name):
+    normalized_name = str(deckbuilder_name or "").strip()
 
+    return (
+        WebDeckbuilder.objects
+        .annotate(normalized_name=Trim("deckbuilder_name"))
+        .filter(normalized_name__iexact=normalized_name)
+        .first()
+    )
 
 def _split_deckbuilder_names(value):
     if not value:
@@ -174,10 +182,7 @@ def deckbuilder_detail(request, deckbuilder_name):
 
     The name comes from web_deckbuilders.deckbuilder_name.
     """
-    deckbuilder = get_object_or_404(
-        WebDeckbuilder,
-        deckbuilder_name__iexact=deckbuilder_name,
-    )
+    deckbuilder = _get_deckbuilder(deckbuilder_name)
 
     profile = (
         UserProfile.objects
@@ -228,10 +233,7 @@ def deckbuilder_decks(request, deckbuilder_name):
     IMPORTANT:
     inspiration is NOT checked.
     """
-    deckbuilder = get_object_or_404(
-        WebDeckbuilder,
-        deckbuilder_name__iexact=deckbuilder_name,
-    )
+    deckbuilder = _get_deckbuilder(deckbuilder_name)
 
     decks = _get_deckbuilder_decks(
         deckbuilder
@@ -288,10 +290,7 @@ def deckbuilder_deck_count(request, deckbuilder_name):
 
     inspiration is intentionally NOT checked.
     """
-    deckbuilder = get_object_or_404(
-        WebDeckbuilder,
-        deckbuilder_name__iexact=deckbuilder_name,
-    )
+    deckbuilder = _get_deckbuilder(deckbuilder_name)
 
     decks = _get_deckbuilder_decks(
         deckbuilder
