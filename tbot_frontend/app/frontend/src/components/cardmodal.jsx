@@ -608,18 +608,6 @@ function CardModal({
       return <span key={`tribe-${index}`}>{segment}</span>;
     });
   };
-
-  /*
-   * Find the actual superpower card objects.
-   *
-   * We search the ENTIRE ability text rather than requiring
-   * an entire line to equal the card name.
-   *
-   * This handles cases where multiple superpowers appear
-   * on the same line, such as:
-   *
-   * Meteor Strike ... Slammin' Smackdown ...
-   */
   const getSuperpowerCards = () => {
     if (!card?.ability || !Array.isArray(allCards) || allCards.length === 0) {
       return [];
@@ -631,12 +619,6 @@ function CardModal({
         .replace(/__/g, "")
         .replace(/`/g, ""),
     );
-
-    /*
-     * Longest names are checked first so that a shorter
-     * card name cannot incorrectly win before a longer
-     * card name containing it.
-     */
     const candidates = allCards
       .filter(
         (candidate) =>
@@ -795,7 +777,9 @@ function CardModal({
               {hasValue(card.ability) && (
                 <div className="metadata-item">
                   <span className="label">
-                    {superpowers.length > 0 ? "Superpowers" : "Ability"}
+                    <span className="label">
+                      {showShareHero ? "Superpowers" : "Ability"}
+                    </span>
                   </span>
 
                   <span className="value ability-value">
