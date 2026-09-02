@@ -277,16 +277,6 @@ const getCsrfToken = () => {
   return getCookie("csrftoken");
 };
 
-/*
- * Always refresh the CSRF token from Django.
- *
- * This avoids reusing a stale csrftoken cookie that can result
- * in:
- *
- *   403 CSRF Failed
- *
- * on POST/PATCH/DELETE requests.
- */
 const ensureCsrfToken = async () => {
   const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
     method: "GET",
@@ -312,7 +302,11 @@ const ensureCsrfToken = async () => {
     );
   }
 
-  const token = getCsrfToken() || data?.csrfToken || data?.csrf_token;
+  // Prefer the token Django returned directly.
+  const token =
+    data?.csrfToken ||
+    data?.csrf_token ||
+    getCsrfToken();
 
   if (!token) {
     throw new Error("Unable to obtain CSRF token");
@@ -321,13 +315,6 @@ const ensureCsrfToken = async () => {
   return token;
 };
 
-/*
- * Central request helper.
- *
- * GET requests do not need CSRF.
- * POST/PATCH/PUT/DELETE requests automatically receive
- * the Django CSRF token.
- */
 const requestJson = async (url, options = {}) => {
   const method = (options.method || "GET").toUpperCase();
 
@@ -358,11 +345,26 @@ const requestJson = async (url, options = {}) => {
 
   let data = null;
 
+const contentType = response.headers.get("content-type") || "";
+
+if (contentType.includes("application/json")) {
   try {
     data = await response.json();
   } catch {
     data = null;
   }
+} else {
+  const text = await response.text();
+
+  if (text) {
+    data = {
+      error: text
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim(),
+    };
+  }
+}
 
   if (!response.ok) {
     const errorMessage =
