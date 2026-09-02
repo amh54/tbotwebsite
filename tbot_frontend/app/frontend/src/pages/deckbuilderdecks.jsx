@@ -54,8 +54,7 @@ const API_BASE_URL = getApiBaseUrl();
 
 function DeckbuilderDecks() {
   const { deckbuilder_name } = useParams();
-
-  const decodedDeckbuilderName = decodeURIComponent(deckbuilder_name || "");
+  const decodedDeckbuilderName = deckbuilder_name || "";
 
   const [deckbuilder, setDeckbuilder] = useState(null);
   const [decks, setDecks] = useState([]);
