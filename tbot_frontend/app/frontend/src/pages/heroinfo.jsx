@@ -93,7 +93,9 @@ const CLASS_ICON_LINKS = {
 };
 
 const HERO_CACHE_KEY = "tbot_hero_info_cache";
+
 const CARD_CACHE_KEY = "tbot_card_info_cache";
+
 const HERO_CACHE_DURATION = 24 * 60 * 60 * 1000;
 
 const normalizeText = (value) =>
@@ -108,6 +110,7 @@ const getRarityName = (setRarity) => {
   }
 
   const value = String(setRarity).trim();
+
   const separatorIndex = value.lastIndexOf(" - ");
 
   if (separatorIndex === -1) {
@@ -134,33 +137,71 @@ const getCachedData = (key) => {
     return parsed;
   } catch (error) {
     console.warn(`Unable to read ${key}:`, error);
+
     return null;
   }
 };
 
 function HeroInfo() {
   const initialHeroCache = getCachedData(HERO_CACHE_KEY);
+
   const initialCardCache = getCachedData(CARD_CACHE_KEY);
 
   const [cards, setCards] = useState(initialHeroCache?.results || []);
+
   const [allCards, setAllCards] = useState(initialCardCache?.results || []);
+
   const [side, setSide] = useState("Plants");
+
   const [selectedCard, setSelectedCard] = useState(null);
+
+  // True only when the selected item is an actual hero.
+  // Superpowers leave this false.
+  const [selectedIsHero, setSelectedIsHero] = useState(false);
+
   const [loading, setLoading] = useState(!initialHeroCache?.results?.length);
+
   const [error, setError] = useState("");
 
   const [totalHeroes, setTotalHeroes] = useState(
     Number(initialHeroCache?.count) || initialHeroCache?.results?.length || 0,
   );
 
-  const openCardModal = (card) => {
+  useEffect(() => {
+    document.title = "Hero Info";
+
+    const faviconUrl = "https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp";
+
+    let favicon = document.querySelector('link[rel="icon"]');
+
+    if (!favicon) {
+      favicon = document.createElement("link");
+      favicon.rel = "icon";
+      document.head.appendChild(favicon);
+    }
+
+    favicon.href = faviconUrl;
+  }, []);
+
+  /*
+   * isHero is true only when opening an actual hero.
+   *
+   * Superpowers call:
+   *   openCardModal(superpower)
+   *
+   * Heroes call:
+   *   openCardModal(card, true)
+   */
+  const openCardModal = (card, isHero = false) => {
     if (!card) {
       return;
     }
 
     setSelectedCard(card);
+    setSelectedIsHero(isHero);
 
     const url = new URL(window.location.href);
+
     url.searchParams.set("card", card.card_name);
 
     window.history.pushState(
@@ -186,102 +227,127 @@ function HeroInfo() {
         url: STAT_ICON_LINKS.cost,
         alt: "Brainz",
       },
+
       strength: {
         url: STAT_ICON_LINKS.strength,
         alt: "Strength",
       },
+
       health: {
         url: STAT_ICON_LINKS.health,
         alt: "Health",
       },
+
       sun: {
         url: STAT_ICON_LINKS.sun,
         alt: "Sun",
       },
+
       healthstrength: {
         url: STAT_ICON_LINKS.healthstrength,
         alt: "Health and Strength",
       },
+
       deadly: {
         url: TRAIT_ICON_LINKS.deadly,
         alt: "Deadly",
       },
+
       freeze: {
         url: TRAIT_ICON_LINKS.freeze,
         alt: "Freeze",
       },
+
       antihero: {
         url: TRAIT_ICON_LINKS.antihero,
         alt: "Anti-Hero",
       },
+
       strikethrough: {
         url: TRAIT_ICON_LINKS.strikethrough,
         alt: "Strikethrough",
       },
+
       special: {
         url: TRAIT_ICON_LINKS.special,
         alt: "Special",
       },
+
       bullseye: {
         url: TRAIT_ICON_LINKS.bullseye,
         alt: "Bullseye",
       },
+
       frenzy: {
         url: TRAIT_ICON_LINKS.frenzy,
         alt: "Frenzy",
       },
+
       armored: {
         url: TRAIT_ICON_LINKS.armored,
         alt: "Armored",
       },
+
       overshoot: {
         url: TRAIT_ICON_LINKS.overshoot,
         alt: "Overshoot",
       },
+
       untrickable: {
         url: TRAIT_ICON_LINKS.untrickable,
         alt: "Untrickable",
       },
+
       doublestrike: {
         url: TRAIT_ICON_LINKS.doublestrike,
         alt: "Double Strike",
       },
+
       guardian: {
         url: CLASS_ICON_LINKS.guardian,
         alt: "Guardian",
       },
+
       kabloom: {
         url: CLASS_ICON_LINKS.kabloom,
         alt: "Kabloom",
       },
+
       megagrow: {
         url: CLASS_ICON_LINKS.megagrow,
         alt: "Mega-Grow",
       },
+
       smarty: {
         url: CLASS_ICON_LINKS.smarty,
         alt: "Smarty",
       },
+
       solar: {
         url: CLASS_ICON_LINKS.solar,
         alt: "Solar",
       },
+
       beastly: {
         url: CLASS_ICON_LINKS.beastly,
         alt: "Beastly",
       },
+
       brainy: {
         url: CLASS_ICON_LINKS.brainy,
         alt: "Brainy",
       },
+
       crazy: {
         url: CLASS_ICON_LINKS.crazy,
         alt: "Crazy",
       },
+
       hearty: {
         url: CLASS_ICON_LINKS.hearty,
         alt: "Hearty",
       },
+
       sneaky: {
         url: CLASS_ICON_LINKS.sneaky,
         alt: "Sneaky",
@@ -308,10 +374,12 @@ function HeroInfo() {
     }
 
     const parts = [];
+
     let lastIndex = 0;
 
     matches.forEach((match, index) => {
       const fullMatch = match[0];
+
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
@@ -373,7 +441,9 @@ function HeroInfo() {
     }
 
     const text = String(stats);
+
     const pattern = /(<:[^:>]+:\d+>)/gi;
+
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
@@ -381,10 +451,12 @@ function HeroInfo() {
     }
 
     const parts = [];
+
     let lastIndex = 0;
 
     matches.forEach((match, index) => {
       const fullEmoji = match[1];
+
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
@@ -434,7 +506,7 @@ function HeroInfo() {
         {String(text)
           .replace(/<:[^:>]+:\d+>/gi, "")
           .replace(/\*\*/g, "")
-          .replace(/__/g, "")
+          .replace(/\_\_/g, "")
           .trim()}
       </span>
     );
@@ -464,7 +536,7 @@ function HeroInfo() {
         .replace(/[“”]/g, '"')
         .replace(/<:[^:>]+:\d+>/gi, "")
         .replace(/\*\*/g, "")
-        .replace(/__/g, "")
+        .replace(/\_\_/g, "")
         .replace(/\s+/g, " ")
         .trim()
         .toLowerCase();
@@ -486,7 +558,9 @@ function HeroInfo() {
       );
 
     const result = [];
+
     const ability = String(hero.ability);
+
     const lines = ability.split(/\r?\n/);
 
     for (const line of lines) {
@@ -512,6 +586,7 @@ function HeroInfo() {
         }
 
         const textBeforeEmoji = line.slice(0, emojiIndex);
+
         const normalizedBeforeEmoji = normalizeCardName(textBeforeEmoji);
 
         const matchingCard = sortedCards.find((card) => {
@@ -558,6 +633,7 @@ function HeroInfo() {
 
     const loadHeroes = async () => {
       let hasCachedHeroes = false;
+
       let hasCachedCards = false;
 
       try {
@@ -587,6 +663,7 @@ function HeroInfo() {
 
         if (cachedCards?.results?.length) {
           hasCachedCards = true;
+
           setAllCards(cachedCards.results);
         }
 
@@ -641,6 +718,7 @@ function HeroInfo() {
 
           if (heroResults.length > 0) {
             setCards(heroResults);
+
             setTotalHeroes(heroCount);
 
             sessionStorage.setItem(
@@ -682,6 +760,7 @@ function HeroInfo() {
 
         if (!hasCachedHeroes) {
           setCards([]);
+
           setTotalHeroes(0);
 
           setError(
@@ -708,6 +787,7 @@ function HeroInfo() {
     cards
       .filter((card) => {
         const cardSide = normalizeText(card.side);
+
         const selectedSide = normalizeText(side);
 
         if (selectedSide === "plants") {
@@ -722,6 +802,7 @@ function HeroInfo() {
         }
 
         const image = new Image();
+
         image.src = card.thumbnail;
       });
   }, [cards, side]);
@@ -753,6 +834,11 @@ function HeroInfo() {
       }
 
       setSelectedCard(foundCard);
+
+      // A card loaded from the HeroInfo ?card= URL
+      // is necessarily a hero because `cards` contains
+      // the hero dataset, not the superpower dataset.
+      setSelectedIsHero(true);
     }
   }, [cards]);
 
@@ -778,6 +864,7 @@ function HeroInfo() {
 
   const renderCard = (card) => {
     const superpowers = getSuperpowerCards(card);
+
     const [heroColor1, heroColor2] = getHeroColors(card);
 
     return (
@@ -790,11 +877,12 @@ function HeroInfo() {
         }}
         role="button"
         tabIndex={0}
-        onClick={() => openCardModal(card)}
+        onClick={() => openCardModal(card, true)}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            openCardModal(card);
+
+            openCardModal(card, true);
           }
         }}
       >
@@ -853,6 +941,10 @@ function HeroInfo() {
                     title={superpower.card_name}
                     onClick={(event) => {
                       event.stopPropagation();
+
+                      // IMPORTANT:
+                      // Do NOT pass true here.
+                      // This is a superpower, not a hero.
                       openCardModal(superpower);
                     }}
                   >
@@ -903,15 +995,6 @@ function HeroInfo() {
 
   return (
     <>
-      <head>
-        <link
-          rel="icon"
-          href="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
-        />
-
-        <title>Hero Info</title>
-      </head>
-
       <Navbar />
 
       <div className="card-information-page">
@@ -958,14 +1041,18 @@ function HeroInfo() {
             card={selectedCard}
             allCards={allCards}
             showShareCard={false}
-            showShareHero={true}
+            showShareHero={selectedIsHero}
             close={() => {
               if (window.history.state?.card) {
                 window.history.back();
               } else {
                 setSelectedCard(null);
+                setSelectedIsHero(false);
+
                 const url = new URL(window.location.href);
+
                 url.searchParams.delete("card");
+
                 window.history.replaceState({}, "", url);
               }
             }}
