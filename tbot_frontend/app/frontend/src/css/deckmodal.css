@@ -84,7 +84,8 @@
   font-weight: 400;
   font-size: 1.2rem;
   min-width: 0;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .hero-red-green {
   --hero-color-1: #d94b4b;
