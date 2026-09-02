@@ -125,7 +125,13 @@ const classNamesMatchTitle = (cardType, title) => {
   );
 };
 
-function CardModal({ card, allCards = [], close }) {
+function CardModal({
+  card,
+  close,
+  allCards,
+  showShareCard = true,
+  showShareHero = false,
+}) {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
 
@@ -726,17 +732,25 @@ function CardModal({ card, allCards = [], close }) {
             />
 
             <div className="card-modal-actions">
-              <button
-                type="button"
-                className="share-card-btn"
-                onClick={handleShare}
-              >
-                {copied
-                  ? "Link Copied!"
-                  : normalizeText(card.set_rarity) === "premium - hero"
-                    ? "Share Hero"
-                    : "Share Card"}
-              </button>
+              {showShareCard && (
+                <button
+                  type="button"
+                  className="share-card-btn"
+                  onClick={handleShare}
+                >
+                  {copied ? "Link Copied!" : "Share Card"}
+                </button>
+              )}
+
+              {showShareHero && (
+                <button
+                  type="button"
+                  className="share-card-btn"
+                  onClick={handleShare}
+                >
+                  {copied ? "Link Copied!" : "Share Hero"}
+                </button>
+              )}
             </div>
           </div>
 

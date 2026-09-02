@@ -957,16 +957,15 @@ function HeroInfo() {
           <CardModal
             card={selectedCard}
             allCards={allCards}
+            showShareCard={false}
+            showShareHero={true}
             close={() => {
               if (window.history.state?.card) {
                 window.history.back();
               } else {
                 setSelectedCard(null);
-
                 const url = new URL(window.location.href);
-
                 url.searchParams.delete("card");
-
                 window.history.replaceState({}, "", url);
               }
             }}

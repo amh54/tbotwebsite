@@ -1979,6 +1979,7 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         {selectedCard && (
           <CardModal
             card={selectedCard}
+            showShareCard={false}
             close={() => {
               if (window.history.state?.card) {
                 window.history.back();
