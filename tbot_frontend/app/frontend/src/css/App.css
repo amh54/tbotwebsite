@@ -428,7 +428,9 @@ a:hover {
     max-width: 100%;
     margin-bottom: 30px;
   }
-
+ .home {
+    background-attachment: scroll;
+  }
   .feature-grid {
     grid-template-columns: 1fr;
   }
