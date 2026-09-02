@@ -18,13 +18,24 @@ body {
 }
 
 .home {
+  position: relative;
   min-height: 100vh;
   width: 100%;
-  background: #101416;
   color: #ffffff;
   padding-bottom: 60px;
-}
 
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.62),
+      rgba(16, 20, 22, 0.62)
+    ),
+    url("https://i.ibb.co/3yL1vMtT/tbot-site-wallpaper.webp");
+
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
 /* =========================
    HERO
 ========================= */
