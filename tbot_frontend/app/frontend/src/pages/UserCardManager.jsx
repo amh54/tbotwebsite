@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+
 import Select from "react-select";
+
 import { Link } from "react-router-dom";
+
 import Footer from "../components/footer";
+
 import "../css/cardinfo.css";
+
 import "../css/cardmanager.css";
+
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
@@ -31,9 +37,9 @@ const SIDE_OPTIONS = [
 
 const MAX_QUANTITY = 4;
 
-// Card data only stores raw fields like card_type, stats, and set_rarity —
-// class, cost, set, and rarity all have to be parsed out of those, the same
-// way CardBrowser does it, or the filter options end up empty.
+// Card data only stores raw fields like card_type, stats, and set_rarity.
+// Class, cost, set, and rarity all have to be parsed out of those.
+
 const normalizeText = (value) =>
   String(value ?? "")
     .trim()
@@ -133,6 +139,7 @@ const getCardTypes = (card) => {
 
 const getCardStats = (stats) => {
   const cleanStats = removeDiscordEmojis(stats).replace(/\s+/g, " ").trim();
+
   const numbers = cleanStats.match(/\d+/g) || [];
 
   return {
@@ -378,10 +385,13 @@ const getSelectedQuantity = (value) => {
 const getCardKey = (card) => {
   return String(card.cardid ?? card.card_id ?? card.card_name);
 };
+
 const UserCardManager = () => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [selectedCardData, setSelectedCardData] = useState({});
+
   const [loadingCards, setLoadingCards] = useState(false);
   const [savingCardId, setSavingCardId] = useState(null);
   const [deletingCardId, setDeletingCardId] = useState(null);
@@ -391,10 +401,13 @@ const UserCardManager = () => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const [selectedSide, setSelectedSide] = useState("");
-  const [selectedClass, setSelectedClass] = useState("");
+  // Add-card filters are multi-select.
+  const [selectedSides, setSelectedSides] = useState([]);
+  const [selectedClasses, setSelectedClasses] = useState([]);
+
   const [search, setSearch] = useState("");
   const [collectionSearch, setCollectionSearch] = useState("");
+
   const [collectionSide, setCollectionSide] = useState([]);
   const [collectionType, setCollectionType] = useState([]);
   const [collectionClass, setCollectionClass] = useState([]);
@@ -404,11 +417,13 @@ const UserCardManager = () => {
 
   const [classes, setClasses] = useState([]);
   const [availableCards, setAvailableCards] = useState([]);
+
   const [selectedCards, setSelectedCards] = useState({});
   const [selectedQuantities, setSelectedQuantities] = useState({});
 
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [addingCards, setAddingCards] = useState(false);
+
   const setAllVisibleToFour = () => {
     if (!availableCards.length) {
       return;
@@ -462,6 +477,7 @@ const UserCardManager = () => {
       return nextQuantities;
     });
   };
+
   const loadCollection = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -481,8 +497,22 @@ const UserCardManager = () => {
     }
   }, []);
 
-  const loadClasses = useCallback(async (side) => {
-    if (!side) {
+  /*
+   * Load classes for every selected side.
+   *
+   * Example:
+   *
+   * Plants
+   *   -> Guardian, Kabloom, Mega-Grow, Smarty, Solar
+   *
+   * Zombie
+   *   -> Beastly, Brainy, Crazy, Hearty, Sneaky
+   *
+   * Plants + Zombie
+   *   -> all ten classes
+   */
+  const loadClasses = useCallback(async (sides) => {
+    if (!sides?.length) {
       setClasses([]);
       return;
     }
@@ -492,13 +522,30 @@ const UserCardManager = () => {
 
     try {
       const params = new URLSearchParams();
-      params.set("side", side);
+
+      sides.forEach((side) => {
+        params.append("side", side.value);
+      });
 
       const data = await requestJson(
         `${API_BASE_URL}/tbotapp/user-cards/classes/?${params.toString()}`,
       );
 
-      setClasses(Array.isArray(data.classes) ? data.classes : []);
+      const loadedClasses = Array.isArray(data.classes) ? data.classes : [];
+
+      const uniqueClasses = [
+        ...new Set(
+          loadedClasses
+            .map((cardClass) => normalizeClassName(cardClass))
+            .filter(Boolean),
+        ),
+      ].sort((a, b) =>
+        a.localeCompare(b, undefined, {
+          sensitivity: "base",
+        }),
+      );
+
+      setClasses(uniqueClasses);
     } catch (requestError) {
       setClasses([]);
       setError(requestError.message || "Unable to load card classes.");
@@ -508,7 +555,7 @@ const UserCardManager = () => {
   }, []);
 
   const loadAvailableCards = useCallback(async () => {
-    if (!selectedSide || !selectedClass) {
+    if (!selectedSides.length || !selectedClasses.length) {
       setAvailableCards([]);
       setLoadingCards(false);
       return;
@@ -519,8 +566,13 @@ const UserCardManager = () => {
     try {
       const params = new URLSearchParams();
 
-      params.set("side", selectedSide);
-      params.set("class", selectedClass);
+      selectedSides.forEach((side) => {
+        params.append("side", side.value);
+      });
+
+      selectedClasses.forEach((cardClass) => {
+        params.append("class", cardClass.value);
+      });
 
       if (search.trim()) {
         params.set("search", search.trim());
@@ -533,11 +585,12 @@ const UserCardManager = () => {
       setAvailableCards(Array.isArray(data.cards) ? data.cards : []);
     } catch (requestError) {
       setAvailableCards([]);
+
       setError(requestError.message || "Unable to load available cards.");
     } finally {
       setLoadingCards(false);
     }
-  }, [selectedSide, selectedClass, search]);
+  }, [selectedSides, selectedClasses, search]);
 
   useEffect(() => {
     loadCollection();
@@ -548,18 +601,15 @@ const UserCardManager = () => {
       return;
     }
 
-    loadClasses(selectedSide);
-  }, [isAddModalOpen, selectedSide, loadClasses]);
+    loadClasses(selectedSides);
+  }, [isAddModalOpen, selectedSides, loadClasses]);
 
   useEffect(() => {
     if (!isAddModalOpen) {
       return;
     }
 
-    /*
-     * Explicitly clear the card list while a class has not been selected.
-     */
-    if (!selectedSide || !selectedClass) {
+    if (!selectedSides.length || !selectedClasses.length) {
       setAvailableCards([]);
       setLoadingCards(false);
       return;
@@ -572,7 +622,13 @@ const UserCardManager = () => {
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [isAddModalOpen, selectedSide, selectedClass, search, loadAvailableCards]);
+  }, [
+    isAddModalOpen,
+    selectedSides,
+    selectedClasses,
+    search,
+    loadAvailableCards,
+  ]);
 
   const ownedCount = useMemo(() => {
     return cards.length;
@@ -585,9 +641,7 @@ const UserCardManager = () => {
     );
   }, [cards]);
 
-  // Derived filter values pulled from the collection, using the same
-  // parsing CardBrowser applies to card_type / stats / set_rarity before
-  // mapping into react-select options.
+  // Derived filter values pulled from the collection.
   const collectionFilterOptions = useMemo(() => {
     const sides = new Set();
     const types = new Set();
@@ -675,12 +729,17 @@ const UserCardManager = () => {
     const searchValue = collectionSearch.trim().toLowerCase();
 
     const selectedSides = Array.isArray(collectionSide) ? collectionSide : [];
+
     const selectedTypes = Array.isArray(collectionType) ? collectionType : [];
+
     const selectedClasses = Array.isArray(collectionClass)
       ? collectionClass
       : [];
+
     const selectedCosts = Array.isArray(collectionCost) ? collectionCost : [];
+
     const selectedSets = Array.isArray(collectionSet) ? collectionSet : [];
+
     const selectedRarities = Array.isArray(collectionRarity)
       ? collectionRarity
       : [];
@@ -695,6 +754,7 @@ const UserCardManager = () => {
       const cardClasses = getClassNames(cardData.card_type);
       const cardTypes = getCardTypes(cardData);
       const stats = getCardStats(cardData.stats);
+
       const setName = getSetName(cardData.set_rarity);
       const rarityName = getRarityName(cardData.set_rarity);
 
@@ -829,8 +889,8 @@ const UserCardManager = () => {
   };
 
   const resetAddModalState = () => {
-    setSelectedSide("");
-    setSelectedClass("");
+    setSelectedSides([]);
+    setSelectedClasses([]);
     setSearch("");
     setClasses([]);
     setAvailableCards([]);
@@ -854,20 +914,28 @@ const UserCardManager = () => {
     resetAddModalState();
   };
 
-  const handleSideChange = (side) => {
+  const handleSideChange = (sides) => {
     clearMessages();
-    setSelectedSide(side);
-    setSelectedClass("");
+
+    setSelectedSides(sides || []);
+
+    // Changing the side selection invalidates the current
+    // class selection because the available classes may change.
+    setSelectedClasses([]);
+
     setSearch("");
+
     setSelectedCards({});
     setSelectedCardData({});
     setSelectedQuantities({});
     setAvailableCards([]);
   };
 
-  const handleClassChange = (cardClass) => {
+  const handleClassChange = (cardClasses) => {
     clearMessages();
-    setSelectedClass(cardClass);
+
+    setSelectedClasses(cardClasses || []);
+
     setSelectedCards({});
     setSelectedCardData({});
     setSelectedQuantities({});
@@ -1303,11 +1371,13 @@ const UserCardManager = () => {
         <section className="card-manager-summary">
           <div className="summary-item">
             <span className="summary-label">Unique Cards</span>
+
             <strong>{ownedCount}</strong>
           </div>
 
           <div className="summary-item">
             <span className="summary-label">Total Copies</span>
+
             <strong>{totalQuantity}</strong>
           </div>
         </section>
@@ -1332,8 +1402,6 @@ const UserCardManager = () => {
             </button>
           </div>
 
-          {/* Search bar + filters below match CardBrowser's card-search /
-              card-filters markup, styling, and multi-select behavior. */}
           <div className="card-search-container">
             <input
               className="card-search"
@@ -1481,8 +1549,8 @@ const UserCardManager = () => {
                 <h2 id="add-cards-title">Add Cards</h2>
 
                 <p>
-                  Select a side and class, then choose the cards you want to
-                  add.
+                  Select one or more sides and classes, then choose the cards
+                  you want to add.
                 </p>
               </div>
 
@@ -1501,45 +1569,46 @@ const UserCardManager = () => {
               <div className="filter-group">
                 <label htmlFor="card-side">Side</label>
 
-                <select
-                  id="card-side"
-                  value={selectedSide}
-                  onChange={(event) => handleSideChange(event.target.value)}
-                  disabled={addingCards}
-                >
-                  <option value="">Select side</option>
-
-                  {SIDE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  inputId="card-side"
+                  styles={selectStyles}
+                  menuPortalTarget={document.body}
+                  placeholder="Select sides..."
+                  options={SIDE_OPTIONS}
+                  value={selectedSides}
+                  onChange={handleSideChange}
+                  isMulti
+                  closeMenuOnSelect={false}
+                  isDisabled={addingCards}
+                />
               </div>
 
               <div className="filter-group">
                 <label htmlFor="card-class">Class</label>
 
-                <select
-                  id="card-class"
-                  value={selectedClass}
-                  onChange={(event) => handleClassChange(event.target.value)}
-                  disabled={!selectedSide || loadingClasses || addingCards}
-                >
-                  <option value="">
-                    {!selectedSide
-                      ? "Select side first..."
+                <Select
+                  inputId="card-class"
+                  styles={selectStyles}
+                  menuPortalTarget={document.body}
+                  placeholder={
+                    !selectedSides.length
+                      ? "Select sides first..."
                       : loadingClasses
                         ? "Loading classes..."
-                        : "Select class..."}
-                  </option>
-
-                  {classes.map((cardClass) => (
-                    <option key={cardClass} value={cardClass}>
-                      {cardClass}
-                    </option>
-                  ))}
-                </select>
+                        : "Select classes..."
+                  }
+                  options={classes.map((cardClass) => ({
+                    value: cardClass,
+                    label: cardClass,
+                  }))}
+                  value={selectedClasses}
+                  onChange={handleClassChange}
+                  isMulti
+                  closeMenuOnSelect={false}
+                  isDisabled={
+                    !selectedSides.length || loadingClasses || addingCards
+                  }
+                />
               </div>
 
               <div className="filter-group search-group">
@@ -1553,27 +1622,28 @@ const UserCardManager = () => {
                     setSearch(event.target.value);
                   }}
                   placeholder={
-                    selectedClass
+                    selectedClasses.length
                       ? "Search cards..."
                       : "Select a class first..."
                   }
-                  disabled={!selectedClass || addingCards}
+                  disabled={!selectedClasses.length || addingCards}
                 />
               </div>
             </div>
 
-            {!selectedSide ? (
+            {!selectedSides.length ? (
               <div className="modal-empty-state">
                 <h3>Choose a side to begin</h3>
 
                 <p>Select Plants or Zombies to load the available classes.</p>
               </div>
-            ) : !selectedClass ? (
+            ) : !selectedClasses.length ? (
               <div className="modal-empty-state">
                 <h3>Choose a class to see cards</h3>
 
                 <p>
-                  Select a class above before the available cards are displayed.
+                  Select at least one class above before the available cards are
+                  displayed.
                 </p>
               </div>
             ) : (
@@ -1632,7 +1702,9 @@ const UserCardManager = () => {
                   ) : (
                     availableCards.map((card) => {
                       const key = getCardKey(card);
+
                       const isSelected = Boolean(selectedCards[key]);
+
                       const quantity = getSelectedQuantity(
                         selectedQuantities[key] ?? 1,
                       );

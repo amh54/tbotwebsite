@@ -1,12 +1,15 @@
-
 import json
 import re
+
 from rest_framework.response import Response
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from rest_framework.decorators import api_view
+
 from ..models import UserProfile, UserCard, WebCards
 from ..serializers import UserCardSerializer
+
+
 # ---------------------------------------------------------------------------
 # Card exclusion rules
 # ---------------------------------------------------------------------------
@@ -84,6 +87,7 @@ def get_collectible_cards():
     # "Token"
     # "Hero"
     # ------------------------------------------------------------------
+
     for excluded_type in EXCLUDED_CARD_TYPES:
         cards = cards.exclude(
             card_type__icontains=excluded_type
@@ -100,6 +104,7 @@ def get_collectible_cards():
     # It has card_type = "Guardian", so card_type filtering alone
     # would NOT remove it.
     # ------------------------------------------------------------------
+
     for excluded_term in EXCLUDED_DESCRIPTION_TERMS:
         cards = cards.exclude(
             description__icontains=excluded_term
@@ -116,6 +121,7 @@ def get_collectible_cards():
     # Hero cards may have:
     # set_rarity = "Premium - Hero"
     # ------------------------------------------------------------------
+
     for excluded_term in EXCLUDED_SET_RARITY_TERMS:
         cards = cards.exclude(
             set_rarity__icontains=excluded_term
@@ -125,12 +131,12 @@ def get_collectible_cards():
     # Multi-class cards are Heroes.
     #
     # Examples:
-    #
     # Guardian, Smarty
     # Kabloom, Guardian
     #
     # Normal collectible cards have exactly one class.
     # ------------------------------------------------------------------
+
     cards = cards.exclude(
         card_type__contains=","
     )
@@ -143,21 +149,19 @@ def get_card_class_names(cards):
     Convert card_type values into a unique list of individual classes.
 
     Examples:
-
         Guardian
         Smarty
         Guardian, Smarty
         Kabloom, Guardian
 
     become:
-
         Guardian
         Kabloom
         Smarty
 
-    Multi-class cards are already excluded from get_collectible_cards(),
-    but splitting on commas here also prevents duplicate/composite class
-    names from ever appearing in the dropdown.
+    Multi-class cards are already excluded from
+    get_collectible_cards(), but splitting on commas here also prevents
+    duplicate/composite class names from appearing in the dropdown.
     """
 
     class_names = set()
@@ -192,7 +196,6 @@ def card_type_contains_class(card_type, requested_class):
     the requested individual class.
 
     Examples:
-
         "Guardian, Smarty" + "Guardian" -> True
         "Guardian, Smarty" + "Smarty"   -> True
         "Guardian, Smarty" + "Kabloom"  -> False
@@ -209,16 +212,57 @@ def card_type_contains_class(card_type, requested_class):
     )
 
 
+def card_type_contains_any_class(card_type, requested_classes):
+    """
+    Return True if card_type contains at least one of the requested
+    classes.
+
+    This is used by the multi-class selector.
+
+    Example:
+
+        card_type = "Sneaky"
+        requested_classes = ["Sneaky", "Crazy"]
+
+        -> True
+
+    Example:
+
+        card_type = "Sneaky"
+        requested_classes = ["Guardian", "Crazy"]
+
+        -> False
+    """
+
+    if not card_type or not requested_classes:
+        return False
+
+    requested = {
+        str(card_class).strip().casefold()
+        for card_class in requested_classes
+        if str(card_class).strip()
+    }
+
+    if not requested:
+        return False
+
+    card_classes = {
+        card_class.strip().casefold()
+        for card_class in str(card_type).split(",")
+        if card_class.strip()
+    }
+
+    return bool(card_classes & requested)
+
+
 def get_card_cost(card):
     """
     Extract the card's cost from the stats field.
 
     Example:
-
-        "1 <:Sun:...> 2 <:Strength:...> 1 <:Health:...>"
+        "1 <:Sun:...> 2 <:Strength:...> 1 <:Health:..."
 
     returns:
-
         1
 
     Cards without a usable stats cost are placed after cards
@@ -413,7 +457,6 @@ def user_card_create(request):
     collectible_cards = get_collectible_cards()
 
     for index, item in enumerate(cards_data):
-
         if not isinstance(item, dict):
             return JsonResponse(
                 {
@@ -761,54 +804,119 @@ def user_cards_available(request):
             status=401,
         )
 
-    side = str(
-        request.GET.get("side", "")
-    ).strip()
+    # ------------------------------------------------------------------
+    # IMPORTANT:
+    #
+    # The frontend now sends multiple values:
+    #
+    # ?side=Plants&side=Zombie
+    #
+    # and:
+    #
+    # ?class=Sneaky&class=Crazy
+    #
+    # getlist() is required here.
+    # ------------------------------------------------------------------
 
-    card_class = str(
-        request.GET.get("class", "")
-    ).strip()
+    sides = [
+        value.strip()
+        for value in request.GET.getlist("side")
+        if value.strip()
+    ]
+
+    classes = [
+        value.strip()
+        for value in request.GET.getlist("class")
+        if value.strip()
+    ]
 
     search = str(
         request.GET.get("search", "")
     ).strip()
 
+    # Remove duplicate values while preserving order.
+    sides = list(dict.fromkeys(
+        sides
+    ))
+
+    classes = list(dict.fromkeys(
+        classes
+    ))
+
+    # ------------------------------------------------------------------
     # Start with ONLY collectible cards.
+    # ------------------------------------------------------------------
+
     cards = get_collectible_cards()
 
-    if side:
+    # ------------------------------------------------------------------
+    # Multiple sides are OR'd together.
+    #
+    # Example:
+    #
+    # side=Plants&side=Zombie
+    #
+    # becomes:
+    #
+    # side IN ("Plants", "Zombie")
+    #
+    # This is important because the database uses:
+    #
+    # Plants
+    # Zombie
+    #
+    # exactly.
+    # ------------------------------------------------------------------
+
+    if sides:
         cards = cards.filter(
-            side__iexact=side
+            side__in=sides
         )
+
+    # ------------------------------------------------------------------
+    # Search by card name.
+    # ------------------------------------------------------------------
 
     if search:
         cards = cards.filter(
             card_name__icontains=search
         )
 
-    # Convert the queryset to a list so we can:
+    # ------------------------------------------------------------------
+    # Convert queryset to a list so we can:
     #
     # 1. Filter individual classes correctly.
     # 2. Sort by cost extracted from stats.
     # 3. Sort alphabetically when costs match.
+    # ------------------------------------------------------------------
+
     card_list = list(cards)
 
-    # Class filtering.
+    # ------------------------------------------------------------------
+    # Multiple classes are OR'd together.
     #
-    # This allows a future multi-class card to match an individual
-    # class, while the normal collectible query still excludes the
-    # known Hero multi-class cards.
-    if card_class:
+    # Example:
+    #
+    # class=Sneaky&class=Crazy
+    #
+    # means:
+    #
+    # Sneaky OR Crazy
+    #
+    # This also works if card_type ever contains multiple classes.
+    # ------------------------------------------------------------------
+
+    if classes:
         card_list = [
             card
             for card in card_list
-            if card_type_contains_class(
+            if card_type_contains_any_class(
                 card.card_type,
-                card_class,
+                classes,
             )
         ]
 
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Sort:
     #
     # Cost ascending
@@ -820,7 +928,8 @@ def user_cards_available(request):
     # 1 - Forget-Me-Nuts
     # 1 - Another Card
     # 2 - ...
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
+
     card_list = sort_cards_by_cost_and_name(
         card_list
     )
@@ -869,25 +978,51 @@ def user_cards_available(request):
 
 @require_http_methods(["GET"])
 def user_card_classes(request):
-    side = str(
-        request.GET.get("side", "")
-    ).strip()
-
+    # ------------------------------------------------------------------
     # IMPORTANT:
+    #
+    # The frontend can now send:
+    #
+    # ?side=Plants&side=Zombie
+    #
+    # We MUST use getlist() rather than get().
+    # ------------------------------------------------------------------
+
+    sides = [
+        value.strip()
+        for value in request.GET.getlist("side")
+        if value.strip()
+    ]
+
+    # Remove duplicate sides.
+    sides = list(dict.fromkeys(
+        sides
+    ))
+
+    # ------------------------------------------------------------------
     # Classes are generated from the same collectible-card queryset
     # used by the available-card endpoint.
     #
     # Therefore:
     #
-    # - Superpowers are not used to generate classes.
+    # - Superpowers are not used.
     # - Tokens are not used.
     # - Heroes are not used.
     # - Multi-class Hero entries are not used.
+    # ------------------------------------------------------------------
+
     cards = get_collectible_cards()
 
-    if side:
+    # ------------------------------------------------------------------
+    # Multiple sides are OR'd together.
+    #
+    # This is what makes selecting both Plants AND Zombies return
+    # classes from BOTH sides.
+    # ------------------------------------------------------------------
+
+    if sides:
         cards = cards.filter(
-            side__iexact=side
+            side__in=sides
         )
 
     classes = get_card_class_names(cards)
@@ -897,9 +1032,14 @@ def user_card_classes(request):
             "classes": classes,
         }
     )
+
+
+# ---------------------------------------------------------------------------
+# Public profile cards
+# ---------------------------------------------------------------------------
+
 @api_view(["GET"])
 def user_profile_cards(request, profile_slug):
-
     try:
         profile = UserProfile.objects.get(
             profile_slug=profile_slug
@@ -939,7 +1079,6 @@ def user_profile_cards(request, profile_slug):
     results = []
 
     for user_card in user_cards:
-
         card = web_cards.get(
             user_card.card_name
         )
@@ -961,8 +1100,8 @@ def user_profile_cards(request, profile_slug):
                         "ability": card.ability,
                         "thumbnail": card.thumbnail,
                         "traits": card.traits,
-                        "set_rarity": card.set_rarity,
                         "flavor_text": card.flavor_text,
+                        "set_rarity": card.set_rarity,
                     }
                     if card
                     else None
