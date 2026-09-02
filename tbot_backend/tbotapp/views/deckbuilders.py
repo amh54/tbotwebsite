@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-
+from urllib.parse import unquote
 from ..models import (
     WebDeckbuilder,
     UserProfile,
@@ -14,18 +14,16 @@ from ..serializers import (
 )
 
 
-def _normalize_deckbuilder_name(value):
-    """
-    Normalize a deckbuilder name for reliable matching.
 
-    Handles:
-    - Leading/trailing whitespace
-    - Multiple spaces
-    - Tabs/newlines
-    - Non-standard whitespace
-    - Capitalization differences
-    """
-    return " ".join(str(value or "").split()).casefold()
+def _normalize_deckbuilder_name(value):
+    text = str(value or "")
+    for _ in range(5):
+        decoded = unquote(text)
+        if decoded == text:
+            break
+        text = decoded
+
+    return " ".join(text.split()).casefold()
 
 
 def _get_deckbuilder(deckbuilder_name):
