@@ -64,9 +64,6 @@
 }
 
 .creator-field {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
   min-width: 0;
   max-width: 100%;
   overflow-wrap: break-word;
@@ -76,14 +73,12 @@
   color: #8fe38b;
   font-weight: 700;
   white-space: nowrap;
-  flex: 0 0 auto;
 }
 
 .creator-field .creator-value {
   color: #d5dde4;
   font-weight: 400;
   font-size: 1.3rem;
-  min-width: 0;
   white-space: normal;
   overflow-wrap: break-word;
 }
