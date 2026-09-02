@@ -17,6 +17,14 @@ from ..serializers import (
 def _get_deckbuilder(deckbuilder_name):
     normalized_name = str(deckbuilder_name or "").strip()
 
+    print("REQUESTED DECKBUILDER:", repr(deckbuilder_name))
+    print("NORMALIZED DECKBUILDER:", repr(normalized_name))
+
+    deckbuilders = WebDeckbuilder.objects.all()
+
+    for db in deckbuilders:
+        print("DATABASE DECKBUILDER:", repr(db.deckbuilder_name))
+
     return (
         WebDeckbuilder.objects
         .annotate(normalized_name=Trim("deckbuilder_name"))
