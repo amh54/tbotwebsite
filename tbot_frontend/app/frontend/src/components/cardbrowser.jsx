@@ -424,7 +424,11 @@ const isHeroCard = (card) => {
   return rarity === "hero";
 };
 
-function CardBrowser({ cards: providedCards = [], userCollection = false }) {
+function CardBrowser({
+  cards: providedCards = [],
+  userCollection = false,
+  allCards = [],
+}) {
   const hasValue = (value) =>
     value !== null && value !== undefined && String(value).trim() !== "";
 
@@ -1979,17 +1983,15 @@ function CardBrowser({ cards: providedCards = [], userCollection = false }) {
         {selectedCard && (
           <CardModal
             card={selectedCard}
-            showShareCard={false}
+            allCards={allCards}
+            showShareCard={!userCollection}
             close={() => {
               if (window.history.state?.card) {
                 window.history.back();
               } else {
                 setSelectedCard(null);
-
                 const url = new URL(window.location.href);
-
                 url.searchParams.delete("card");
-
                 window.history.replaceState({}, "", url);
               }
             }}
