@@ -64,11 +64,11 @@
 }
 
 .creator-field {
-  display: block;
-  white-space: normal;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
   min-width: 0;
   max-width: 100%;
-  overflow-wrap: break-word;
 }
 
 .creator-field .field-label {
@@ -81,8 +81,8 @@
   color: #d5dde4;
   font-weight: 400;
   font-size: 1.3rem;
-  white-space: normal;
-  overflow-wrap: break-word;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .hero-red-green {
