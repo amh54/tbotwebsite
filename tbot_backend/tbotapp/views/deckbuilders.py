@@ -1,9 +1,7 @@
-from django.shortcuts import get_object_or_404
-
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models.functions import Trim
+
 from ..models import (
     WebDeckbuilder,
     UserProfile,
@@ -14,23 +12,39 @@ from ..serializers import (
     PublicDeckbuilderSerializer,
     PublicDeckSerializer,
 )
+
+
+def _normalize_deckbuilder_name(value):
+    """
+    Normalize a deckbuilder name for reliable matching.
+
+    Handles:
+    - Leading/trailing whitespace
+    - Multiple spaces
+    - Tabs/newlines
+    - Non-standard whitespace
+    - Capitalization differences
+    """
+    return " ".join(str(value or "").split()).casefold()
+
+
 def _get_deckbuilder(deckbuilder_name):
-    normalized_name = str(deckbuilder_name or "").strip()
+    """
+    Find a deckbuilder by name using normalized matching.
+    """
 
-    print("REQUESTED DECKBUILDER:", repr(deckbuilder_name))
-    print("NORMALIZED DECKBUILDER:", repr(normalized_name))
+    target_name = _normalize_deckbuilder_name(deckbuilder_name)
 
-    deckbuilders = WebDeckbuilder.objects.all()
+    for deckbuilder in WebDeckbuilder.objects.all():
+        database_name = _normalize_deckbuilder_name(
+            deckbuilder.deckbuilder_name
+        )
 
-    for db in deckbuilders:
-        print("DATABASE DECKBUILDER:", repr(db.deckbuilder_name))
+        if database_name == target_name:
+            return deckbuilder
 
-    return (
-        WebDeckbuilder.objects
-        .annotate(normalized_name=Trim("deckbuilder_name"))
-        .filter(normalized_name__iexact=normalized_name)
-        .first()
-    )
+    return None
+
 
 def _split_deckbuilder_names(value):
     if not value:
@@ -53,7 +67,7 @@ def _split_deckbuilder_names(value):
     names = []
 
     for name in text.split(","):
-        normalized = name.strip().lower()
+        normalized = _normalize_deckbuilder_name(name)
 
         if normalized and normalized not in names:
             names.append(normalized)
@@ -62,18 +76,9 @@ def _split_deckbuilder_names(value):
 
 
 def _deck_matches_deckbuilder(deck, deckbuilder_name):
-    """
-    Determine whether a deck belongs to a deckbuilder.
 
-    A deck matches when the deckbuilder's name appears as an
-    individual name in either:
 
-        - creator
-        - optimization
-
-    inspiration is intentionally NOT checked.
-    """
-    target_name = str(deckbuilder_name or "").strip().lower()
+    target_name = _normalize_deckbuilder_name(deckbuilder_name)
 
     if not target_name:
         return False
@@ -93,6 +98,9 @@ def _deck_matches_deckbuilder(deck, deckbuilder_name):
 
 
 def _get_deckbuilder_decks(deckbuilder):
+    if deckbuilder is None:
+        return []
+
     deckbuilder_name = deckbuilder.deckbuilder_name
 
     all_decks = Decklist.objects.all()
@@ -119,10 +127,7 @@ def _get_deckbuilder_decks(deckbuilder):
 
 @api_view(["GET"])
 def deckbuilders(request):
-    deckbuilders_queryset = (
-        WebDeckbuilder.objects
-        .all()
-    )
+    deckbuilders_queryset = WebDeckbuilder.objects.all()
 
     results = []
 
@@ -150,6 +155,7 @@ def deckbuilders(request):
         data["actual_deck_count"] = actual_count
 
         results.append(data)
+
     results.sort(
         key=lambda item: (
             -int(item.get("numb_of_decks") or 0),
@@ -185,12 +191,18 @@ def deckbuilder_count(request):
 
 @api_view(["GET"])
 def deckbuilder_detail(request, deckbuilder_name):
-    """
-    Return one deckbuilder and their profile information.
 
-    The name comes from web_deckbuilders.deckbuilder_name.
-    """
     deckbuilder = _get_deckbuilder(deckbuilder_name)
+
+    if deckbuilder is None:
+        return Response(
+            {
+                "success": False,
+                "error": "Deckbuilder not found.",
+                "requested_name": deckbuilder_name,
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
     profile = (
         UserProfile.objects
@@ -205,7 +217,6 @@ def deckbuilder_detail(request, deckbuilder_name):
     )
 
     data = serializer.data
-
     data["has_profile"] = profile is not None
 
     return Response(
@@ -219,33 +230,19 @@ def deckbuilder_detail(request, deckbuilder_name):
 
 @api_view(["GET"])
 def deckbuilder_decks(request, deckbuilder_name):
-    """
-    Return every deck belonging to the specified deckbuilder.
-
-    A deck belongs to the deckbuilder when their name appears as
-    an individual name in either:
-
-        - creator
-        - optimization
-
-    Examples:
-
-        creator = "Xera"
-
-        creator = "Xera, Pillowy"
-
-        optimization = "Xera, Pillowy, Zzyzx_Master"
-
-    All of those count toward Xera.
-
-    IMPORTANT:
-    inspiration is NOT checked.
-    """
     deckbuilder = _get_deckbuilder(deckbuilder_name)
 
-    decks = _get_deckbuilder_decks(
-        deckbuilder
-    )
+    if deckbuilder is None:
+        return Response(
+            {
+                "success": False,
+                "error": "Deckbuilder not found.",
+                "requested_name": deckbuilder_name,
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    decks = _get_deckbuilder_decks(deckbuilder)
 
     deckbuilder_serializer = PublicDeckbuilderSerializer(
         deckbuilder
@@ -270,13 +267,7 @@ def deckbuilder_decks(request, deckbuilder_name):
             "deckbuilder": deckbuilder_serializer.data,
             "has_profile": profile is not None,
             "decks": deck_serializer.data,
-
-            # This is now the ACTUAL number of matching decks.
-            #
-            # It includes decks where the name appears in creator
-            # OR optimization.
             "deck_count": len(decks),
-
             "actual_deck_count": len(decks),
         },
         status=status.HTTP_200_OK,
@@ -285,24 +276,20 @@ def deckbuilder_decks(request, deckbuilder_name):
 
 @api_view(["GET"])
 def deckbuilder_deck_count(request, deckbuilder_name):
-    """
-    Return the actual number of decks belonging to the deckbuilder.
 
-    The count uses exactly the same matching logic as
-    deckbuilder_decks().
-
-    Matching fields:
-
-        creator
-        optimization
-
-    inspiration is intentionally NOT checked.
-    """
     deckbuilder = _get_deckbuilder(deckbuilder_name)
 
-    decks = _get_deckbuilder_decks(
-        deckbuilder
-    )
+    if deckbuilder is None:
+        return Response(
+            {
+                "success": False,
+                "error": "Deckbuilder not found.",
+                "requested_name": deckbuilder_name,
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    decks = _get_deckbuilder_decks(deckbuilder)
 
     return Response(
         {
