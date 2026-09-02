@@ -199,18 +199,18 @@ const selectStyles = {
   }),
 
   valueContainer: (base) => ({
-    ...base,
-    minWidth: 0,
-    maxHeight: "42px",
-    overflowY: "auto",
-    overflowX: "hidden",
-    flexWrap: "wrap",
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
-    "::-webkit-scrollbar": {
-      display: "none",
-    },
-  }),
+  ...base,
+  minWidth: 0,
+  flexWrap: "wrap",
+  maxHeight: "140px",
+  overflowY: "auto",
+  overflowX: "hidden",
+  scrollbarWidth: "none",
+  msOverflowStyle: "none",
+  "::-webkit-scrollbar": {
+    display: "none",
+  },
+}),
 
   indicatorsContainer: (base) => ({
     ...base,
