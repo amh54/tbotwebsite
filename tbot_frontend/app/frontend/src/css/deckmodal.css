@@ -63,13 +63,13 @@
   white-space: nowrap;
 }
 
+
 .creator-field {
   display: flex;
   align-items: baseline;
   gap: 5px;
   min-width: 0;
   max-width: 100%;
-  overflow-wrap: break-word;
 }
 
 .creator-field .field-label {
@@ -84,9 +84,11 @@
   font-weight: 400;
   font-size: 1.3rem;
   min-width: 0;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
 .hero-red-green {
   --hero-color-1: #d94b4b;
   --hero-color-2: #4caf50;
