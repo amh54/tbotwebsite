@@ -1,15 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-
 import Select from "react-select";
-
 import { Link } from "react-router-dom";
-
 import Footer from "../components/footer";
-
 import "../css/cardinfo.css";
-
 import "../css/cardmanager.css";
-
 import "../css/loading.css";
 
 const getApiBaseUrl = () => {
@@ -283,13 +277,17 @@ const getCsrfToken = () => {
   return getCookie("csrftoken");
 };
 
+/*
+ * Always refresh the CSRF token from Django.
+ *
+ * This avoids reusing a stale csrftoken cookie that can result
+ * in:
+ *
+ *   403 CSRF Failed
+ *
+ * on POST/PATCH/DELETE requests.
+ */
 const ensureCsrfToken = async () => {
-  const existingToken = getCsrfToken();
-
-  if (existingToken) {
-    return existingToken;
-  }
-
   const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
     method: "GET",
     credentials: "include",
@@ -323,19 +321,39 @@ const ensureCsrfToken = async () => {
   return token;
 };
 
+/*
+ * Central request helper.
+ *
+ * GET requests do not need CSRF.
+ * POST/PATCH/PUT/DELETE requests automatically receive
+ * the Django CSRF token.
+ */
 const requestJson = async (url, options = {}) => {
+  const method = (options.method || "GET").toUpperCase();
+
+  const headers = {
+    Accept: "application/json",
+
+    ...(options.body
+      ? {
+          "Content-Type": "application/json",
+        }
+      : {}),
+
+    ...(options.headers || {}),
+  };
+
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    const csrfToken = await ensureCsrfToken();
+
+    headers["X-CSRFToken"] = csrfToken;
+  }
+
   const response = await fetch(url, {
-    credentials: "include",
     ...options,
-    headers: {
-      Accept: "application/json",
-      ...(options.body
-        ? {
-            "Content-Type": "application/json",
-          }
-        : {}),
-      ...(options.headers || {}),
-    },
+    method,
+    credentials: "include",
+    headers,
   });
 
   let data = null;
@@ -350,9 +368,11 @@ const requestJson = async (url, options = {}) => {
     const errorMessage =
       data?.error ||
       data?.detail ||
+      data?.reason ||
       `Request failed with status ${response.status}`;
 
     const error = new Error(errorMessage);
+
     error.status = response.status;
     error.data = data;
 
@@ -389,16 +409,12 @@ const getCardKey = (card) => {
 const UserCardManager = () => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [selectedCardData, setSelectedCardData] = useState({});
-
   const [loadingCards, setLoadingCards] = useState(false);
   const [savingCardId, setSavingCardId] = useState(null);
   const [deletingCardId, setDeletingCardId] = useState(null);
-
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Add-card filters are multi-select.
@@ -407,7 +423,6 @@ const UserCardManager = () => {
 
   const [search, setSearch] = useState("");
   const [collectionSearch, setCollectionSearch] = useState("");
-
   const [collectionSide, setCollectionSide] = useState([]);
   const [collectionType, setCollectionType] = useState([]);
   const [collectionClass, setCollectionClass] = useState([]);
@@ -417,10 +432,8 @@ const UserCardManager = () => {
 
   const [classes, setClasses] = useState([]);
   const [availableCards, setAvailableCards] = useState([]);
-
   const [selectedCards, setSelectedCards] = useState({});
   const [selectedQuantities, setSelectedQuantities] = useState({});
-
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [addingCards, setAddingCards] = useState(false);
 
@@ -499,8 +512,6 @@ const UserCardManager = () => {
 
   /*
    * Load classes for every selected side.
-   *
-   * Example:
    *
    * Plants
    *   -> Guardian, Kabloom, Mega-Grow, Smarty, Solar
@@ -585,7 +596,6 @@ const UserCardManager = () => {
       setAvailableCards(Array.isArray(data.cards) ? data.cards : []);
     } catch (requestError) {
       setAvailableCards([]);
-
       setError(requestError.message || "Unable to load available cards.");
     } finally {
       setLoadingCards(false);
@@ -752,9 +762,9 @@ const UserCardManager = () => {
       const searchMatch = !searchValue || name.includes(searchValue);
 
       const cardClasses = getClassNames(cardData.card_type);
+
       const cardTypes = getCardTypes(cardData);
       const stats = getCardStats(cardData.stats);
-
       const setName = getSetName(cardData.set_rarity);
       const rarityName = getRarityName(cardData.set_rarity);
 
@@ -831,6 +841,7 @@ const UserCardManager = () => {
       }
 
       const aClass = getClassNames(aData.card_type)[0] || "";
+
       const bClass = getClassNames(bData.card_type)[0] || "";
 
       const classDifference = aClass.localeCompare(bClass, undefined, {
@@ -842,6 +853,7 @@ const UserCardManager = () => {
       }
 
       const aCost = getCardStats(aData.stats).cost ?? Infinity;
+
       const bCost = getCardStats(bData.stats).cost ?? Infinity;
 
       if (aCost !== bCost) {
@@ -919,12 +931,12 @@ const UserCardManager = () => {
 
     setSelectedSides(sides || []);
 
-    // Changing the side selection invalidates the current
-    // class selection because the available classes may change.
+    // Changing the side selection invalidates the
+    // current class selection because the available
+    // classes may change.
     setSelectedClasses([]);
 
     setSearch("");
-
     setSelectedCards({});
     setSelectedCardData({});
     setSelectedQuantities({});
@@ -935,7 +947,6 @@ const UserCardManager = () => {
     clearMessages();
 
     setSelectedClasses(cardClasses || []);
-
     setSelectedCards({});
     setSelectedCardData({});
     setSelectedQuantities({});
@@ -1088,8 +1099,10 @@ const UserCardManager = () => {
     const failedCards = [];
 
     try {
-      const csrfToken = await ensureCsrfToken();
-
+      /*
+       * requestJson() now handles CSRF automatically.
+       * There is no need to manually retrieve the token here.
+       */
       for (const card of selected) {
         const key = getCardKey(card);
 
@@ -1098,9 +1111,6 @@ const UserCardManager = () => {
         try {
           await requestJson(`${API_BASE_URL}/tbotapp/user-cards/create/`, {
             method: "POST",
-            headers: {
-              "X-CSRFToken": csrfToken,
-            },
             body: JSON.stringify({
               card_name: card.card_name,
               quantity,
@@ -1125,8 +1135,8 @@ const UserCardManager = () => {
         setIsAddModalOpen(false);
         resetAddModalState();
       }
-    } catch (error) {
-      setError(error.message);
+    } catch (requestError) {
+      setError(requestError.message || "Unable to add cards.");
     } finally {
       setAddingCards(false);
     }
@@ -1157,15 +1167,10 @@ const UserCardManager = () => {
     clearMessages();
 
     try {
-      const csrfToken = await ensureCsrfToken();
-
       const data = await requestJson(
         `${API_BASE_URL}/tbotapp/user-cards/${card.id}/`,
         {
           method: "PATCH",
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
           body: JSON.stringify({
             quantity,
           }),
@@ -1217,15 +1222,10 @@ const UserCardManager = () => {
     clearMessages();
 
     try {
-      const csrfToken = await ensureCsrfToken();
-
       await requestJson(
         `${API_BASE_URL}/tbotapp/user-cards/${card.id}/delete/`,
         {
           method: "DELETE",
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
         },
       );
 
@@ -1371,13 +1371,11 @@ const UserCardManager = () => {
         <section className="card-manager-summary">
           <div className="summary-item">
             <span className="summary-label">Unique Cards</span>
-
             <strong>{ownedCount}</strong>
           </div>
 
           <div className="summary-item">
             <span className="summary-label">Total Copies</span>
-
             <strong>{totalQuantity}</strong>
           </div>
         </section>
@@ -1386,7 +1384,6 @@ const UserCardManager = () => {
           <div className="card-manager-section-header">
             <div>
               <h2>My Collection</h2>
-
               <span>
                 {ownedCount} unique card
                 {ownedCount === 1 ? "" : "s"}
@@ -1508,7 +1505,6 @@ const UserCardManager = () => {
           ) : cards.length === 0 ? (
             <div className="card-manager-empty">
               <h3>Your collection is empty</h3>
-
               <p>Add cards to start building your collection.</p>
 
               <button
