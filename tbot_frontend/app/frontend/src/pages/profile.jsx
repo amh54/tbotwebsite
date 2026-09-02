@@ -102,67 +102,85 @@ function Profile() {
   const [shareMessage, setShareMessage] = useState("");
 
   useEffect(() => {
-    const controller = new AbortController();
+  const controller = new AbortController();
 
-    const loadViewer = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/tbotapp/profile/me/`, {
+  const loadViewerCollection = async () => {
+    try {
+      const profileResponse = await fetch(
+        `${API_BASE_URL}/tbotapp/profile/me/`,
+        {
           method: "GET",
           headers: {
             Accept: "application/json",
           },
           credentials: "include",
           signal: controller.signal,
-        });
+        },
+      );
 
-        const data = await response.json().catch(() => null);
+      const profileData = await profileResponse.json().catch(() => null);
 
-        if (!response.ok || !data?.authenticated) {
-          setIsAuthenticated(false);
-          setViewerCards([]);
-          return;
-        }
+      if (!profileResponse.ok || !profileData?.authenticated) {
+        setIsAuthenticated(false);
+        setViewerCards([]);
+        return;
+      }
 
-        setIsAuthenticated(true);
+      setIsAuthenticated(true);
 
-        const cardsResponse = await fetch(
-          `${API_BASE_URL}/tbotapp/profile/me/cards/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            credentials: "include",
-            signal: controller.signal,
+      const viewerSlug = profileData?.profile?.profile_slug;
+
+      if (!viewerSlug) {
+        console.error("Logged-in profile has no profile_slug.");
+        setViewerCards([]);
+        return;
+      }
+
+      const cardsResponse = await fetch(
+        `${API_BASE_URL}/tbotapp/profile/${encodeURIComponent(viewerSlug)}/cards/`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
           },
+          credentials: "include",
+          signal: controller.signal,
+        },
+      );
+
+      const cardsData = await cardsResponse.json().catch(() => null);
+
+      if (!cardsResponse.ok) {
+        console.error(
+          "Unable to load logged-in user's collection:",
+          cardsData,
         );
+        setViewerCards([]);
+        return;
+      }
 
-        const cardsData = await cardsResponse.json().catch(() => null);
-
-        const loadedViewerCards = cardsResponse.ok
-          ? Array.isArray(cardsData)
-            ? cardsData
-            : Array.isArray(cardsData?.cards)
-              ? cardsData.cards
-              : []
+      const loadedViewerCards = Array.isArray(cardsData)
+        ? cardsData
+        : Array.isArray(cardsData?.cards)
+          ? cardsData.cards
           : [];
 
-        setViewerCards(loadedViewerCards);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load viewer:", err);
-          setIsAuthenticated(false);
-          setViewerCards([]);
-        }
+      setViewerCards(loadedViewerCards);
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error("Unable to load viewer collection:", err);
+        setIsAuthenticated(false);
+        setViewerCards([]);
       }
-    };
+    }
+  };
 
-    loadViewer();
+  loadViewerCollection();
 
-    return () => {
-      controller.abort();
-    };
-  }, []);
+  return () => {
+    controller.abort();
+  };
+}, []);
 
   /*
    * --------------------------------------------------------------------------
