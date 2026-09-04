@@ -252,6 +252,10 @@ def profile_update(request):
 
         update_data["display_name"] = display_name
 
+        # The user is explicitly setting their own display
+        # name, so stop letting Discord logins overwrite it.
+        update_data["display_name_is_custom"] = True
+
     if "profile_slug" in update_data:
         profile_slug = str(
             update_data["profile_slug"]

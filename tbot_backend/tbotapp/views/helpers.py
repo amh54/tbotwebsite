@@ -172,8 +172,14 @@ def get_discord_user(request):
                             )
                             changed = True
 
+                        # Only let Discord overwrite the display
+                        # name if the user hasn't customized it
+                        # on the site. Otherwise every page load
+                        # that refreshes the Discord profile was
+                        # silently stomping the user's own choice.
                         if (
-                            profile.display_name
+                            not profile.display_name_is_custom
+                            and profile.display_name
                             != discord_global_name
                         ):
                             profile.display_name = (

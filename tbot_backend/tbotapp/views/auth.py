@@ -251,11 +251,11 @@ def discord_callback(request):
     # ========================================================
 
     user, created = User.objects.get_or_create(
-        username=f"discord_{discord_id}",
-        defaults={
-            "first_name": display_name,
-        },
-    )
+    username=f"discord_{discord_id}",
+    defaults={
+        "first_name": display_name,
+    },
+)
 
     if not created:
         user.first_name = display_name
@@ -278,30 +278,48 @@ def discord_callback(request):
 
     user.save()
 
-    # ========================================================
+        # ========================================================
     # CREATE / UPDATE USER PROFILE
     # ========================================================
 
     profile_slug = username.strip()
     now = timezone.now()
 
-    UserProfile.objects.update_or_create(
-    discord_id=str(discord_id),
-    defaults={
-        "username": username,
-        "profile_slug": profile_slug,
-        "avatar": avatar,
-        "updated_at": now,
-    },
-    create_defaults={
-        "username": username,
-        "display_name": display_name,
-        "profile_slug": profile_slug,
-        "avatar": avatar,
-        "created_at": now,
-        "updated_at": now,
-    },
-)
+    profile = UserProfile.objects.filter(
+        discord_id=str(discord_id)
+    ).first()
+
+    if profile is None:
+        UserProfile.objects.create(
+            discord_id=str(discord_id),
+            username=username,
+            display_name=display_name,
+            profile_slug=profile_slug,
+            avatar=avatar,
+            created_at=now,
+            updated_at=now,
+        )
+    else:
+        profile.username = username
+
+        # Only let Discord overwrite the display name if the
+        # user has never customized it on the site. Once they
+        # set their own display_name via profile_update, this
+        # keeps Discord logins from stomping it back.
+        if not profile.display_name_is_custom:
+            profile.display_name = display_name
+
+        profile.avatar = avatar
+        profile.updated_at = now
+
+        profile.save(
+            update_fields=[
+                "username",
+                "display_name",
+                "avatar",
+                "updated_at",
+            ]
+        )
 
     # ========================================================
     # LOGIN
@@ -375,13 +393,29 @@ def discord_me(request):
                 len("discord_"):
             ]
 
-    discord_global_name = request.session.get(
-        "discord_global_name"
+    # ========================================================
+    # DISPLAY NAME
+    # ========================================================
+    #
+    # The UserProfile record is the source of truth: it holds
+    # whatever the user last set (either synced from Discord,
+    # or customized on the site). Don't fall back to
+    # request.user.first_name here, since that field is synced
+    # from Discord independently and can drift from the
+    # profile's display_name.
+
+    profile = (
+        UserProfile.objects
+        .filter(discord_id=str(discord_id))
+        .first()
     )
 
-    if not discord_global_name:
-        discord_global_name = (
-            request.user.first_name
+    if profile and profile.display_name:
+        display_name = profile.display_name
+    else:
+        display_name = (
+            request.session.get("discord_global_name")
+            or request.user.first_name
             or discord_username
         )
 
@@ -435,7 +469,7 @@ def discord_me(request):
         "user": {
             "id": request.user.id,
             "username": discord_username,
-            "first_name": request.user.first_name,
+            "first_name": display_name,
             "avatar": avatar_url,
             "is_owner": is_owner,
         },

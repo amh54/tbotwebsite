@@ -143,6 +143,7 @@ class UserProfile(models.Model):
     username = models.CharField(
         max_length=100,
     )
+    display_name_is_custom = models.BooleanField(default=False)
 
     display_name = models.CharField(
         max_length=100,
