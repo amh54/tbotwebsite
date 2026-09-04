@@ -286,23 +286,22 @@ def discord_callback(request):
     now = timezone.now()
 
     UserProfile.objects.update_or_create(
-        discord_id=str(discord_id),
-        defaults={
-            "username": username,
-            "display_name": display_name,
-            "profile_slug": profile_slug,
-            "avatar": avatar,
-            "updated_at": now,
-        },
-        create_defaults={
-            "username": username,
-            "display_name": display_name,
-            "profile_slug": profile_slug,
-            "avatar": avatar,
-            "created_at": now,
-            "updated_at": now,
-        },
-    )
+    discord_id=str(discord_id),
+    defaults={
+        "username": username,
+        "profile_slug": profile_slug,
+        "avatar": avatar,
+        "updated_at": now,
+    },
+    create_defaults={
+        "username": username,
+        "display_name": display_name,
+        "profile_slug": profile_slug,
+        "avatar": avatar,
+        "created_at": now,
+        "updated_at": now,
+    },
+)
 
     # ========================================================
     # LOGIN
