@@ -41,20 +41,6 @@ const API_BASE_URL = String(
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
 ).replace(/\/+$/, "");
 
-function getCookie(name) {
-  const cookies = document.cookie ? document.cookie.split(";") : [];
-
-  for (const cookie of cookies) {
-    const trimmedCookie = cookie.trim();
-
-    if (trimmedCookie.startsWith(`${name}=`)) {
-      return decodeURIComponent(trimmedCookie.substring(name.length + 1));
-    }
-  }
-
-  return null;
-}
-
 async function ensureCsrfToken() {
   const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
     method: "GET",
@@ -66,13 +52,13 @@ async function ensureCsrfToken() {
     throw new Error(`Unable to obtain CSRF token: ${response.status}`);
   }
 
-  const csrfToken = getCookie("csrftoken");
+  const data = await response.json();
 
-  if (!csrfToken) {
+  if (!data.csrfToken) {
     throw new Error("CSRF token was not provided by the server.");
   }
 
-  return csrfToken;
+  return data.csrfToken;
 }
 
 function Navbar() {
@@ -256,6 +242,7 @@ function Navbar() {
   const getOperatingSystem = () => {
     const userAgent = window.navigator.userAgent || "";
     const platform = window.navigator.platform || "";
+    const maxTouchPoints = window.navigator.maxTouchPoints || 0;
 
     if (/Windows/i.test(userAgent) || /Win/i.test(platform)) {
       return "Windows";
@@ -265,11 +252,18 @@ function Navbar() {
       return "Android";
     }
 
-    if (/iPhone|iPad|iPod/i.test(userAgent)) {
+    if (/iPhone|iPod/i.test(userAgent)) {
       return "iOS";
     }
 
-    if (/Macintosh|Mac OS X/i.test(userAgent)) {
+    if (
+      /iPad/i.test(userAgent) ||
+      (platform === "MacIntel" && maxTouchPoints > 1)
+    ) {
+      return "iPadOS";
+    }
+
+    if (/Macintosh|Mac OS X/i.test(userAgent) || /Mac/i.test(platform)) {
       return "macOS";
     }
 
@@ -353,7 +347,6 @@ function Navbar() {
       formData.append("browser", getBrowser());
       formData.append("operating_system", getOperatingSystem());
       formData.append("discord_id", String(user.id));
-
       formData.append("discord_username", user.username || "");
 
       if (bugScreenshot) {
@@ -367,7 +360,6 @@ function Navbar() {
           credentials: "include",
           headers: {
             "X-CSRFToken": csrfToken,
-            Referer: window.location.origin,
           },
           body: formData,
         },
@@ -416,11 +408,16 @@ function Navbar() {
     setLoggingOut(true);
 
     try {
+      const csrfToken = await ensureCsrfToken();
+
       const response = await fetch(
         `${API_BASE_URL}/tbotapp/auth/discord/logout/`,
         {
           method: "POST",
           credentials: "include",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
         },
       );
 
@@ -438,7 +435,6 @@ function Navbar() {
         );
       }
 
-      // Immediately update the navbar UI.
       setUser(null);
       setProfile(null);
       closeMenus();
