@@ -8,8 +8,8 @@ const NAVIGATION = [
     label: "Website Info",
     links: [
       { label: "Home", path: "/" },
-      {label: "Tutorial", path: "/tutorial"},
-      {label: "Site Donations", path: "https://buymeacoffee.com/pvzhtbot"},
+      { label: "Tutorial", path: "/tutorial" },
+      { label: "Site Donations", path: "https://buymeacoffee.com/pvzhtbot" },
       { label: "Site Updates", path: "/updates" },
       { label: "Users", path: "/users" },
       { label: "Terms of Service", path: "/termsofservice" },
@@ -56,22 +56,17 @@ function getCookie(name) {
 }
 
 async function ensureCsrfToken() {
-  let csrfToken = getCookie("csrftoken");
-
-  if (csrfToken) {
-    return csrfToken;
-  }
-
   const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
     method: "GET",
     credentials: "include",
+    cache: "no-store",
   });
 
   if (!response.ok) {
     throw new Error(`Unable to obtain CSRF token: ${response.status}`);
   }
 
-  csrfToken = getCookie("csrftoken");
+  const csrfToken = getCookie("csrftoken");
 
   if (!csrfToken) {
     throw new Error("CSRF token was not provided by the server.");
@@ -372,6 +367,7 @@ function Navbar() {
           credentials: "include",
           headers: {
             "X-CSRFToken": csrfToken,
+            Referer: window.location.origin,
           },
           body: formData,
         },
