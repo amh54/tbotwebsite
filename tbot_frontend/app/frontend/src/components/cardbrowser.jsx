@@ -192,6 +192,10 @@ const simplifyForMatch = (value) =>
 const keywordMatchesText = (keyword, text) => {
   const normalized = simplifyForMatch(text);
 
+  if (keyword === "Dino-Roar") {
+    return /dino[\s-]*roar/i.test(normalized);
+  }
+
   if (keyword === "Freeze") {
     return /\bfrozen?\b|\bfreezes\b|\bfreezing\b|\bfreeze\b/.test(normalized);
   }
@@ -213,7 +217,6 @@ const getAbilityKeywords = (ability, description = "") => {
     keywordMatchesText(keyword, abilityText),
   );
 };
-
 const getCardKeywords = (card) => {
   const traitNames = getTraitNames(card.traits);
   const abilityKeywords = getAbilityKeywords(card.ability, card.description);
