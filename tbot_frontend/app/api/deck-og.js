@@ -743,6 +743,32 @@ function isPrivateRoute(pathname) {
   );
 }
 
+function getPublicSearchParams(searchParams) {
+  const params = new URLSearchParams(searchParams);
+
+  params.delete("path");
+
+  if (params.get("slug")) {
+    params.delete("slug");
+  }
+
+  return params;
+}
+
+function buildPublicUrl(pathname, searchParams) {
+  const params = getPublicSearchParams(searchParams);
+  const search = params.toString();
+
+  return `${SITE_URL}${pathname}${search ? `?${search}` : ""}`;
+}
+
+function buildPublicRedirect(pathname, searchParams) {
+  const params = getPublicSearchParams(searchParams);
+  const search = params.toString();
+
+  return `${pathname}${search ? `?${search}` : ""}`;
+}
+
 function buildHtml({
   title,
   description,
@@ -882,7 +908,11 @@ export default async function handler(req, res) {
     return notFound(res);
   }
 
-  const canonicalUrl = `${SITE_URL}${originalPath}` + `${originalUrl.search}`;
+  const canonicalUrl = buildPublicUrl(originalPath, originalUrl.searchParams);
+  const redirectPath = buildPublicRedirect(
+    originalPath,
+    originalUrl.searchParams,
+  );
 
   const html = buildHtml({
     title: og.title || DEFAULT_TITLE,
@@ -890,7 +920,7 @@ export default async function handler(req, res) {
     image: og.image || DEFAULT_IMAGE,
     url: canonicalUrl,
     noindex: isPrivateRoute(originalPath),
-    redirectPath: `${originalPath}${originalUrl.search}`,
+    redirectPath,
   });
 
   res.statusCode = 200;
