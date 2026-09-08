@@ -2,35 +2,35 @@
   "rewrites": [
     {
       "source": "/deck/:slug/:key",
-      "destination": "/api/deck-og"
+      "destination": "/api/deck-og?path=/deck/:slug/:key"
     },
     {
       "source": "/profile/:slug",
-      "destination": "/api/deck-og"
+      "destination": "/api/deck-og?path=/profile/:slug"
     },
     {
       "source": "/decklists",
-      "destination": "/api/deck-og"
+      "destination": "/api/deck-og?path=/decklists"
     },
     {
       "source": "/legacydecks",
-      "destination": "/api/deck-og"
+      "destination": "/api/deck-og?path=/legacydecks"
     },
     {
       "source": "/legacy-decklists",
-      "destination": "/api/deck-og"
+      "destination": "/api/deck-og?path=/legacy-decklists"
     },
     {
       "source": "/deckbuilders/:name",
-      "destination": "/api/deck-og"
+      "destination": "/api/deck-og?path=/deckbuilders/:name"
     },
     {
       "source": "/cardinfo",
-      "destination": "/api/deck-og"
+      "destination": "/api/deck-og?path=/cardinfo"
     },
     {
       "source": "/",
-      "destination": "/api/deck-og"
+      "destination": "/api/deck-og?path=/"
     },
     {
       "source": "/(.*)",
