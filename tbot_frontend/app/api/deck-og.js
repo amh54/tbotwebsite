@@ -1,34 +1,112 @@
-const API = process.env.DJANGO_API_URL; 
+const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
 
-function resolveImageUrl(image) {
-  const img = String(image || "").trim();
+const SITE_URL = "https://pvzhtbot.com";
 
-  if (!img) return "";
+const DEFAULT_IMAGE =
+  "https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp";
 
-  if (/^https?:\/\/|^data:|^blob:/i.test(img)) return img;
+const DEFAULT_TITLE = "Tbot — Plants vs. Zombies Heroes";
 
-  return `${API}${img.startsWith("/") ? "" : "/"}${img}`;
-}
+const DEFAULT_DESCRIPTION =
+  "A community database for Plants vs. Zombies Heroes cards, heroes, decks, collections, and strategy.";
 
-function escapeHtml(str) {
-  return String(str || "").replace(
-    /[&<>"']/g,
-    (c) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[c],
-  );
-}
+const PAGE_METADATA = {
+  "/": {
+    title: "Tbot — Plants vs. Zombies Heroes",
+    description:
+      "A community database for Plants vs. Zombies Heroes cards, heroes, decks, collections, and strategy.",
+  },
 
-const normalizeText = (v) =>
-  String(v ?? "")
+  "/decklists": {
+    title: "Decklists — Tbot",
+    description:
+      "Browse the Tbot Plants vs. Zombies Heroes community deck database.",
+  },
+
+  "/cardinfo": {
+    title: "Card Information — Tbot",
+    description:
+      "Search and explore Plants vs. Zombies Heroes cards, abilities, stats, traits, sets, and rarities.",
+  },
+
+  "/heroinfo": {
+    title: "Hero Information — Tbot",
+    description:
+      "Explore Plants vs. Zombies Heroes heroes, classes, abilities, traits, stats, and cards.",
+  },
+
+  "/keeporscrap": {
+    title: "Keep or Scrap — Tbot",
+    description:
+      "Find recommendations for which Plants vs. Zombies Heroes cards to keep or scrap.",
+  },
+
+  "/legacydecks": {
+    title: "Legacy Decks — Tbot",
+    description:
+      "Browse the older Tbot Plants vs. Zombies Heroes deck database.",
+  },
+
+  "/deckbuilders": {
+    title: "Deckbuilders — Tbot",
+    description:
+      "Explore Tbot deckbuilders and the decks they have submitted to the community.",
+  },
+
+  "/users": {
+    title: "Users — Tbot",
+    description:
+      "Browse Tbot community profiles and discover Plants vs. Zombies Heroes deckbuilders.",
+  },
+
+  "/tutorial": {
+    title: "Tbot Tutorial",
+    description:
+      "Learn how to use Tbot to browse cards, heroes, decks, collections, profiles, and other features.",
+  },
+
+  "/updates": {
+    title: "Site Updates — Tbot",
+    description:
+      "View the latest updates, improvements, and changes to the Tbot website.",
+  },
+
+  "/termsofservice": {
+    title: "Terms of Service — Tbot",
+    description:
+      "Read the Tbot Terms of Service.",
+  },
+
+  "/privacypolicy": {
+    title: "Privacy Policy — Tbot",
+    description:
+      "Read the Tbot Privacy Policy.",
+  },
+};
+
+const PRIVATE_ROUTES = [
+  "/dashboard",
+  "/dashboard/decks",
+  "/dashboard/decks/add",
+  "/dashboard/card-manager",
+  "/admin",
+  "/admin/cards",
+  "/admin/bugs",
+  "/admin/decklists",
+  "/admin/decklists/add",
+  "/admin/decklist/add",
+  "/admin/keeporscrap",
+  "/admin/legacy-decks",
+  "/admin/user-decks",
+  "/my-bug-reports",
+];
+
+function normalizeText(value) {
+  return String(value ?? "")
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ");
+}
 
 function stripDiscordFormatting(value) {
   return String(value ?? "")
@@ -47,24 +125,90 @@ function truncate(text, max = 500) {
     : clean;
 }
 
+function escapeHtml(str) {
+  return String(str || "").replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[c],
+  );
+}
+
+function resolveImageUrl(image) {
+  const img = String(image || "").trim();
+
+  if (!img) {
+    return DEFAULT_IMAGE;
+  }
+
+  if (/^(https?:\/\/|data:|blob:)/i.test(img)) {
+    return img;
+  }
+
+  if (!API) {
+    return img;
+  }
+
+  return `${API}${img.startsWith("/") ? "" : "/"}${img}`;
+}
+
+function resolveDiscordAvatar(profile) {
+  const discordId = String(
+    profile?.discord_id || "",
+  ).trim();
+
+  const avatarHash = String(
+    profile?.avatar || "",
+  ).trim();
+
+  if (!discordId || !avatarHash) {
+    return DEFAULT_IMAGE;
+  }
+
+  if (/^https?:\/\//i.test(avatarHash)) {
+    return avatarHash;
+  }
+
+  const extension = avatarHash.startsWith("a_")
+    ? "gif"
+    : "png";
+
+  return `https://cdn.discordapp.com/avatars/${encodeURIComponent(
+    discordId,
+  )}/${encodeURIComponent(
+    avatarHash,
+  )}.${extension}`;
+}
+
 function findDeckInList(payload, deckKey) {
   const list = Array.isArray(payload)
     ? payload
     : payload?.results || payload?.decks || [];
 
-  const wanted = String(deckKey || "").toLowerCase();
+  const wanted = String(deckKey || "")
+    .trim()
+    .toLowerCase();
+
+  if (!wanted) {
+    return null;
+  }
 
   return (
-    list.find((d) => {
+    list.find((deck) => {
       const id = String(
-        d.deckid ??
-          d.deckID ??
-          d.deckId ??
-          d.id ??
+        deck.deckid ??
+          deck.deckID ??
+          deck.deckId ??
+          deck.id ??
           "",
       ).trim();
 
-      const name = String(d.name || "")
+      const name = String(deck.name || "")
         .trim()
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
@@ -81,7 +225,9 @@ function findDeckInList(payload, deckKey) {
 }
 
 function deckToOg(deck) {
-  if (!deck) return null;
+  if (!deck) {
+    return null;
+  }
 
   const parts = [];
 
@@ -93,9 +239,18 @@ function deckToOg(deck) {
       "",
   );
 
-  const category = stripDiscordFormatting(deck.category);
-  const archetype = stripDiscordFormatting(deck.archetype);
-  const description = stripDiscordFormatting(deck.description);
+  const category = stripDiscordFormatting(
+    deck.category,
+  );
+
+  const archetype = stripDiscordFormatting(
+    deck.archetype,
+  );
+
+  const description = stripDiscordFormatting(
+    deck.description,
+  );
+
   if (creator) {
     parts.push(`Creator: ${creator}`);
   }
@@ -107,18 +262,19 @@ function deckToOg(deck) {
   if (archetype) {
     parts.push(`Archetype: ${archetype}`);
   }
+
   if (description) {
     parts.push(description);
   }
 
   return {
     title: `${deck.name || "Untitled Deck"} — TBOT Deck`,
-   description: truncate(parts.join("\n"), 500),
+    description:
+      truncate(parts.join("\n"), 500) ||
+      "View this Plants vs. Zombies Heroes deck on Tbot.",
     image: resolveImageUrl(deck.image),
   };
 }
-
-
 
 function findCardInList(payload, cardQuery) {
   const list = Array.isArray(payload)
@@ -127,17 +283,26 @@ function findCardInList(payload, cardQuery) {
 
   const wanted = normalizeText(cardQuery);
 
+  if (!wanted) {
+    return null;
+  }
+
   return (
     list.find((card) => {
-      const cardName = normalizeText(card.card_name);
+      const cardName = normalizeText(
+        card.card_name,
+      );
 
       const title = normalizeText(
         stripDiscordFormatting(card.title),
       );
 
-      const aliases = normalizeText(card.aliases)
+      const aliases = normalizeText(
+        card.aliases,
+      )
         .split(/[,|;]/)
-        .map((a) => a.trim());
+        .map((alias) => alias.trim())
+        .filter(Boolean);
 
       return (
         cardName === wanted ||
@@ -149,257 +314,698 @@ function findCardInList(payload, cardQuery) {
 }
 
 function cardToOg(card) {
-  if (!card) return null;
+  if (!card) {
+    return null;
+  }
 
   const name =
     stripDiscordFormatting(card.title) ||
-    card.card_name ||
+    stripDiscordFormatting(card.card_name) ||
     "Unknown Card";
 
   const parts = [];
+
   if (card.card_type) {
     parts.push(
-      `Class: ${stripDiscordFormatting(card.card_type)}`,
+      `Class: ${stripDiscordFormatting(
+        card.card_type,
+      )}`,
     );
   }
 
   if (card.side) {
     parts.push(
-      `Side: ${stripDiscordFormatting(card.side)}`,
+      `Side: ${stripDiscordFormatting(
+        card.side,
+      )}`,
     );
   }
 
   if (card.stats) {
     parts.push(
-      `Stats: ${stripDiscordFormatting(card.stats)}`,
+      `Stats: ${stripDiscordFormatting(
+        card.stats,
+      )}`,
     );
   }
 
   if (card.description) {
     parts.push(
-      `Description: ${stripDiscordFormatting(card.description)}`,
+      `Description: ${stripDiscordFormatting(
+        card.description,
+      )}`,
     );
   }
 
   if (card.ability) {
     parts.push(
-      `Ability: ${stripDiscordFormatting(card.ability)}`,
+      `Ability: ${stripDiscordFormatting(
+        card.ability,
+      )}`,
     );
   }
 
   if (card.traits) {
     parts.push(
-      `Traits: ${stripDiscordFormatting(card.traits)}`,
+      `Traits: ${stripDiscordFormatting(
+        card.traits,
+      )}`,
     );
   }
 
   if (card.set_rarity) {
     parts.push(
-      `Set/Rarity: ${stripDiscordFormatting(card.set_rarity)}`,
+      `Set/Rarity: ${stripDiscordFormatting(
+        card.set_rarity,
+      )}`,
     );
   }
 
   return {
     title: `${name} — TBOT Card Info`,
-   description: truncate(parts.join("\n"), 500),
+    description:
+      truncate(parts.join("\n"), 500) ||
+      `View information about ${name} on Tbot.`,
     image: resolveImageUrl(card.thumbnail),
   };
 }
 
+function cleanSlug(value) {
+  let decoded = String(value || "");
+
+  try {
+    decoded = decodeURIComponent(decoded);
+  } catch {}
+
+  return decoded
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getProfileName(profile, fallbackSlug) {
+  return (
+    stripDiscordFormatting(
+      profile?.display_name ||
+        profile?.username ||
+        "",
+    ) ||
+    cleanSlug(fallbackSlug) ||
+    "User"
+  );
+}
+
+function profileToOg(profile, fallbackSlug) {
+  if (!profile) {
+    return buildProfileOg(fallbackSlug);
+  }
+
+  const name = getProfileName(
+    profile,
+    fallbackSlug,
+  );
+
+  return {
+    title: `${name} — Tbot Profile`,
+    description:
+      `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`,
+    image: resolveDiscordAvatar(profile),
+  };
+}
+
+function buildProfileOg(slug) {
+  const name = cleanSlug(slug);
+
+  if (!name) {
+    return null;
+  }
+
+  return {
+    title: `${name} — Tbot Profile`,
+    description:
+      `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`,
+    image: DEFAULT_IMAGE,
+  };
+}
+
+function buildDeckbuilderOg(name) {
+  const cleanName = cleanSlug(name);
+
+  if (!cleanName) {
+    return null;
+  }
+
+  return {
+    title: `${cleanName} — Tbot Deckbuilder`,
+    description:
+      `Explore ${cleanName}'s Plants vs. Zombies Heroes decks on Tbot.`,
+    image: DEFAULT_IMAGE,
+  };
+}
+
+async function fetchJson(url) {
+  if (!API) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+async function fetchProfile(slug) {
+  if (!slug) {
+    return null;
+  }
+
+  const data = await fetchJson(
+    `${API}/tbotapp/profile/${encodeURIComponent(
+      slug,
+    )}/`,
+  );
+
+  return data?.profile || null;
+}
 
 const RESOLVERS = [
   {
-    // /deck/{slug}/{key}
     test: (pathname) =>
-      /^\/deck\/([^/]+)\/([^/]+)$/.exec(pathname),
+      /^\/deck\/([^/]+)\/([^/]+)$/.exec(
+        pathname,
+      ),
 
     resolve: async (match) => {
       const [, slug, key] = match;
 
-      const deckId = /-(\d+)$/.exec(key)?.[1];
+      let deckId = null;
 
-      if (!deckId) return null;
+      const numericMatch =
+        /^(\d+)$/.exec(key);
 
-      const r = await fetch(
+      if (numericMatch) {
+        deckId = numericMatch[1];
+      } else {
+        const slugIdMatch =
+          /-(\d+)$/.exec(key);
+
+        if (slugIdMatch) {
+          deckId = slugIdMatch[1];
+        }
+      }
+
+      if (!deckId) {
+        return null;
+      }
+
+      const data = await fetchJson(
         `${API}/tbotapp/user-decks/shared/${encodeURIComponent(
           slug,
-        )}/${deckId}/`,
+        )}/${encodeURIComponent(
+          deckId,
+        )}/`,
       );
 
-      if (!r.ok) return null;
-
-      return deckToOg(await r.json());
+      return deckToOg(data);
     },
   },
 
   {
-    test: (pathname, params) =>
-      pathname.startsWith("/profile/") &&
-      params.has("deck")
-        ? [pathname.split("/")[2]]
-        : null,
+    test: (pathname, params) => {
+      if (
+        !pathname.startsWith("/profile/") ||
+        pathname === "/profile/"
+      ) {
+        return null;
+      }
 
-    resolve: async ([slug], params) => {
-      const r = await fetch(
-        `${API}/tbotapp/profile/${encodeURIComponent(
-          slug,
-        )}/decks/`,
+      const match =
+        /^\/profile\/([^/]+)$/.exec(
+          pathname,
+        );
+
+      if (!match) {
+        return null;
+      }
+
+      return [
+        match[1],
+        params.get("deck"),
+      ];
+    },
+
+    resolve: async ([slug, deckKey]) => {
+      if (deckKey) {
+        const data = await fetchJson(
+          `${API}/tbotapp/profile/${encodeURIComponent(
+            slug,
+          )}/decks/`,
+        );
+
+        const deck = findDeckInList(
+          data,
+          deckKey,
+        );
+
+        if (deck) {
+          return deckToOg(deck);
+        }
+      }
+
+      const profile =
+        await fetchProfile(slug);
+
+      return profileToOg(
+        profile,
+        slug,
       );
+    },
+  },
 
-      if (!r.ok) return null;
+  {
+    test: (pathname, params) => {
+      if (!params.has("deck")) {
+        return null;
+      }
+
+      if (pathname === "/decklists") {
+        return ["decklists"];
+      }
+
+      if (
+        pathname === "/legacydecks" ||
+        pathname === "/legacy-decklists"
+      ) {
+        return ["legacy-decklists"];
+      }
+
+      const dbMatch =
+        /^\/deckbuilders\/([^/]+)$/.exec(
+          pathname,
+        );
+
+      if (dbMatch) {
+        return [
+          "deckbuilders",
+          dbMatch[1],
+        ];
+      }
+
+      return null;
+    },
+
+    resolve: async (
+      match,
+      params,
+    ) => {
+      let listUrl = "";
+
+      if (match[0] === "decklists") {
+        listUrl =
+          `${API}/tbotapp/decklists/`;
+      } else if (
+        match[0] ===
+        "legacy-decklists"
+      ) {
+        listUrl =
+          `${API}/tbotapp/legacy-decklists/`;
+      } else {
+        listUrl =
+          `${API}/tbotapp/deckbuilders/` +
+          `${encodeURIComponent(
+            match[1],
+          )}/decks/`;
+      }
+
+      const data =
+        await fetchJson(listUrl);
 
       return deckToOg(
         findDeckInList(
-          await r.json(),
+          data,
           params.get("deck"),
         ),
       );
     },
   },
 
- {
-  test: (pathname, params) => {
-    if (!params.has("deck")) return null;
-
-    if (pathname === "/decklists") {
-      return ["decklists"];
-    }
-    if (
-      pathname === "/legacydecks" ||
-      pathname === "/legacy-decklists"
-    ) {
-      return ["legacy-decklists"];
-    }
-
-    const dbMatch =
-      /^\/deckbuilders\/([^/]+)/.exec(pathname);
-
-    if (dbMatch) {
-      return ["deckbuilders", dbMatch[1]];
-    }
-
-    return null;
-  },
-
-  resolve: async (match, params) => {
-    const listUrl =
-      match[0] === "decklists"
-        ? `${API}/tbotapp/decklists/`
-        : match[0] === "legacy-decklists"
-          ? `${API}/tbotapp/legacy-decklists/`
-          : `${API}/tbotapp/deckbuilders/${encodeURIComponent(
-              match[1],
-            )}/decks/`;
-
-    const r = await fetch(listUrl);
-
-    if (!r.ok) return null;
-
-    return deckToOg(
-      findDeckInList(
-        await r.json(),
-        params.get("deck"),
-      ),
-    );
-  },
-},
-
   {
-    test: (pathname, params) =>
-      params.has("card")
-        ? [params.get("card")]
-        : null,
+    test: (pathname, params) => {
+      if (!params.has("card")) {
+        return null;
+      }
+
+      if (
+        pathname === "/cardinfo" ||
+        pathname === "/"
+      ) {
+        return [
+          params.get("card"),
+        ];
+      }
+
+      return null;
+    },
 
     resolve: async ([cardQuery]) => {
-      const r = await fetch(
-        `${API}/tbotapp/cardinfo/`,
-      );
-
-      if (!r.ok) return null;
+      const data =
+        await fetchJson(
+          `${API}/tbotapp/cardinfo/`,
+        );
 
       return cardToOg(
         findCardInList(
-          await r.json(),
+          data,
           cardQuery,
         ),
       );
     },
   },
+
+  {
+    test: (pathname, params) => {
+      const match =
+        /^\/deckbuilders\/([^/]+)$/.exec(
+          pathname,
+        );
+
+      if (
+        !match ||
+        params.has("deck")
+      ) {
+        return null;
+      }
+
+      return [match[1]];
+    },
+
+    resolve: async ([name]) => {
+      const profile =
+        await fetchProfile(name);
+
+      if (profile) {
+        const profileName =
+          getProfileName(
+            profile,
+            name,
+          );
+
+        return {
+          title:
+            `${profileName} — Tbot Deckbuilder`,
+          description:
+            `Explore ${profileName}'s Plants vs. Zombies Heroes decks on Tbot.`,
+          image:
+            resolveDiscordAvatar(
+              profile,
+            ),
+        };
+      }
+
+      return buildDeckbuilderOg(
+        name,
+      );
+    },
+  },
 ];
 
+function getStaticMetadata(pathname) {
+  if (PAGE_METADATA[pathname]) {
+    return PAGE_METADATA[pathname];
+  }
 
-export default async function handler(req, res) {
-  const { path } = req.query;
+  if (
+    pathname === "/legacy-decklists"
+  ) {
+    return PAGE_METADATA[
+      "/legacydecks"
+    ];
+  }
 
-  if (!path) {
+  return null;
+}
+
+function isPrivateRoute(pathname) {
+  return PRIVATE_ROUTES.some(
+    (route) =>
+      pathname === route ||
+      pathname.startsWith(
+        `${route}/`,
+      ),
+  );
+}
+
+function buildHtml({
+  title,
+  description,
+  image,
+  url,
+  noindex = false,
+  redirectPath,
+}) {
+  const safeTitle =
+    escapeHtml(title);
+
+  const safeDescription =
+    escapeHtml(description);
+
+  const safeImage =
+    escapeHtml(image);
+
+  const safeUrl =
+    escapeHtml(url);
+
+  const safeRedirectPath =
+    escapeHtml(redirectPath);
+
+  const robots = noindex
+    ? '<meta name="robots" content="noindex, nofollow" />'
+    : '<meta name="robots" content="index, follow" />';
+
+  const imageTags = image
+    ? `
+  <meta property="og:image" content="${safeImage}" />
+  <meta property="og:image:alt" content="${safeTitle}" />
+  <meta name="twitter:image" content="${safeImage}" />`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <title>${safeTitle}</title>
+
+  <meta
+    name="description"
+    content="${safeDescription}"
+  />
+
+  ${robots}
+
+  <link
+    rel="canonical"
+    href="${safeUrl}"
+  />
+
+  <meta
+    property="og:type"
+    content="website"
+  />
+
+  <meta
+    property="og:site_name"
+    content="Tbot"
+  />
+
+  <meta
+    property="og:title"
+    content="${safeTitle}"
+  />
+
+  <meta
+    property="og:description"
+    content="${safeDescription}"
+  />
+
+  <meta
+    property="og:url"
+    content="${safeUrl}"
+  />
+${imageTags}
+
+  <meta
+    name="twitter:card"
+    content="${image ? "summary_large_image" : "summary"}"
+  />
+
+  <meta
+    name="twitter:title"
+    content="${safeTitle}"
+  />
+
+  <meta
+    name="twitter:description"
+    content="${safeDescription}"
+  />
+
+  <meta
+    http-equiv="refresh"
+    content="0; url=${safeRedirectPath}"
+  />
+</head>
+
+<body>
+  Redirecting…
+</body>
+</html>`;
+}
+
+export default async function handler(
+  req,
+  res,
+) {
+  const rawPath =
+    req.query?.path;
+
+  if (!rawPath) {
     return notFound(res);
   }
 
-  const url = new URL(
-    path,
-    "https://placeholder.local",
-  );
+  let path = Array.isArray(rawPath)
+    ? rawPath.join("/")
+    : String(rawPath);
 
-  const pathname = url.pathname;
-  const params = url.searchParams;
+  if (!path.startsWith("/")) {
+    path = `/${path}`;
+  }
+
+  let url;
+
+  try {
+    url = new URL(
+      path,
+      SITE_URL,
+    );
+  } catch {
+    return notFound(res);
+  }
+
+  const pathname =
+    url.pathname;
+
+  const params =
+    url.searchParams;
 
   let og = null;
 
   for (const resolver of RESOLVERS) {
-    const match = resolver.test(
-      pathname,
-      params,
-    );
+    try {
+      const match =
+        resolver.test(
+          pathname,
+          params,
+        );
 
-    if (!match) continue;
+      if (!match) {
+        continue;
+      }
 
-    og = await resolver.resolve(
-      match,
-      params,
-    );
+      og =
+        await resolver.resolve(
+          match,
+          params,
+        );
 
-    if (og) break;
+      if (og) {
+        break;
+      }
+    } catch {
+      og = null;
+    }
+  }
+
+  if (!og) {
+    og =
+      getStaticMetadata(
+        pathname,
+      );
+  }
+
+  if (
+    !og &&
+    isPrivateRoute(pathname)
+  ) {
+    og = {
+      title: "Tbot",
+      description:
+        DEFAULT_DESCRIPTION,
+      image: DEFAULT_IMAGE,
+    };
   }
 
   if (!og) {
     return notFound(res);
   }
 
+  const canonicalUrl =
+    `${SITE_URL}${pathname}${url.search}`;
+
+  const html =
+    buildHtml({
+      title:
+        og.title ||
+        DEFAULT_TITLE,
+
+      description:
+        og.description ||
+        DEFAULT_DESCRIPTION,
+
+      image:
+        og.image ||
+        DEFAULT_IMAGE,
+
+      url: canonicalUrl,
+
+      noindex:
+        isPrivateRoute(
+          pathname,
+        ),
+
+      redirectPath: path,
+    });
+
+  res.statusCode = 200;
+
   res.setHeader(
     "Content-Type",
-    "text/html",
+    "text/html; charset=utf-8",
   );
 
-  res.send(`<!DOCTYPE html>
-<html>
-<head>
-  <meta property="og:title" content="${escapeHtml(
-    og.title,
-  )}" />
+  res.setHeader(
+    "Cache-Control",
+    "public, s-maxage=300, stale-while-revalidate=3600",
+  );
 
-  <meta property="og:description" content="${escapeHtml(
-    og.description,
-  )}" />
-
-  <meta property="og:image" content="${escapeHtml(
-    og.image,
-  )}" />
-
-  <meta property="og:type" content="website" />
-
-  <meta name="twitter:card" content="summary_large_image" />
-
-  <meta http-equiv="refresh" content="0; url=${escapeHtml(
-    path,
-  )}" />
-</head>
-
-<body>
-  Redirecting…
-</body>
-</html>`);
+  return res.end(html);
 }
 
 function notFound(res) {
-  res.status(404).send("Not found");
+  res.statusCode = 404;
+
+  res.setHeader(
+    "Content-Type",
+    "text/plain; charset=utf-8",
+  );
+
+  return res.end(
+    "Not found",
+  );
 }
