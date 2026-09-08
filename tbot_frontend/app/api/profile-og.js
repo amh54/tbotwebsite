@@ -2,29 +2,44 @@ import sharp from "sharp";
 import { Resvg } from "@resvg/resvg-js";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const API = String(
-  process.env.DJANGO_API_URL || "",
-).replace(/\/+$/, "");
+const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
 
-const DISCORD_CDN =
-  "https://cdn.discordapp.com";
+const DISCORD_CDN = "https://cdn.discordapp.com";
 
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-const FONT_DIR = path.join(
-  process.cwd(),
-  "node_modules",
-  "dejavu-fonts-ttf",
-  "ttf",
+const __filename = fileURLToPath(import.meta.url);
+
+const __dirname = path.dirname(__filename);
+
+const REGULAR_FONT = path.join(
+  __dirname,
+  "..",
+  "public",
+  "fonts",
+  "DejaVuSans.ttf",
 );
 
-if (!fs.existsSync(FONT_DIR)) {
-  throw new Error(
-    `DejaVu font directory not found: ${FONT_DIR}`,
-  );
+const BOLD_FONT = path.join(
+  __dirname,
+  "..",
+  "public",
+  "fonts",
+  "DejaVuSans-Bold.ttf",
+);
+
+if (!fs.existsSync(REGULAR_FONT)) {
+  throw new Error(`DejaVu Sans regular font not found: ${REGULAR_FONT}`);
 }
+
+if (!fs.existsSync(BOLD_FONT)) {
+  throw new Error(`DejaVu Sans bold font not found: ${BOLD_FONT}`);
+}
+
+const FONT_FILES = [REGULAR_FONT, BOLD_FONT];
 
 function cleanText(value, fallback = "") {
   const text = String(value ?? "")
@@ -55,11 +70,7 @@ function truncateText(value, maxLength) {
   return `${text.slice(0, maxLength - 1).trim()}…`;
 }
 
-function wrapText(
-  text,
-  maxCharsPerLine,
-  maxLines = Infinity,
-) {
+function wrapText(text, maxCharsPerLine, maxLines = Infinity) {
   const clean = cleanText(text);
 
   if (!clean) {
@@ -71,9 +82,7 @@ function wrapText(
   let current = "";
 
   for (const word of words) {
-    const next = current
-      ? `${current} ${word}`
-      : word;
+    const next = current ? `${current} ${word}` : word;
 
     if (next.length > maxCharsPerLine) {
       if (current) {
@@ -90,50 +99,26 @@ function wrapText(
     }
   }
 
-  if (
-    lines.length < maxLines &&
-    current
-  ) {
+  if (lines.length < maxLines && current) {
     lines.push(current);
   }
 
-  const truncatedLines = lines.slice(
-    0,
-    maxLines,
-  );
+  const truncatedLines = lines.slice(0, maxLines);
 
-  const wordsUsed = truncatedLines
-    .join(" ")
-    .split(" ")
-    .length;
+  const wordsUsed = truncatedLines.join(" ").split(" ").length;
 
-  const hasMoreText =
-    wordsUsed < words.length;
+  const hasMoreText = wordsUsed < words.length;
 
-  if (
-    hasMoreText &&
-    truncatedLines.length
-  ) {
-    const lastIndex =
-      truncatedLines.length - 1;
+  if (hasMoreText && truncatedLines.length) {
+    const lastIndex = truncatedLines.length - 1;
 
-    let lastLine =
-      truncatedLines[lastIndex];
+    let lastLine = truncatedLines[lastIndex];
 
-    if (
-      lastLine.length >
-      maxCharsPerLine - 1
-    ) {
-      lastLine = lastLine
-        .slice(
-          0,
-          maxCharsPerLine - 1,
-        )
-        .trim();
+    if (lastLine.length > maxCharsPerLine - 1) {
+      lastLine = lastLine.slice(0, maxCharsPerLine - 1).trim();
     }
 
-    truncatedLines[lastIndex] =
-      `${lastLine}…`;
+    truncatedLines[lastIndex] = `${lastLine}…`;
   }
 
   return truncatedLines;
@@ -149,10 +134,7 @@ function getProfileObject(data) {
     return data.profile;
   }
 
-  if (
-    data &&
-    typeof data === "object"
-  ) {
+  if (data && typeof data === "object") {
     return data;
   }
 
@@ -160,39 +142,26 @@ function getProfileObject(data) {
 }
 
 function getProfileName(data, slug) {
-  const profile =
-    getProfileObject(data);
+  const profile = getProfileObject(data);
 
   return cleanText(
-    profile.display_name ||
-      profile.username ||
-      slug,
+    profile.display_name || profile.username || slug,
     "Tbot User",
   );
 }
 
 function getProfileBio(data) {
-  const profile =
-    getProfileObject(data);
+  const profile = getProfileObject(data);
 
-  return cleanText(
-    profile.bio,
-    "Plants vs. Zombies Heroes player",
-  );
+  return cleanText(profile.bio, "Plants vs. Zombies Heroes player");
 }
 
 function getDeckCount(data) {
-  if (
-    typeof data?.deck_count ===
-    "number"
-  ) {
+  if (typeof data?.deck_count === "number") {
     return data.deck_count;
   }
 
-  if (
-    typeof data?.profile?.deck_count ===
-    "number"
-  ) {
+  if (typeof data?.profile?.deck_count === "number") {
     return data.profile.deck_count;
   }
 
@@ -200,17 +169,11 @@ function getDeckCount(data) {
 }
 
 function getCardCount(data) {
-  if (
-    typeof data?.card_count ===
-    "number"
-  ) {
+  if (typeof data?.card_count === "number") {
     return data.card_count;
   }
 
-  if (
-    typeof data?.profile?.card_count ===
-    "number"
-  ) {
+  if (typeof data?.profile?.card_count === "number") {
     return data.profile.card_count;
   }
 
@@ -218,23 +181,15 @@ function getCardCount(data) {
 }
 
 function getAvatarUrl(profile) {
-  const discordId =
-    cleanText(profile?.discord_id);
+  const discordId = cleanText(profile?.discord_id);
 
-  const avatar =
-    cleanText(profile?.avatar);
+  const avatar = cleanText(profile?.avatar);
 
-  if (
-    !/^\d{15,25}$/.test(discordId) ||
-    !/^[a-zA-Z0-9_]+$/.test(avatar)
-  ) {
+  if (!/^\d{15,25}$/.test(discordId) || !/^[a-zA-Z0-9_]+$/.test(avatar)) {
     return "";
   }
 
-  const extension =
-    avatar.startsWith("a_")
-      ? "gif"
-      : "png";
+  const extension = avatar.startsWith("a_") ? "gif" : "png";
 
   return (
     `${DISCORD_CDN}/avatars/` +
@@ -245,61 +200,46 @@ function getAvatarUrl(profile) {
 }
 
 async function fetchProfile(slug) {
-  const url =
-    `${API}/tbotapp/profile/` +
-    `${encodeURIComponent(slug)}/`;
+  const url = `${API}/tbotapp/profile/` + `${encodeURIComponent(slug)}/`;
 
-  const response =
-    await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-    });
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
 
   if (!response.ok) {
-    throw new Error(
-      `Profile request failed with ${response.status}`,
-    );
+    throw new Error(`Profile request failed with ${response.status}`);
   }
 
   return response.json();
 }
 
 async function fetchAvatar(profile) {
-  const avatarUrl =
-    getAvatarUrl(profile);
+  const avatarUrl = getAvatarUrl(profile);
 
   if (!avatarUrl) {
     return null;
   }
 
   try {
-    const response =
-      await fetch(avatarUrl, {
-        method: "GET",
-        redirect: "follow",
-        headers: {
-          Accept:
-            "image/png,image/gif,image/jpeg,image/webp,image/*,*/*;q=0.8",
-          "User-Agent":
-            "Tbot/1.0",
-        },
-      });
+    const response = await fetch(avatarUrl, {
+      method: "GET",
+      redirect: "follow",
+      headers: {
+        Accept: "image/png,image/gif,image/jpeg,image/webp,image/*,*/*;q=0.8",
+        "User-Agent": "Tbot/1.0",
+      },
+    });
 
     if (!response.ok) {
-      console.error(
-        "Discord avatar request failed:",
-        response.status,
-      );
+      console.error("Discord avatar request failed:", response.status);
 
       return null;
     }
 
-    const buffer =
-      Buffer.from(
-        await response.arrayBuffer(),
-      );
+    const buffer = Buffer.from(await response.arrayBuffer());
 
     return sharp(buffer)
       .resize(300, 300, {
@@ -309,10 +249,7 @@ async function fetchAvatar(profile) {
       .png()
       .toBuffer();
   } catch (error) {
-    console.error(
-      "Discord avatar fetch failed:",
-      error,
-    );
+    console.error("Discord avatar fetch failed:", error);
 
     return null;
   }
@@ -323,96 +260,61 @@ function avatarDataUri(buffer) {
     return "";
   }
 
-  return (
-    "data:image/png;base64," +
-    buffer.toString("base64")
-  );
+  return "data:image/png;base64," + buffer.toString("base64");
 }
 
-function createSvg({
-  name,
-  username,
-  bio,
-  deckCount,
-  cardCount,
-  avatar,
-}) {
-  const safeName =
-    escapeXml(
-      truncateText(name, 28),
-    );
+function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
+  const safeName = escapeXml(truncateText(name, 28));
 
-  const safeUsername =
-    escapeXml(
-      truncateText(username, 32),
-    );
+  const safeUsername = escapeXml(truncateText(username, 32));
 
-  const bioLines = wrapText(
-    bio,
-    52,
-  ).map((line) =>
-    escapeXml(line),
-  );
+  const bioLines = wrapText(bio, 52).map((line) => escapeXml(line));
 
   const BIO_LINE_HEIGHT = 33;
 
-  const bioOverflow =
-    (bioLines.length - 1) *
-    BIO_LINE_HEIGHT;
+  const bioOverflow = Math.max(0, bioLines.length - 1) * BIO_LINE_HEIGHT;
 
-  const bioMarkup =
-    bioLines.length
-      ? `
-      <text
-        x="270"
-        y="225"
-        font-family="DejaVu Sans"
-        font-size="27"
-        font-weight="400"
-        fill="#e3e7e9"
-      >
-        ${bioLines
-          .map(
-            (line, index) =>
-              `<tspan
-                x="270"
-                dy="${
-                  index === 0
-                    ? 0
-                    : BIO_LINE_HEIGHT
-                }"
-              >${line}</tspan>`,
-          )
-          .join("")}
-      </text>
-    `
-      : "";
+  const bioMarkup = bioLines.length
+    ? `
+        <text
+          x="270"
+          y="225"
+          font-family="DejaVu Sans"
+          font-size="27"
+          font-weight="400"
+          fill="#e3e7e9"
+        >
+          ${bioLines
+            .map(
+              (line, index) =>
+                `<tspan
+                  x="270"
+                  dy="${index === 0 ? 0 : BIO_LINE_HEIGHT}"
+                >${line}</tspan>`,
+            )
+            .join("")}
+        </text>
+      `
+    : "";
 
-  const statsY =
-    305 + bioOverflow;
+  const statsY = 305 + bioOverflow;
 
-  const statsLabelY =
-    350 + bioOverflow;
+  const statsLabelY = 350 + bioOverflow;
 
-  const statsValueY =
-    395 + bioOverflow;
+  const statsValueY = 395 + bioOverflow;
 
-  const taglineY =
-    500 + bioOverflow;
+  const taglineY = 500 + bioOverflow;
 
-  const footerY =
-    540 + bioOverflow;
+  const footerY = 540 + bioOverflow;
 
-  const initial =
-    escapeXml(
-      String(name || "T")
-        .charAt(0)
-        .toUpperCase(),
-    );
+  const initial = escapeXml(
+    String(name || "T")
+      .charAt(0)
+      .toUpperCase(),
+  );
 
-  const avatarMarkup =
-    avatar
-      ? `
+  const avatarMarkup = avatar
+    ? `
         <clipPath id="avatarClip">
           <circle
             cx="132"
@@ -431,7 +333,7 @@ function createSvg({
           clip-path="url(#avatarClip)"
         />
       `
-      : `
+    : `
         <circle
           cx="132"
           cy="132"
@@ -452,11 +354,9 @@ function createSvg({
         </text>
       `;
 
-  const CARD_HEIGHT =
-    566 + bioOverflow;
+  const CARD_HEIGHT = 566 + bioOverflow;
 
-  const totalHeight =
-    HEIGHT + bioOverflow;
+  const totalHeight = HEIGHT + bioOverflow;
 
   return `
 <svg
@@ -605,112 +505,67 @@ function createSvg({
 `;
 }
 
-export default async function handler(
-  req,
-  res,
-) {
-  const slug =
-    cleanText(req.query?.slug);
+export default async function handler(req, res) {
+  const slug = cleanText(req.query?.slug);
 
   if (!slug) {
     res.statusCode = 400;
 
-    res.setHeader(
-      "Content-Type",
-      "text/plain; charset=utf-8",
-    );
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
 
-    return res.end(
-      "Missing profile slug",
-    );
+    return res.end("Missing profile slug");
   }
 
   try {
-    const profileData =
-      await fetchProfile(slug);
+    const profileData = await fetchProfile(slug);
 
-    const profile =
-      getProfileObject(
-        profileData,
-      );
+    const profile = getProfileObject(profileData);
 
-    const name =
-      getProfileName(
-        profileData,
-        slug,
-      );
+    const name = getProfileName(profileData, slug);
 
-    const username =
-      cleanText(
-        profile.username ||
-          profile.profile_slug ||
-          slug,
-        slug,
-      );
+    const username = cleanText(
+      profile.username || profile.profile_slug || slug,
+      slug,
+    );
 
-    const bio =
-      getProfileBio(
-        profileData,
-      );
+    const bio = getProfileBio(profileData);
 
-    const deckCount =
-      getDeckCount(
-        profileData,
-      );
+    const deckCount = getDeckCount(profileData);
 
-    const cardCount =
-      getCardCount(
-        profileData,
-      );
+    const cardCount = getCardCount(profileData);
 
-    const avatarBuffer =
-      await fetchAvatar(profile);
+    const avatarBuffer = await fetchAvatar(profile);
 
-    const avatar =
-      avatarDataUri(
-        avatarBuffer,
-      );
+    const avatar = avatarDataUri(avatarBuffer);
 
-    const svg =
-      createSvg({
-        name,
-        username,
-        bio,
-        deckCount,
-        cardCount,
-        avatar,
-      });
+    const svg = createSvg({
+      name,
+      username,
+      bio,
+      deckCount,
+      cardCount,
+      avatar,
+    });
 
-    const resvg =
-      new Resvg(svg, {
-        fitTo: {
-          mode: "width",
-          value: WIDTH,
-        },
-        font: {
-          fontDirs: [
-            FONT_DIR,
-          ],
-          loadSystemFonts: false,
-          defaultFontFamily:
-            "DejaVu Sans",
-        },
-      });
+    const resvg = new Resvg(svg, {
+      fitTo: {
+        mode: "width",
+        value: WIDTH,
+      },
+      font: {
+        fontFiles: FONT_FILES,
+        loadSystemFonts: false,
+        defaultFontFamily: "DejaVu Sans",
+      },
+    });
 
-    const png =
-      resvg.render().asPng();
+    const png = resvg.render().asPng();
 
     res.statusCode = 200;
 
-    res.setHeader(
-      "Content-Type",
-      "image/png",
-    );
+    res.setHeader("Content-Type", "image/png");
 
-    res.setHeader(
-      "Content-Length",
-      String(png.length),
-    );
+    res.setHeader("Content-Length", String(png.length));
 
     res.setHeader(
       "Cache-Control",
@@ -719,20 +574,12 @@ export default async function handler(
 
     return res.end(png);
   } catch (error) {
-    console.error(
-      "Profile OG generation failed:",
-      error,
-    );
+    console.error("Profile OG generation failed:", error);
 
     res.statusCode = 500;
 
-    res.setHeader(
-      "Content-Type",
-      "text/plain; charset=utf-8",
-    );
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
 
-    return res.end(
-      "Unable to generate profile image",
-    );
+    return res.end("Unable to generate profile image");
   }
 }
