@@ -2,7 +2,6 @@ import sharp from "sharp";
 import { Resvg } from "@resvg/resvg-js";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 const API = String(
   process.env.DJANGO_API_URL || "",
@@ -13,8 +12,6 @@ const DISCORD_CDN =
 
 const WIDTH = 1200;
 const HEIGHT = 630;
-
-const __filename = fileURLToPath(import.meta.url);
 
 const REGULAR_FONT = path.join(
   process.cwd(),
