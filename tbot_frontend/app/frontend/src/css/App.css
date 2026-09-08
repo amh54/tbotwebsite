@@ -24,11 +24,12 @@ body {
   color: #ffffff;
   padding-bottom: 60px;
   z-index: 0;
+  overflow: hidden;
 }
 
 .home::before {
   content: "";
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: -1;
 
