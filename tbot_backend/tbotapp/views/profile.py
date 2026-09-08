@@ -102,15 +102,12 @@ def profile_detail(request, profile_slug):
         profile_id=profile.id
     ).count()
 
-    card_count = profile.cards.count()
-
     serializer = UserProfileSerializer(profile)
 
     return Response(
         {
             "profile": serializer.data,
             "deck_count": deck_count,
-            "card_count": card_count,
             "is_owner": is_owner,
             "is_site_owner": is_site_owner,
         },
