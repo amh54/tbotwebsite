@@ -4,7 +4,8 @@ const API = String(
   process.env.DJANGO_API_URL || "",
 ).replace(/\/+$/, "");
 
-const DISCORD_CDN = "https://cdn.discordapp.com";
+const DISCORD_CDN =
+  "https://cdn.discordapp.com";
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -14,6 +15,12 @@ function cleanText(value) {
     .replace(/<a?:([^:>]+):\d+>/gi, " $1 ")
     .replace(/\*\*/g, "")
     .replace(/__/g, "")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/[–—]/g, "-")
+    .replace(/…/g, "...")
+    .replace(/•/g, "-")
+    .replace(/[^\x20-\x7E]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -34,7 +41,9 @@ function truncate(value, max) {
     return text;
   }
 
-  return `${text.slice(0, max - 1).trimEnd()}…`;
+  return `${text
+    .slice(0, max - 1)
+    .trimEnd()}...`;
 }
 
 function getProfile(data) {
@@ -43,21 +52,25 @@ function getProfile(data) {
 
 async function fetchProfile(slug) {
   if (!API) {
-    throw new Error("DJANGO_API_URL is not configured");
+    throw new Error(
+      "DJANGO_API_URL is not configured",
+    );
   }
 
-  const encodedSlug = encodeURIComponent(
-    String(slug).trim(),
-  );
+  const encodedSlug =
+    encodeURIComponent(
+      String(slug).trim(),
+    );
 
-  const response = await fetch(
-    `${API}/tbotapp/profile/${encodedSlug}/`,
-    {
-      headers: {
-        Accept: "application/json",
+  const response =
+    await fetch(
+      `${API}/tbotapp/profile/${encodedSlug}/`,
+      {
+        headers: {
+          Accept: "application/json",
+        },
       },
-    },
-  );
+    );
 
   if (!response.ok) {
     throw new Error(
@@ -69,25 +82,36 @@ async function fetchProfile(slug) {
 }
 
 function getAvatarUrl(profile) {
-  const discordId = String(
-    profile?.discord_id || "",
-  ).trim();
+  const discordId =
+    String(
+      profile?.discord_id || "",
+    ).trim();
 
-  const avatar = String(
-    profile?.avatar || "",
-  ).trim();
+  const avatar =
+    String(
+      profile?.avatar || "",
+    ).trim();
 
-  if (!/^\d{15,25}$/.test(discordId)) {
+  if (
+    !/^\d{15,25}$/.test(
+      discordId,
+    )
+  ) {
     return "";
   }
 
-  if (!/^[a-zA-Z0-9_]+$/.test(avatar)) {
+  if (
+    !/^[a-zA-Z0-9_]+$/.test(
+      avatar,
+    )
+  ) {
     return "";
   }
 
-  const extension = avatar.startsWith("a_")
-    ? "gif"
-    : "png";
+  const extension =
+    avatar.startsWith("a_")
+      ? "gif"
+      : "png";
 
   return (
     `${DISCORD_CDN}/avatars/` +
@@ -96,22 +120,26 @@ function getAvatarUrl(profile) {
   );
 }
 
-async function fetchAvatarBuffer(avatarUrl) {
+async function fetchAvatarBuffer(
+  avatarUrl,
+) {
   if (!avatarUrl) {
     return null;
   }
 
   try {
-    const response = await fetch(
-      avatarUrl,
-      {
-        headers: {
-          Accept:
-            "image/png,image/gif,image/*,*/*;q=0.8",
-          "User-Agent": "Tbot/1.0",
+    const response =
+      await fetch(
+        avatarUrl,
+        {
+          headers: {
+            Accept:
+              "image/png,image/gif,image/*,*/*;q=0.8",
+            "User-Agent":
+              "Tbot/1.0",
+          },
         },
-      },
-    );
+      );
 
     if (!response.ok) {
       console.error(
@@ -121,12 +149,33 @@ async function fetchAvatarBuffer(avatarUrl) {
       return null;
     }
 
-    return Buffer.from(
-      await response.arrayBuffer(),
-    );
+    const sourceBuffer =
+      Buffer.from(
+        await response.arrayBuffer(),
+      );
+
+    const pngBuffer =
+      await sharp(
+        sourceBuffer,
+        {
+          animated: true,
+        },
+      )
+        .resize(
+          512,
+          512,
+          {
+            fit: "cover",
+            position: "centre",
+          },
+        )
+        .png()
+        .toBuffer();
+
+    return pngBuffer;
   } catch (error) {
     console.error(
-      "Discord avatar fetch failed:",
+      "Discord avatar processing failed:",
       error,
     );
 
@@ -148,7 +197,9 @@ function getCount(...values) {
 
     if (
       typeof value === "string" &&
-      /^\d+$/.test(value.trim())
+      /^\d+$/.test(
+        value.trim(),
+      )
     ) {
       return Math.max(
         0,
@@ -160,7 +211,10 @@ function getCount(...values) {
   return null;
 }
 
-function getName(profile, slug) {
+function getName(
+  profile,
+  slug,
+) {
   return (
     cleanText(
       profile?.display_name ||
@@ -173,7 +227,10 @@ function getName(profile, slug) {
   );
 }
 
-function getUsername(profile, slug) {
+function getUsername(
+  profile,
+  slug,
+) {
   return (
     cleanText(
       profile?.username ||
@@ -194,14 +251,19 @@ function getBio(profile) {
   );
 }
 
-function wrapText(text, maxChars) {
-  const clean = cleanText(text);
+function wrapText(
+  text,
+  maxChars,
+) {
+  const clean =
+    cleanText(text);
 
   if (!clean) {
     return [];
   }
 
-  const words = clean.split(" ");
+  const words =
+    clean.split(" ");
 
   const lines = [];
   let current = "";
@@ -211,7 +273,10 @@ function wrapText(text, maxChars) {
       ? `${current} ${word}`
       : word;
 
-    if (next.length > maxChars) {
+    if (
+      next.length >
+      maxChars
+    ) {
       if (current) {
         lines.push(current);
       }
@@ -229,41 +294,46 @@ function wrapText(text, maxChars) {
   return lines.slice(0, 5);
 }
 
-function buildAvatarSvg(avatarBuffer, name) {
+function buildAvatarSvg(
+  avatarBuffer,
+  name,
+) {
   if (!avatarBuffer) {
     return `
       <circle
         cx="160"
         cy="315"
-        r="96"
+        r="100"
         fill="#20282c"
       />
 
       <circle
         cx="160"
         cy="315"
-        r="90"
+        r="92"
         fill="#151b1e"
       />
 
       <text
         x="160"
-        y="335"
+        y="337"
         text-anchor="middle"
-        font-family="Arial, Helvetica, sans-serif"
+        font-family="DejaVu Sans, sans-serif"
         font-size="58"
         font-weight="700"
         fill="#8fe38b"
-      >
-        ${escapeXml(
-          name.charAt(0).toUpperCase(),
-        )}
-      </text>
+      >${escapeXml(
+        name
+          .charAt(0)
+          .toUpperCase(),
+      )}</text>
     `;
   }
 
   const avatarBase64 =
-    avatarBuffer.toString("base64");
+    avatarBuffer.toString(
+      "base64",
+    );
 
   return `
     <defs>
@@ -271,7 +341,7 @@ function buildAvatarSvg(avatarBuffer, name) {
         <circle
           cx="160"
           cy="315"
-          r="90"
+          r="92"
         />
       </clipPath>
     </defs>
@@ -279,16 +349,16 @@ function buildAvatarSvg(avatarBuffer, name) {
     <circle
       cx="160"
       cy="315"
-      r="96"
+      r="100"
       fill="#20282c"
     />
 
     <image
       href="data:image/png;base64,${avatarBase64}"
-      x="70"
-      y="225"
-      width="180"
-      height="180"
+      x="68"
+      y="223"
+      width="184"
+      height="184"
       preserveAspectRatio="xMidYMid slice"
       clip-path="url(#avatarClip)"
     />
@@ -302,10 +372,11 @@ function buildSvg({
   deckCount,
   cardCount,
 }) {
-  const name = getName(
-    profile,
-    slug,
-  );
+  const name =
+    getName(
+      profile,
+      slug,
+    );
 
   const username =
     getUsername(
@@ -318,7 +389,9 @@ function buildSvg({
 
   const stats = [];
 
-  if (deckCount !== null) {
+  if (
+    deckCount !== null
+  ) {
     stats.push(
       `${deckCount} ${
         deckCount === 1
@@ -328,7 +401,9 @@ function buildSvg({
     );
   }
 
-  if (cardCount !== null) {
+  if (
+    cardCount !== null
+  ) {
     stats.push(
       `${cardCount} ${
         cardCount === 1
@@ -355,20 +430,24 @@ function buildSvg({
       ? `
         <text
           x="330"
-          y="375"
-          font-family="Arial, Helvetica, sans-serif"
-          font-size="25"
+          y="370"
+          font-family="DejaVu Sans, sans-serif"
+          font-size="24"
+          font-weight="400"
           fill="#e1e5e7"
         >
           ${bioLines
             .map(
-              (line, index) =>
+              (
+                line,
+                index,
+              ) =>
                 `<tspan
                   x="330"
                   dy="${
                     index === 0
                       ? 0
-                      : 34
+                      : 33
                   }"
                 >${escapeXml(
                   line,
@@ -379,25 +458,24 @@ function buildSvg({
       `
       : "";
 
+  const statsY =
+    bioLines.length
+      ? 555
+      : 470;
+
   const statsMarkup =
     stats.length
       ? `
         <text
           x="330"
-          y="${
-            bioLines.length
-              ? 555
-              : 470
-          }"
-          font-family="Arial, Helvetica, sans-serif"
+          y="${statsY}"
+          font-family="DejaVu Sans, sans-serif"
           font-size="25"
           font-weight="700"
           fill="#8fe38b"
-        >
-          ${escapeXml(
-            stats.join(" • "),
-          )}
-        </text>
+        >${escapeXml(
+          stats.join("  -  "),
+        )}</text>
       `
       : "";
 
@@ -420,6 +498,7 @@ function buildSvg({
         offset="0%"
         stop-color="#101416"
       />
+
       <stop
         offset="100%"
         stop-color="#151b1e"
@@ -449,35 +528,33 @@ function buildSvg({
   <text
     x="330"
     y="145"
-    font-family="Arial, Helvetica, sans-serif"
+    font-family="DejaVu Sans, sans-serif"
     font-size="24"
     font-weight="700"
     letter-spacing="2"
     fill="#8fe38b"
-  >
-    TBOT PROFILE
-  </text>
+  >TBOT PROFILE</text>
 
   <text
     x="330"
     y="220"
-    font-family="Arial, Helvetica, sans-serif"
+    font-family="DejaVu Sans, sans-serif"
     font-size="62"
-    font-weight="800"
+    font-weight="700"
     fill="#ffffff"
-  >
-    ${escapeXml(name)}
-  </text>
+  >${escapeXml(
+    name,
+  )}</text>
 
   <text
     x="330"
     y="265"
-    font-family="Arial, Helvetica, sans-serif"
+    font-family="DejaVu Sans, sans-serif"
     font-size="28"
     fill="#aeb7bb"
-  >
-    @${escapeXml(username)}
-  </text>
+  >@${escapeXml(
+    username,
+  )}</text>
 
   ${bioMarkup}
 
@@ -487,13 +564,11 @@ function buildSvg({
     x="1090"
     y="555"
     text-anchor="end"
-    font-family="Arial, Helvetica, sans-serif"
+    font-family="DejaVu Sans, sans-serif"
     font-size="22"
     font-weight="600"
     fill="#697276"
-  >
-    pvzhtbot.com
-  </text>
+  >pvzhtbot.com</text>
 </svg>`;
 }
 
@@ -527,7 +602,9 @@ export default async function handler(
 
   try {
     const data =
-      await fetchProfile(slug);
+      await fetchProfile(
+        slug,
+      );
 
     const profile =
       getProfile(data);
@@ -546,7 +623,9 @@ export default async function handler(
     }
 
     const avatarUrl =
-      getAvatarUrl(profile);
+      getAvatarUrl(
+        profile,
+      );
 
     const avatarBuffer =
       await fetchAvatarBuffer(
@@ -607,7 +686,9 @@ export default async function handler(
 
     res.setHeader(
       "Content-Length",
-      String(png.length),
+      String(
+        png.length,
+      ),
     );
 
     res.setHeader(
@@ -615,7 +696,9 @@ export default async function handler(
       "public, max-age=300, s-maxage=300, stale-while-revalidate=3600",
     );
 
-    return res.end(png);
+    return res.end(
+      png,
+    );
   } catch (error) {
     console.error(
       "Profile OG generation failed:",
