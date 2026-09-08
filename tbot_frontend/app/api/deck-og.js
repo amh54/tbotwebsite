@@ -142,7 +142,11 @@ function resolveImageUrl(image) {
 
 function resolveDiscordAvatar(profile) {
   const discordId = String(
-    profile?.discord_id || profile?.discordId || profile?.discord_user_id || "",
+    profile?.discord_id ||
+      profile?.discordId ||
+      profile?.discord_user_id ||
+      profile?.discordUserId ||
+      "",
   ).trim();
 
   const avatar = String(
@@ -231,9 +235,7 @@ function deckToOg(deck) {
   );
 
   const category = stripDiscordFormatting(deck.category);
-
   const archetype = stripDiscordFormatting(deck.archetype);
-
   const description = stripDiscordFormatting(deck.description);
 
   if (creator) {
@@ -348,7 +350,13 @@ function cleanSlug(value) {
   return decoded.replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function getProfileName(profile, fallbackSlug) {
+function getProfileObject(profileData) {
+  return profileData?.profile || profileData || null;
+}
+
+function getProfileName(profileData, fallbackSlug) {
+  const profile = getProfileObject(profileData);
+
   return (
     stripDiscordFormatting(
       profile?.display_name ||
@@ -362,7 +370,9 @@ function getProfileName(profile, fallbackSlug) {
   );
 }
 
-function getProfileBio(profile) {
+function getProfileBio(profileData) {
+  const profile = getProfileObject(profileData);
+
   return stripDiscordFormatting(
     profile?.bio || profile?.description || profile?.about || "",
   );
@@ -391,25 +401,42 @@ function getDeckList(payload) {
 function getExplicitCount(...values) {
   for (const value of values) {
     if (typeof value === "number" && Number.isFinite(value)) {
-      return value;
+      return Math.max(0, Math.trunc(value));
     }
 
     if (typeof value === "string" && /^\d+$/.test(value.trim())) {
-      return Number(value.trim());
+      return Math.max(0, Number(value.trim()));
     }
   }
 
   return null;
 }
 
-function getProfileDeckCount(profile, decksPayload) {
-  const explicit = getExplicitCount(
+function getProfileDeckCount(profileData, decksPayload) {
+  const directCount = getExplicitCount(
+    profileData?.deck_count,
+    profileData?.deckCount,
+  );
+
+  if (directCount !== null) {
+    return directCount;
+  }
+
+  const profile = getProfileObject(profileData);
+
+  const profileCount = getExplicitCount(
     profile?.deck_count,
     profile?.deckCount,
     profile?.number_of_decks,
     profile?.num_decks,
     profile?.decks_count,
-    profile?.decks?.count,
+  );
+
+  if (profileCount !== null) {
+    return profileCount;
+  }
+
+  const payloadCount = getExplicitCount(
     decksPayload?.count,
     decksPayload?.deck_count,
     decksPayload?.deckCount,
@@ -417,14 +444,25 @@ function getProfileDeckCount(profile, decksPayload) {
     decksPayload?.num_decks,
   );
 
-  if (explicit !== null) {
-    return explicit;
+  if (payloadCount !== null) {
+    return payloadCount;
   }
 
   return getDeckList(decksPayload).length;
 }
 
-function getProfileCardCount(profile) {
+function getProfileCardCount(profileData) {
+  const directCount = getExplicitCount(
+    profileData?.card_count,
+    profileData?.cardCount,
+  );
+
+  if (directCount !== null) {
+    return directCount;
+  }
+
+  const profile = getProfileObject(profileData);
+
   return getExplicitCount(
     profile?.card_count,
     profile?.cardCount,
@@ -433,7 +471,6 @@ function getProfileCardCount(profile) {
     profile?.cards_count,
     profile?.collection_count,
     profile?.collectionCount,
-    profile?.cards?.count,
   );
 }
 
@@ -465,15 +502,20 @@ function buildProfileDescription(name, bio, deckCount, cardCount) {
   return truncate(parts.join("\n"), 500);
 }
 
-function profileToOg(profile, fallbackSlug, decksPayload) {
-  if (!profile) {
+function profileToOg(profileData, fallbackSlug, decksPayload) {
+  if (!profileData) {
     return buildProfileOg(fallbackSlug);
   }
 
-  const name = getProfileName(profile, fallbackSlug);
-  const bio = getProfileBio(profile);
-  const deckCount = getProfileDeckCount(profile, decksPayload);
-  const cardCount = getProfileCardCount(profile);
+  const profile = getProfileObject(profileData);
+
+  const name = getProfileName(profileData, fallbackSlug);
+
+  const bio = getProfileBio(profileData);
+
+  const deckCount = getProfileDeckCount(profileData, decksPayload);
+
+  const cardCount = getProfileCardCount(profileData);
 
   return {
     title: `${name} — Tbot Profile`,
@@ -516,7 +558,11 @@ async function fetchJson(url) {
   }
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+      },
+    });
 
     if (!response.ok) {
       return null;
@@ -533,11 +579,7 @@ async function fetchProfile(slug) {
     return null;
   }
 
-  const data = await fetchJson(
-    `${API}/tbotapp/profile/${encodeURIComponent(slug)}/`,
-  );
-
-  return data?.profile || null;
+  return fetchJson(`${API}/tbotapp/profile/${encodeURIComponent(slug)}/`);
 }
 
 async function fetchProfileDecks(slug) {
@@ -563,10 +605,13 @@ async function resolveMetadata(pathname, query) {
       }
     }
 
-    const [profile, decksPayload] = await Promise.all([
-      fetchProfile(slug),
-      fetchProfileDecks(slug),
-    ]);
+    const profile = await fetchProfile(slug);
+
+    let decksPayload = null;
+
+    if (profile) {
+      decksPayload = await fetchProfileDecks(slug);
+    }
 
     return profileToOg(profile, slug, decksPayload);
   }
@@ -575,6 +620,7 @@ async function resolveMetadata(pathname, query) {
     const parts = pathname.split("/").filter(Boolean);
 
     const slug = query.slug || parts[1] || "";
+
     const key = query.key || parts[2] || "";
 
     let deckId = null;
@@ -629,6 +675,7 @@ async function resolveMetadata(pathname, query) {
     const parts = pathname.split("/").filter(Boolean);
 
     const name = query.name || parts[1] || "";
+
     const deckKey = query.deck;
 
     if (deckKey && name) {
@@ -652,7 +699,7 @@ async function resolveMetadata(pathname, query) {
         return {
           title: `${profileName} — Tbot Deckbuilder`,
           description: `Explore ${profileName}'s Plants vs. Zombies Heroes decks on Tbot.`,
-          image: resolveProfileImage(profile),
+          image: resolveProfileImage(getProfileObject(profile)),
         };
       }
 
@@ -725,68 +772,54 @@ function buildHtml({
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-
   <title>${safeTitle}</title>
-
   <meta
     name="description"
     content="${safeDescription}"
   />
-
   ${robots}
-
   <link
     rel="canonical"
     href="${safeUrl}"
   />
-
   <meta
     property="og:type"
     content="website"
   />
-
   <meta
     property="og:site_name"
     content="Tbot"
   />
-
   <meta
     property="og:title"
     content="${safeTitle}"
   />
-
   <meta
     property="og:description"
     content="${safeDescription}"
   />
-
   <meta
     property="og:url"
     content="${safeUrl}"
   />
 ${imageTags}
-
   <meta
     name="twitter:card"
     content="${image ? "summary_large_image" : "summary"}"
   />
-
   <meta
     name="twitter:title"
     content="${safeTitle}"
   />
-
   <meta
     name="twitter:description"
     content="${safeDescription}"
   />
-
   <meta
     http-equiv="refresh"
     content="0; url=${safeRedirectPath}"
   />
 </head>
-
 <body>
   Redirecting…
 </body>
@@ -815,10 +848,6 @@ export default async function handler(req, res) {
 
   if (query.path && typeof query.path === "string") {
     pathname = query.path;
-  }
-
-  if (pathname.startsWith("/api/deck-og")) {
-    pathname = "/";
   }
 
   if (pathname !== "/" && pathname.endsWith("/")) {
@@ -877,7 +906,20 @@ export default async function handler(req, res) {
 function getOriginalPath(pathname, query) {
   if (pathname === "/api/deck-og") {
     if (query.slug) {
-      return `/profile/${query.slug}`;
+      const slug = String(
+        Array.isArray(query.slug) ? query.slug[0] : query.slug,
+      );
+
+      if (query.deck) {
+        return (
+          `/profile/${encodeURIComponent(slug)}` +
+          `?deck=${encodeURIComponent(
+            String(Array.isArray(query.deck) ? query.deck[0] : query.deck),
+          )}`
+        );
+      }
+
+      return `/profile/${encodeURIComponent(slug)}`;
     }
 
     return "/";
