@@ -2,8 +2,7 @@ const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
 
 const SITE_URL = "https://pvzhtbot.com";
 
-const DEFAULT_IMAGE =
-  "https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp";
+const DEFAULT_IMAGE = "https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp";
 
 const DEFAULT_TITLE = "Tbot — Plants vs. Zombies Heroes";
 
@@ -73,14 +72,12 @@ const PAGE_METADATA = {
 
   "/termsofservice": {
     title: "Terms of Service — Tbot",
-    description:
-      "Read the Tbot Terms of Service.",
+    description: "Read the Tbot Terms of Service.",
   },
 
   "/privacypolicy": {
     title: "Privacy Policy — Tbot",
-    description:
-      "Read the Tbot Privacy Policy.",
+    description: "Read the Tbot Privacy Policy.",
   },
 };
 
@@ -120,9 +117,7 @@ function stripDiscordFormatting(value) {
 function truncate(text, max = 500) {
   const clean = String(text || "");
 
-  return clean.length > max
-    ? `${clean.slice(0, max).trimEnd()}…`
-    : clean;
+  return clean.length > max ? `${clean.slice(0, max).trimEnd()}…` : clean;
 }
 
 function escapeHtml(str) {
@@ -142,9 +137,7 @@ function escapeHtml(str) {
 function resolveImageUrl(image) {
   const img = String(image || "").trim();
 
-  if (!img) {
-    return DEFAULT_IMAGE;
-  }
+  if (!img) return DEFAULT_IMAGE;
 
   if (/^(https?:\/\/|data:|blob:)/i.test(img)) {
     return img;
@@ -158,13 +151,8 @@ function resolveImageUrl(image) {
 }
 
 function resolveDiscordAvatar(profile) {
-  const discordId = String(
-    profile?.discord_id || "",
-  ).trim();
-
-  const avatarHash = String(
-    profile?.avatar || "",
-  ).trim();
+  const discordId = String(profile?.discord_id || "").trim();
+  const avatarHash = String(profile?.avatar || "").trim();
 
   if (!discordId || !avatarHash) {
     return DEFAULT_IMAGE;
@@ -174,15 +162,13 @@ function resolveDiscordAvatar(profile) {
     return avatarHash;
   }
 
-  const extension = avatarHash.startsWith("a_")
-    ? "gif"
-    : "png";
+  const extension = avatarHash.startsWith("a_") ? "gif" : "png";
 
-  return `https://cdn.discordapp.com/avatars/${encodeURIComponent(
-    discordId,
-  )}/${encodeURIComponent(
-    avatarHash,
-  )}.${extension}`;
+  return (
+    `https://cdn.discordapp.com/avatars/` +
+    `${encodeURIComponent(discordId)}/` +
+    `${encodeURIComponent(avatarHash)}.${extension}`
+  );
 }
 
 function findDeckInList(payload, deckKey) {
@@ -201,11 +187,7 @@ function findDeckInList(payload, deckKey) {
   return (
     list.find((deck) => {
       const id = String(
-        deck.deckid ??
-          deck.deckID ??
-          deck.deckId ??
-          deck.id ??
-          "",
+        deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? "",
       ).trim();
 
       const name = String(deck.name || "")
@@ -216,10 +198,7 @@ function findDeckInList(payload, deckKey) {
 
       const key = name ? `${name}-${id}` : id;
 
-      return (
-        wanted === key.toLowerCase() ||
-        wanted === id.toLowerCase()
-      );
+      return wanted === key.toLowerCase() || wanted === id.toLowerCase();
     }) || null
   );
 }
@@ -232,24 +211,14 @@ function deckToOg(deck) {
   const parts = [];
 
   const creator = stripDiscordFormatting(
-    deck.creator ||
-      deck.creator_name ||
-      deck.created_by ||
-      deck.owner ||
-      "",
+    deck.creator || deck.creator_name || deck.created_by || deck.owner || "",
   );
 
-  const category = stripDiscordFormatting(
-    deck.category,
-  );
+  const category = stripDiscordFormatting(deck.category);
 
-  const archetype = stripDiscordFormatting(
-    deck.archetype,
-  );
+  const archetype = stripDiscordFormatting(deck.archetype);
 
-  const description = stripDiscordFormatting(
-    deck.description,
-  );
+  const description = stripDiscordFormatting(deck.description);
 
   if (creator) {
     parts.push(`Creator: ${creator}`);
@@ -269,9 +238,11 @@ function deckToOg(deck) {
 
   return {
     title: `${deck.name || "Untitled Deck"} — TBOT Deck`,
+
     description:
       truncate(parts.join("\n"), 500) ||
       "View this Plants vs. Zombies Heroes deck on Tbot.",
+
     image: resolveImageUrl(deck.image),
   };
 }
@@ -289,25 +260,17 @@ function findCardInList(payload, cardQuery) {
 
   return (
     list.find((card) => {
-      const cardName = normalizeText(
-        card.card_name,
-      );
+      const cardName = normalizeText(card.card_name);
 
-      const title = normalizeText(
-        stripDiscordFormatting(card.title),
-      );
+      const title = normalizeText(stripDiscordFormatting(card.title));
 
-      const aliases = normalizeText(
-        card.aliases,
-      )
+      const aliases = normalizeText(card.aliases)
         .split(/[,|;]/)
         .map((alias) => alias.trim())
         .filter(Boolean);
 
       return (
-        cardName === wanted ||
-        title === wanted ||
-        aliases.includes(wanted)
+        cardName === wanted || title === wanted || aliases.includes(wanted)
       );
     }) || null
   );
@@ -326,66 +289,40 @@ function cardToOg(card) {
   const parts = [];
 
   if (card.card_type) {
-    parts.push(
-      `Class: ${stripDiscordFormatting(
-        card.card_type,
-      )}`,
-    );
+    parts.push(`Class: ${stripDiscordFormatting(card.card_type)}`);
   }
 
   if (card.side) {
-    parts.push(
-      `Side: ${stripDiscordFormatting(
-        card.side,
-      )}`,
-    );
+    parts.push(`Side: ${stripDiscordFormatting(card.side)}`);
   }
 
   if (card.stats) {
-    parts.push(
-      `Stats: ${stripDiscordFormatting(
-        card.stats,
-      )}`,
-    );
+    parts.push(`Stats: ${stripDiscordFormatting(card.stats)}`);
   }
 
   if (card.description) {
-    parts.push(
-      `Description: ${stripDiscordFormatting(
-        card.description,
-      )}`,
-    );
+    parts.push(`Description: ${stripDiscordFormatting(card.description)}`);
   }
 
   if (card.ability) {
-    parts.push(
-      `Ability: ${stripDiscordFormatting(
-        card.ability,
-      )}`,
-    );
+    parts.push(`Ability: ${stripDiscordFormatting(card.ability)}`);
   }
 
   if (card.traits) {
-    parts.push(
-      `Traits: ${stripDiscordFormatting(
-        card.traits,
-      )}`,
-    );
+    parts.push(`Traits: ${stripDiscordFormatting(card.traits)}`);
   }
 
   if (card.set_rarity) {
-    parts.push(
-      `Set/Rarity: ${stripDiscordFormatting(
-        card.set_rarity,
-      )}`,
-    );
+    parts.push(`Set/Rarity: ${stripDiscordFormatting(card.set_rarity)}`);
   }
 
   return {
     title: `${name} — TBOT Card Info`,
+
     description:
       truncate(parts.join("\n"), 500) ||
       `View information about ${name} on Tbot.`,
+
     image: resolveImageUrl(card.thumbnail),
   };
 }
@@ -397,19 +334,12 @@ function cleanSlug(value) {
     decoded = decodeURIComponent(decoded);
   } catch {}
 
-  return decoded
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return decoded.replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function getProfileName(profile, fallbackSlug) {
   return (
-    stripDiscordFormatting(
-      profile?.display_name ||
-        profile?.username ||
-        "",
-    ) ||
+    stripDiscordFormatting(profile?.display_name || profile?.username || "") ||
     cleanSlug(fallbackSlug) ||
     "User"
   );
@@ -420,15 +350,13 @@ function profileToOg(profile, fallbackSlug) {
     return buildProfileOg(fallbackSlug);
   }
 
-  const name = getProfileName(
-    profile,
-    fallbackSlug,
-  );
+  const name = getProfileName(profile, fallbackSlug);
 
   return {
     title: `${name} — Tbot Profile`,
-    description:
-      `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`,
+
+    description: `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`,
+
     image: resolveDiscordAvatar(profile),
   };
 }
@@ -442,8 +370,9 @@ function buildProfileOg(slug) {
 
   return {
     title: `${name} — Tbot Profile`,
-    description:
-      `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`,
+
+    description: `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`,
+
     image: DEFAULT_IMAGE,
   };
 }
@@ -457,8 +386,9 @@ function buildDeckbuilderOg(name) {
 
   return {
     title: `${cleanName} — Tbot Deckbuilder`,
-    description:
-      `Explore ${cleanName}'s Plants vs. Zombies Heroes decks on Tbot.`,
+
+    description: `Explore ${cleanName}'s Plants vs. Zombies Heroes decks on Tbot.`,
+
     image: DEFAULT_IMAGE,
   };
 }
@@ -487,266 +417,155 @@ async function fetchProfile(slug) {
   }
 
   const data = await fetchJson(
-    `${API}/tbotapp/profile/${encodeURIComponent(
-      slug,
-    )}/`,
+    `${API}/tbotapp/profile/${encodeURIComponent(slug)}/`,
   );
 
   return data?.profile || null;
 }
 
-const RESOLVERS = [
-  {
-    test: (pathname) =>
-      /^\/deck\/([^/]+)\/([^/]+)$/.exec(
-        pathname,
-      ),
+async function resolveMetadata(pathname, query) {
+  if (pathname === "/profile" || pathname.startsWith("/profile/")) {
+    const slug = query.slug || pathname.replace(/^\/profile\//, "");
 
-    resolve: async (match) => {
-      const [, slug, key] = match;
+    const deckKey = query.deck;
 
-      let deckId = null;
-
-      const numericMatch =
-        /^(\d+)$/.exec(key);
-
-      if (numericMatch) {
-        deckId = numericMatch[1];
-      } else {
-        const slugIdMatch =
-          /-(\d+)$/.exec(key);
-
-        if (slugIdMatch) {
-          deckId = slugIdMatch[1];
-        }
-      }
-
-      if (!deckId) {
-        return null;
-      }
-
+    if (deckKey) {
       const data = await fetchJson(
-        `${API}/tbotapp/user-decks/shared/${encodeURIComponent(
-          slug,
-        )}/${encodeURIComponent(
-          deckId,
-        )}/`,
+        `${API}/tbotapp/profile/${encodeURIComponent(slug)}/decks/`,
       );
 
-      return deckToOg(data);
-    },
-  },
+      const deck = findDeckInList(data, deckKey);
 
-  {
-    test: (pathname, params) => {
-      if (
-        !pathname.startsWith("/profile/") ||
-        pathname === "/profile/"
-      ) {
-        return null;
+      if (deck) {
+        return deckToOg(deck);
       }
+    }
 
-      const match =
-        /^\/profile\/([^/]+)$/.exec(
-          pathname,
-        );
+    const profile = await fetchProfile(slug);
 
-      if (!match) {
-        return null;
+    return profileToOg(profile, slug);
+  }
+
+  if (pathname === "/deck" || pathname.startsWith("/deck/")) {
+    const parts = pathname.split("/").filter(Boolean);
+
+    const slug = query.slug || parts[1] || "";
+
+    const key = query.key || parts[2] || "";
+
+    let deckId = null;
+
+    const numericMatch = /^(\d+)$/.exec(key);
+
+    if (numericMatch) {
+      deckId = numericMatch[1];
+    } else {
+      const slugIdMatch = /-(\d+)$/.exec(key);
+
+      if (slugIdMatch) {
+        deckId = slugIdMatch[1];
       }
+    }
 
-      return [
-        match[1],
-        params.get("deck"),
-      ];
-    },
-
-    resolve: async ([slug, deckKey]) => {
-      if (deckKey) {
-        const data = await fetchJson(
-          `${API}/tbotapp/profile/${encodeURIComponent(
-            slug,
-          )}/decks/`,
-        );
-
-        const deck = findDeckInList(
-          data,
-          deckKey,
-        );
-
-        if (deck) {
-          return deckToOg(deck);
-        }
-      }
-
-      const profile =
-        await fetchProfile(slug);
-
-      return profileToOg(
-        profile,
-        slug,
-      );
-    },
-  },
-
-  {
-    test: (pathname, params) => {
-      if (!params.has("deck")) {
-        return null;
-      }
-
-      if (pathname === "/decklists") {
-        return ["decklists"];
-      }
-
-      if (
-        pathname === "/legacydecks" ||
-        pathname === "/legacy-decklists"
-      ) {
-        return ["legacy-decklists"];
-      }
-
-      const dbMatch =
-        /^\/deckbuilders\/([^/]+)$/.exec(
-          pathname,
-        );
-
-      if (dbMatch) {
-        return [
-          "deckbuilders",
-          dbMatch[1],
-        ];
-      }
-
+    if (!deckId) {
       return null;
-    },
+    }
 
-    resolve: async (
-      match,
-      params,
-    ) => {
-      let listUrl = "";
+    const data = await fetchJson(
+      `${API}/tbotapp/user-decks/shared/` +
+        `${encodeURIComponent(slug)}/` +
+        `${encodeURIComponent(deckId)}/`,
+    );
 
-      if (match[0] === "decklists") {
-        listUrl =
-          `${API}/tbotapp/decklists/`;
-      } else if (
-        match[0] ===
-        "legacy-decklists"
-      ) {
-        listUrl =
-          `${API}/tbotapp/legacy-decklists/`;
-      } else {
-        listUrl =
-          `${API}/tbotapp/deckbuilders/` +
-          `${encodeURIComponent(
-            match[1],
-          )}/decks/`;
-      }
+    return deckToOg(data);
+  }
 
-      const data =
-        await fetchJson(listUrl);
+  if (
+    pathname === "/decklists" ||
+    pathname === "/legacydecks" ||
+    pathname === "/legacy-decklists"
+  ) {
+    const deckKey = query.deck;
 
-      return deckToOg(
-        findDeckInList(
-          data,
-          params.get("deck"),
-        ),
+    if (!deckKey) {
+      return getStaticMetadata(pathname);
+    }
+
+    let listUrl;
+
+    if (pathname === "/decklists") {
+      listUrl = `${API}/tbotapp/decklists/`;
+    } else {
+      listUrl = `${API}/tbotapp/legacy-decklists/`;
+    }
+
+    const data = await fetchJson(listUrl);
+
+    return deckToOg(findDeckInList(data, deckKey));
+  }
+
+  if (pathname === "/deckbuilders" || pathname.startsWith("/deckbuilders/")) {
+    const parts = pathname.split("/").filter(Boolean);
+
+    const name = query.name || parts[1] || "";
+
+    const deckKey = query.deck;
+
+    if (deckKey && name) {
+      const data = await fetchJson(
+        `${API}/tbotapp/deckbuilders/` + `${encodeURIComponent(name)}/decks/`,
       );
-    },
-  },
 
-  {
-    test: (pathname, params) => {
-      if (!params.has("card")) {
-        return null;
+      const deck = findDeckInList(data, deckKey);
+
+      if (deck) {
+        return deckToOg(deck);
       }
+    }
 
-      if (
-        pathname === "/cardinfo" ||
-        pathname === "/"
-      ) {
-        return [
-          params.get("card"),
-        ];
-      }
-
-      return null;
-    },
-
-    resolve: async ([cardQuery]) => {
-      const data =
-        await fetchJson(
-          `${API}/tbotapp/cardinfo/`,
-        );
-
-      return cardToOg(
-        findCardInList(
-          data,
-          cardQuery,
-        ),
-      );
-    },
-  },
-
-  {
-    test: (pathname, params) => {
-      const match =
-        /^\/deckbuilders\/([^/]+)$/.exec(
-          pathname,
-        );
-
-      if (
-        !match ||
-        params.has("deck")
-      ) {
-        return null;
-      }
-
-      return [match[1]];
-    },
-
-    resolve: async ([name]) => {
-      const profile =
-        await fetchProfile(name);
+    if (name) {
+      const profile = await fetchProfile(name);
 
       if (profile) {
-        const profileName =
-          getProfileName(
-            profile,
-            name,
-          );
+        const profileName = getProfileName(profile, name);
 
         return {
-          title:
-            `${profileName} — Tbot Deckbuilder`,
-          description:
-            `Explore ${profileName}'s Plants vs. Zombies Heroes decks on Tbot.`,
-          image:
-            resolveDiscordAvatar(
-              profile,
-            ),
+          title: `${profileName} — Tbot Deckbuilder`,
+
+          description: `Explore ${profileName}'s Plants vs. Zombies Heroes decks on Tbot.`,
+
+          image: resolveDiscordAvatar(profile),
         };
       }
 
-      return buildDeckbuilderOg(
-        name,
-      );
-    },
-  },
-];
+      return buildDeckbuilderOg(name);
+    }
+
+    return getStaticMetadata(pathname);
+  }
+
+  if (pathname === "/cardinfo" || pathname === "/") {
+    const cardQuery = query.card;
+
+    if (cardQuery) {
+      const data = await fetchJson(`${API}/tbotapp/cardinfo/`);
+
+      const card = findCardInList(data, cardQuery);
+
+      return cardToOg(card);
+    }
+  }
+
+  return getStaticMetadata(pathname);
+}
 
 function getStaticMetadata(pathname) {
   if (PAGE_METADATA[pathname]) {
     return PAGE_METADATA[pathname];
   }
 
-  if (
-    pathname === "/legacy-decklists"
-  ) {
-    return PAGE_METADATA[
-      "/legacydecks"
-    ];
+  if (pathname === "/legacy-decklists") {
+    return PAGE_METADATA["/legacydecks"];
   }
 
   return null;
@@ -754,11 +573,7 @@ function getStaticMetadata(pathname) {
 
 function isPrivateRoute(pathname) {
   return PRIVATE_ROUTES.some(
-    (route) =>
-      pathname === route ||
-      pathname.startsWith(
-        `${route}/`,
-      ),
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 }
 
@@ -770,20 +585,15 @@ function buildHtml({
   noindex = false,
   redirectPath,
 }) {
-  const safeTitle =
-    escapeHtml(title);
+  const safeTitle = escapeHtml(title);
 
-  const safeDescription =
-    escapeHtml(description);
+  const safeDescription = escapeHtml(description);
 
-  const safeImage =
-    escapeHtml(image);
+  const safeImage = escapeHtml(image);
 
-  const safeUrl =
-    escapeHtml(url);
+  const safeUrl = escapeHtml(url);
 
-  const safeRedirectPath =
-    escapeHtml(redirectPath);
+  const safeRedirectPath = escapeHtml(redirectPath);
 
   const robots = noindex
     ? '<meta name="robots" content="noindex, nofollow" />'
@@ -792,6 +602,7 @@ function buildHtml({
   const imageTags = image
     ? `
   <meta property="og:image" content="${safeImage}" />
+  <meta property="og:image:secure_url" content="${safeImage}" />
   <meta property="og:image:alt" content="${safeTitle}" />
   <meta name="twitter:image" content="${safeImage}" />`
     : "";
@@ -868,85 +679,56 @@ ${imageTags}
 </html>`;
 }
 
-export default async function handler(
-  req,
-  res,
-) {
-  const rawPath =
-    req.query?.path;
+export default async function handler(req, res) {
+  const rawUrl = String(req.url || "");
 
-  if (!rawPath) {
-    return notFound(res);
-  }
-
-  let path = Array.isArray(rawPath)
-    ? rawPath.join("/")
-    : String(rawPath);
-
-  if (!path.startsWith("/")) {
-    path = `/${path}`;
-  }
-
-  let url;
+  let originalUrl;
 
   try {
-    url = new URL(
-      path,
-      SITE_URL,
-    );
+    originalUrl = new URL(rawUrl, SITE_URL);
   } catch {
     return notFound(res);
   }
 
-  const pathname =
-    url.pathname;
+  let pathname = originalUrl.pathname;
 
-  const params =
-    url.searchParams;
+  const query = {
+    ...(originalUrl.searchParams
+      ? Object.fromEntries(originalUrl.searchParams.entries())
+      : {}),
+    ...(req.query || {}),
+  };
+
+  if (query.path && typeof query.path === "string") {
+    pathname = query.path;
+  }
+
+  if (pathname.startsWith("/api/deck-og")) {
+    pathname = "/";
+  }
+
+  if (pathname !== "/" && pathname.endsWith("/")) {
+    pathname = pathname.slice(0, -1);
+  }
+
+  const originalPath = getOriginalPath(pathname, query);
 
   let og = null;
 
-  for (const resolver of RESOLVERS) {
-    try {
-      const match =
-        resolver.test(
-          pathname,
-          params,
-        );
-
-      if (!match) {
-        continue;
-      }
-
-      og =
-        await resolver.resolve(
-          match,
-          params,
-        );
-
-      if (og) {
-        break;
-      }
-    } catch {
-      og = null;
-    }
+  try {
+    og = await resolveMetadata(originalPath, query);
+  } catch {
+    og = null;
   }
 
   if (!og) {
-    og =
-      getStaticMetadata(
-        pathname,
-      );
+    og = getStaticMetadata(originalPath);
   }
 
-  if (
-    !og &&
-    isPrivateRoute(pathname)
-  ) {
+  if (!og && isPrivateRoute(originalPath)) {
     og = {
       title: "Tbot",
-      description:
-        DEFAULT_DESCRIPTION,
+      description: DEFAULT_DESCRIPTION,
       image: DEFAULT_IMAGE,
     };
   }
@@ -955,39 +737,25 @@ export default async function handler(
     return notFound(res);
   }
 
-  const canonicalUrl =
-    `${SITE_URL}${pathname}${url.search}`;
+  const canonicalUrl = `${SITE_URL}${originalPath}` + `${originalUrl.search}`;
 
-  const html =
-    buildHtml({
-      title:
-        og.title ||
-        DEFAULT_TITLE,
+  const html = buildHtml({
+    title: og.title || DEFAULT_TITLE,
 
-      description:
-        og.description ||
-        DEFAULT_DESCRIPTION,
+    description: og.description || DEFAULT_DESCRIPTION,
 
-      image:
-        og.image ||
-        DEFAULT_IMAGE,
+    image: og.image || DEFAULT_IMAGE,
 
-      url: canonicalUrl,
+    url: canonicalUrl,
 
-      noindex:
-        isPrivateRoute(
-          pathname,
-        ),
+    noindex: isPrivateRoute(originalPath),
 
-      redirectPath: path,
-    });
+    redirectPath: `${originalPath}${originalUrl.search}`,
+  });
 
   res.statusCode = 200;
 
-  res.setHeader(
-    "Content-Type",
-    "text/html; charset=utf-8",
-  );
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
 
   res.setHeader(
     "Cache-Control",
@@ -997,15 +765,22 @@ export default async function handler(
   return res.end(html);
 }
 
+function getOriginalPath(pathname, query) {
+  if (pathname === "/api/deck-og") {
+    return "/";
+  }
+
+  if (query.slug && pathname === "/api/deck-og") {
+    return `/profile/${query.slug}`;
+  }
+
+  return pathname;
+}
+
 function notFound(res) {
   res.statusCode = 404;
 
-  res.setHeader(
-    "Content-Type",
-    "text/plain; charset=utf-8",
-  );
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
 
-  return res.end(
-    "Not found",
-  );
+  return res.end("Not found");
 }

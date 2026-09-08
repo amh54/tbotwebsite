@@ -1,6 +1,38 @@
 {
   "rewrites": [
     {
+      "source": "/deck/:slug/:key",
+      "destination": "/api/deck-og"
+    },
+    {
+      "source": "/profile/:slug",
+      "destination": "/api/deck-og"
+    },
+    {
+      "source": "/decklists",
+      "destination": "/api/deck-og"
+    },
+    {
+      "source": "/legacydecks",
+      "destination": "/api/deck-og"
+    },
+    {
+      "source": "/legacy-decklists",
+      "destination": "/api/deck-og"
+    },
+    {
+      "source": "/deckbuilders/:name",
+      "destination": "/api/deck-og"
+    },
+    {
+      "source": "/cardinfo",
+      "destination": "/api/deck-og"
+    },
+    {
+      "source": "/",
+      "destination": "/api/deck-og"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
