@@ -139,7 +139,6 @@ function resolveImageUrl(image) {
 
   return `${API}${img.startsWith("/") ? "" : "/"}${img}`;
 }
-
 function resolveDiscordAvatar(profile) {
   const avatar = String(profile?.avatar || "").trim();
   const discordId = String(profile?.discord_id || "").trim();
@@ -157,7 +156,6 @@ function resolveDiscordAvatar(profile) {
     `&format=${extension}`
   );
 }
-
 function resolveProfileImage(profile) {
   const image = String(
     profile?.avatar_url ||
@@ -476,7 +474,7 @@ function buildProfileDescription(name, bio, deckCount, cardCount) {
   }
 
   if (stats.length) {
-    parts.push(stats.join(" • "));
+    parts.push(stats.join("\n"));
   }
 
   if (!parts.length) {
@@ -486,15 +484,9 @@ function buildProfileDescription(name, bio, deckCount, cardCount) {
   return truncate(parts.join("\n"), 500);
 }
 
-function profileToOg(
-  profileData,
-  fallbackSlug,
-  decksPayload,
-) {
+function profileToOg(profileData, fallbackSlug, decksPayload) {
   if (!profileData) {
-    return buildProfileOg(
-      fallbackSlug,
-    );
+    return buildProfileOg(fallbackSlug);
   }
 
   const name = getProfileName(
@@ -506,39 +498,31 @@ function profileToOg(
     profileData,
   );
 
-  const deckCount =
-    getProfileDeckCount(
-      profileData,
-      decksPayload,
-    );
+  const deckCount = getProfileDeckCount(
+    profileData,
+    decksPayload,
+  );
 
-  const cardCount =
-    getProfileCardCount(
-      profileData,
-    );
-
-  const imageSlug =
-    String(fallbackSlug || "").trim();
+  const cardCount = getProfileCardCount(
+    profileData,
+  );
 
   return {
-    title:
-      `${name} — Tbot Profile`,
+    title: `${name} — Tbot Profile`,
 
-    description:
-      buildProfileDescription(
-        name,
-        bio,
-        deckCount,
-        cardCount,
-      ),
+    description: buildProfileDescription(
+      name,
+      bio,
+      deckCount,
+      cardCount,
+    ),
 
     image:
       `${SITE_URL}/api/profile-og?slug=${encodeURIComponent(
-        imageSlug,
+        String(fallbackSlug || "").trim(),
       )}`,
   };
 }
-
 function buildProfileOg(slug) {
   const name = cleanSlug(slug);
 
@@ -701,8 +685,7 @@ async function resolveMetadata(pathname, query) {
 
     if (deckKey && name) {
       const data = await fetchJson(
-        `${API}/tbotapp/deckbuilders/` +
-          `${encodeURIComponent(name)}/decks/`,
+        `${API}/tbotapp/deckbuilders/` + `${encodeURIComponent(name)}/decks/`,
       );
 
       const deck = findDeckInList(data, deckKey);
@@ -811,9 +794,6 @@ function buildHtml({
     ? `
   <meta property="og:image" content="${safeImage}" />
   <meta property="og:image:secure_url" content="${safeImage}" />
-  <meta property="og:image:type" content="image/png" />
-  <meta property="og:image:width" content="1024" />
-  <meta property="og:image:height" content="1024" />
   <meta property="og:image:alt" content="${safeTitle}" />
   <meta name="twitter:image" content="${safeImage}" />`
     : "";
@@ -823,19 +803,52 @@ function buildHtml({
 <head>
   <meta charset="UTF-8" />
   <title>${safeTitle}</title>
-  <meta name="description" content="${safeDescription}" />
+  <meta
+    name="description"
+    content="${safeDescription}"
+  />
   ${robots}
-  <link rel="canonical" href="${safeUrl}" />
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Tbot" />
-  <meta property="og:title" content="${safeTitle}" />
-  <meta property="og:description" content="${safeDescription}" />
-  <meta property="og:url" content="${safeUrl}" />
+  <link
+    rel="canonical"
+    href="${safeUrl}"
+  />
+  <meta
+    property="og:type"
+    content="website"
+  />
+  <meta
+    property="og:site_name"
+    content="Tbot"
+  />
+  <meta
+    property="og:title"
+    content="${safeTitle}"
+  />
+  <meta
+    property="og:description"
+    content="${safeDescription}"
+  />
+  <meta
+    property="og:url"
+    content="${safeUrl}"
+  />
 ${imageTags}
-  <meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}" />
-  <meta name="twitter:title" content="${safeTitle}" />
-  <meta name="twitter:description" content="${safeDescription}" />
-  <meta http-equiv="refresh" content="0; url=${safeRedirectPath}" />
+  <meta
+    name="twitter:card"
+    content="${image ? "summary_large_image" : "summary"}"
+  />
+  <meta
+    name="twitter:title"
+    content="${safeTitle}"
+  />
+  <meta
+    name="twitter:description"
+    content="${safeDescription}"
+  />
+  <meta
+    http-equiv="refresh"
+    content="0; url=${safeRedirectPath}"
+  />
 </head>
 <body>
   Redirecting…
@@ -898,10 +911,7 @@ export default async function handler(req, res) {
     return notFound(res);
   }
 
-  const canonicalUrl = buildPublicUrl(
-    originalPath,
-    originalUrl.searchParams,
-  );
+  const canonicalUrl = buildPublicUrl(originalPath, originalUrl.searchParams);
 
   const redirectPath = buildPublicRedirect(
     originalPath,

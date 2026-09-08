@@ -1,15 +1,25 @@
-const DISCORD_CDN = "https://cdn.discordapp.com";
+const DISCORD_CDN =
+  "https://cdn.discordapp.com";
 
-export default async function handler(req, res) {
-  const discordId = String(
-    req.query?.discord_id || "",
-  ).trim();
+export default async function handler(
+  req,
+  res,
+) {
+  const discordId =
+    String(
+      req.query?.discord_id || "",
+    ).trim();
 
-  const avatar = String(
-    req.query?.avatar || "",
-  ).trim();
+  const avatar =
+    String(
+      req.query?.avatar || "",
+    ).trim();
 
-  if (!/^\d{15,25}$/.test(discordId)) {
+  if (
+    !/^\d{15,25}$/.test(
+      discordId,
+    )
+  ) {
     res.statusCode = 400;
 
     res.setHeader(
@@ -22,7 +32,11 @@ export default async function handler(req, res) {
     );
   }
 
-  if (!/^[a-zA-Z0-9_]+$/.test(avatar)) {
+  if (
+    !/^[a-zA-Z0-9_]+$/.test(
+      avatar,
+    )
+  ) {
     res.statusCode = 400;
 
     res.setHeader(
@@ -35,28 +49,32 @@ export default async function handler(req, res) {
     );
   }
 
-  const extension = avatar.startsWith("a_")
-    ? "gif"
-    : "png";
+  const extension =
+    avatar.startsWith("a_")
+      ? "gif"
+      : "png";
 
   const discordUrl =
     `${DISCORD_CDN}/avatars/` +
     `${discordId}/` +
-    `${avatar}.${extension}?size=1024`;
+    `${avatar}.${extension}` +
+    "?size=1024";
 
   try {
-    const response = await fetch(
-      discordUrl,
-      {
-        method: "GET",
-        redirect: "follow",
-        headers: {
-          Accept:
-            "image/png,image/gif,image/*,*/*;q=0.8",
-          "User-Agent": "Tbot/1.0",
+    const response =
+      await fetch(
+        discordUrl,
+        {
+          method: "GET",
+          redirect: "follow",
+          headers: {
+            Accept:
+              "image/png,image/gif,image/*,*/*;q=0.8",
+            "User-Agent":
+              "Tbot/1.0",
+          },
         },
-      },
-    );
+      );
 
     if (!response.ok) {
       res.statusCode = 502;
@@ -71,9 +89,10 @@ export default async function handler(req, res) {
       );
     }
 
-    const buffer = Buffer.from(
-      await response.arrayBuffer(),
-    );
+    const buffer =
+      Buffer.from(
+        await response.arrayBuffer(),
+      );
 
     res.statusCode = 200;
 
@@ -94,7 +113,9 @@ export default async function handler(req, res) {
       "public, max-age=31536000, s-maxage=31536000, immutable",
     );
 
-    return res.end(buffer);
+    return res.end(
+      buffer,
+    );
   } catch (error) {
     console.error(
       "Discord avatar proxy failed:",
