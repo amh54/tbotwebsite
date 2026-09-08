@@ -153,7 +153,7 @@ function resolveDiscordAvatar(profile) {
     profile?.avatar || profile?.discord_avatar || profile?.discordAvatar || "",
   ).trim();
 
-  if (!avatar) {
+  if (!avatar || !discordId) {
     return DEFAULT_IMAGE;
   }
 
@@ -161,16 +161,10 @@ function resolveDiscordAvatar(profile) {
     return avatar;
   }
 
-  if (!discordId) {
-    return resolveImageUrl(avatar);
-  }
-
-  const extension = avatar.startsWith("a_") ? "gif" : "png";
-
   return (
-    `https://cdn.discordapp.com/avatars/` +
-    `${encodeURIComponent(discordId)}/` +
-    `${encodeURIComponent(avatar)}.${extension}`
+    `${SITE_URL}/api/profile-avatar` +
+    `?discord_id=${encodeURIComponent(discordId)}` +
+    `&avatar=${encodeURIComponent(avatar)}`
   );
 }
 
@@ -743,12 +737,12 @@ function isPrivateRoute(pathname) {
   );
 }
 
-function getPublicSearchParams(searchParams) {
+function getPublicSearchParams(searchParams, pathname) {
   const params = new URLSearchParams(searchParams);
 
   params.delete("path");
 
-  if (params.get("slug")) {
+  if (pathname === "/profile" || pathname.startsWith("/profile/")) {
     params.delete("slug");
   }
 
@@ -756,14 +750,14 @@ function getPublicSearchParams(searchParams) {
 }
 
 function buildPublicUrl(pathname, searchParams) {
-  const params = getPublicSearchParams(searchParams);
+  const params = getPublicSearchParams(searchParams, pathname);
   const search = params.toString();
 
   return `${SITE_URL}${pathname}${search ? `?${search}` : ""}`;
 }
 
 function buildPublicRedirect(pathname, searchParams) {
-  const params = getPublicSearchParams(searchParams);
+  const params = getPublicSearchParams(searchParams, pathname);
   const search = params.toString();
 
   return `${pathname}${search ? `?${search}` : ""}`;
@@ -909,6 +903,7 @@ export default async function handler(req, res) {
   }
 
   const canonicalUrl = buildPublicUrl(originalPath, originalUrl.searchParams);
+
   const redirectPath = buildPublicRedirect(
     originalPath,
     originalUrl.searchParams,
@@ -937,6 +932,16 @@ export default async function handler(req, res) {
 
 function getOriginalPath(pathname, query) {
   if (pathname === "/api/deck-og") {
+    if (query.path && typeof query.path === "string") {
+      let path = query.path;
+
+      if (path !== "/" && path.endsWith("/")) {
+        path = path.slice(0, -1);
+      }
+
+      return path;
+    }
+
     if (query.slug) {
       const slug = String(
         Array.isArray(query.slug) ? query.slug[0] : query.slug,
