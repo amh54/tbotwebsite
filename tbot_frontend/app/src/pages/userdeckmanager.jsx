@@ -1201,7 +1201,7 @@ function UserDeckManager() {
         )}
       </main>
 
-      <Footer credits="Manage your personal Tbot decklists and share your decks with the PVZH community." />
+      <Footer credits="Manage and upload your personal Tbot decklists. Share your decks with the PVZH community from your profile page." />
 
       {deleteLoading && (
         <div className="admin-delete-overlay">
