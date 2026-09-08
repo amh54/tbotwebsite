@@ -1,8 +1,8 @@
-import sharp from "sharp";
 import { Resvg } from "@resvg/resvg-js";
-import fs from "fs";
-import path from "path";
-import { createRequire } from "module";
+import sharp from "sharp";
+import fs from "node:fs";
+import path from "node:path";
+import { createRequire } from "node:module";
 
 const API = String(
   process.env.DJANGO_API_URL || "",
@@ -14,48 +14,54 @@ const DISCORD_CDN =
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-
 const require = createRequire(
   import.meta.url,
 );
 
-const FONT_DIR = path.join(
-  path.dirname(
-    require.resolve(
-      "dejavu-fonts-ttf/package.json",
-    ),
+const FONT_PACKAGE_DIR = path.dirname(
+  require.resolve(
+    "dejavu-fonts-ttf/package.json",
   ),
+);
+
+const FONT_DIR = path.join(
+  FONT_PACKAGE_DIR,
   "ttf",
 );
 
-const FONT_FILES = [
-  path.join(
-    FONT_DIR,
-    "DejaVuSans.ttf",
-  ),
-  path.join(
-    FONT_DIR,
-    "DejaVuSans-Bold.ttf",
-  ),
-].filter((fontPath) => {
-  const exists = fs.existsSync(
-    fontPath,
+const REGULAR_FONT = path.join(
+  FONT_DIR,
+  "DejaVuSans.ttf",
+);
+
+const BOLD_FONT = path.join(
+  FONT_DIR,
+  "DejaVuSans-Bold.ttf",
+);
+
+if (!fs.existsSync(REGULAR_FONT)) {
+  throw new Error(
+    `DejaVu Sans regular font not found: ${REGULAR_FONT}`,
   );
+}
 
-  if (!exists) {
-    console.error(
-      `Font file not found at ${fontPath}. Is "dejavu-fonts-ttf" installed?`,
-    );
-  }
+if (!fs.existsSync(BOLD_FONT)) {
+  throw new Error(
+    `DejaVu Sans bold font not found: ${BOLD_FONT}`,
+  );
+}
 
-  return exists;
-});
-
-// ---------------------------------------------------------------------
+const FONT_FILES = [
+  REGULAR_FONT,
+  BOLD_FONT,
+];
 
 function cleanText(value) {
   return String(value ?? "")
-    .replace(/<a?:([^:>]+):\d+>/gi, " $1 ")
+    .replace(
+      /<a?:([^:>]+):\d+>/gi,
+      " $1 ",
+    )
     .replace(/\*\*/g, "")
     .replace(/__/g, "")
     .replace(/[“”]/g, '"')
@@ -63,6 +69,7 @@ function cleanText(value) {
     .replace(/[–—]/g, "-")
     .replace(/…/g, "...")
     .replace(/•/g, "-")
+    .replace(/\u00a0/g, " ")
     .replace(/[^\x20-\x7E]/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -85,7 +92,7 @@ function truncate(value, max) {
   }
 
   return `${text
-    .slice(0, max - 1)
+    .slice(0, max - 3)
     .trimEnd()}...`;
 }
 
@@ -197,25 +204,22 @@ async function fetchAvatarBuffer(
         await response.arrayBuffer(),
       );
 
-    const pngBuffer =
-      await sharp(
-        sourceBuffer,
+    return await sharp(
+      sourceBuffer,
+      {
+        animated: true,
+      },
+    )
+      .resize(
+        512,
+        512,
         {
-          animated: true,
+          fit: "cover",
+          position: "centre",
         },
       )
-        .resize(
-          512,
-          512,
-          {
-            fit: "cover",
-            position: "centre",
-          },
-        )
-        .png()
-        .toBuffer();
-
-    return pngBuffer;
+      .png()
+      .toBuffer();
   } catch (error) {
     console.error(
       "Discord avatar processing failed:",
@@ -361,7 +365,7 @@ function buildAvatarSvg(
         x="160"
         y="337"
         text-anchor="middle"
-        font-family="DejaVu Sans, sans-serif"
+        font-family="DejaVu Sans"
         font-size="58"
         font-weight="700"
         fill="#8fe38b"
@@ -474,7 +478,7 @@ function buildSvg({
         <text
           x="330"
           y="370"
-          font-family="DejaVu Sans, sans-serif"
+          font-family="DejaVu Sans"
           font-size="24"
           font-weight="400"
           fill="#e1e5e7"
@@ -512,7 +516,7 @@ function buildSvg({
         <text
           x="330"
           y="${statsY}"
-          font-family="DejaVu Sans, sans-serif"
+          font-family="DejaVu Sans"
           font-size="25"
           font-weight="700"
           fill="#8fe38b"
@@ -571,7 +575,7 @@ function buildSvg({
   <text
     x="330"
     y="145"
-    font-family="DejaVu Sans, sans-serif"
+    font-family="DejaVu Sans"
     font-size="24"
     font-weight="700"
     letter-spacing="2"
@@ -581,7 +585,7 @@ function buildSvg({
   <text
     x="330"
     y="220"
-    font-family="DejaVu Sans, sans-serif"
+    font-family="DejaVu Sans"
     font-size="62"
     font-weight="700"
     fill="#ffffff"
@@ -592,7 +596,7 @@ function buildSvg({
   <text
     x="330"
     y="265"
-    font-family="DejaVu Sans, sans-serif"
+    font-family="DejaVu Sans"
     font-size="28"
     fill="#aeb7bb"
   >@${escapeXml(
@@ -607,7 +611,7 @@ function buildSvg({
     x="1090"
     y="555"
     text-anchor="end"
-    font-family="DejaVu Sans, sans-serif"
+    font-family="DejaVu Sans"
     font-size="22"
     font-weight="600"
     fill="#697276"
@@ -708,21 +712,28 @@ export default async function handler(
         cardCount,
       });
 
-    const resvg = new Resvg(svg, {
-      fitTo: {
-        mode: "width",
-        value: WIDTH,
-      },
-      font: {
-        fontFiles: FONT_FILES,
-        loadSystemFonts: false,
-        defaultFontFamily: "DejaVu Sans",
-      },
-    });
+    const resvg =
+      new Resvg(
+        svg,
+        {
+          fitTo: {
+            mode: "width",
+            value: WIDTH,
+          },
+          font: {
+            fontFiles:
+              FONT_FILES,
+            loadSystemFonts: false,
+            defaultFontFamily:
+              "DejaVu Sans",
+          },
+        },
+      );
 
-    const png = resvg
-      .render()
-      .asPng();
+    const png =
+      resvg
+        .render()
+        .asPng();
 
     res.statusCode = 200;
 
