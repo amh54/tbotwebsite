@@ -1,53 +1,80 @@
-import { Resvg } from "@resvg/resvg-js";
 import sharp from "sharp";
+import { Resvg } from "@resvg/resvg-js";
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 
-const API = String(
-  process.env.DJANGO_API_URL || "",
-).replace(/\/+$/, "");
-
-const DISCORD_CDN =
-  "https://cdn.discordapp.com";
+const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
+const DISCORD_CDN = "https://cdn.discordapp.com";
 
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-const require = createRequire(
-  import.meta.url,
-);
+const require = createRequire(import.meta.url);
 
-const FONT_PACKAGE_DIR = path.dirname(
-  require.resolve(
-    "dejavu-fonts-ttf/package.json",
-  ),
-);
+function findFontFile(rootDir, fileName) {
+  const entries = fs.readdirSync(rootDir, {
+    withFileTypes: true,
+  });
 
-const FONT_DIR = path.join(
-  FONT_PACKAGE_DIR,
-  "ttf",
-);
+  for (const entry of entries) {
+    const fullPath = path.join(rootDir, entry.name);
 
-const REGULAR_FONT = path.join(
-  FONT_DIR,
-  "DejaVuSans.ttf",
-);
+    if (entry.isDirectory()) {
+      const result = findFontFile(fullPath, fileName);
 
-const BOLD_FONT = path.join(
-  FONT_DIR,
-  "DejaVuSans-Bold.ttf",
-);
+      if (result) {
+        return result;
+      }
+    }
 
-if (!fs.existsSync(REGULAR_FONT)) {
-  throw new Error(
-    `DejaVu Sans regular font not found: ${REGULAR_FONT}`,
+    if (
+      entry.isFile() &&
+      entry.name.toLowerCase() === fileName.toLowerCase()
+    ) {
+      return fullPath;
+    }
+  }
+
+  return "";
+}
+
+let FONT_PACKAGE_DIR = "";
+
+try {
+  FONT_PACKAGE_DIR = path.dirname(
+    require.resolve("dejavu-fonts-ttf/package.json"),
+  );
+} catch (error) {
+  console.error(
+    "Unable to locate dejavu-fonts-ttf:",
+    error,
   );
 }
 
-if (!fs.existsSync(BOLD_FONT)) {
+const REGULAR_FONT = FONT_PACKAGE_DIR
+  ? findFontFile(
+      FONT_PACKAGE_DIR,
+      "DejaVuSans.ttf",
+    )
+  : "";
+
+const BOLD_FONT = FONT_PACKAGE_DIR
+  ? findFontFile(
+      FONT_PACKAGE_DIR,
+      "DejaVuSans-Bold.ttf",
+    )
+  : "";
+
+if (!REGULAR_FONT) {
   throw new Error(
-    `DejaVu Sans bold font not found: ${BOLD_FONT}`,
+    `DejaVu Sans regular font not found in ${FONT_PACKAGE_DIR}`,
+  );
+}
+
+if (!BOLD_FONT) {
+  throw new Error(
+    `DejaVu Sans bold font not found in ${FONT_PACKAGE_DIR}`,
   );
 }
 
@@ -56,23 +83,14 @@ const FONT_FILES = [
   BOLD_FONT,
 ];
 
-function cleanText(value) {
-  return String(value ?? "")
-    .replace(
-      /<a?:([^:>]+):\d+>/gi,
-      " $1 ",
-    )
-    .replace(/\*\*/g, "")
-    .replace(/__/g, "")
-    .replace(/[“”]/g, '"')
-    .replace(/[‘’]/g, "'")
-    .replace(/[–—]/g, "-")
-    .replace(/…/g, "...")
-    .replace(/•/g, "-")
-    .replace(/\u00a0/g, " ")
-    .replace(/[^\x20-\x7E]/g, "")
+function cleanText(value, fallback = "") {
+  const text = String(value ?? "")
+    .replace(/\r/g, " ")
+    .replace(/\n/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+  return text || fallback;
 }
 
 function escapeXml(value) {
@@ -84,145 +102,180 @@ function escapeXml(value) {
     .replace(/'/g, "&apos;");
 }
 
-function truncate(value, max) {
+function truncateText(value, maxLength) {
   const text = cleanText(value);
 
-  if (text.length <= max) {
+  if (text.length <= maxLength) {
     return text;
   }
 
-  return `${text
-    .slice(0, max - 3)
-    .trimEnd()}...`;
+  return `${text.slice(0, maxLength - 1).trim()}…`;
 }
 
-function getProfile(data) {
-  return data?.profile || data || null;
+function getProfileObject(data) {
+  if (
+    data &&
+    typeof data === "object" &&
+    data.profile &&
+    typeof data.profile === "object"
+  ) {
+    return data.profile;
+  }
+
+  if (
+    data &&
+    typeof data === "object"
+  ) {
+    return data;
+  }
+
+  return {};
+}
+
+function getProfileName(data, slug) {
+  const profile = getProfileObject(data);
+
+  return cleanText(
+    profile.display_name ||
+      profile.username ||
+      slug,
+    "Tbot User",
+  );
+}
+
+function getProfileBio(data) {
+  const profile = getProfileObject(data);
+
+  return cleanText(
+    profile.bio,
+    "Plants vs. Zombies Heroes player",
+  );
+}
+
+function getDeckCount(data) {
+  if (
+    typeof data?.deck_count === "number"
+  ) {
+    return data.deck_count;
+  }
+
+  if (
+    typeof data?.profile?.deck_count === "number"
+  ) {
+    return data.profile.deck_count;
+  }
+
+  return 0;
+}
+
+function getCardCount(data) {
+  if (
+    typeof data?.card_count === "number"
+  ) {
+    return data.card_count;
+  }
+
+  if (
+    typeof data?.profile?.card_count === "number"
+  ) {
+    return data.profile.card_count;
+  }
+
+  return 0;
+}
+
+function resolveAvatarUrl(profile) {
+  const discordId = cleanText(
+    profile?.discord_id,
+  );
+
+  const avatar = cleanText(
+    profile?.avatar,
+  );
+
+  if (
+    !/^\d{15,25}$/.test(discordId) ||
+    !/^[a-zA-Z0-9_]+$/.test(avatar)
+  ) {
+    return "";
+  }
+
+  const extension = avatar.startsWith("a_")
+    ? "gif"
+    : "png";
+
+  return (
+    `${DISCORD_CDN}/avatars/` +
+    `${discordId}/` +
+    `${avatar}.${extension}?size=1024`
+  );
 }
 
 async function fetchProfile(slug) {
-  if (!API) {
-    throw new Error(
-      "DJANGO_API_URL is not configured",
-    );
-  }
+  const url =
+    `${API}/tbotapp/profile/` +
+    `${encodeURIComponent(slug)}/`;
 
-  const encodedSlug =
-    encodeURIComponent(
-      String(slug).trim(),
-    );
-
-  const response =
-    await fetch(
-      `${API}/tbotapp/profile/${encodedSlug}/`,
-      {
-        headers: {
-          Accept: "application/json",
-        },
-      },
-    );
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
 
   if (!response.ok) {
     throw new Error(
-      `Django profile request failed: ${response.status}`,
+      `Profile request failed with ${response.status}`,
     );
   }
 
   return response.json();
 }
 
-function getAvatarUrl(profile) {
-  const discordId =
-    String(
-      profile?.discord_id || "",
-    ).trim();
+async function fetchAvatar(profile) {
+  const avatarUrl = resolveAvatarUrl(profile);
 
-  const avatar =
-    String(
-      profile?.avatar || "",
-    ).trim();
-
-  if (
-    !/^\d{15,25}$/.test(
-      discordId,
-    )
-  ) {
-    return "";
-  }
-
-  if (
-    !/^[a-zA-Z0-9_]+$/.test(
-      avatar,
-    )
-  ) {
-    return "";
-  }
-
-  const extension =
-    avatar.startsWith("a_")
-      ? "gif"
-      : "png";
-
-  return (
-    `${DISCORD_CDN}/avatars/` +
-    `${discordId}/` +
-    `${avatar}.${extension}?size=512`
-  );
-}
-
-async function fetchAvatarBuffer(
-  avatarUrl,
-) {
   if (!avatarUrl) {
     return null;
   }
 
   try {
-    const response =
-      await fetch(
-        avatarUrl,
-        {
-          headers: {
-            Accept:
-              "image/png,image/gif,image/*,*/*;q=0.8",
-            "User-Agent":
-              "Tbot/1.0",
-          },
+    const response = await fetch(
+      avatarUrl,
+      {
+        method: "GET",
+        redirect: "follow",
+        headers: {
+          Accept:
+            "image/png,image/gif,image/jpeg,image/webp,image/*,*/*;q=0.8",
+          "User-Agent": "Tbot/1.0",
         },
-      );
+      },
+    );
 
     if (!response.ok) {
       console.error(
-        `Discord avatar request failed: ${response.status}`,
+        "Discord avatar request failed:",
+        response.status,
       );
 
       return null;
     }
 
-    const sourceBuffer =
-      Buffer.from(
-        await response.arrayBuffer(),
-      );
+    const buffer = Buffer.from(
+      await response.arrayBuffer(),
+    );
 
-    return await sharp(
-      sourceBuffer,
-      {
-        animated: true,
-      },
-    )
-      .resize(
-        512,
-        512,
-        {
-          fit: "cover",
-          position: "centre",
-        },
-      )
+    return await sharp(buffer)
+      .resize(300, 300, {
+        fit: "cover",
+        position: "centre",
+      })
       .png()
       .toBuffer();
   } catch (error) {
     console.error(
-      "Discord avatar processing failed:",
+      "Unable to retrieve Discord avatar:",
       error,
     );
 
@@ -230,510 +283,312 @@ async function fetchAvatarBuffer(
   }
 }
 
-function getCount(...values) {
-  for (const value of values) {
-    if (
-      typeof value === "number" &&
-      Number.isFinite(value)
-    ) {
-      return Math.max(
-        0,
-        Math.trunc(value),
-      );
-    }
-
-    if (
-      typeof value === "string" &&
-      /^\d+$/.test(
-        value.trim(),
-      )
-    ) {
-      return Math.max(
-        0,
-        Number(value.trim()),
-      );
-    }
+function avatarDataUri(buffer) {
+  if (!buffer) {
+    return "";
   }
 
-  return null;
-}
-
-function getName(
-  profile,
-  slug,
-) {
   return (
-    cleanText(
-      profile?.display_name ||
-        profile?.username ||
-        profile?.name ||
-        "",
-    ) ||
-    cleanText(slug) ||
-    "User"
+    "data:image/png;base64," +
+    buffer.toString("base64")
   );
 }
 
-function getUsername(
-  profile,
-  slug,
-) {
-  return (
-    cleanText(
-      profile?.username ||
-        profile?.profile_slug ||
-        "",
-    ) ||
-    cleanText(slug)
-  );
-}
-
-function getBio(profile) {
-  return truncate(
-    profile?.bio ||
-      profile?.description ||
-      profile?.about ||
-      "",
-    280,
-  );
-}
-
-function wrapText(
-  text,
-  maxChars,
-) {
-  const clean =
-    cleanText(text);
-
-  if (!clean) {
-    return [];
-  }
-
-  const words =
-    clean.split(" ");
-
-  const lines = [];
-  let current = "";
-
-  for (const word of words) {
-    const next = current
-      ? `${current} ${word}`
-      : word;
-
-    if (
-      next.length >
-      maxChars
-    ) {
-      if (current) {
-        lines.push(current);
-      }
-
-      current = word;
-    } else {
-      current = next;
-    }
-  }
-
-  if (current) {
-    lines.push(current);
-  }
-
-  return lines.slice(0, 5);
-}
-
-function buildAvatarSvg(
-  avatarBuffer,
+function createSvg({
   name,
-) {
-  if (!avatarBuffer) {
-    return `
-      <circle
-        cx="160"
-        cy="315"
-        r="100"
-        fill="#20282c"
-      />
+  username,
+  bio,
+  deckCount,
+  cardCount,
+  avatar,
+}) {
+  const safeName = escapeXml(
+    truncateText(name, 28),
+  );
 
-      <circle
-        cx="160"
-        cy="315"
-        r="92"
-        fill="#151b1e"
-      />
+  const safeUsername = escapeXml(
+    truncateText(username, 32),
+  );
 
-      <text
-        x="160"
-        y="337"
-        text-anchor="middle"
-        font-family="DejaVu Sans"
-        font-size="58"
-        font-weight="700"
-        fill="#8fe38b"
-      >${escapeXml(
-        name
-          .charAt(0)
-          .toUpperCase(),
-      )}</text>
-    `;
-  }
+  const safeBio = escapeXml(
+    truncateText(bio, 170),
+  );
 
-  const avatarBase64 =
-    avatarBuffer.toString(
-      "base64",
-    );
-
-  return `
-    <defs>
+  const avatarMarkup = avatar
+    ? `
       <clipPath id="avatarClip">
         <circle
-          cx="160"
-          cy="315"
+          cx="132"
+          cy="132"
           r="92"
         />
       </clipPath>
-    </defs>
 
-    <circle
-      cx="160"
-      cy="315"
-      r="100"
-      fill="#20282c"
-    />
+      <image
+        href="${avatar}"
+        x="40"
+        y="40"
+        width="184"
+        height="184"
+        preserveAspectRatio="xMidYMid slice"
+        clip-path="url(#avatarClip)"
+      />
+    `
+    : `
+      <circle
+        cx="132"
+        cy="132"
+        r="92"
+        fill="#30363b"
+      />
 
-    <image
-      href="data:image/png;base64,${avatarBase64}"
-      x="68"
-      y="223"
-      width="184"
-      height="184"
-      preserveAspectRatio="xMidYMid slice"
-      clip-path="url(#avatarClip)"
-    />
-  `;
-}
+      <text
+        x="132"
+        y="155"
+        text-anchor="middle"
+        font-family="DejaVu Sans"
+        font-size="72"
+        font-weight="700"
+        fill="#ffffff"
+      >
+        ${escapeXml(
+          String(name || "T")
+            .charAt(0)
+            .toUpperCase(),
+        )}
+      </text>
+    `;
 
-function buildSvg({
-  profile,
-  slug,
-  avatarBuffer,
-  deckCount,
-  cardCount,
-}) {
-  const name =
-    getName(
-      profile,
-      slug,
-    );
-
-  const username =
-    getUsername(
-      profile,
-      slug,
-    );
-
-  const bio =
-    getBio(profile);
-
-  const stats = [];
-
-  if (
-    deckCount !== null
-  ) {
-    stats.push(
-      `${deckCount} ${
-        deckCount === 1
-          ? "deck"
-          : "decks"
-      }`,
-    );
-  }
-
-  if (
-    cardCount !== null
-  ) {
-    stats.push(
-      `${cardCount} ${
-        cardCount === 1
-          ? "card"
-          : "cards"
-      }`,
-    );
-  }
-
-  const bioLines =
-    wrapText(
-      bio,
-      68,
-    );
-
-  const avatarMarkup =
-    buildAvatarSvg(
-      avatarBuffer,
-      name,
-    );
-
-  const bioMarkup =
-    bioLines.length
-      ? `
-        <text
-          x="330"
-          y="370"
-          font-family="DejaVu Sans"
-          font-size="24"
-          font-weight="400"
-          fill="#e1e5e7"
-        >
-          ${bioLines
-            .map(
-              (
-                line,
-                index,
-              ) =>
-                `<tspan
-                  x="330"
-                  dy="${
-                    index === 0
-                      ? 0
-                      : 33
-                  }"
-                >${escapeXml(
-                  line,
-                )}</tspan>`,
-            )
-            .join("")}
-        </text>
-      `
-      : "";
-
-  const statsY =
-    bioLines.length
-      ? 555
-      : 470;
-
-  const statsMarkup =
-    stats.length
-      ? `
-        <text
-          x="330"
-          y="${statsY}"
-          font-family="DejaVu Sans"
-          font-size="25"
-          font-weight="700"
-          fill="#8fe38b"
-        >${escapeXml(
-          stats.join("  -  "),
-        )}</text>
-      `
-      : "";
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
+  return `
 <svg
   xmlns="http://www.w3.org/2000/svg"
   width="${WIDTH}"
   height="${HEIGHT}"
   viewBox="0 0 ${WIDTH} ${HEIGHT}"
 >
-  <defs>
-    <linearGradient
-      id="background"
-      x1="0"
-      y1="0"
-      x2="1"
-      y2="1"
-    >
-      <stop
-        offset="0%"
-        stop-color="#101416"
-      />
-
-      <stop
-        offset="100%"
-        stop-color="#151b1e"
-      />
-    </linearGradient>
-  </defs>
-
   <rect
     width="${WIDTH}"
     height="${HEIGHT}"
-    fill="url(#background)"
+    fill="#101416"
   />
 
   <rect
-    x="42"
-    y="42"
-    width="1116"
-    height="546"
+    x="32"
+    y="32"
+    width="1136"
+    height="566"
     rx="28"
-    fill="#151b1e"
-    stroke="#252e32"
+    fill="#15191c"
+    stroke="#30363b"
     stroke-width="2"
+  />
+
+  <rect
+    x="32"
+    y="32"
+    width="12"
+    height="566"
+    rx="6"
+    fill="#8fe38b"
   />
 
   ${avatarMarkup}
 
   <text
-    x="330"
-    y="145"
+    x="270"
+    y="118"
     font-family="DejaVu Sans"
-    font-size="24"
-    font-weight="700"
-    letter-spacing="2"
-    fill="#8fe38b"
-  >TBOT PROFILE</text>
-
-  <text
-    x="330"
-    y="220"
-    font-family="DejaVu Sans"
-    font-size="62"
+    font-size="54"
     font-weight="700"
     fill="#ffffff"
-  >${escapeXml(
-    name,
-  )}</text>
+  >
+    ${safeName}
+  </text>
 
   <text
-    x="330"
-    y="265"
+    x="270"
+    y="165"
     font-family="DejaVu Sans"
-    font-size="28"
-    fill="#aeb7bb"
-  >@${escapeXml(
-    username,
-  )}</text>
-
-  ${bioMarkup}
-
-  ${statsMarkup}
+    font-size="27"
+    font-weight="400"
+    fill="#9ba3a8"
+  >
+    @${safeUsername}
+  </text>
 
   <text
-    x="1090"
-    y="555"
+    x="270"
+    y="225"
+    font-family="DejaVu Sans"
+    font-size="27"
+    font-weight="400"
+    fill="#e3e7e9"
+  >
+    ${safeBio}
+  </text>
+
+  <rect
+    x="270"
+    y="305"
+    width="250"
+    height="112"
+    rx="18"
+    fill="#202529"
+  />
+
+  <text
+    x="295"
+    y="350"
+    font-family="DejaVu Sans"
+    font-size="23"
+    font-weight="400"
+    fill="#9ba3a8"
+  >
+    Decks
+  </text>
+
+  <text
+    x="295"
+    y="395"
+    font-family="DejaVu Sans"
+    font-size="38"
+    font-weight="700"
+    fill="#ffffff"
+  >
+    ${escapeXml(deckCount)}
+  </text>
+
+  <rect
+    x="540"
+    y="305"
+    width="250"
+    height="112"
+    rx="18"
+    fill="#202529"
+  />
+
+  <text
+    x="565"
+    y="350"
+    font-family="DejaVu Sans"
+    font-size="23"
+    font-weight="400"
+    fill="#9ba3a8"
+  >
+    Cards
+  </text>
+
+  <text
+    x="565"
+    y="395"
+    font-family="DejaVu Sans"
+    font-size="38"
+    font-weight="700"
+    fill="#ffffff"
+  >
+    ${escapeXml(cardCount)}
+  </text>
+
+  <text
+    x="270"
+    y="500"
+    font-family="DejaVu Sans"
+    font-size="25"
+    font-weight="400"
+    fill="#8fe38b"
+  >
+    Tbot • Plants vs. Zombies Heroes
+  </text>
+
+  <text
+    x="1100"
+    y="540"
     text-anchor="end"
     font-family="DejaVu Sans"
-    font-size="22"
-    font-weight="600"
-    fill="#697276"
-  >pvzhtbot.com</text>
-</svg>`;
+    font-size="23"
+    font-weight="400"
+    fill="#6f797f"
+  >
+    pvzhtbot.com
+  </text>
+</svg>
+`;
 }
 
-export default async function handler(
-  req,
-  res,
-) {
-  const requestUrl =
-    new URL(
-      req.url,
-      "https://pvzhtbot.com",
-    );
-
-  const slug =
-    requestUrl.searchParams.get(
-      "slug",
-    );
+export default async function handler(req, res) {
+  const slug = cleanText(
+    req.query?.slug,
+  );
 
   if (!slug) {
     res.statusCode = 400;
-
     res.setHeader(
       "Content-Type",
       "text/plain; charset=utf-8",
     );
-
     return res.end(
       "Missing profile slug",
     );
   }
 
   try {
-    const data =
-      await fetchProfile(
-        slug,
-      );
+    const profileData =
+      await fetchProfile(slug);
 
     const profile =
-      getProfile(data);
+      getProfileObject(profileData);
 
-    if (!profile) {
-      res.statusCode = 404;
-
-      res.setHeader(
-        "Content-Type",
-        "text/plain; charset=utf-8",
+    const name =
+      getProfileName(
+        profileData,
+        slug,
       );
 
-      return res.end(
-        "Profile not found",
-      );
-    }
+    const username = cleanText(
+      profile.username ||
+        profile.profile_slug ||
+        slug,
+      slug,
+    );
 
-    const avatarUrl =
-      getAvatarUrl(
-        profile,
-      );
-
-    const avatarBuffer =
-      await fetchAvatarBuffer(
-        avatarUrl,
-      );
+    const bio =
+      getProfileBio(profileData);
 
     const deckCount =
-      getCount(
-        data?.deck_count,
-        data?.deckCount,
-        profile?.deck_count,
-        profile?.deckCount,
-        profile?.number_of_decks,
-        profile?.num_decks,
-        profile?.decks_count,
-      );
+      getDeckCount(profileData);
 
     const cardCount =
-      getCount(
-        data?.card_count,
-        data?.cardCount,
-        profile?.card_count,
-        profile?.cardCount,
-        profile?.number_of_cards,
-        profile?.num_cards,
-        profile?.cards_count,
-        profile?.collection_count,
-        profile?.collectionCount,
-      );
+      getCardCount(profileData);
 
-    const svg =
-      buildSvg({
-        profile,
-        slug,
-        avatarBuffer,
-        deckCount,
-        cardCount,
-      });
+    const avatarBuffer =
+      await fetchAvatar(profile);
 
-    const resvg =
-      new Resvg(
-        svg,
-        {
-          fitTo: {
-            mode: "width",
-            value: WIDTH,
-          },
-          font: {
-            fontFiles:
-              FONT_FILES,
-            loadSystemFonts: false,
-            defaultFontFamily:
-              "DejaVu Sans",
-          },
-        },
-      );
+    const avatar =
+      avatarDataUri(avatarBuffer);
+
+    const svg = createSvg({
+      name,
+      username,
+      bio,
+      deckCount,
+      cardCount,
+      avatar,
+    });
+
+    const resvg = new Resvg(svg, {
+      fitTo: {
+        mode: "width",
+        value: WIDTH,
+      },
+      font: {
+        fontFiles: FONT_FILES,
+        loadSystemFonts: false,
+        defaultFontFamily: "DejaVu Sans",
+      },
+    });
 
     const png =
-      resvg
-        .render()
-        .asPng();
+      resvg.render().asPng();
 
     res.statusCode = 200;
 
@@ -744,9 +599,7 @@ export default async function handler(
 
     res.setHeader(
       "Content-Length",
-      String(
-        png.length,
-      ),
+      String(png.length),
     );
 
     res.setHeader(
@@ -754,9 +607,7 @@ export default async function handler(
       "public, max-age=300, s-maxage=300, stale-while-revalidate=3600",
     );
 
-    return res.end(
-      png,
-    );
+    return res.end(png);
   } catch (error) {
     console.error(
       "Profile OG generation failed:",
