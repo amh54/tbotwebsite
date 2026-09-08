@@ -2,7 +2,6 @@ import sharp from "sharp";
 import { Resvg } from "@resvg/resvg-js";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 const API = String(
   process.env.DJANGO_API_URL || "",
@@ -14,67 +13,18 @@ const DISCORD_CDN =
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-// Resolve fonts relative to THIS FILE's own location, not
-// process.cwd(). process.cwd() reflects wherever the runtime chose
-// to start the process from — on this platform that's the function
-// task root (e.g. /var/task), which is NOT necessarily the project
-// root the file layout is relative to. The deployed module itself
-// (import.meta.url) always sits at a fixed, known location relative
-// to the rest of the bundled project, so resolving from there is
-// reliable regardless of what cwd happens to be at runtime.
-//
-// File layout (per project tree):
-//   app/
-//     api/
-//       profile-og.js   <- this file
-//     public/
-//       fonts/
-//         DejaVuSans.ttf
-//         DejaVuSans-Bold.ttf
-//
-// So from this file's directory (app/api/), the fonts are one level
-// up and into public/fonts/.
-
-const __filename = fileURLToPath(
-  import.meta.url,
+const FONT_DIR = path.join(
+  process.cwd(),
+  "node_modules",
+  "dejavu-fonts-ttf",
+  "ttf",
 );
 
-const __dirname = path.dirname(
-  __filename,
-);
-
-const REGULAR_FONT = path.join(
-  __dirname,
-  "..",
-  "public",
-  "fonts",
-  "DejaVuSans.ttf",
-);
-
-const BOLD_FONT = path.join(
-  __dirname,
-  "..",
-  "public",
-  "fonts",
-  "DejaVuSans-Bold.ttf",
-);
-
-if (!fs.existsSync(REGULAR_FONT)) {
+if (!fs.existsSync(FONT_DIR)) {
   throw new Error(
-    `DejaVu Sans regular font not found: ${REGULAR_FONT}`,
+    `DejaVu font directory not found: ${FONT_DIR}`,
   );
 }
-
-if (!fs.existsSync(BOLD_FONT)) {
-  throw new Error(
-    `DejaVu Sans bold font not found: ${BOLD_FONT}`,
-  );
-}
-
-const FONT_FILES = [
-  REGULAR_FONT,
-  BOLD_FONT,
-];
 
 function cleanText(value, fallback = "") {
   const text = String(value ?? "")
@@ -105,11 +55,6 @@ function truncateText(value, maxLength) {
   return `${text.slice(0, maxLength - 1).trim()}…`;
 }
 
-// Breaks text into lines that fit maxCharsPerLine. With no maxLines
-// given, wraps the FULL text with no cap and no ellipsis — nothing
-// gets cut off. Pass a maxLines to cap the output and add an
-// ellipsis if there's leftover text (used elsewhere for things like
-// truncated card descriptions, not the profile bio).
 function wrapText(
   text,
   maxCharsPerLine,
@@ -122,7 +67,6 @@ function wrapText(
   }
 
   const words = clean.split(" ");
-
   const lines = [];
   let current = "";
 
@@ -160,7 +104,8 @@ function wrapText(
 
   const wordsUsed = truncatedLines
     .join(" ")
-    .split(" ").length;
+    .split(" ")
+    .length;
 
   const hasMoreText =
     wordsUsed < words.length;
@@ -187,9 +132,8 @@ function wrapText(
         .trim();
     }
 
-    truncatedLines[
-      lastIndex
-    ] = `${lastLine}…`;
+    truncatedLines[lastIndex] =
+      `${lastLine}…`;
   }
 
   return truncatedLines;
@@ -406,18 +350,19 @@ function createSvg({
   const bioLines = wrapText(
     bio,
     52,
-  ).map((line) => escapeXml(line));
+  ).map((line) =>
+    escapeXml(line),
+  );
 
   const BIO_LINE_HEIGHT = 33;
 
-  // Everything below the bio (stat boxes, tagline, footer) needs to
-  // shift down when the bio wraps to a second line, or it'll overlap.
   const bioOverflow =
     (bioLines.length - 1) *
     BIO_LINE_HEIGHT;
 
-  const bioMarkup = bioLines.length
-    ? `
+  const bioMarkup =
+    bioLines.length
+      ? `
       <text
         x="270"
         y="225"
@@ -441,15 +386,22 @@ function createSvg({
           .join("")}
       </text>
     `
-    : "";
+      : "";
 
-  const statsY = 305 + bioOverflow;
+  const statsY =
+    305 + bioOverflow;
+
   const statsLabelY =
     350 + bioOverflow;
+
   const statsValueY =
     395 + bioOverflow;
-  const taglineY = 500 + bioOverflow;
-  const footerY = 540 + bioOverflow;
+
+  const taglineY =
+    500 + bioOverflow;
+
+  const footerY =
+    540 + bioOverflow;
 
   const initial =
     escapeXml(
@@ -500,8 +452,11 @@ function createSvg({
         </text>
       `;
 
-  const CARD_HEIGHT = 566 + bioOverflow;
-  const totalHeight = HEIGHT + bioOverflow;
+  const CARD_HEIGHT =
+    566 + bioOverflow;
+
+  const totalHeight =
+    HEIGHT + bioOverflow;
 
   return `
 <svg
@@ -675,7 +630,9 @@ export default async function handler(
       await fetchProfile(slug);
 
     const profile =
-      getProfileObject(profileData);
+      getProfileObject(
+        profileData,
+      );
 
     const name =
       getProfileName(
@@ -692,13 +649,19 @@ export default async function handler(
       );
 
     const bio =
-      getProfileBio(profileData);
+      getProfileBio(
+        profileData,
+      );
 
     const deckCount =
-      getDeckCount(profileData);
+      getDeckCount(
+        profileData,
+      );
 
     const cardCount =
-      getCardCount(profileData);
+      getCardCount(
+        profileData,
+      );
 
     const avatarBuffer =
       await fetchAvatar(profile);
@@ -725,8 +688,9 @@ export default async function handler(
           value: WIDTH,
         },
         font: {
-          fontFiles:
-            FONT_FILES,
+          fontDirs: [
+            FONT_DIR,
+          ],
           loadSystemFonts: false,
           defaultFontFamily:
             "DejaVu Sans",
