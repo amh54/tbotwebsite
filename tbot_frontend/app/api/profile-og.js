@@ -2,79 +2,46 @@ import sharp from "sharp";
 import { Resvg } from "@resvg/resvg-js";
 import fs from "node:fs";
 import path from "node:path";
-import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 
-const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
-const DISCORD_CDN = "https://cdn.discordapp.com";
+const API = String(
+  process.env.DJANGO_API_URL || "",
+).replace(/\/+$/, "");
+
+const DISCORD_CDN =
+  "https://cdn.discordapp.com";
 
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-function findFontFile(rootDir, fileName) {
-  const entries = fs.readdirSync(rootDir, {
-    withFileTypes: true,
-  });
+const REGULAR_FONT = path.join(
+  __dirname,
+  "..",
+  "public",
+  "fonts",
+  "DejaVuSans.ttf",
+);
 
-  for (const entry of entries) {
-    const fullPath = path.join(rootDir, entry.name);
+const BOLD_FONT = path.join(
+  __dirname,
+  "..",
+  "public",
+  "fonts",
+  "DejaVuSans-Bold.ttf",
+);
 
-    if (entry.isDirectory()) {
-      const result = findFontFile(fullPath, fileName);
-
-      if (result) {
-        return result;
-      }
-    }
-
-    if (
-      entry.isFile() &&
-      entry.name.toLowerCase() === fileName.toLowerCase()
-    ) {
-      return fullPath;
-    }
-  }
-
-  return "";
-}
-
-let FONT_PACKAGE_DIR = "";
-
-try {
-  FONT_PACKAGE_DIR = path.dirname(
-    require.resolve("dejavu-fonts-ttf/package.json"),
-  );
-} catch (error) {
-  console.error(
-    "Unable to locate dejavu-fonts-ttf:",
-    error,
-  );
-}
-
-const REGULAR_FONT = FONT_PACKAGE_DIR
-  ? findFontFile(
-      FONT_PACKAGE_DIR,
-      "DejaVuSans.ttf",
-    )
-  : "";
-
-const BOLD_FONT = FONT_PACKAGE_DIR
-  ? findFontFile(
-      FONT_PACKAGE_DIR,
-      "DejaVuSans-Bold.ttf",
-    )
-  : "";
-
-if (!REGULAR_FONT) {
+if (!fs.existsSync(REGULAR_FONT)) {
   throw new Error(
-    `DejaVu Sans regular font not found in ${FONT_PACKAGE_DIR}`,
+    `DejaVu Sans regular font not found: ${REGULAR_FONT}`,
   );
 }
 
-if (!BOLD_FONT) {
+if (!fs.existsSync(BOLD_FONT)) {
   throw new Error(
-    `DejaVu Sans bold font not found in ${FONT_PACKAGE_DIR}`,
+    `DejaVu Sans bold font not found: ${BOLD_FONT}`,
   );
 }
 
@@ -133,7 +100,8 @@ function getProfileObject(data) {
 }
 
 function getProfileName(data, slug) {
-  const profile = getProfileObject(data);
+  const profile =
+    getProfileObject(data);
 
   return cleanText(
     profile.display_name ||
@@ -144,7 +112,8 @@ function getProfileName(data, slug) {
 }
 
 function getProfileBio(data) {
-  const profile = getProfileObject(data);
+  const profile =
+    getProfileObject(data);
 
   return cleanText(
     profile.bio,
@@ -154,13 +123,15 @@ function getProfileBio(data) {
 
 function getDeckCount(data) {
   if (
-    typeof data?.deck_count === "number"
+    typeof data?.deck_count ===
+    "number"
   ) {
     return data.deck_count;
   }
 
   if (
-    typeof data?.profile?.deck_count === "number"
+    typeof data?.profile?.deck_count ===
+    "number"
   ) {
     return data.profile.deck_count;
   }
@@ -170,13 +141,15 @@ function getDeckCount(data) {
 
 function getCardCount(data) {
   if (
-    typeof data?.card_count === "number"
+    typeof data?.card_count ===
+    "number"
   ) {
     return data.card_count;
   }
 
   if (
-    typeof data?.profile?.card_count === "number"
+    typeof data?.profile?.card_count ===
+    "number"
   ) {
     return data.profile.card_count;
   }
@@ -184,14 +157,12 @@ function getCardCount(data) {
   return 0;
 }
 
-function resolveAvatarUrl(profile) {
-  const discordId = cleanText(
-    profile?.discord_id,
-  );
+function getAvatarUrl(profile) {
+  const discordId =
+    cleanText(profile?.discord_id);
 
-  const avatar = cleanText(
-    profile?.avatar,
-  );
+  const avatar =
+    cleanText(profile?.avatar);
 
   if (
     !/^\d{15,25}$/.test(discordId) ||
@@ -200,14 +171,16 @@ function resolveAvatarUrl(profile) {
     return "";
   }
 
-  const extension = avatar.startsWith("a_")
-    ? "gif"
-    : "png";
+  const extension =
+    avatar.startsWith("a_")
+      ? "gif"
+      : "png";
 
   return (
     `${DISCORD_CDN}/avatars/` +
     `${discordId}/` +
-    `${avatar}.${extension}?size=1024`
+    `${avatar}.${extension}` +
+    "?size=1024"
   );
 }
 
@@ -216,12 +189,13 @@ async function fetchProfile(slug) {
     `${API}/tbotapp/profile/` +
     `${encodeURIComponent(slug)}/`;
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-  });
+  const response =
+    await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
 
   if (!response.ok) {
     throw new Error(
@@ -233,25 +207,25 @@ async function fetchProfile(slug) {
 }
 
 async function fetchAvatar(profile) {
-  const avatarUrl = resolveAvatarUrl(profile);
+  const avatarUrl =
+    getAvatarUrl(profile);
 
   if (!avatarUrl) {
     return null;
   }
 
   try {
-    const response = await fetch(
-      avatarUrl,
-      {
+    const response =
+      await fetch(avatarUrl, {
         method: "GET",
         redirect: "follow",
         headers: {
           Accept:
             "image/png,image/gif,image/jpeg,image/webp,image/*,*/*;q=0.8",
-          "User-Agent": "Tbot/1.0",
+          "User-Agent":
+            "Tbot/1.0",
         },
-      },
-    );
+      });
 
     if (!response.ok) {
       console.error(
@@ -262,11 +236,12 @@ async function fetchAvatar(profile) {
       return null;
     }
 
-    const buffer = Buffer.from(
-      await response.arrayBuffer(),
-    );
+    const buffer =
+      Buffer.from(
+        await response.arrayBuffer(),
+      );
 
-    return await sharp(buffer)
+    return sharp(buffer)
       .resize(300, 300, {
         fit: "cover",
         position: "centre",
@@ -275,7 +250,7 @@ async function fetchAvatar(profile) {
       .toBuffer();
   } catch (error) {
     console.error(
-      "Unable to retrieve Discord avatar:",
+      "Discord avatar fetch failed:",
       error,
     );
 
@@ -302,62 +277,69 @@ function createSvg({
   cardCount,
   avatar,
 }) {
-  const safeName = escapeXml(
-    truncateText(name, 28),
-  );
+  const safeName =
+    escapeXml(
+      truncateText(name, 28),
+    );
 
-  const safeUsername = escapeXml(
-    truncateText(username, 32),
-  );
+  const safeUsername =
+    escapeXml(
+      truncateText(username, 32),
+    );
 
-  const safeBio = escapeXml(
-    truncateText(bio, 170),
-  );
+  const safeBio =
+    escapeXml(
+      truncateText(bio, 165),
+    );
 
-  const avatarMarkup = avatar
-    ? `
-      <clipPath id="avatarClip">
+  const initial =
+    escapeXml(
+      String(name || "T")
+        .charAt(0)
+        .toUpperCase(),
+    );
+
+  const avatarMarkup =
+    avatar
+      ? `
+        <clipPath id="avatarClip">
+          <circle
+            cx="132"
+            cy="132"
+            r="92"
+          />
+        </clipPath>
+
+        <image
+          href="${avatar}"
+          x="40"
+          y="40"
+          width="184"
+          height="184"
+          preserveAspectRatio="xMidYMid slice"
+          clip-path="url(#avatarClip)"
+        />
+      `
+      : `
         <circle
           cx="132"
           cy="132"
           r="92"
+          fill="#30363b"
         />
-      </clipPath>
 
-      <image
-        href="${avatar}"
-        x="40"
-        y="40"
-        width="184"
-        height="184"
-        preserveAspectRatio="xMidYMid slice"
-        clip-path="url(#avatarClip)"
-      />
-    `
-    : `
-      <circle
-        cx="132"
-        cy="132"
-        r="92"
-        fill="#30363b"
-      />
-
-      <text
-        x="132"
-        y="155"
-        text-anchor="middle"
-        font-family="DejaVu Sans"
-        font-size="72"
-        font-weight="700"
-        fill="#ffffff"
-      >
-        ${escapeXml(
-          String(name || "T")
-            .charAt(0)
-            .toUpperCase(),
-        )}
-      </text>
-    `;
+        <text
+          x="132"
+          y="157"
+          text-anchor="middle"
+          font-family="DejaVu Sans"
+          font-size="72"
+          font-weight="700"
+          fill="#ffffff"
+        >
+          ${initial}
+        </text>
+      `;
 
   return `
 <svg
@@ -515,17 +497,21 @@ function createSvg({
 `;
 }
 
-export default async function handler(req, res) {
-  const slug = cleanText(
-    req.query?.slug,
-  );
+export default async function handler(
+  req,
+  res,
+) {
+  const slug =
+    cleanText(req.query?.slug);
 
   if (!slug) {
     res.statusCode = 400;
+
     res.setHeader(
       "Content-Type",
       "text/plain; charset=utf-8",
     );
+
     return res.end(
       "Missing profile slug",
     );
@@ -544,12 +530,13 @@ export default async function handler(req, res) {
         slug,
       );
 
-    const username = cleanText(
-      profile.username ||
-        profile.profile_slug ||
+    const username =
+      cleanText(
+        profile.username ||
+          profile.profile_slug ||
+          slug,
         slug,
-      slug,
-    );
+      );
 
     const bio =
       getProfileBio(profileData);
@@ -564,28 +551,34 @@ export default async function handler(req, res) {
       await fetchAvatar(profile);
 
     const avatar =
-      avatarDataUri(avatarBuffer);
+      avatarDataUri(
+        avatarBuffer,
+      );
 
-    const svg = createSvg({
-      name,
-      username,
-      bio,
-      deckCount,
-      cardCount,
-      avatar,
-    });
+    const svg =
+      createSvg({
+        name,
+        username,
+        bio,
+        deckCount,
+        cardCount,
+        avatar,
+      });
 
-    const resvg = new Resvg(svg, {
-      fitTo: {
-        mode: "width",
-        value: WIDTH,
-      },
-      font: {
-        fontFiles: FONT_FILES,
-        loadSystemFonts: false,
-        defaultFontFamily: "DejaVu Sans",
-      },
-    });
+    const resvg =
+      new Resvg(svg, {
+        fitTo: {
+          mode: "width",
+          value: WIDTH,
+        },
+        font: {
+          fontFiles:
+            FONT_FILES,
+          loadSystemFonts: false,
+          defaultFontFamily:
+            "DejaVu Sans",
+        },
+      });
 
     const png =
       resvg.render().asPng();
