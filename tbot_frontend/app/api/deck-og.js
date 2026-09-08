@@ -139,35 +139,26 @@ function resolveImageUrl(image) {
 
   return `${API}${img.startsWith("/") ? "" : "/"}${img}`;
 }
-
 function resolveDiscordAvatar(profile) {
-  const discordId = String(
-    profile?.discord_id ||
-      profile?.discordId ||
-      profile?.discord_user_id ||
-      profile?.discordUserId ||
-      "",
-  ).trim();
+  const avatar = String(profile?.avatar || "").trim();
+  const discordId = String(profile?.discord_id || "").trim();
 
-  const avatar = String(
-    profile?.avatar || profile?.discord_avatar || profile?.discordAvatar || "",
-  ).trim();
-
-  if (!avatar || !discordId) {
-    return DEFAULT_IMAGE;
+  if (!avatar) {
+    return "";
   }
 
-  if (/^(https?:\/\/|data:|blob:)/i.test(avatar)) {
+  if (/^https?:\/\//i.test(avatar)) {
     return avatar;
   }
 
-  return (
-    `${SITE_URL}/api/profile-avatar` +
-    `?discord_id=${encodeURIComponent(discordId)}` +
-    `&avatar=${encodeURIComponent(avatar)}`
-  );
-}
+  if (!discordId) {
+    return "";
+  }
 
+  const extension = avatar.startsWith("a_") ? "gif" : "png";
+
+  return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=1024`;
+}
 function resolveProfileImage(profile) {
   const image = String(
     profile?.avatar_url ||
