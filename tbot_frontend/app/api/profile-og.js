@@ -18,18 +18,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const REGULAR_FONT = path.join(
-  __dirname,
-  "..",
-  "public",
-  "fonts",
+  process.cwd(),
+  "node_modules",
+  "dejavu-fonts-ttf",
+  "ttf",
   "DejaVuSans.ttf",
 );
 
 const BOLD_FONT = path.join(
-  __dirname,
-  "..",
-  "public",
-  "fonts",
+  process.cwd(),
+  "node_modules",
+  "dejavu-fonts-ttf",
+  "ttf",
   "DejaVuSans-Bold.ttf",
 );
 
