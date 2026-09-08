@@ -915,9 +915,14 @@ export default async function handler(req, res) {
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");
 
+  const isProfileMetadata =
+    originalPath === "/profile" || originalPath.startsWith("/profile/");
+
   res.setHeader(
     "Cache-Control",
-    "public, s-maxage=300, stale-while-revalidate=3600",
+    isProfileMetadata
+      ? "no-store, max-age=0"
+      : "public, s-maxage=300, stale-while-revalidate=3600",
   );
 
   return res.end(html);
