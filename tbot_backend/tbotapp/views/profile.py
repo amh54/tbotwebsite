@@ -9,7 +9,7 @@ from rest_framework.decorators import (
 )
 from rest_framework.response import Response
 
-from ..models import UserProfile, UserDeck
+from ..models import UserProfile, UserDeck, UserCard
 from ..serializers import (
     UserProfileSerializer,
     UserDeckSerializer,
@@ -102,12 +102,17 @@ def profile_detail(request, profile_slug):
         profile_id=profile.id
     ).count()
 
+    card_count = UserCard.objects.filter(
+        profile_id=profile.id
+    ).count()
+
     serializer = UserProfileSerializer(profile)
 
     return Response(
         {
             "profile": serializer.data,
             "deck_count": deck_count,
+            "card_count": card_count,
             "is_owner": is_owner,
             "is_site_owner": is_site_owner,
         },
