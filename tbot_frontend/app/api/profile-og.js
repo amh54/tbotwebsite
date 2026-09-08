@@ -14,6 +14,27 @@ const DISCORD_CDN =
 const WIDTH = 1200;
 const HEIGHT = 630;
 
+// Resolve fonts relative to THIS FILE's own location, not
+// process.cwd(). process.cwd() reflects wherever the runtime chose
+// to start the process from — on this platform that's the function
+// task root (e.g. /var/task), which is NOT necessarily the project
+// root the file layout is relative to. The deployed module itself
+// (import.meta.url) always sits at a fixed, known location relative
+// to the rest of the bundled project, so resolving from there is
+// reliable regardless of what cwd happens to be at runtime.
+//
+// File layout (per project tree):
+//   app/
+//     api/
+//       profile-og.js   <- this file
+//     public/
+//       fonts/
+//         DejaVuSans.ttf
+//         DejaVuSans-Bold.ttf
+//
+// So from this file's directory (app/api/), the fonts are one level
+// up and into public/fonts/.
+
 const __filename = fileURLToPath(
   import.meta.url,
 );
@@ -84,12 +105,16 @@ function truncateText(value, maxLength) {
   return `${text.slice(0, maxLength - 1).trim()}…`;
 }
 
-// The bio was previously rendered as a single <text> with no
-// wrapping, so anything longer than the card's width just ran off
-// the right edge and got cut off mid-word. This breaks it into
-// multiple lines that actually fit, capping at maxLines and adding
-// an ellipsis if there's still more text left over after that.
-function wrapText(text, maxCharsPerLine, maxLines) {
+// Breaks text into lines that fit maxCharsPerLine. With no maxLines
+// given, wraps the FULL text with no cap and no ellipsis — nothing
+// gets cut off. Pass a maxLines to cap the output and add an
+// ellipsis if there's leftover text (used elsewhere for things like
+// truncated card descriptions, not the profile bio).
+function wrapText(
+  text,
+  maxCharsPerLine,
+  maxLines = Infinity,
+) {
   const clean = cleanText(text);
 
   if (!clean) {
@@ -381,7 +406,6 @@ function createSvg({
   const bioLines = wrapText(
     bio,
     52,
-    2,
   ).map((line) => escapeXml(line));
 
   const BIO_LINE_HEIGHT = 33;
@@ -476,16 +500,19 @@ function createSvg({
         </text>
       `;
 
+  const CARD_HEIGHT = 566 + bioOverflow;
+  const totalHeight = HEIGHT + bioOverflow;
+
   return `
 <svg
   xmlns="http://www.w3.org/2000/svg"
   width="${WIDTH}"
-  height="${HEIGHT}"
-  viewBox="0 0 ${WIDTH} ${HEIGHT}"
+  height="${totalHeight}"
+  viewBox="0 0 ${WIDTH} ${totalHeight}"
 >
   <rect
     width="${WIDTH}"
-    height="${HEIGHT}"
+    height="${totalHeight}"
     fill="#101416"
   />
 
@@ -493,7 +520,7 @@ function createSvg({
     x="32"
     y="32"
     width="1136"
-    height="566"
+    height="${CARD_HEIGHT}"
     rx="28"
     fill="#15191c"
     stroke="#30363b"
@@ -504,7 +531,7 @@ function createSvg({
     x="32"
     y="32"
     width="12"
-    height="566"
+    height="${CARD_HEIGHT}"
     rx="6"
     fill="#8fe38b"
   />
