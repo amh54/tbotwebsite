@@ -489,29 +489,6 @@ function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
   >
     ${escapeXml(cardCount)}
   </text>
-
-  <text
-    x="270"
-    y="${taglineY}"
-    font-family="DejaVu Sans"
-    font-size="25"
-    font-weight="400"
-    fill="#8fe38b"
-  >
-    Tbot • Plants vs. Zombies Heroes
-  </text>
-
-  <text
-    x="1100"
-    y="${footerY}"
-    text-anchor="end"
-    font-family="DejaVu Sans"
-    font-size="23"
-    font-weight="400"
-    fill="#6f797f"
-  >
-    pvzhtbot.com
-  </text>
 </svg>
 `;
 }
