@@ -295,8 +295,6 @@ function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
   const statsY = 305 + bioOverflow;
   const statsLabelY = 350 + bioOverflow;
   const statsValueY = 395 + bioOverflow;
-  const taglineY = 500 + bioOverflow;
-  const footerY = 540 + bioOverflow;
 
   const initial = escapeXml(
     String(name || "T")
@@ -550,10 +548,7 @@ export default async function handler(req, res) {
     res.setHeader("Content-Type", "image/png");
     res.setHeader("Content-Length", String(png.length));
 
-    res.setHeader(
-      "Cache-Control",
-      "public, max-age=300, s-maxage=300, stale-while-revalidate=3600",
-    );
+   res.setHeader("Cache-Control", "no-store, max-age=0");
 
     return res.end(png);
   } catch (error) {
