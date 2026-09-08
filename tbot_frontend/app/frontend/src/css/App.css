@@ -43,9 +43,6 @@ body {
   background-position: center top;
   background-repeat: no-repeat;
 }
-/* =========================
-   HERO
-========================= */
 
 .hero {
   width: 100%;
@@ -108,13 +105,6 @@ body {
   color: #8fe38b;
   text-decoration: none;
 }
-/* =========================
-   TUTORIAL LINK
-========================= */
-
-/* .tutorial-link is nested inside .hero, so it should fill .hero's
-   content box (already inset by .hero's own padding) rather than
-   recalculating its own left/right inset on top of that. */
 .tutorial-link {
   width: 100%;
   margin-top: 8px;
@@ -157,9 +147,6 @@ body {
   transform: translateY(1px);
 }
 
-/* =========================
-   GENERAL SECTIONS
-========================= */
 
 .features,
 .quick-answers,
@@ -184,9 +171,7 @@ body {
   line-height: 1.3;
 }
 
-/* =========================
-   QUICK ANSWERS
-========================= */
+
 
 .quick-answers {
   width: 100%;
@@ -253,9 +238,7 @@ body {
   text-decoration: underline;
 }
 
-/* =========================
-   FEATURES
-========================= */
+
 
 .features > p,
 .about > p {
@@ -302,9 +285,6 @@ body {
   font-weight: 500;
 }
 
-/* =========================
-   ABOUT
-========================= */
 
 .about {
   padding-top: 8px;
@@ -347,9 +327,7 @@ body {
   color: #c4c9cc;
 }
 
-/* =========================
-   LINKS
-========================= */
+
 
 a {
   color: #7fb9ff;
@@ -360,10 +338,6 @@ a:hover {
   color: #8fe38b;
   text-decoration: underline;
 }
-
-/* =========================
-   RESPONSIVE
-========================= */
 
 @media (max-width: 900px) {
   .quick-answers {
