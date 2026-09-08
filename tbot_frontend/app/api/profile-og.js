@@ -12,7 +12,6 @@ const WIDTH = 1200;
 const HEIGHT = 630;
 
 const __filename = fileURLToPath(import.meta.url);
-
 const __dirname = path.dirname(__filename);
 
 const REGULAR_FONT = path.join(
@@ -182,7 +181,6 @@ function getCardCount(data) {
 
 function getAvatarUrl(profile) {
   const discordId = cleanText(profile?.discord_id);
-
   const avatar = cleanText(profile?.avatar);
 
   if (!/^\d{15,25}$/.test(discordId) || !/^[a-zA-Z0-9_]+$/.test(avatar)) {
@@ -235,7 +233,6 @@ async function fetchAvatar(profile) {
 
     if (!response.ok) {
       console.error("Discord avatar request failed:", response.status);
-
       return null;
     }
 
@@ -250,7 +247,6 @@ async function fetchAvatar(profile) {
       .toBuffer();
   } catch (error) {
     console.error("Discord avatar fetch failed:", error);
-
     return null;
   }
 }
@@ -265,7 +261,6 @@ function avatarDataUri(buffer) {
 
 function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
   const safeName = escapeXml(truncateText(name, 28));
-
   const safeUsername = escapeXml(truncateText(username, 32));
 
   const bioLines = wrapText(bio, 52).map((line) => escapeXml(line));
@@ -298,13 +293,9 @@ function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
     : "";
 
   const statsY = 305 + bioOverflow;
-
   const statsLabelY = 350 + bioOverflow;
-
   const statsValueY = 395 + bioOverflow;
-
   const taglineY = 500 + bioOverflow;
-
   const footerY = 540 + bioOverflow;
 
   const initial = escapeXml(
@@ -317,7 +308,7 @@ function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
     ? `
         <clipPath id="avatarClip">
           <circle
-            cx="132"
+            cx="162"
             cy="132"
             r="92"
           />
@@ -325,7 +316,7 @@ function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
 
         <image
           href="${avatar}"
-          x="40"
+          x="70"
           y="40"
           width="184"
           height="184"
@@ -335,14 +326,14 @@ function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
       `
     : `
         <circle
-          cx="132"
+          cx="162"
           cy="132"
           r="92"
           fill="#30363b"
         />
 
         <text
-          x="132"
+          x="162"
           y="157"
           text-anchor="middle"
           font-family="DejaVu Sans"
@@ -355,7 +346,6 @@ function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
       `;
 
   const CARD_HEIGHT = 566 + bioOverflow;
-
   const totalHeight = HEIGHT + bioOverflow;
 
   return `
@@ -510,9 +500,7 @@ export default async function handler(req, res) {
 
   if (!slug) {
     res.statusCode = 400;
-
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-
     return res.end("Missing profile slug");
   }
 
@@ -531,11 +519,9 @@ export default async function handler(req, res) {
     const bio = getProfileBio(profileData);
 
     const deckCount = getDeckCount(profileData);
-
     const cardCount = getCardCount(profileData);
 
     const avatarBuffer = await fetchAvatar(profile);
-
     const avatar = avatarDataUri(avatarBuffer);
 
     const svg = createSvg({
@@ -564,7 +550,6 @@ export default async function handler(req, res) {
     res.statusCode = 200;
 
     res.setHeader("Content-Type", "image/png");
-
     res.setHeader("Content-Length", String(png.length));
 
     res.setHeader(
@@ -577,7 +562,6 @@ export default async function handler(req, res) {
     console.error("Profile OG generation failed:", error);
 
     res.statusCode = 500;
-
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
 
     return res.end("Unable to generate profile image");
