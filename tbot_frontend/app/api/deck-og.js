@@ -143,21 +143,18 @@ function resolveDiscordAvatar(profile) {
   const avatar = String(profile?.avatar || "").trim();
   const discordId = String(profile?.discord_id || "").trim();
 
-  if (!avatar) {
-    return "";
-  }
-
-  if (/^https?:\/\//i.test(avatar)) {
-    return avatar;
-  }
-
-  if (!discordId) {
+  if (!avatar || !discordId) {
     return "";
   }
 
   const extension = avatar.startsWith("a_") ? "gif" : "png";
 
-  return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=1024`;
+  return (
+    `${SITE_URL}/api/profile-avatar` +
+    `?discord_id=${encodeURIComponent(discordId)}` +
+    `&avatar=${encodeURIComponent(avatar)}` +
+    `&format=${extension}`
+  );
 }
 function resolveProfileImage(profile) {
   const image = String(
@@ -477,7 +474,7 @@ function buildProfileDescription(name, bio, deckCount, cardCount) {
   }
 
   if (stats.length) {
-    parts.push(stats.join(" • "));
+    parts.push(stats.join("\n"));
   }
 
   if (!parts.length) {
