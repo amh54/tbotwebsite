@@ -15,66 +15,55 @@ const PAGE_METADATA = {
     description:
       "A community database for Plants vs. Zombies Heroes cards, heroes, decks, collections, and strategy.",
   },
-
   "/decklists": {
     title: "Decklists — Tbot",
     description:
       "Browse the Tbot Plants vs. Zombies Heroes community deck database.",
   },
-
   "/cardinfo": {
     title: "Card Information — Tbot",
     description:
       "Search and explore Plants vs. Zombies Heroes cards, abilities, stats, traits, sets, and rarities.",
   },
-
   "/heroinfo": {
     title: "Hero Information — Tbot",
     description:
       "Explore Plants vs. Zombies Heroes heroes, classes, abilities, traits, stats, and cards.",
   },
-
   "/keeporscrap": {
     title: "Keep or Scrap — Tbot",
     description:
       "Find recommendations for which Plants vs. Zombies Heroes cards to keep or scrap.",
   },
-
   "/legacydecks": {
     title: "Legacy Decks — Tbot",
     description:
       "Browse the older Tbot Plants vs. Zombies Heroes deck database.",
   },
-
   "/deckbuilders": {
     title: "Deckbuilders — Tbot",
     description:
       "Explore Tbot deckbuilders and the decks they have submitted to the community.",
   },
-
   "/users": {
     title: "Users — Tbot",
     description:
       "Browse Tbot community profiles and discover Plants vs. Zombies Heroes deckbuilders.",
   },
-
   "/tutorial": {
     title: "Tbot Tutorial",
     description:
       "Learn how to use Tbot to browse cards, heroes, decks, collections, profiles, and other features.",
   },
-
   "/updates": {
     title: "Site Updates — Tbot",
     description:
       "View the latest updates, improvements, and changes to the Tbot website.",
   },
-
   "/termsofservice": {
     title: "Terms of Service — Tbot",
     description: "Read the Tbot Terms of Service.",
   },
-
   "/privacypolicy": {
     title: "Privacy Policy — Tbot",
     description: "Read the Tbot Privacy Policy.",
@@ -116,7 +105,6 @@ function stripDiscordFormatting(value) {
 
 function truncate(text, max = 500) {
   const clean = String(text || "");
-
   return clean.length > max ? `${clean.slice(0, max).trimEnd()}…` : clean;
 }
 
@@ -137,7 +125,9 @@ function escapeHtml(str) {
 function resolveImageUrl(image) {
   const img = String(image || "").trim();
 
-  if (!img) return DEFAULT_IMAGE;
+  if (!img) {
+    return DEFAULT_IMAGE;
+  }
 
   if (/^(https?:\/\/|data:|blob:)/i.test(img)) {
     return img;
@@ -151,24 +141,50 @@ function resolveImageUrl(image) {
 }
 
 function resolveDiscordAvatar(profile) {
-  const discordId = String(profile?.discord_id || "").trim();
-  const avatarHash = String(profile?.avatar || "").trim();
+  const discordId = String(
+    profile?.discord_id || profile?.discordId || profile?.discord_user_id || "",
+  ).trim();
 
-  if (!discordId || !avatarHash) {
+  const avatar = String(
+    profile?.avatar || profile?.discord_avatar || profile?.discordAvatar || "",
+  ).trim();
+
+  if (!avatar) {
     return DEFAULT_IMAGE;
   }
 
-  if (/^https?:\/\//i.test(avatarHash)) {
-    return avatarHash;
+  if (/^(https?:\/\/|data:|blob:)/i.test(avatar)) {
+    return avatar;
   }
 
-  const extension = avatarHash.startsWith("a_") ? "gif" : "png";
+  if (!discordId) {
+    return resolveImageUrl(avatar);
+  }
+
+  const extension = avatar.startsWith("a_") ? "gif" : "png";
 
   return (
     `https://cdn.discordapp.com/avatars/` +
     `${encodeURIComponent(discordId)}/` +
-    `${encodeURIComponent(avatarHash)}.${extension}`
+    `${encodeURIComponent(avatar)}.${extension}`
   );
+}
+
+function resolveProfileImage(profile) {
+  const image = String(
+    profile?.avatar_url ||
+      profile?.avatarUrl ||
+      profile?.profile_image ||
+      profile?.profileImage ||
+      profile?.image ||
+      "",
+  ).trim();
+
+  if (image) {
+    return resolveImageUrl(image);
+  }
+
+  return resolveDiscordAvatar(profile);
 }
 
 function findDeckInList(payload, deckKey) {
@@ -238,11 +254,9 @@ function deckToOg(deck) {
 
   return {
     title: `${deck.name || "Untitled Deck"} — TBOT Deck`,
-
     description:
       truncate(parts.join("\n"), 500) ||
       "View this Plants vs. Zombies Heroes deck on Tbot.",
-
     image: resolveImageUrl(deck.image),
   };
 }
@@ -261,7 +275,6 @@ function findCardInList(payload, cardQuery) {
   return (
     list.find((card) => {
       const cardName = normalizeText(card.card_name);
-
       const title = normalizeText(stripDiscordFormatting(card.title));
 
       const aliases = normalizeText(card.aliases)
@@ -318,11 +331,9 @@ function cardToOg(card) {
 
   return {
     title: `${name} — TBOT Card Info`,
-
     description:
       truncate(parts.join("\n"), 500) ||
       `View information about ${name} on Tbot.`,
-
     image: resolveImageUrl(card.thumbnail),
   };
 }
@@ -339,25 +350,135 @@ function cleanSlug(value) {
 
 function getProfileName(profile, fallbackSlug) {
   return (
-    stripDiscordFormatting(profile?.display_name || profile?.username || "") ||
+    stripDiscordFormatting(
+      profile?.display_name ||
+        profile?.username ||
+        profile?.name ||
+        profile?.discord_name ||
+        "",
+    ) ||
     cleanSlug(fallbackSlug) ||
     "User"
   );
 }
 
-function profileToOg(profile, fallbackSlug) {
+function getProfileBio(profile) {
+  return stripDiscordFormatting(
+    profile?.bio || profile?.description || profile?.about || "",
+  );
+}
+
+function getDeckList(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.results)) {
+    return payload.results;
+  }
+
+  if (Array.isArray(payload?.decks)) {
+    return payload.decks;
+  }
+
+  if (Array.isArray(payload?.user_decks)) {
+    return payload.user_decks;
+  }
+
+  return [];
+}
+
+function getExplicitCount(...values) {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+      return Number(value.trim());
+    }
+  }
+
+  return null;
+}
+
+function getProfileDeckCount(profile, decksPayload) {
+  const explicit = getExplicitCount(
+    profile?.deck_count,
+    profile?.deckCount,
+    profile?.number_of_decks,
+    profile?.num_decks,
+    profile?.decks_count,
+    profile?.decks?.count,
+    decksPayload?.count,
+    decksPayload?.deck_count,
+    decksPayload?.deckCount,
+    decksPayload?.number_of_decks,
+    decksPayload?.num_decks,
+  );
+
+  if (explicit !== null) {
+    return explicit;
+  }
+
+  return getDeckList(decksPayload).length;
+}
+
+function getProfileCardCount(profile) {
+  return getExplicitCount(
+    profile?.card_count,
+    profile?.cardCount,
+    profile?.number_of_cards,
+    profile?.num_cards,
+    profile?.cards_count,
+    profile?.collection_count,
+    profile?.collectionCount,
+    profile?.cards?.count,
+  );
+}
+
+function buildProfileDescription(name, bio, deckCount, cardCount) {
+  const parts = [];
+
+  if (bio) {
+    parts.push(bio);
+  }
+
+  const stats = [];
+
+  if (deckCount !== null) {
+    stats.push(`${deckCount} ${deckCount === 1 ? "deck" : "decks"}`);
+  }
+
+  if (cardCount !== null) {
+    stats.push(`${cardCount} ${cardCount === 1 ? "card" : "cards"}`);
+  }
+
+  if (stats.length) {
+    parts.push(stats.join(" • "));
+  }
+
+  if (!parts.length) {
+    return `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`;
+  }
+
+  return truncate(parts.join("\n"), 500);
+}
+
+function profileToOg(profile, fallbackSlug, decksPayload) {
   if (!profile) {
     return buildProfileOg(fallbackSlug);
   }
 
   const name = getProfileName(profile, fallbackSlug);
+  const bio = getProfileBio(profile);
+  const deckCount = getProfileDeckCount(profile, decksPayload);
+  const cardCount = getProfileCardCount(profile);
 
   return {
     title: `${name} — Tbot Profile`,
-
-    description: `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`,
-
-    image: resolveDiscordAvatar(profile),
+    description: buildProfileDescription(name, bio, deckCount, cardCount),
+    image: resolveProfileImage(profile),
   };
 }
 
@@ -370,9 +491,7 @@ function buildProfileOg(slug) {
 
   return {
     title: `${name} — Tbot Profile`,
-
     description: `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`,
-
     image: DEFAULT_IMAGE,
   };
 }
@@ -386,9 +505,7 @@ function buildDeckbuilderOg(name) {
 
   return {
     title: `${cleanName} — Tbot Deckbuilder`,
-
     description: `Explore ${cleanName}'s Plants vs. Zombies Heroes decks on Tbot.`,
-
     image: DEFAULT_IMAGE,
   };
 }
@@ -423,6 +540,14 @@ async function fetchProfile(slug) {
   return data?.profile || null;
 }
 
+async function fetchProfileDecks(slug) {
+  if (!slug) {
+    return null;
+  }
+
+  return fetchJson(`${API}/tbotapp/profile/${encodeURIComponent(slug)}/decks/`);
+}
+
 async function resolveMetadata(pathname, query) {
   if (pathname === "/profile" || pathname.startsWith("/profile/")) {
     const slug = query.slug || pathname.replace(/^\/profile\//, "");
@@ -430,10 +555,7 @@ async function resolveMetadata(pathname, query) {
     const deckKey = query.deck;
 
     if (deckKey) {
-      const data = await fetchJson(
-        `${API}/tbotapp/profile/${encodeURIComponent(slug)}/decks/`,
-      );
-
+      const data = await fetchProfileDecks(slug);
       const deck = findDeckInList(data, deckKey);
 
       if (deck) {
@@ -441,16 +563,18 @@ async function resolveMetadata(pathname, query) {
       }
     }
 
-    const profile = await fetchProfile(slug);
+    const [profile, decksPayload] = await Promise.all([
+      fetchProfile(slug),
+      fetchProfileDecks(slug),
+    ]);
 
-    return profileToOg(profile, slug);
+    return profileToOg(profile, slug, decksPayload);
   }
 
   if (pathname === "/deck" || pathname.startsWith("/deck/")) {
     const parts = pathname.split("/").filter(Boolean);
 
     const slug = query.slug || parts[1] || "";
-
     const key = query.key || parts[2] || "";
 
     let deckId = null;
@@ -491,13 +615,10 @@ async function resolveMetadata(pathname, query) {
       return getStaticMetadata(pathname);
     }
 
-    let listUrl;
-
-    if (pathname === "/decklists") {
-      listUrl = `${API}/tbotapp/decklists/`;
-    } else {
-      listUrl = `${API}/tbotapp/legacy-decklists/`;
-    }
+    const listUrl =
+      pathname === "/decklists"
+        ? `${API}/tbotapp/decklists/`
+        : `${API}/tbotapp/legacy-decklists/`;
 
     const data = await fetchJson(listUrl);
 
@@ -508,7 +629,6 @@ async function resolveMetadata(pathname, query) {
     const parts = pathname.split("/").filter(Boolean);
 
     const name = query.name || parts[1] || "";
-
     const deckKey = query.deck;
 
     if (deckKey && name) {
@@ -531,10 +651,8 @@ async function resolveMetadata(pathname, query) {
 
         return {
           title: `${profileName} — Tbot Deckbuilder`,
-
           description: `Explore ${profileName}'s Plants vs. Zombies Heroes decks on Tbot.`,
-
-          image: resolveDiscordAvatar(profile),
+          image: resolveProfileImage(profile),
         };
       }
 
@@ -586,13 +704,9 @@ function buildHtml({
   redirectPath,
 }) {
   const safeTitle = escapeHtml(title);
-
   const safeDescription = escapeHtml(description);
-
   const safeImage = escapeHtml(image);
-
   const safeUrl = escapeHtml(url);
-
   const safeRedirectPath = escapeHtml(redirectPath);
 
   const robots = noindex
@@ -741,15 +855,10 @@ export default async function handler(req, res) {
 
   const html = buildHtml({
     title: og.title || DEFAULT_TITLE,
-
     description: og.description || DEFAULT_DESCRIPTION,
-
     image: og.image || DEFAULT_IMAGE,
-
     url: canonicalUrl,
-
     noindex: isPrivateRoute(originalPath),
-
     redirectPath: `${originalPath}${originalUrl.search}`,
   });
 
@@ -767,11 +876,11 @@ export default async function handler(req, res) {
 
 function getOriginalPath(pathname, query) {
   if (pathname === "/api/deck-og") {
-    return "/";
-  }
+    if (query.slug) {
+      return `/profile/${query.slug}`;
+    }
 
-  if (query.slug && pathname === "/api/deck-og") {
-    return `/profile/${query.slug}`;
+    return "/";
   }
 
   return pathname;
