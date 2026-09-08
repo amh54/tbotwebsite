@@ -13,19 +13,11 @@ const DISCORD_CDN =
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-const REGULAR_FONT = path.join(
-  process.cwd(),
-  "public",
-  "fonts",
-  "DejaVuSans.ttf",
-);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const BOLD_FONT = path.join(
-  process.cwd(),
-  "public",
-  "fonts",
-  "DejaVuSans-Bold.ttf",
-);
+const REGULAR_FONT = path.join(__dirname, "..", "public", "fonts", "DejaVuSans.ttf");
+const BOLD_FONT = path.join(__dirname, "..", "public", "fonts", "DejaVuSans-Bold.ttf");
 
 if (!fs.existsSync(REGULAR_FONT)) {
   throw new Error(
