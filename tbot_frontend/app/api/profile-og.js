@@ -288,7 +288,7 @@ function buildSvg({ profile, slug, avatarDataUrl, deckCount, cardCount }) {
       font-weight="700"
       fill="#8fe38b"
     >
-      ${escapeXml(stats.join(" • "))}
+      ${escapeXml(stats.join("\n"))}
     </text>
   `
     : "";
