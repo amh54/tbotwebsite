@@ -504,7 +504,7 @@ function profileToOg(profileData, fallbackSlug, decksPayload) {
 
     image: `${SITE_URL}/api/profile-og?slug=${encodeURIComponent(
       String(fallbackSlug || "").trim(),
-    )}&v=2`,
+    )}`,
   };
 }
 function buildProfileOg(slug) {
