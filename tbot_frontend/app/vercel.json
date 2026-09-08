@@ -1,4 +1,5 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
       "source": "/deck/:slug/:key",
@@ -7,7 +8,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -20,7 +21,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -33,7 +34,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -46,7 +47,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -59,7 +60,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -72,7 +73,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -85,7 +86,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -98,7 +99,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -111,7 +112,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -124,7 +125,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -137,7 +138,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -150,7 +151,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -163,7 +164,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
@@ -176,7 +177,7 @@
           "type": "header",
           "key": "user-agent",
           "value": {
-            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
           }
         }
       ],
