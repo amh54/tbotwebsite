@@ -29,6 +29,34 @@
       "destination": "/api/deck-og?path=/cardinfo"
     },
     {
+      "source": "/heroinfo",
+      "destination": "/api/deck-og?path=/heroinfo"
+    },
+    {
+      "source": "/keeporscrap",
+      "destination": "/api/deck-og?path=/keeporscrap"
+    },
+    {
+      "source": "/users",
+      "destination": "/api/deck-og?path=/users"
+    },
+    {
+      "source": "/tutorial",
+      "destination": "/api/deck-og?path=/tutorial"
+    },
+    {
+      "source": "/updates",
+      "destination": "/api/deck-og?path=/updates"
+    },
+    {
+      "source": "/termsofservice",
+      "destination": "/api/deck-og?path=/termsofservice"
+    },
+    {
+      "source": "/privacypolicy",
+      "destination": "/api/deck-og?path=/privacypolicy"
+    },
+    {
       "source": "/",
       "destination": "/api/deck-og?path=/"
     },
