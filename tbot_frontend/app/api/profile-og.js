@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { Resvg } from "@resvg/resvg-js";
 import fs from "node:fs";
 import path from "node:path";
-
+import { fileURLToPath } from "node:url";
 const API = String(
   process.env.DJANGO_API_URL || "",
 ).replace(/\/+$/, "");
