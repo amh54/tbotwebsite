@@ -15,21 +15,18 @@ const WIDTH = 1200;
 const HEIGHT = 630;
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const REGULAR_FONT = path.join(
   process.cwd(),
-  "node_modules",
-  "dejavu-fonts-ttf",
-  "ttf",
+  "public",
+  "fonts",
   "DejaVuSans.ttf",
 );
 
 const BOLD_FONT = path.join(
   process.cwd(),
-  "node_modules",
-  "dejavu-fonts-ttf",
-  "ttf",
+  "public",
+  "fonts",
   "DejaVuSans-Bold.ttf",
 );
 
