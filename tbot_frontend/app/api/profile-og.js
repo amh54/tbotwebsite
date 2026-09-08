@@ -1,4 +1,8 @@
-const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
+import sharp from "sharp";
+
+const API = String(
+  process.env.DJANGO_API_URL || "",
+).replace(/\/+$/, "");
 
 const DISCORD_CDN = "https://cdn.discordapp.com";
 
@@ -42,25 +46,36 @@ async function fetchProfile(slug) {
     throw new Error("DJANGO_API_URL is not configured");
   }
 
-  const encodedSlug = encodeURIComponent(String(slug).trim());
+  const encodedSlug = encodeURIComponent(
+    String(slug).trim(),
+  );
 
-  const response = await fetch(`${API}/tbotapp/profile/${encodedSlug}/`, {
-    headers: {
-      Accept: "application/json",
+  const response = await fetch(
+    `${API}/tbotapp/profile/${encodedSlug}/`,
+    {
+      headers: {
+        Accept: "application/json",
+      },
     },
-  });
+  );
 
   if (!response.ok) {
-    throw new Error(`Django profile request failed: ${response.status}`);
+    throw new Error(
+      `Django profile request failed: ${response.status}`,
+    );
   }
 
   return response.json();
 }
 
 function getAvatarUrl(profile) {
-  const discordId = String(profile?.discord_id || "").trim();
+  const discordId = String(
+    profile?.discord_id || "",
+  ).trim();
 
-  const avatar = String(profile?.avatar || "").trim();
+  const avatar = String(
+    profile?.avatar || "",
+  ).trim();
 
   if (!/^\d{15,25}$/.test(discordId)) {
     return "";
@@ -70,7 +85,9 @@ function getAvatarUrl(profile) {
     return "";
   }
 
-  const extension = avatar.startsWith("a_") ? "gif" : "png";
+  const extension = avatar.startsWith("a_")
+    ? "gif"
+    : "png";
 
   return (
     `${DISCORD_CDN}/avatars/` +
@@ -79,57 +96,64 @@ function getAvatarUrl(profile) {
   );
 }
 
-async function fetchAvatarDataUrl(avatarUrl) {
+async function fetchAvatarBuffer(avatarUrl) {
   if (!avatarUrl) {
-    return "";
+    return null;
   }
 
   try {
-    const response = await fetch(avatarUrl, {
-      headers: {
-        Accept: "image/png,image/gif,image/*,*/*;q=0.8",
-        "User-Agent": "Tbot/1.0",
+    const response = await fetch(
+      avatarUrl,
+      {
+        headers: {
+          Accept:
+            "image/png,image/gif,image/*,*/*;q=0.8",
+          "User-Agent": "Tbot/1.0",
+        },
       },
-    });
+    );
 
     if (!response.ok) {
-      return "";
-    }
-
-    const contentType = response.headers.get("content-type") || "image/png";
-
-    const buffer = await response.arrayBuffer();
-
-    let binary = "";
-
-    const bytes = new Uint8Array(buffer);
-
-    const chunkSize = 8192;
-
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      binary += String.fromCharCode(
-        ...bytes.subarray(i, Math.min(i + chunkSize, bytes.length)),
+      console.error(
+        `Discord avatar request failed: ${response.status}`,
       );
+
+      return null;
     }
 
-    const base64 = btoa(binary);
-
-    return `data:${contentType};base64,${base64}`;
+    return Buffer.from(
+      await response.arrayBuffer(),
+    );
   } catch (error) {
-    console.error("Discord avatar fetch failed:", error);
+    console.error(
+      "Discord avatar fetch failed:",
+      error,
+    );
 
-    return "";
+    return null;
   }
 }
 
 function getCount(...values) {
   for (const value of values) {
-    if (typeof value === "number" && Number.isFinite(value)) {
-      return Math.max(0, Math.trunc(value));
+    if (
+      typeof value === "number" &&
+      Number.isFinite(value)
+    ) {
+      return Math.max(
+        0,
+        Math.trunc(value),
+      );
     }
 
-    if (typeof value === "string" && /^\d+$/.test(value.trim())) {
-      return Math.max(0, Number(value.trim()));
+    if (
+      typeof value === "string" &&
+      /^\d+$/.test(value.trim())
+    ) {
+      return Math.max(
+        0,
+        Number(value.trim()),
+      );
     }
   }
 
@@ -139,7 +163,10 @@ function getCount(...values) {
 function getName(profile, slug) {
   return (
     cleanText(
-      profile?.display_name || profile?.username || profile?.name || "",
+      profile?.display_name ||
+        profile?.username ||
+        profile?.name ||
+        "",
     ) ||
     cleanText(slug) ||
     "User"
@@ -148,26 +175,41 @@ function getName(profile, slug) {
 
 function getUsername(profile, slug) {
   return (
-    cleanText(profile?.username || profile?.profile_slug || "") ||
+    cleanText(
+      profile?.username ||
+        profile?.profile_slug ||
+        "",
+    ) ||
     cleanText(slug)
   );
 }
 
 function getBio(profile) {
   return truncate(
-    profile?.bio || profile?.description || profile?.about || "",
+    profile?.bio ||
+      profile?.description ||
+      profile?.about ||
+      "",
     280,
   );
 }
 
 function wrapText(text, maxChars) {
-  const words = cleanText(text).split(" ");
+  const clean = cleanText(text);
+
+  if (!clean) {
+    return [];
+  }
+
+  const words = clean.split(" ");
 
   const lines = [];
   let current = "";
 
   for (const word of words) {
-    const next = current ? `${current} ${word}` : word;
+    const next = current
+      ? `${current} ${word}`
+      : word;
 
     if (next.length > maxChars) {
       if (current) {
@@ -187,27 +229,43 @@ function wrapText(text, maxChars) {
   return lines.slice(0, 5);
 }
 
-function buildSvg({ profile, slug, avatarDataUrl, deckCount, cardCount }) {
-  const name = getName(profile, slug);
+function buildAvatarSvg(avatarBuffer, name) {
+  if (!avatarBuffer) {
+    return `
+      <circle
+        cx="160"
+        cy="315"
+        r="96"
+        fill="#20282c"
+      />
 
-  const username = getUsername(profile, slug);
+      <circle
+        cx="160"
+        cy="315"
+        r="90"
+        fill="#151b1e"
+      />
 
-  const bio = getBio(profile);
-
-  const stats = [];
-
-  if (deckCount !== null) {
-    stats.push(`${deckCount} ${deckCount === 1 ? "deck" : "decks"}`);
+      <text
+        x="160"
+        y="335"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="58"
+        font-weight="700"
+        fill="#8fe38b"
+      >
+        ${escapeXml(
+          name.charAt(0).toUpperCase(),
+        )}
+      </text>
+    `;
   }
 
-  if (cardCount !== null) {
-    stats.push(`${cardCount} ${cardCount === 1 ? "card" : "cards"}`);
-  }
+  const avatarBase64 =
+    avatarBuffer.toString("base64");
 
-  const bioLines = wrapText(bio, 68);
-
-  const avatarMarkup = avatarDataUrl
-    ? `
+  return `
     <defs>
       <clipPath id="avatarClip">
         <circle
@@ -226,7 +284,7 @@ function buildSvg({ profile, slug, avatarDataUrl, deckCount, cardCount }) {
     />
 
     <image
-      href="${avatarDataUrl}"
+      href="data:image/png;base64,${avatarBase64}"
       x="70"
       y="225"
       width="180"
@@ -234,69 +292,118 @@ function buildSvg({ profile, slug, avatarDataUrl, deckCount, cardCount }) {
       preserveAspectRatio="xMidYMid slice"
       clip-path="url(#avatarClip)"
     />
-  `
-    : `
-    <circle
-      cx="160"
-      cy="315"
-      r="90"
-      fill="#20282c"
-    />
-
-    <text
-      x="160"
-      y="335"
-      text-anchor="middle"
-      font-family="Arial, Helvetica, sans-serif"
-      font-size="58"
-      font-weight="700"
-      fill="#8fe38b"
-    >
-      ${escapeXml(name.charAt(0).toUpperCase())}
-    </text>
   `;
+}
 
-  const bioMarkup = bioLines.length
-    ? `
-    <text
-      x="330"
-      y="375"
-      font-family="Arial, Helvetica, sans-serif"
-      font-size="25"
-      fill="#e1e5e7"
-    >
-      ${bioLines
-        .map(
-          (line, index) =>
-            `<tspan
-              x="330"
-              dy="${index === 0 ? 0 : 34}"
-            >${escapeXml(line)}</tspan>`,
-        )
-        .join("")}
-    </text>
-  `
-    : "";
+function buildSvg({
+  profile,
+  slug,
+  avatarBuffer,
+  deckCount,
+  cardCount,
+}) {
+  const name = getName(
+    profile,
+    slug,
+  );
 
-  const statsMarkup = stats.length
-    ? `
-    <text
-      x="330"
-      y="${bioLines.length ? 555 : 470}"
-      font-family="Arial, Helvetica, sans-serif"
-      font-size="25"
-      font-weight="700"
-      fill="#8fe38b"
-    >
-      ${escapeXml(stats.join("\n"))}
-    </text>
-  `
-    : "";
+  const username =
+    getUsername(
+      profile,
+      slug,
+    );
+
+  const bio =
+    getBio(profile);
+
+  const stats = [];
+
+  if (deckCount !== null) {
+    stats.push(
+      `${deckCount} ${
+        deckCount === 1
+          ? "deck"
+          : "decks"
+      }`,
+    );
+  }
+
+  if (cardCount !== null) {
+    stats.push(
+      `${cardCount} ${
+        cardCount === 1
+          ? "card"
+          : "cards"
+      }`,
+    );
+  }
+
+  const bioLines =
+    wrapText(
+      bio,
+      68,
+    );
+
+  const avatarMarkup =
+    buildAvatarSvg(
+      avatarBuffer,
+      name,
+    );
+
+  const bioMarkup =
+    bioLines.length
+      ? `
+        <text
+          x="330"
+          y="375"
+          font-family="Arial, Helvetica, sans-serif"
+          font-size="25"
+          fill="#e1e5e7"
+        >
+          ${bioLines
+            .map(
+              (line, index) =>
+                `<tspan
+                  x="330"
+                  dy="${
+                    index === 0
+                      ? 0
+                      : 34
+                  }"
+                >${escapeXml(
+                  line,
+                )}</tspan>`,
+            )
+            .join("")}
+        </text>
+      `
+      : "";
+
+  const statsMarkup =
+    stats.length
+      ? `
+        <text
+          x="330"
+          y="${
+            bioLines.length
+              ? 555
+              : 470
+          }"
+          font-family="Arial, Helvetica, sans-serif"
+          font-size="25"
+          font-weight="700"
+          fill="#8fe38b"
+        >
+          ${escapeXml(
+            stats.join(" • "),
+          )}
+        </text>
+      `
+      : "";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  xmlns:xlink="http://www.w3.org/1999/xlink"
   width="${WIDTH}"
   height="${HEIGHT}"
   viewBox="0 0 ${WIDTH} ${HEIGHT}"
@@ -390,83 +497,140 @@ function buildSvg({ profile, slug, avatarDataUrl, deckCount, cardCount }) {
 </svg>`;
 }
 
-export default async function handler(req, res) {
-  const requestUrl = new URL(req.url, "https://pvzhtbot.com");
+export default async function handler(
+  req,
+  res,
+) {
+  const requestUrl =
+    new URL(
+      req.url,
+      "https://pvzhtbot.com",
+    );
 
-  const slug = requestUrl.searchParams.get("slug");
+  const slug =
+    requestUrl.searchParams.get(
+      "slug",
+    );
 
   if (!slug) {
     res.statusCode = 400;
 
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader(
+      "Content-Type",
+      "text/plain; charset=utf-8",
+    );
 
-    return res.end("Missing profile slug");
+    return res.end(
+      "Missing profile slug",
+    );
   }
 
   try {
-    const data = await fetchProfile(slug);
+    const data =
+      await fetchProfile(slug);
 
-    const profile = getProfile(data);
+    const profile =
+      getProfile(data);
 
     if (!profile) {
       res.statusCode = 404;
 
-      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.setHeader(
+        "Content-Type",
+        "text/plain; charset=utf-8",
+      );
 
-      return res.end("Profile not found");
+      return res.end(
+        "Profile not found",
+      );
     }
 
-    const avatarUrl = getAvatarUrl(profile);
+    const avatarUrl =
+      getAvatarUrl(profile);
 
-    const avatarDataUrl = await fetchAvatarDataUrl(avatarUrl);
+    const avatarBuffer =
+      await fetchAvatarBuffer(
+        avatarUrl,
+      );
 
-    const deckCount = getCount(
-      data?.deck_count,
-      data?.deckCount,
-      profile?.deck_count,
-      profile?.deckCount,
-      profile?.number_of_decks,
-      profile?.num_decks,
-      profile?.decks_count,
-    );
+    const deckCount =
+      getCount(
+        data?.deck_count,
+        data?.deckCount,
+        profile?.deck_count,
+        profile?.deckCount,
+        profile?.number_of_decks,
+        profile?.num_decks,
+        profile?.decks_count,
+      );
 
-    const cardCount = getCount(
-      data?.card_count,
-      data?.cardCount,
-      profile?.card_count,
-      profile?.cardCount,
-      profile?.number_of_cards,
-      profile?.num_cards,
-      profile?.cards_count,
-      profile?.collection_count,
-      profile?.collectionCount,
-    );
+    const cardCount =
+      getCount(
+        data?.card_count,
+        data?.cardCount,
+        profile?.card_count,
+        profile?.cardCount,
+        profile?.number_of_cards,
+        profile?.num_cards,
+        profile?.cards_count,
+        profile?.collection_count,
+        profile?.collectionCount,
+      );
 
-    const svg = buildSvg({
-      profile,
-      slug,
-      avatarDataUrl,
-      deckCount,
-      cardCount,
-    });
+    const svg =
+      buildSvg({
+        profile,
+        slug,
+        avatarBuffer,
+        deckCount,
+        cardCount,
+      });
+
+    const png =
+      await sharp(
+        Buffer.from(
+          svg,
+          "utf8",
+        ),
+      )
+        .png({
+          compressionLevel: 6,
+        })
+        .toBuffer();
 
     res.statusCode = 200;
 
-    res.setHeader("Content-Type", "image/svg+xml; charset=utf-8");
+    res.setHeader(
+      "Content-Type",
+      "image/png",
+    );
+
+    res.setHeader(
+      "Content-Length",
+      String(png.length),
+    );
 
     res.setHeader(
       "Cache-Control",
       "public, max-age=300, s-maxage=300, stale-while-revalidate=3600",
     );
 
-    return res.end(svg);
+    return res.end(png);
   } catch (error) {
-    console.error("Profile OG generation failed:", error);
+    console.error(
+      "Profile OG generation failed:",
+      error,
+    );
 
     res.statusCode = 500;
 
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader(
+      "Content-Type",
+      "text/plain; charset=utf-8",
+    );
 
-    return res.end("Unable to generate profile image");
+    return res.end(
+      "Unable to generate profile image",
+    );
   }
 }
