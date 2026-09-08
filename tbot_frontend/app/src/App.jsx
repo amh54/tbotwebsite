@@ -5,7 +5,7 @@ import "./css/navbar.css";
 
 import { Link, Route, Routes } from "react-router-dom";
 
-import SiteUpdates from "./pages/SiteUpdates";
+import SiteUpdates from "./pages/SiteUpdates.jsx";
 import AdminKeepOrScrap from "./pages/admin-keeporscrap.jsx";
 import Tutorial from "./pages/tutorial.jsx";
 import StandaloneDeckPage from "./pages/standalonedeck.jsx";
@@ -30,7 +30,7 @@ import Users from "./pages/users.jsx";
 import UserDeckManager from "./pages/userdeckmanager.jsx";
 import UserDashboard from "./pages/userdashboard.jsx";
 import UserCardManager from "./pages/UserCardManager.jsx";
-import AdminCards from "./pages/admincards";
+import AdminCards from "./pages/admincards.jsx";
 import AdminBugReports from "./pages/adminbugreports.jsx";
 import MyBugReports from "./pages/mybugreports.jsx";
 

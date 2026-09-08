@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import Select from "react-select";
 
-import CardModal from "../components/cardmodal";
+import CardModal from "./cardmodal";
 
 import "../css/cardinfo.css";
 

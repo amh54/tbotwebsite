@@ -1,6 +1,4 @@
-const API = process.env.DJANGO_API_URL; // server-side only, not VITE_-prefixed
-
-// ---------- shared helpers ----------
+const API = process.env.DJANGO_API_URL; 
 
 function resolveImageUrl(image) {
   const img = String(image || "").trim();
@@ -120,7 +118,7 @@ function deckToOg(deck) {
   };
 }
 
-// ---------- card helpers ----------
+
 
 function findCardInList(payload, cardQuery) {
   const list = Array.isArray(payload)
@@ -208,7 +206,6 @@ function cardToOg(card) {
   };
 }
 
-// ---------- resolvers, tried in order ----------
 
 const RESOLVERS = [
   {
@@ -267,9 +264,6 @@ const RESOLVERS = [
     if (pathname === "/decklists") {
       return ["decklists"];
     }
-
-    // Actual legacy deck page URL:
-    // /legacydecks?deck=heal-midrose-265
     if (
       pathname === "/legacydecks" ||
       pathname === "/legacy-decklists"
@@ -311,11 +305,6 @@ const RESOLVERS = [
 },
 
   {
-    // ANY page ?card={card_name}
-    //
-    // CardBrowser does not use a dedicated path,
-    // so this resolver intentionally works regardless
-    // of the current pathname.
     test: (pathname, params) =>
       params.has("card")
         ? [params.get("card")]
@@ -338,7 +327,6 @@ const RESOLVERS = [
   },
 ];
 
-// ---------- handler ----------
 
 export default async function handler(req, res) {
   const { path } = req.query;
