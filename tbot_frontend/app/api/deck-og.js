@@ -508,13 +508,9 @@ function profileToOg(profileData, fallbackSlug, decksPayload) {
   }
 
   const profile = getProfileObject(profileData);
-
   const name = getProfileName(profileData, fallbackSlug);
-
   const bio = getProfileBio(profileData);
-
   const deckCount = getProfileDeckCount(profileData, decksPayload);
-
   const cardCount = getProfileCardCount(profileData);
 
   return {
@@ -554,6 +550,7 @@ function buildDeckbuilderOg(name) {
 
 async function fetchJson(url) {
   if (!API) {
+    console.error("DJANGO_API_URL is not configured");
     return null;
   }
 
@@ -565,11 +562,15 @@ async function fetchJson(url) {
     });
 
     if (!response.ok) {
+      console.error(
+        `Django API request failed: ${response.status} ${response.statusText} — ${url}`,
+      );
       return null;
     }
 
     return await response.json();
-  } catch {
+  } catch (error) {
+    console.error(`Django API request error — ${url}`, error);
     return null;
   }
 }
@@ -579,7 +580,9 @@ async function fetchProfile(slug) {
     return null;
   }
 
-  return fetchJson(`${API}/tbotapp/profile/${encodeURIComponent(slug)}/`);
+  const encodedSlug = encodeURIComponent(String(slug).trim());
+
+  return fetchJson(`${API}/tbotapp/profile/${encodedSlug}/`);
 }
 
 async function fetchProfileDecks(slug) {
@@ -587,13 +590,14 @@ async function fetchProfileDecks(slug) {
     return null;
   }
 
-  return fetchJson(`${API}/tbotapp/profile/${encodeURIComponent(slug)}/decks/`);
+  const encodedSlug = encodeURIComponent(String(slug).trim());
+
+  return fetchJson(`${API}/tbotapp/profile/${encodedSlug}/decks/`);
 }
 
 async function resolveMetadata(pathname, query) {
   if (pathname === "/profile" || pathname.startsWith("/profile/")) {
     const slug = query.slug || pathname.replace(/^\/profile\//, "");
-
     const deckKey = query.deck;
 
     if (deckKey) {
@@ -620,7 +624,6 @@ async function resolveMetadata(pathname, query) {
     const parts = pathname.split("/").filter(Boolean);
 
     const slug = query.slug || parts[1] || "";
-
     const key = query.key || parts[2] || "";
 
     let deckId = null;
@@ -675,7 +678,6 @@ async function resolveMetadata(pathname, query) {
     const parts = pathname.split("/").filter(Boolean);
 
     const name = query.name || parts[1] || "";
-
     const deckKey = query.deck;
 
     if (deckKey && name) {
@@ -714,7 +716,6 @@ async function resolveMetadata(pathname, query) {
 
     if (cardQuery) {
       const data = await fetchJson(`${API}/tbotapp/cardinfo/`);
-
       const card = findCardInList(data, cardQuery);
 
       return cardToOg(card);
@@ -860,7 +861,8 @@ export default async function handler(req, res) {
 
   try {
     og = await resolveMetadata(originalPath, query);
-  } catch {
+  } catch (error) {
+    console.error("OG metadata resolution failed:", error);
     og = null;
   }
 
