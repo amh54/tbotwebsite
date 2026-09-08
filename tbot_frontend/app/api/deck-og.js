@@ -489,38 +489,22 @@ function profileToOg(profileData, fallbackSlug, decksPayload) {
     return buildProfileOg(fallbackSlug);
   }
 
-  const name = getProfileName(
-    profileData,
-    fallbackSlug,
-  );
+  const name = getProfileName(profileData, fallbackSlug);
 
-  const bio = getProfileBio(
-    profileData,
-  );
+  const bio = getProfileBio(profileData);
 
-  const deckCount = getProfileDeckCount(
-    profileData,
-    decksPayload,
-  );
+  const deckCount = getProfileDeckCount(profileData, decksPayload);
 
-  const cardCount = getProfileCardCount(
-    profileData,
-  );
+  const cardCount = getProfileCardCount(profileData);
 
   return {
     title: `${name} — Tbot Profile`,
 
-    description: buildProfileDescription(
-      name,
-      bio,
-      deckCount,
-      cardCount,
-    ),
+    description: buildProfileDescription(name, bio, deckCount, cardCount),
 
-    image:
-      `${SITE_URL}/api/profile-og?slug=${encodeURIComponent(
-        String(fallbackSlug || "").trim(),
-      )}`,
+    image: `${SITE_URL}/api/profile-og?slug=${encodeURIComponent(
+      String(fallbackSlug || "").trim(),
+    )}&v=2`,
   };
 }
 function buildProfileOg(slug) {
