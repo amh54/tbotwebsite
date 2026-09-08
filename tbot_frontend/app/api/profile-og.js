@@ -2,6 +2,10 @@
 import React from "react";
 import { ImageResponse } from "@vercel/og";
 
+export const config = {
+  runtime: "edge",
+};
+
 const API = String(
   process.env.DJANGO_API_URL || "",
 ).replace(/\/+$/, "");
@@ -65,7 +69,7 @@ async function fetchProfile(slug) {
   return response.json();
 }
 
-async function fetchAvatar(profile) {
+function getAvatarUrl(profile) {
   const discordId = String(
     profile?.discord_id || "",
   ).trim();
@@ -79,7 +83,7 @@ async function fetchAvatar(profile) {
       discordId,
     )
   ) {
-    return null;
+    return "";
   }
 
   if (
@@ -87,7 +91,7 @@ async function fetchAvatar(profile) {
       avatar,
     )
   ) {
-    return null;
+    return "";
   }
 
   const extension =
@@ -95,61 +99,11 @@ async function fetchAvatar(profile) {
       ? "gif"
       : "png";
 
-  const url =
+  return (
     `${DISCORD_CDN}/avatars/` +
     `${discordId}/` +
-    `${avatar}.${extension}` +
-    "?size=1024";
-
-  try {
-    const response =
-      await fetch(
-        url,
-        {
-          headers: {
-            Accept:
-              "image/png,image/gif,image/*,*/*;q=0.8",
-            "User-Agent":
-              "Tbot/1.0",
-          },
-        },
-      );
-
-    if (!response.ok) {
-      console.error(
-        `Discord avatar request failed: ${response.status}`,
-      );
-
-      return null;
-    }
-
-    const buffer =
-      Buffer.from(
-        await response.arrayBuffer(),
-      );
-
-    const contentType =
-      response.headers.get(
-        "content-type",
-      ) ||
-      (extension === "gif"
-        ? "image/gif"
-        : "image/png");
-
-    return {
-      dataUrl:
-        `data:${contentType};base64,` +
-        buffer.toString("base64"),
-      contentType,
-    };
-  } catch (error) {
-    console.error(
-      "Discord avatar fetch failed:",
-      error,
-    );
-
-    return null;
-  }
+    `${avatar}.${extension}?size=1024`
+  );
 }
 
 function getCount(...values) {
@@ -221,7 +175,7 @@ function getBio(profile) {
 function buildImage({
   profile,
   slug,
-  avatar,
+  avatarUrl,
   deckCount,
   cardCount,
 }) {
@@ -289,11 +243,11 @@ function buildImage({
           width: "100%",
         },
       },
-      avatar
+      avatarUrl
         ? React.createElement(
             "img",
             {
-              src: avatar.dataUrl,
+              src: avatarUrl,
               width: 180,
               height: 180,
               style: {
@@ -312,9 +266,10 @@ function buildImage({
           style: {
             display: "flex",
             flexDirection: "column",
-            marginLeft: avatar
-              ? "42px"
-              : "0px",
+            marginLeft:
+              avatarUrl
+                ? "42px"
+                : "0px",
             flex: 1,
           },
         },
@@ -409,22 +364,26 @@ function buildImage({
 
 export default async function handler(
   req,
-  res,
 ) {
-  const slug = String(
-    req.query?.slug || "",
-  ).trim();
-
-  if (!slug) {
-    res.statusCode = 400;
-
-    res.setHeader(
-      "Content-Type",
-      "text/plain; charset=utf-8",
+  const requestUrl =
+    new URL(
+      req.url,
     );
 
-    return res.end(
+  const slug =
+    requestUrl.searchParams
+      .get("slug");
+
+  if (!slug) {
+    return new Response(
       "Missing profile slug",
+      {
+        status: 400,
+        headers: {
+          "Content-Type":
+            "text/plain; charset=utf-8",
+        },
+      },
     );
   }
 
@@ -436,22 +395,20 @@ export default async function handler(
       getProfile(data);
 
     if (!profile) {
-      res.statusCode = 404;
-
-      res.setHeader(
-        "Content-Type",
-        "text/plain; charset=utf-8",
-      );
-
-      return res.end(
+      return new Response(
         "Profile not found",
+        {
+          status: 404,
+          headers: {
+            "Content-Type":
+              "text/plain; charset=utf-8",
+          },
+        },
       );
     }
 
-    const avatar =
-      await fetchAvatar(
-        profile,
-      );
+    const avatarUrl =
+      getAvatarUrl(profile);
 
     const deckCount =
       getCount(
@@ -477,64 +434,42 @@ export default async function handler(
         profile?.collectionCount,
       );
 
-    const element =
-      buildImage({
-        profile,
-        slug,
-        avatar,
-        deckCount,
-        cardCount,
-      });
-
-    const imageResponse =
+    const image =
       new ImageResponse(
-        element,
+        buildImage({
+          profile,
+          slug,
+          avatarUrl,
+          deckCount,
+          cardCount,
+        }),
         {
           width: WIDTH,
           height: HEIGHT,
         },
       );
 
-    const buffer =
-      Buffer.from(
-        await imageResponse.arrayBuffer(),
-      );
-
-    res.statusCode = 200;
-
-    res.setHeader(
-      "Content-Type",
-      "image/png",
-    );
-
-    res.setHeader(
-      "Content-Length",
-      String(buffer.length),
-    );
-
-    res.setHeader(
+    image.headers.set(
       "Cache-Control",
       "public, max-age=300, s-maxage=300, stale-while-revalidate=3600",
     );
 
-    return res.end(
-      buffer,
-    );
+    return image;
   } catch (error) {
     console.error(
       "Profile OG generation failed:",
       error,
     );
 
-    res.statusCode = 500;
-
-    res.setHeader(
-      "Content-Type",
-      "text/plain; charset=utf-8",
-    );
-
-    return res.end(
+    return new Response(
       "Unable to generate profile image",
+      {
+        status: 500,
+        headers: {
+          "Content-Type":
+            "text/plain; charset=utf-8",
+        },
+      },
     );
   }
 }
