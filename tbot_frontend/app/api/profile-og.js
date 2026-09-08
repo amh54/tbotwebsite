@@ -3,6 +3,7 @@ import { Resvg } from "@resvg/resvg-js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
 const API = String(
   process.env.DJANGO_API_URL || "",
 ).replace(/\/+$/, "");
@@ -13,11 +14,29 @@ const DISCORD_CDN =
 const WIDTH = 1200;
 const HEIGHT = 630;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(
+  import.meta.url,
+);
 
-const REGULAR_FONT = path.join(__dirname, "..", "public", "fonts", "DejaVuSans.ttf");
-const BOLD_FONT = path.join(__dirname, "..", "public", "fonts", "DejaVuSans-Bold.ttf");
+const __dirname = path.dirname(
+  __filename,
+);
+
+const REGULAR_FONT = path.join(
+  __dirname,
+  "..",
+  "public",
+  "fonts",
+  "DejaVuSans.ttf",
+);
+
+const BOLD_FONT = path.join(
+  __dirname,
+  "..",
+  "public",
+  "fonts",
+  "DejaVuSans-Bold.ttf",
+);
 
 if (!fs.existsSync(REGULAR_FONT)) {
   throw new Error(
@@ -63,6 +82,92 @@ function truncateText(value, maxLength) {
   }
 
   return `${text.slice(0, maxLength - 1).trim()}…`;
+}
+
+// The bio was previously rendered as a single <text> with no
+// wrapping, so anything longer than the card's width just ran off
+// the right edge and got cut off mid-word. This breaks it into
+// multiple lines that actually fit, capping at maxLines and adding
+// an ellipsis if there's still more text left over after that.
+function wrapText(text, maxCharsPerLine, maxLines) {
+  const clean = cleanText(text);
+
+  if (!clean) {
+    return [];
+  }
+
+  const words = clean.split(" ");
+
+  const lines = [];
+  let current = "";
+
+  for (const word of words) {
+    const next = current
+      ? `${current} ${word}`
+      : word;
+
+    if (next.length > maxCharsPerLine) {
+      if (current) {
+        lines.push(current);
+      }
+
+      current = word;
+
+      if (lines.length === maxLines) {
+        break;
+      }
+    } else {
+      current = next;
+    }
+  }
+
+  if (
+    lines.length < maxLines &&
+    current
+  ) {
+    lines.push(current);
+  }
+
+  const truncatedLines = lines.slice(
+    0,
+    maxLines,
+  );
+
+  const wordsUsed = truncatedLines
+    .join(" ")
+    .split(" ").length;
+
+  const hasMoreText =
+    wordsUsed < words.length;
+
+  if (
+    hasMoreText &&
+    truncatedLines.length
+  ) {
+    const lastIndex =
+      truncatedLines.length - 1;
+
+    let lastLine =
+      truncatedLines[lastIndex];
+
+    if (
+      lastLine.length >
+      maxCharsPerLine - 1
+    ) {
+      lastLine = lastLine
+        .slice(
+          0,
+          maxCharsPerLine - 1,
+        )
+        .trim();
+    }
+
+    truncatedLines[
+      lastIndex
+    ] = `${lastLine}…`;
+  }
+
+  return truncatedLines;
 }
 
 function getProfileObject(data) {
@@ -273,10 +378,54 @@ function createSvg({
       truncateText(username, 32),
     );
 
-  const safeBio =
-    escapeXml(
-      truncateText(bio, 165),
-    );
+  const bioLines = wrapText(
+    bio,
+    52,
+    2,
+  ).map((line) => escapeXml(line));
+
+  const BIO_LINE_HEIGHT = 33;
+
+  // Everything below the bio (stat boxes, tagline, footer) needs to
+  // shift down when the bio wraps to a second line, or it'll overlap.
+  const bioOverflow =
+    (bioLines.length - 1) *
+    BIO_LINE_HEIGHT;
+
+  const bioMarkup = bioLines.length
+    ? `
+      <text
+        x="270"
+        y="225"
+        font-family="DejaVu Sans"
+        font-size="27"
+        font-weight="400"
+        fill="#e3e7e9"
+      >
+        ${bioLines
+          .map(
+            (line, index) =>
+              `<tspan
+                x="270"
+                dy="${
+                  index === 0
+                    ? 0
+                    : BIO_LINE_HEIGHT
+                }"
+              >${line}</tspan>`,
+          )
+          .join("")}
+      </text>
+    `
+    : "";
+
+  const statsY = 305 + bioOverflow;
+  const statsLabelY =
+    350 + bioOverflow;
+  const statsValueY =
+    395 + bioOverflow;
+  const taglineY = 500 + bioOverflow;
+  const footerY = 540 + bioOverflow;
 
   const initial =
     escapeXml(
@@ -384,20 +533,11 @@ function createSvg({
     @${safeUsername}
   </text>
 
-  <text
-    x="270"
-    y="225"
-    font-family="DejaVu Sans"
-    font-size="27"
-    font-weight="400"
-    fill="#e3e7e9"
-  >
-    ${safeBio}
-  </text>
+  ${bioMarkup}
 
   <rect
     x="270"
-    y="305"
+    y="${statsY}"
     width="250"
     height="112"
     rx="18"
@@ -406,7 +546,7 @@ function createSvg({
 
   <text
     x="295"
-    y="350"
+    y="${statsLabelY}"
     font-family="DejaVu Sans"
     font-size="23"
     font-weight="400"
@@ -417,7 +557,7 @@ function createSvg({
 
   <text
     x="295"
-    y="395"
+    y="${statsValueY}"
     font-family="DejaVu Sans"
     font-size="38"
     font-weight="700"
@@ -428,7 +568,7 @@ function createSvg({
 
   <rect
     x="540"
-    y="305"
+    y="${statsY}"
     width="250"
     height="112"
     rx="18"
@@ -437,7 +577,7 @@ function createSvg({
 
   <text
     x="565"
-    y="350"
+    y="${statsLabelY}"
     font-family="DejaVu Sans"
     font-size="23"
     font-weight="400"
@@ -448,7 +588,7 @@ function createSvg({
 
   <text
     x="565"
-    y="395"
+    y="${statsValueY}"
     font-family="DejaVu Sans"
     font-size="38"
     font-weight="700"
@@ -459,7 +599,7 @@ function createSvg({
 
   <text
     x="270"
-    y="500"
+    y="${taglineY}"
     font-family="DejaVu Sans"
     font-size="25"
     font-weight="400"
@@ -470,7 +610,7 @@ function createSvg({
 
   <text
     x="1100"
-    y="540"
+    y="${footerY}"
     text-anchor="end"
     font-family="DejaVu Sans"
     font-size="23"
