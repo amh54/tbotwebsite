@@ -1021,7 +1021,7 @@ function UserDeckManager() {
             <h1>My Decklists</h1>
 
             <p className="admin-decklists-subtitle">
-              Manage and share your personal Tbot decks.
+              Manage and upload your personal Tbot decks.
             </p>
           </div>
 
