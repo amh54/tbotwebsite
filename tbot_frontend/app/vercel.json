@@ -1,64 +1,187 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
       "source": "/deck/:slug/:key",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/deck/:slug/:key"
     },
     {
       "source": "/profile/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/profile/:slug"
     },
     {
       "source": "/decklists",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/decklists"
     },
     {
       "source": "/legacydecks",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/legacydecks"
     },
     {
       "source": "/legacy-decklists",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/legacy-decklists"
     },
     {
       "source": "/deckbuilders/:name",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/deckbuilders/:name"
     },
     {
       "source": "/cardinfo",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/cardinfo"
     },
     {
       "source": "/heroinfo",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/heroinfo"
     },
     {
       "source": "/keeporscrap",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/keeporscrap"
     },
     {
       "source": "/users",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/users"
     },
     {
       "source": "/tutorial",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/tutorial"
     },
     {
       "source": "/updates",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/updates"
     },
     {
       "source": "/termsofservice",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/termsofservice"
     },
     {
       "source": "/privacypolicy",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(?i)(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
       "destination": "/api/deck-og?path=/privacypolicy"
-    },
-    {
-      "source": "/",
-      "destination": "/api/deck-og?path=/"
     },
     {
       "source": "/(.*)",
