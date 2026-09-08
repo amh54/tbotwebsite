@@ -304,46 +304,67 @@ function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
       .toUpperCase(),
   );
 
-  const avatarMarkup = avatar
-    ? `
-        <clipPath id="avatarClip">
-          <circle
-            cx="162"
-            cy="132"
-            r="92"
-          />
-        </clipPath>
+ const avatarMarkup = avatar
+  ? `
+      <circle
+        cx="162"
+        cy="132"
+        r="100"
+        fill="#8fe38b"
+      />
 
-        <image
-          href="${avatar}"
-          x="70"
-          y="40"
-          width="184"
-          height="184"
-          preserveAspectRatio="xMidYMid slice"
-          clip-path="url(#avatarClip)"
-        />
-      `
-    : `
+      <circle
+        cx="162"
+        cy="132"
+        r="94"
+        fill="#101416"
+      />
+
+      <clipPath id="avatarClip">
         <circle
           cx="162"
           cy="132"
-          r="92"
-          fill="#30363b"
+          r="88"
         />
+      </clipPath>
 
-        <text
-          x="162"
-          y="157"
-          text-anchor="middle"
-          font-family="DejaVu Sans"
-          font-size="72"
-          font-weight="700"
-          fill="#ffffff"
-        >
-          ${initial}
-        </text>
-      `;
+      <image
+        href="${avatar}"
+        x="74"
+        y="44"
+        width="176"
+        height="176"
+        preserveAspectRatio="xMidYMid slice"
+        clip-path="url(#avatarClip)"
+      />
+    `
+  : `
+      <circle
+        cx="162"
+        cy="132"
+        r="100"
+        fill="#8fe38b"
+      />
+
+      <circle
+        cx="162"
+        cy="132"
+        r="94"
+        fill="#30363b"
+      />
+
+      <text
+        x="162"
+        y="157"
+        text-anchor="middle"
+        font-family="DejaVu Sans"
+        font-size="72"
+        font-weight="700"
+        fill="#ffffff"
+      >
+        ${initial}
+      </text>
+    `;
 
   const CARD_HEIGHT = 566 + bioOverflow;
   const totalHeight = HEIGHT + bioOverflow;
