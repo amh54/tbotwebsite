@@ -303,12 +303,6 @@ function ProfileDeckBrowser({
   ]);
 
   const collectionOptions = useMemo(() => {
-    /*
-     * Always return the normal Collection options.
-     *
-     * When unauthenticated, the dropdown remains visible but
-     * clicking it triggers the temporary login message.
-     */
     if (!isAuthenticated) {
       return COLLECTION_OPTIONS;
     }
