@@ -40,12 +40,18 @@ const getCookie = (name) => {
   return null;
 };
 
-const ensureCsrfToken = async () => {
-  const existingToken = getCookie("csrftoken");
-
-  if (existingToken) {
-    csrfToken = existingToken;
+const ensureCsrfToken = async (forceRefresh = false) => {
+  if (!forceRefresh && csrfToken) {
     return csrfToken;
+  }
+
+  if (!forceRefresh) {
+    const existingToken = getCookie("csrftoken");
+
+    if (existingToken) {
+      csrfToken = existingToken;
+      return csrfToken;
+    }
   }
 
   const response = await fetch(
@@ -56,6 +62,7 @@ const ensureCsrfToken = async () => {
       headers: {
         Accept: "application/json",
       },
+      cache: "no-store",
     },
   );
 
@@ -65,22 +72,26 @@ const ensureCsrfToken = async () => {
     );
   }
 
-  try {
-    const data = await response.json();
+  let data = null;
 
-    csrfToken =
-      data?.csrfToken ||
-      data?.csrf_token ||
-      getCookie("csrftoken");
+  try {
+    data = await response.json();
   } catch {
-    csrfToken = getCookie("csrftoken");
+    data = null;
   }
 
-  if (!csrfToken) {
+  const freshToken =
+    data?.csrfToken ||
+    data?.csrf_token ||
+    getCookie("csrftoken");
+
+  if (!freshToken) {
     throw new Error(
       "CSRF token is missing. Please refresh the page and try again.",
     );
   }
+
+  csrfToken = freshToken;
 
   return csrfToken;
 };
@@ -183,26 +194,6 @@ const getReporterAvatar = (report) =>
   report?.user?.avatar ||
   report?.user?.avatar_url ||
   "";
-
-/*
- * Handles all of these possible API formats:
- *
- * screenshot: "https://res.cloudinary.com/..."
- *
- * screenshot_url: "https://res.cloudinary.com/..."
- *
- * screenshot: {
- *   url: "https://res.cloudinary.com/..."
- * }
- *
- * screenshot: {
- *   secure_url: "https://res.cloudinary.com/..."
- * }
- *
- * screenshot: {
- *   screenshot_url: "https://res.cloudinary.com/..."
- * }
- */
 const getScreenshotUrl = (report) => {
   const possibleScreenshot =
     report?.screenshot ??
@@ -520,33 +511,51 @@ function AdminBugReports() {
     return result;
   }, [reports]);
 
-  const handleStatusChange = async (
-    report,
-    newStatus,
-  ) => {
-    const reportId = getReportId(report);
+const handleStatusChange = async (
+  report,
+  newStatus,
+) => {
+  const reportId = getReportId(report);
 
-    if (
-      reportId === undefined ||
-      reportId === null
-    ) {
-      setActionError(
-        "This bug report does not have a valid ID.",
-      );
-      return;
-    }
+  if (
+    reportId === undefined ||
+    reportId === null
+  ) {
+    setActionError(
+      "This bug report does not have a valid ID.",
+    );
+    return;
+  }
 
-    const normalizedStatus =
-      normalizeStatus(newStatus);
+  const normalizedStatus =
+    normalizeStatus(newStatus);
 
-    try {
-      setUpdatingId(reportId);
-      setActionError("");
+  try {
+    setUpdatingId(reportId);
+    setActionError("");
 
-      const token =
-        await ensureCsrfToken();
+    let token = await ensureCsrfToken();
 
-      const response = await fetch(
+    let response = await fetch(
+      `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
+      {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-CSRFToken": token,
+        },
+        body: JSON.stringify({
+          status: normalizedStatus,
+        }),
+      },
+    );
+
+    if (response.status === 403) {
+      token = await ensureCsrfToken(true);
+
+      response = await fetch(
         `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
         {
           method: "PATCH",
@@ -561,126 +570,113 @@ function AdminBugReports() {
           }),
         },
       );
-
-      if (!response.ok) {
-        const message =
-          await getApiErrorMessage(
-            response,
-            `Unable to update bug report. Status ${response.status}`,
-          );
-
-        throw new Error(message);
-      }
-
-      let updatedReport = null;
-
-      try {
-        updatedReport =
-          await response.json();
-      } catch {
-        updatedReport = null;
-      }
-
-      setReports(
-        (currentReports) =>
-          currentReports.map(
-            (currentReport) => {
-              const currentId =
-                getReportId(
-                  currentReport,
-                );
-
-              if (
-                String(currentId) !==
-                String(reportId)
-              ) {
-                return currentReport;
-              }
-
-              return (
-                updatedReport || {
-                  ...currentReport,
-                  status:
-                    normalizedStatus,
-                }
-              );
-            },
-          ),
-      );
-
-      setSelectedReport(
-        (current) => {
-          if (!current) {
-            return current;
-          }
-
-          const currentId =
-            getReportId(current);
-
-          if (
-            String(currentId) !==
-            String(reportId)
-          ) {
-            return current;
-          }
-
-          return (
-            updatedReport || {
-              ...current,
-              status:
-                normalizedStatus,
-            }
-          );
-        },
-      );
-    } catch (err) {
-      console.error(
-        "Unable to update bug report:",
-        err,
-      );
-
-      setActionError(
-        err.message ||
-          "Unable to update bug report.",
-      );
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const handleDelete = async (report) => {
-    const reportId = getReportId(report);
-
-    if (
-      reportId === undefined ||
-      reportId === null
-    ) {
-      setActionError(
-        "This bug report does not have a valid ID.",
-      );
-      return;
     }
 
-    const title =
-      getReportTitle(report);
+    if (!response.ok) {
+      const message =
+        await getApiErrorMessage(
+          response,
+          `Unable to update bug report. Status ${response.status}`,
+        );
 
-    const confirmed =
-      window.confirm(
-        `Delete "${title}"?\n\nThis cannot be undone.`,
-      );
-
-    if (!confirmed) {
-      return;
+      throw new Error(message);
     }
+
+    let updatedReport = null;
 
     try {
-      setDeletingId(reportId);
-      setActionError("");
+      updatedReport = await response.json();
+    } catch {
+      updatedReport = null;
+    }
 
-      const token =
-        await ensureCsrfToken();
+    if (updatedReport) {
+      setReports((currentReports) =>
+        currentReports.map((currentReport) =>
+          String(getReportId(currentReport)) ===
+          String(reportId)
+            ? updatedReport
+            : currentReport,
+        ),
+      );
+    } else {
+      setReports((currentReports) =>
+        currentReports.map((currentReport) =>
+          String(getReportId(currentReport)) ===
+          String(reportId)
+            ? {
+                ...currentReport,
+                status: normalizedStatus,
+              }
+            : currentReport,
+        ),
+      );
+    }
+  } catch (error) {
+    console.error(
+      "Unable to update bug report:",
+      error,
+    );
 
-      const response = await fetch(
+    setActionError(
+      error instanceof Error
+        ? error.message
+        : "Unable to update bug report.",
+    );
+  } finally {
+    setUpdatingId(null);
+  }
+};
+
+const handleDelete = async (report) => {
+  const reportId = getReportId(report);
+
+  if (
+    reportId === undefined ||
+    reportId === null
+  ) {
+    setActionError(
+      "This bug report does not have a valid ID.",
+    );
+    return;
+  }
+
+  const title =
+    getReportTitle(report);
+
+  const confirmed =
+    window.confirm(
+      `Delete "${title}"?\n\nThis cannot be undone.`,
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    setDeletingId(reportId);
+    setActionError("");
+
+    let token =
+      await ensureCsrfToken();
+
+    let response = await fetch(
+      `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
+      {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "X-CSRFToken": token,
+        },
+      },
+    );
+
+    if (response.status === 403) {
+      token =
+        await ensureCsrfToken(true);
+
+      response = await fetch(
         `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
         {
           method: "DELETE",
@@ -691,57 +687,59 @@ function AdminBugReports() {
           },
         },
       );
-
-      if (!response.ok) {
-        const message =
-          await getApiErrorMessage(
-            response,
-            `Unable to delete bug report. Status ${response.status}`,
-          );
-
-        throw new Error(message);
-      }
-
-      setReports(
-        (currentReports) =>
-          currentReports.filter(
-            (currentReport) =>
-              String(
-                getReportId(
-                  currentReport,
-                ),
-              ) !==
-              String(reportId),
-          ),
-      );
-
-      setSelectedReport(
-        (current) => {
-          if (!current) {
-            return null;
-          }
-
-          return String(
-            getReportId(current),
-          ) === String(reportId)
-            ? null
-            : current;
-        },
-      );
-    } catch (err) {
-      console.error(
-        "Unable to delete bug report:",
-        err,
-      );
-
-      setActionError(
-        err.message ||
-          "Unable to delete bug report.",
-      );
-    } finally {
-      setDeletingId(null);
     }
-  };
+
+    if (!response.ok) {
+      const message =
+        await getApiErrorMessage(
+          response,
+          `Unable to delete bug report. Status ${response.status}`,
+        );
+
+      throw new Error(message);
+    }
+
+    setReports(
+      (currentReports) =>
+        currentReports.filter(
+          (currentReport) =>
+            String(
+              getReportId(
+                currentReport,
+              ),
+            ) !==
+            String(reportId),
+        ),
+    );
+
+    setSelectedReport(
+      (current) => {
+        if (!current) {
+          return null;
+        }
+
+        return String(
+          getReportId(current),
+        ) === String(reportId)
+          ? null
+          : current;
+      },
+    );
+  } catch (err) {
+    console.error(
+      "Unable to delete bug report:",
+      err,
+    );
+
+    setActionError(
+      err.message ||
+        "Unable to delete bug report.",
+    );
+  } finally {
+    setDeletingId(null);
+  }
+};
+
 
   const closeDetails = () => {
     setSelectedReport(null);

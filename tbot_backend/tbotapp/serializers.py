@@ -494,9 +494,10 @@ class BugReportSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
 
+    discord_username = serializers.SerializerMethodField()
+
     class Meta:
         model = BugReport
-
         fields = [
             "id",
             "discord_id",
@@ -514,7 +515,6 @@ class BugReportSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-
         read_only_fields = [
             "id",
             "discord_id",
@@ -524,6 +524,50 @@ class BugReportSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def get_discord_username(self, obj):
+        stored_username = str(
+            getattr(obj, "discord_username", "") or ""
+        ).strip()
+
+        discord_id = str(
+            getattr(obj, "discord_id", "") or ""
+        ).strip()
+
+        if discord_id:
+            try:
+                from .models import UserProfile
+
+                profile = (
+                    UserProfile.objects
+                    .filter(discord_id=discord_id)
+                    .first()
+                )
+
+                if profile:
+                    display_name = str(
+                        getattr(profile, "display_name", "") or ""
+                    ).strip()
+
+                    username = str(
+                        getattr(profile, "username", "") or ""
+                    ).strip()
+
+                    if display_name:
+                        return display_name
+
+                    if username:
+                        return username
+            except Exception:
+                logger.exception(
+                    "Unable to resolve Discord profile for bug report %s",
+                    getattr(obj, "id", "unknown"),
+                )
+
+        if stored_username:
+            return stored_username
+
+        return "Unknown User"
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -547,7 +591,6 @@ class BugReportSerializer(serializers.ModelSerializer):
                 "Unable to resolve screenshot URL for bug report %s",
                 getattr(instance, "id", "unknown"),
             )
-
             data["screenshot"] = ""
 
         return data
