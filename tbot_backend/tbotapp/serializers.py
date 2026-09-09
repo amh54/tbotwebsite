@@ -488,7 +488,6 @@ class KeepOrScrapSerializer(serializers.ModelSerializer):
 
 
 class BugReportSerializer(serializers.ModelSerializer):
-
     screenshot = serializers.ImageField(
         required=False,
         allow_null=True,
@@ -519,8 +518,6 @@ class BugReportSerializer(serializers.ModelSerializer):
             "id",
             "discord_id",
             "discord_username",
-            "status",
-            "admin_notes",
             "created_at",
             "updated_at",
         ]
@@ -558,6 +555,7 @@ class BugReportSerializer(serializers.ModelSerializer):
 
                     if username:
                         return username
+
             except Exception:
                 logger.exception(
                     "Unable to resolve Discord profile for bug report %s",
