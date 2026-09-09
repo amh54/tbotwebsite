@@ -937,7 +937,15 @@ const handleDownload = () => {
   window.location.href =
     `${API_BASE_URL}/tbotapp/decks/${deck.deckid}/download/`;
 };
+const handleAddComplete = (result) => {
+  if (typeof onComplete === "function") {
+    onComplete(result);
+  }
 
+  if (result) {
+    setOpen(false);
+  }
+};
 
   const handleEditComplete = (result) => {
     if (!result) {
