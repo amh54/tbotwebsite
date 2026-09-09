@@ -928,18 +928,16 @@ function DeckCard({
     }
   };
 
-  const handleDownload = () => {
+
+const handleDownload = () => {
   if (!deck?.deckid) {
     return;
   }
 
-  const apiBase = String(
-    import.meta.env.VITE_API_URL || ""
-  ).replace(/\/+$/, "");
-
   window.location.href =
-    `${apiBase}/tbotapp/decks/${deck.deckid}/download/`;
+    `${API_BASE_URL}/tbotapp/decks/${deck.deckid}/download/`;
 };
+
 
   const handleEditComplete = (result) => {
     if (!result) {
