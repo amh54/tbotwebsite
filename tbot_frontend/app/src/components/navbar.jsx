@@ -15,6 +15,7 @@ const NAVIGATION = [
       { label: "Users", path: "/users" },
       { label: "Terms of Service", path: "/termsofservice" },
       { label: "Privacy Policy", path: "/privacypolicy" },
+      { label: "Report a Bug", action: "reportBug" },
     ],
   },
   {
@@ -508,20 +509,21 @@ function Navbar() {
                 </button>
 
                 <div className="navbar-dropdown-menu">
-                  {menu.links.map((link) => (
-                    <Link key={link.path} to={link.path} onClick={closeMenus}>
-                      {link.label}
-                    </Link>
-                  ))}
-
-                  {menu.label === "Website Info" && (
-                    <button
-                      type="button"
-                      className="navbar-dropdown-link-button"
-                      onClick={openBugReport}
-                    >
-                      Report a Bug
-                    </button>
+                  {menu.links.map((link) =>
+                    link.action === "reportBug" ? (
+                      <button
+                        key={link.label}
+                        type="button"
+                        className="navbar-dropdown-link-button"
+                        onClick={openBugReport}
+                      >
+                        {link.label}
+                      </button>
+                    ) : (
+                      <Link key={link.path} to={link.path} onClick={closeMenus}>
+                        {link.label}
+                      </Link>
+                    ),
                   )}
                 </div>
               </div>
@@ -740,20 +742,21 @@ function Navbar() {
                 </button>
 
                 <div className="navbar-mobile-section-menu">
-                  {menu.links.map((link) => (
-                    <Link key={link.path} to={link.path} onClick={closeMenus}>
-                      {link.label}
-                    </Link>
-                  ))}
-
-                  {menu.label === "Website Info" && (
-                    <button
-                      type="button"
-                      className="navbar-mobile-link-button"
-                      onClick={openBugReport}
-                    >
-                      Report a Bug
-                    </button>
+                  {menu.links.map((link) =>
+                    link.action === "reportBug" ? (
+                      <button
+                        key={link.label}
+                        type="button"
+                        className="navbar-mobile-link-button"
+                        onClick={openBugReport}
+                      >
+                        {link.label}
+                      </button>
+                    ) : (
+                      <Link key={link.path} to={link.path} onClick={closeMenus}>
+                        {link.label}
+                      </Link>
+                    ),
                   )}
                 </div>
               </div>
