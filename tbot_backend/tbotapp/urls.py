@@ -23,7 +23,9 @@ from .views.keep_or_scrap import (
     keep_or_scrap,
     keep_or_scrap_count,
 )
-
+from .views.download_deck import(
+    download_deck_image
+)
 from .views.admin_keep_or_scrap import (
     admin_keep_or_scrap,
     admin_keep_or_scrap_detail,
@@ -139,7 +141,11 @@ urlpatterns = [
         decklist_count,
         name="decklist-count",
     ),
-
+path(
+    "decks/<int:deckid>/download/",
+    download_deck_image,
+    name="download-deck-image",
+),
     path(
         "cardinfo/",
         card_info,

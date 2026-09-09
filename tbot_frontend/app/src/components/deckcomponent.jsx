@@ -928,60 +928,17 @@ function DeckCard({
     }
   };
 
-  const handleDownload = async () => {
-  const imageUrl = getImageUrl(deck.image);
-
-  if (!imageUrl) {
+  const handleDownload = () => {
+  if (!deck?.deckid) {
     return;
   }
 
-  try {
-    const response = await fetch(imageUrl, {
-      method: "GET",
-      mode: "cors",
-      credentials: "omit",
-    });
+  const apiBase = String(
+    import.meta.env.VITE_API_URL || ""
+  ).replace(/\/+$/, "");
 
-    if (!response.ok) {
-      throw new Error(`Image fetch failed: ${response.status}`);
-    }
-
-    const blob = await response.blob();
-
-    if (!blob.size) {
-      throw new Error("Downloaded image is empty");
-    }
-
-    const extension =
-      blob.type === "image/webp"
-        ? "webp"
-        : blob.type === "image/png"
-          ? "png"
-          : blob.type === "image/jpeg"
-            ? "jpg"
-            : "webp";
-
-    const filename = `${deck.name || "decklist"}`
-      .replace(/[^a-z0-9]+/gi, "_")
-      .replace(/^_+|_+$/g, "");
-
-    const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = blobUrl;
-    link.download = `${filename || "decklist"}.${extension}`;
-    link.style.display = "none";
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    setTimeout(() => {
-      URL.revokeObjectURL(blobUrl);
-    }, 1000);
-  } catch (error) {
-    console.error("Deck download failed:", error);
-  }
+  window.location.href =
+    `${apiBase}/tbotapp/decks/${deck.deckid}/download/`;
 };
 
   const handleEditComplete = (result) => {
