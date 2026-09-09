@@ -1,6 +1,5 @@
 from django.db import models
 from django.db.models.functions import Now
-from cloudinary.models import CloudinaryField
 
 class Decklist(models.Model):
     deckid = models.IntegerField(primary_key=True)
@@ -541,11 +540,7 @@ class BugReport(models.Model):
         blank=True,
     )
 
-    screenshot = CloudinaryField(
-        "screenshot",
-        null=True,
-        blank=True,
-    )
+    screenshot = models.CharField(max_length=500, null=True, blank=True)
 
     admin_notes = models.TextField(
         blank=True,

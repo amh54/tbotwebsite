@@ -1,19 +1,15 @@
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import "../css/admin-keeporscrap.css";
 import "../css/loading.css";
-
 import ReactMarkdown from "react-markdown";
 
 const getApiBaseUrl = () => {
   const stripTrailingSlashes = (value) => {
     let normalized = value;
-
     while (normalized.endsWith("/")) {
       normalized = normalized.slice(0, -1);
     }
-
     return normalized;
   };
 
@@ -67,7 +63,6 @@ const hasValue = (value) =>
 
 const isIntroEntry = (entry) => {
   const side = normalizeText(entry?.side);
-
   return side === "intro" || side === "intro/explanation";
 };
 
@@ -104,66 +99,13 @@ const ensureCsrfToken = async () => {
   return token;
 };
 
-const loadCloudinaryWidgetScript = () => {
-  return new Promise((resolve, reject) => {
-    if (window.cloudinary) {
-      resolve(window.cloudinary);
-      return;
-    }
-
-    const existingScript = document.querySelector(
-      'script[data-cloudinary-upload-widget="true"]',
-    );
-
-    if (existingScript) {
-      existingScript.addEventListener(
-        "load",
-        () => resolve(window.cloudinary),
-        { once: true },
-      );
-
-      existingScript.addEventListener(
-        "error",
-        () => reject(new Error("Unable to load the Cloudinary Upload Widget.")),
-        { once: true },
-      );
-
-      return;
-    }
-
-    const script = document.createElement("script");
-
-    script.src = "https://upload-widget.cloudinary.com/latest/global/all.js";
-
-    script.async = true;
-
-    script.dataset.cloudinaryUploadWidget = "true";
-
-    script.onload = () => {
-      if (window.cloudinary) {
-        resolve(window.cloudinary);
-      } else {
-        reject(new Error("Cloudinary Upload Widget loaded incorrectly."));
-      }
-    };
-
-    script.onerror = () => {
-      reject(new Error("Unable to load the Cloudinary Upload Widget."));
-    };
-
-    document.head.appendChild(script);
-  });
-};
-
 const renderBoldText = (text) => {
   if (!hasValue(text)) {
     return null;
   }
 
   const rawText = String(text);
-
   const pattern = /\*\*(.+?)\*\*/g;
-
   const matches = [...rawText.matchAll(pattern)];
 
   if (matches.length === 0) {
@@ -172,14 +114,12 @@ const renderBoldText = (text) => {
     return lines.map((line, index) => (
       <span key={`line-${index}`}>
         {line}
-
         {index < lines.length - 1 && <br />}
       </span>
     ));
   }
 
   const parts = [];
-
   let lastIndex = 0;
 
   matches.forEach((match, index) => {
@@ -206,7 +146,6 @@ const renderBoldText = (text) => {
 
   if (lastIndex < rawText.length) {
     const textAfter = rawText.slice(lastIndex);
-
     const lines = textAfter.split(/\r?\n/);
 
     lines.forEach((line, lineIndex) => {
@@ -232,33 +171,25 @@ const renderIntroText = (text) => {
         h1: ({ children }) => (
           <h1 className="admin-kos-intro-heading">{children}</h1>
         ),
-
         h2: ({ children }) => (
           <h2 className="admin-kos-intro-heading">{children}</h2>
         ),
-
         h3: ({ children }) => (
           <h3 className="admin-kos-intro-heading">{children}</h3>
         ),
-
         blockquote: ({ children }) => (
           <blockquote className="admin-kos-intro-quote">{children}</blockquote>
         ),
-
         p: ({ children }) => (
           <p className="admin-kos-intro-paragraph">{children}</p>
         ),
-
         strong: ({ children }) => <strong>{children}</strong>,
-
         ul: ({ children }) => (
           <ul className="admin-kos-intro-list">{children}</ul>
         ),
-
         ol: ({ children }) => (
           <ol className="admin-kos-intro-list">{children}</ol>
         ),
-
         li: ({ children }) => <li>{children}</li>,
       }}
     >
@@ -269,30 +200,19 @@ const renderIntroText = (text) => {
 
 function AdminKeepOrScrap() {
   const [entries, setEntries] = useState([]);
-
   const [side, setSide] = useState("Intro");
   const [portalReady, setPortalReady] = useState(false);
   const [loading, setLoading] = useState(true);
-
   const [saving, setSaving] = useState(false);
-
   const [uploading, setUploading] = useState(false);
-
   const [error, setError] = useState("");
-
   const [success, setSuccess] = useState("");
-
   const [editorOpen, setEditorOpen] = useState(false);
-
   const [editingEntry, setEditingEntry] = useState(null);
-
   const [form, setForm] = useState(EMPTY_FORM);
-
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const widgetRef = useRef(null);
-
-  const cloudinaryRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     document.title = "Admin - Keep or Scrap";
@@ -301,9 +221,11 @@ function AdminKeepOrScrap() {
       document.title = "Tbot";
     };
   }, []);
+
   useEffect(() => {
     setPortalReady(true);
   }, []);
+
   useEffect(() => {
     document.body.style.overflow = editorOpen || deleteTarget ? "hidden" : "";
 
@@ -336,9 +258,7 @@ function AdminKeepOrScrap() {
           } else if (payload?.error) {
             message += `: ${payload.error}`;
           }
-        } catch {
-          // Ignore invalid JSON.
-        }
+        } catch {}
 
         throw new Error(message);
       }
@@ -395,14 +315,12 @@ function AdminKeepOrScrap() {
     return [...groups.values()]
       .map((group) => ({
         ...group,
-
         entries: group.entries.sort(
           (a, b) => Number(a.tierid) - Number(b.tierid),
         ),
       }))
       .sort((a, b) => {
         const aSide = normalizeText(a.side);
-
         const bSide = normalizeText(b.side);
 
         const aIsPlant = aSide === "plants" || aSide === "plant";
@@ -438,7 +356,6 @@ function AdminKeepOrScrap() {
 
     setError("");
     setSuccess("");
-
     setEditorOpen(true);
   };
 
@@ -452,7 +369,6 @@ function AdminKeepOrScrap() {
 
     setError("");
     setSuccess("");
-
     setEditorOpen(true);
   };
 
@@ -470,7 +386,6 @@ function AdminKeepOrScrap() {
 
     setError("");
     setSuccess("");
-
     setEditorOpen(true);
   };
 
@@ -480,196 +395,119 @@ function AdminKeepOrScrap() {
     }
 
     setEditorOpen(false);
-
     setEditingEntry(null);
-
     setForm(EMPTY_FORM);
-
     setError("");
   };
 
-  const getCloudinarySignature = useCallback(async (paramsToSign) => {
-    const query = new URLSearchParams();
-
-    Object.entries(paramsToSign || {}).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        query.set(key, String(value));
-      }
-    });
-
-    const response = await fetch(
-      `${API_BASE_URL}/tbotapp/admin/keeporscrap/cloudinary-signature/?${query.toString()}`,
-      {
-        method: "GET",
-        credentials: "include",
-      },
-    );
-
-    if (!response.ok) {
-      let message = `Cloudinary signature request failed (${response.status}).`;
-
-      try {
-        const payload = await response.json();
-
-        if (payload?.detail) {
-          message += ` ${payload.detail}`;
-        } else if (payload?.error) {
-          message += ` ${payload.error}`;
-        }
-      } catch {
-        // Ignore invalid JSON.
-      }
-
-      throw new Error(message);
-    }
-
-    return response.json();
-  }, []);
-
-  const initializeCloudinary = useCallback(async () => {
-    if (widgetRef.current && cloudinaryRef.current) {
+  const openR2FilePicker = () => {
+    if (uploading || saving) {
       return;
     }
 
-    const cloudinary = await loadCloudinaryWidgetScript();
+    setError("");
+    setSuccess("");
+    fileInputRef.current?.click();
+  };
 
-    cloudinaryRef.current = cloudinary;
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
 
-    const configResponse = await getCloudinarySignature({
-      timestamp: Math.floor(Date.now() / 1000),
-    });
-
-    if (!configResponse?.cloud_name || !configResponse?.api_key) {
-      throw new Error("Cloudinary configuration could not be loaded.");
+    if (!file) {
+      return;
     }
 
-    widgetRef.current = cloudinary.createUploadWidget(
-      {
-        cloudName: configResponse.cloud_name,
+    const isIntro =
+      normalizeText(form.side) === "intro" ||
+      normalizeText(form.side) === "intro/explanation";
 
-        apiKey: configResponse.api_key,
+    if (!isIntro && !hasValue(form.card_class)) {
+      setError("Card class is required before uploading an image.");
 
-        uploadSignature: async (callback, paramsToSign) => {
-          try {
-            const result = await getCloudinarySignature(paramsToSign);
+      event.target.value = "";
+      return;
+    }
 
-            callback(result.signature);
-          } catch (signatureError) {
-            console.error("Cloudinary signature failed:", signatureError);
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
-            callback(null);
-          }
-        },
+    if (!allowedTypes.includes(file.type)) {
+      setError("Unsupported image type. Use JPEG, PNG, WebP, or GIF.");
 
-        sources: ["local", "url", "camera"],
+      event.target.value = "";
+      return;
+    }
 
-        defaultSource: "local",
+    const maxSize = 15 * 1024 * 1024;
 
-        multiple: false,
+    if (file.size > maxSize) {
+      setError("Image is too large. Maximum size is 15 MB.");
 
-        maxFiles: 1,
+      event.target.value = "";
+      return;
+    }
 
-        resourceType: "image",
-
-        folder: "tbot/keep-or-scrap",
-
-        cropping: false,
-
-        showAdvancedOptions: false,
-
-        singleUploadAutoClose: true,
-
-        showUploadMoreButton: false,
-
-        theme: "minimal",
-
-        styles: {
-          palette: {
-            window: "#15181b",
-            windowBorder: "#2a3034",
-            tabIcon: "#8fe38b",
-            menuIcons: "#8fe38b",
-            textDark: "#ffffff",
-            textLight: "#ffffff",
-            link: "#8fe38b",
-            action: "#8fe38b",
-            inactiveTabIcon: "#7b858b",
-            error: "#ff6b6b",
-            inProgress: "#8fe38b",
-            complete: "#8fe38b",
-            sourceBg: "#101416",
-          },
-        },
-      },
-
-      (uploadError, result) => {
-        if (uploadError) {
-          console.error("Cloudinary upload error:", uploadError);
-
-          setUploading(false);
-
-          setError(
-            uploadError?.status ||
-              uploadError?.message ||
-              "Cloudinary image upload failed.",
-          );
-
-          return;
-        }
-
-        if (result?.event === "queues-start") {
-          setUploading(true);
-          setError("");
-          setSuccess("");
-        }
-
-        if (result?.event === "success") {
-          const secureUrl = result?.info?.secure_url;
-
-          if (!secureUrl) {
-            setUploading(false);
-
-            setError(
-              "Cloudinary uploaded the image but did not return an image URL.",
-            );
-
-            return;
-          }
-
-          updateForm("image", secureUrl);
-
-          setUploading(false);
-
-          setSuccess("Image uploaded to Cloudinary.");
-        }
-
-        if (result?.event === "close") {
-          setUploading(false);
-        }
-      },
-    );
-  }, [getCloudinarySignature]);
-
-  const openCloudinaryUpload = async () => {
     try {
+      setUploading(true);
       setError("");
       setSuccess("");
 
-      await initializeCloudinary();
+      const csrfToken = await ensureCsrfToken();
 
-      widgetRef.current?.open();
+      const formData = new FormData();
+
+      formData.append("image", file);
+
+      if (!isIntro) {
+        formData.append("card_class", String(form.card_class).trim());
+      } else {
+        formData.append("card_class", "intro");
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/tbotapp/admin/keeporscrap/image-upload/`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: formData,
+        },
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            data.detail ||
+            `Unable to upload image (${response.status}).`,
+        );
+      }
+
+      const imageUrl = data.secure_url || data.url;
+
+      if (!imageUrl) {
+        throw new Error(
+          "Image upload succeeded, but no image URL was returned.",
+        );
+      }
+
+      updateForm("image", imageUrl);
+
+      setSuccess("Image uploaded to Cloudflare R2.");
     } catch (uploadError) {
-      console.error("Cloudinary initialization failed:", uploadError);
+      console.error("Keep or Scrap R2 image upload failed:", uploadError);
 
+      setError(uploadError.message || "Unable to upload image to R2.");
+    } finally {
       setUploading(false);
-
-      setError(uploadError.message || "Unable to open Cloudinary.");
+      event.target.value = "";
     }
   };
 
   const removeImage = () => {
     updateForm("image", "");
-
     setSuccess("");
   };
 
@@ -696,7 +534,6 @@ function AdminKeepOrScrap() {
 
     try {
       setSaving(true);
-
       setError("");
       setSuccess("");
 
@@ -704,13 +541,9 @@ function AdminKeepOrScrap() {
 
       const payload = {
         side: form.side.trim(),
-
         card_class: isIntro ? "" : form.card_class.trim(),
-
         image: form.image.trim(),
-
         reasoning: form.reasoning,
-
         creator: form.creator.trim(),
       };
 
@@ -719,15 +552,11 @@ function AdminKeepOrScrap() {
           `${API_BASE_URL}/tbotapp/admin/keeporscrap/${editingEntry.tierid}/`,
           {
             method: "PATCH",
-
             credentials: "include",
-
             headers: {
               "Content-Type": "application/json",
-
               "X-CSRFToken": csrfToken,
             },
-
             body: JSON.stringify(payload),
           },
         );
@@ -743,9 +572,7 @@ function AdminKeepOrScrap() {
             } else if (errorPayload?.error) {
               message += `: ${errorPayload.error}`;
             }
-          } catch {
-            // Ignore invalid JSON.
-          }
+          } catch {}
 
           throw new Error(message);
         }
@@ -764,15 +591,11 @@ function AdminKeepOrScrap() {
           `${API_BASE_URL}/tbotapp/admin/keeporscrap/`,
           {
             method: "POST",
-
             credentials: "include",
-
             headers: {
               "Content-Type": "application/json",
-
               "X-CSRFToken": csrfToken,
             },
-
             body: JSON.stringify(createPayload),
           },
         );
@@ -788,9 +611,7 @@ function AdminKeepOrScrap() {
             } else if (errorPayload?.error) {
               message += `: ${errorPayload.error}`;
             }
-          } catch {
-            // Ignore invalid JSON.
-          }
+          } catch {}
 
           throw new Error(message);
         }
@@ -830,9 +651,7 @@ function AdminKeepOrScrap() {
         `${API_BASE_URL}/tbotapp/admin/keeporscrap/${deleteTarget.tierid}/`,
         {
           method: "DELETE",
-
           credentials: "include",
-
           headers: {
             "X-CSRFToken": csrfToken,
           },
@@ -850,9 +669,7 @@ function AdminKeepOrScrap() {
           } else if (payload?.error) {
             message += `: ${payload.error}`;
           }
-        } catch {
-          // Ignore invalid JSON.
-        }
+        } catch {}
 
         throw new Error(message);
       }
@@ -877,7 +694,6 @@ function AdminKeepOrScrap() {
 
   const changeSide = (newSide) => {
     setSide(newSide);
-
     setError("");
     setSuccess("");
   };
@@ -975,7 +791,6 @@ function AdminKeepOrScrap() {
             <div className="admin-kos-section-heading">
               <div>
                 <span>KEEP OR SCRAP</span>
-
                 <h2>Introduction</h2>
               </div>
             </div>
@@ -1020,7 +835,6 @@ function AdminKeepOrScrap() {
                     {hasValue(entry.creator) && (
                       <div className="admin-kos-creator">
                         <strong>Credits</strong>
-
                         <span>{entry.creator}</span>
                       </div>
                     )}
@@ -1054,7 +868,6 @@ function AdminKeepOrScrap() {
             <div className="admin-kos-section-heading">
               <div>
                 <span>RECOMMENDATIONS</span>
-
                 <h2>Keep or Scrap</h2>
               </div>
 
@@ -1252,13 +1065,23 @@ function AdminKeepOrScrap() {
                         <strong>Keep or Scrap Image</strong>
                       </div>
 
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleImageUpload}
+                        style={{
+                          display: "none",
+                        }}
+                      />
+
                       <button
                         type="button"
                         className="admin-kos-upload-button"
-                        onClick={openCloudinaryUpload}
+                        onClick={openR2FilePicker}
                         disabled={uploading || saving}
                       >
-                        {uploading ? "Uploading..." : "Upload to Cloudinary"}
+                        {uploading ? "Uploading..." : "Upload Image"}
                       </button>
                     </div>
 
@@ -1269,16 +1092,15 @@ function AdminKeepOrScrap() {
                         </div>
 
                         <div className="admin-kos-upload-preview-info">
-                          <span>Cloudinary Image</span>
+                          <span>R2 Image</span>
 
-                          <small>
-                            Image is stored in your Cloudinary account.
-                          </small>
+                          <small>Image is stored in Cloudflare R2.</small>
 
                           <button
                             type="button"
                             className="admin-kos-remove-image"
                             onClick={removeImage}
+                            disabled={uploading || saving}
                           >
                             Remove Image
                           </button>
@@ -1288,14 +1110,16 @@ function AdminKeepOrScrap() {
                       <button
                         type="button"
                         className="admin-kos-upload-dropzone"
-                        onClick={openCloudinaryUpload}
+                        onClick={openR2FilePicker}
+                        disabled={uploading || saving}
                       >
                         <span className="admin-kos-upload-icon">↑</span>
 
                         <strong>Upload Keep or Scrap Image</strong>
 
                         <small>
-                          Choose an image from your computer using Cloudinary.
+                          Choose an image from your computer. It will be
+                          uploaded to Cloudflare R2.
                         </small>
                       </button>
                     )}

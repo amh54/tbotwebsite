@@ -2,17 +2,40 @@ import json
 import logging
 import os
 import re
-import logging
+from functools import wraps
+
+import boto3
 import requests
 
+from django.conf import settings
 from django.utils import timezone
 
-from ..models import UserProfile
-import cloudinary.uploader
+from rest_framework import status
+from rest_framework.response import Response
 
-from django.conf import settings
+from ..models import UserProfile
+
 
 logger = logging.getLogger(__name__)
+
+
+MAX_CARD_RATIO = 4
+TARGET_CARD_RATIO_TOTAL = 40
+MAX_DECK_IMAGE_SIZE = 10 * 1024 * 1024
+
+R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID", "").strip()
+R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "").strip()
+R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "").strip()
+R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "").strip()
+R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "").strip().rstrip("/")
+
+IMAGE_CONTENT_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+}
 
 
 def include_error_detail():
@@ -26,10 +49,73 @@ def include_error_detail():
     }
 
 
+def _get_r2_client():
+    if not all(
+        [
+            R2_ACCOUNT_ID,
+            R2_ACCESS_KEY_ID,
+            R2_SECRET_ACCESS_KEY,
+            R2_BUCKET_NAME,
+            R2_PUBLIC_URL,
+        ]
+    ):
+        raise RuntimeError(
+            "R2 storage is not configured correctly."
+        )
+
+    return boto3.client(
+        "s3",
+        endpoint_url=(
+            f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+        ),
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        region_name="auto",
+    )
 
 
+def _normalize_r2_side(value):
+    value = str(value or "").strip().lower()
 
-logger = logging.getLogger(__name__)
+    if value in {"plant", "plants"}:
+        return "plants"
+
+    if value in {"zombie", "zombies"}:
+        return "zombies"
+
+    return None
+
+
+def _get_image_extension(uploaded_file):
+    original_name = str(
+        getattr(uploaded_file, "name", "") or ""
+    )
+
+    extension = os.path.splitext(original_name)[1].lower()
+
+    if extension in IMAGE_CONTENT_TYPES:
+        return extension
+
+    content_type = str(
+        getattr(uploaded_file, "content_type", "") or ""
+    ).lower()
+
+    for ext, allowed_type in IMAGE_CONTENT_TYPES.items():
+        if content_type == allowed_type:
+            return ext
+
+    raise ValueError(
+        "Unsupported image type. "
+        "Use JPG, JPEG, PNG, WEBP, or GIF."
+    )
+
+
+def _slugify(value):
+    value = str(value or "").strip().lower()
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    value = value.strip("-")
+
+    return value or "deck"
 
 
 def get_discord_user(request):
@@ -48,21 +134,11 @@ def get_discord_user(request):
 
     discord_id = str(discord_id)
 
-    # ============================================================
-    # CURRENT STORED PROFILE
-    # ============================================================
-
     profile = (
         UserProfile.objects
-        .filter(
-            discord_id=discord_id
-        )
+        .filter(discord_id=discord_id)
         .first()
     )
-
-    # ============================================================
-    # REFRESH DISCORD PROFILE
-    # ============================================================
 
     access_token = request.session.get(
         "discord_access_token"
@@ -82,11 +158,8 @@ def get_discord_user(request):
 
             if response.ok:
                 discord_data = response.json()
-
                 current_discord_id = discord_data.get("id")
 
-                # Make sure this token belongs to the
-                # Discord account stored in the session.
                 if (
                     current_discord_id
                     and str(current_discord_id) == discord_id
@@ -94,7 +167,7 @@ def get_discord_user(request):
                     discord_username = str(
                         discord_data.get(
                             "username",
-                            ""
+                            "",
                         )
                     ).strip()
 
@@ -106,28 +179,10 @@ def get_discord_user(request):
                         or f"discord_{discord_id}"
                     )
 
-                    # ====================================================
-                    # DISCORD AVATAR
-                    # ====================================================
-                    #
-                    # Keep the RAW Discord avatar hash.
-                    #
-                    # Static:
-                    #     123456789
-                    #
-                    # Animated:
-                    #     a_123456789
-                    #
-                    # Do NOT build the CDN URL here.
-
                     discord_avatar = (
                         discord_data.get("avatar")
                         or None
                     )
-
-                    # ====================================================
-                    # UPDATE SESSION
-                    # ====================================================
 
                     request.session["discord_id"] = (
                         discord_id
@@ -141,24 +196,9 @@ def get_discord_user(request):
                         discord_global_name
                     )
 
-                    # Store exactly what Discord returned.
-                    #
-                    # This can be:
-                    #     "123456789"
-                    #     "a_123456789"
-                    #     None
-                    #
-                    # Do not leave an old avatar in the session
-                    # when Discord says the user currently has no
-                    # custom avatar.
-
                     request.session["discord_avatar"] = (
                         discord_avatar
                     )
-
-                    # ====================================================
-                    # UPDATE DATABASE
-                    # ====================================================
 
                     if profile:
                         changed = False
@@ -172,11 +212,6 @@ def get_discord_user(request):
                             )
                             changed = True
 
-                        # Only let Discord overwrite the display
-                        # name if the user hasn't customized it
-                        # on the site. Otherwise every page load
-                        # that refreshes the Discord profile was
-                        # silently stomping the user's own choice.
                         if (
                             not profile.display_name_is_custom
                             and profile.display_name
@@ -187,17 +222,6 @@ def get_discord_user(request):
                             )
                             changed = True
 
-                        # IMPORTANT:
-                        #
-                        # Always synchronize the avatar with Discord.
-                        #
-                        # This handles:
-                        #
-                        # NULL -> a_123456789
-                        # old hash -> a_123456789
-                        # a_old -> a_new
-                        # a_123456789 -> NULL
-                        #
                         if profile.avatar != discord_avatar:
                             profile.avatar = (
                                 discord_avatar
@@ -217,10 +241,6 @@ def get_discord_user(request):
                                     "updated_at",
                                 ]
                             )
-
-                    # ====================================================
-                    # RETURN CURRENT DISCORD PROFILE
-                    # ====================================================
 
                     return {
                         "id": discord_id,
@@ -244,7 +264,6 @@ def get_discord_user(request):
                 "Failed to refresh Discord user %s.",
                 discord_id,
             )
-
         except ValueError:
             logger.exception(
                 "Invalid Discord response while refreshing "
@@ -252,45 +271,35 @@ def get_discord_user(request):
                 discord_id,
             )
 
-    # ============================================================
-    # FALLBACK TO DATABASE / SESSION
-    # ============================================================
-
     discord_username = request.session.get(
         "discord_username"
     )
 
-    if not discord_username:
-        if profile and profile.username:
-            discord_username = profile.username
+    if not discord_username and profile and profile.username:
+        discord_username = profile.username
 
-    if not discord_username:
-        if request.user.is_authenticated:
-            discord_username = str(
-                request.user.username or ""
-            ).strip()
+    if not discord_username and request.user.is_authenticated:
+        discord_username = str(
+            request.user.username or ""
+        ).strip()
 
-            if discord_username.startswith("discord_"):
-                discord_username = discord_username[
-                    len("discord_"):
-                ]
+        if discord_username.startswith("discord_"):
+            discord_username = discord_username[
+                len("discord_"):
+            ]
 
     discord_global_name = request.session.get(
         "discord_global_name"
     )
 
-    if not discord_global_name:
-        if profile and profile.display_name:
-            discord_global_name = (
-                profile.display_name
-            )
+    if not discord_global_name and profile and profile.display_name:
+        discord_global_name = profile.display_name
 
-    if not discord_global_name:
-        if request.user.is_authenticated:
-            discord_global_name = (
-                request.user.first_name
-                or discord_username
-            )
+    if not discord_global_name and request.user.is_authenticated:
+        discord_global_name = (
+            request.user.first_name
+            or discord_username
+        )
 
     if not discord_global_name:
         discord_global_name = (
@@ -298,8 +307,6 @@ def get_discord_user(request):
             or f"discord_{discord_id}"
         )
 
-    # Prefer the database avatar because it is the
-    # persistent source of truth.
     avatar = ""
 
     if profile and profile.avatar:
@@ -322,11 +329,6 @@ def get_discord_user(request):
         ),
         "avatar": avatar,
     }
-
-
-
-MAX_CARD_RATIO = 4
-TARGET_CARD_RATIO_TOTAL = 40
 
 
 def normalize_card_ratio_list(value):
@@ -388,7 +390,6 @@ def normalize_card_ratio_list(value):
             continue
 
         name_part, _, count_part = line.partition("|")
-
         name = name_part.strip()
 
         if not name:
@@ -419,10 +420,12 @@ def normalize_card_ratio_list(value):
 
         seen.add(key)
 
-        parsed_cards.append({
-            "name": name,
-            "count": count,
-        })
+        parsed_cards.append(
+            {
+                "name": name,
+                "count": count,
+            }
+        )
 
     return parsed_cards
 
@@ -508,38 +511,25 @@ def save_deck_image(
     uploaded_file,
     deckid,
     deck_name="",
+    legacy=False,
+    side="",
 ):
     if not uploaded_file:
         return None
 
-    allowed_extensions = {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".webp",
-        ".gif",
-    }
-
-    original_name = (
-        uploaded_file.name or ""
-    )
-
-    extension = os.path.splitext(
-        original_name
-    )[1].lower()
-
-    if extension not in allowed_extensions:
+    if not getattr(uploaded_file, "size", 0):
         raise ValueError(
-            "Unsupported image type. "
-            "Use JPG, JPEG, PNG, WEBP, or GIF."
+            "Image is empty."
         )
 
-    max_size = 10 * 1024 * 1024
-
-    if uploaded_file.size > max_size:
+    if uploaded_file.size > MAX_DECK_IMAGE_SIZE:
         raise ValueError(
             "Image is too large. Maximum size is 10 MB."
         )
+
+    extension = _get_image_extension(
+        uploaded_file
+    )
 
     clean_name = str(
         deck_name
@@ -551,46 +541,81 @@ def save_deck_image(
         clean_name
     )[0]
 
-    clean_name = clean_name.lower()
-
-    clean_name = re.sub(
-        r"[^a-z0-9]+",
-        "-",
-        clean_name,
+    clean_name = _slugify(
+        clean_name
     )
 
-    clean_name = clean_name.strip("-")
+    try:
+        numeric_deck_id = int(deckid)
+    except (
+        TypeError,
+        ValueError,
+    ):
+        numeric_deck_id = str(deckid).strip()
 
-    if not clean_name:
-        clean_name = "deck"
-
-    public_id = (
-        f"tbot/decklists/"
-        f"{deckid}-"
-        f"{clean_name}"
+    filename = (
+        f"{clean_name}-{numeric_deck_id}"
+        f"{extension}"
     )
 
-    result = cloudinary.uploader.upload(
-        uploaded_file,
-        public_id=public_id,
-        resource_type="image",
-        overwrite=True,
+    normalized_side = _normalize_r2_side(
+        side
     )
 
-    return result["secure_url"]
-# ============================================================
-# OWNER REQUIRED DECORATOR
-# ============================================================
+    if not normalized_side:
+        raise ValueError(
+            "Side must be Plants or Zombies."
+        )
 
-from functools import wraps
-from rest_framework.response import Response
-from rest_framework import status
+    if legacy:
+        key = (
+            f"legacy_decks/"
+            f"{normalized_side}/"
+            f"{filename}"
+        )
+    else:
+        key = (
+            f"decks/"
+            f"{normalized_side}/"
+            f"{filename}"
+        )
+
+    uploaded_file.seek(0)
+    content = uploaded_file.read()
+
+    if not content:
+        raise ValueError(
+            "Image is empty."
+        )
+
+    client = _get_r2_client()
+
+    client.put_object(
+        Bucket=R2_BUCKET_NAME,
+        Key=key,
+        Body=content,
+        ContentType=IMAGE_CONTENT_TYPES[extension],
+        CacheControl="public, max-age=31536000",
+    )
+
+    client.head_object(
+        Bucket=R2_BUCKET_NAME,
+        Key=key,
+    )
+
+    return f"{R2_PUBLIC_URL}/{key}"
 
 
 def owner_required(view_func):
     @wraps(view_func)
-    def wrapped_view(request, *args, **kwargs):
-        discord_id = request.session.get("discord_id")
+    def wrapped_view(
+        request,
+        *args,
+        **kwargs,
+    ):
+        discord_id = request.session.get(
+            "discord_id"
+        )
 
         if not discord_id:
             return Response(
@@ -602,16 +627,23 @@ def owner_required(view_func):
             )
 
         owner_id = str(
-            getattr(settings, "DISCORD_OWNER_ID", "")
+            getattr(
+                settings,
+                "DISCORD_OWNER_ID",
+                "",
+            )
         ).strip()
 
         if not owner_id:
             logger.error(
                 "DISCORD_OWNER_ID is not configured."
             )
+
             return Response(
                 {
-                    "error": "Owner configuration is missing."
+                    "error": (
+                        "Owner configuration is missing."
+                    )
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
@@ -619,11 +651,17 @@ def owner_required(view_func):
         if str(discord_id) != owner_id:
             return Response(
                 {
-                    "error": "Owner permissions required."
+                    "error": (
+                        "Owner permissions required."
+                    )
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        return view_func(request, *args, **kwargs)
+        return view_func(
+            request,
+            *args,
+            **kwargs,
+        )
 
     return wrapped_view

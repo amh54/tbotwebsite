@@ -894,10 +894,6 @@ def admin_legacy_decklists(request):
                 "",
             )
 
-        # ====================================================
-        # CLOUDINARY IMAGE UPLOAD
-        # ====================================================
-
         uploaded_image = (
             request.FILES.get("image_file")
             or request.FILES.get("image")
@@ -913,10 +909,12 @@ def admin_legacy_decklists(request):
 
         try:
             image_url = save_deck_image(
-                uploaded_image,
-                deckid=deckid,
-                deck_name=data.get("name") or deckid,
-            )
+    uploaded_image,
+    deckid=deckid,
+    deck_name=data.get("name") or deckid,
+    legacy=True,
+    side=data.get("side"),
+)
 
             data["image"] = image_url
 
@@ -1165,10 +1163,12 @@ def admin_legacy_decklist_update(
     if uploaded_image:
         try:
             image_url = save_deck_image(
-                uploaded_image,
-                deckid=deckid,
-                deck_name=data.get("name") or deck.name,
-            )
+    uploaded_image,
+    deckid=deckid,
+    deck_name=data.get("name") or deckid,
+    legacy=True,
+    side=data.get("side"),
+)
 
             data["image"] = image_url
 

@@ -8,7 +8,7 @@ from pathlib import Path
 import os
 
 import dj_database_url
-import cloudinary
+
 
 
 # ============================================================
@@ -180,28 +180,11 @@ ALLOWED_HOSTS = parse_csv_env(
 )
 
 
-# ============================================================
-# CLOUDINARY
-# ============================================================
-
-CLOUDINARY_CLOUD_NAME = os.getenv(
-    "CLOUDINARY_CLOUD_NAME"
-)
-
-CLOUDINARY_API_KEY = os.getenv(
-    "CLOUDINARY_API_KEY"
-)
-
-CLOUDINARY_API_SECRET = os.getenv(
-    "CLOUDINARY_API_SECRET"
-)
-
-cloudinary.config(
-    cloud_name=CLOUDINARY_CLOUD_NAME,
-    api_key=CLOUDINARY_API_KEY,
-    api_secret=CLOUDINARY_API_SECRET,
-    secure=True,
-)
+os.getenv("R2_ACCOUNT_ID")
+os.getenv("R2_ACCESS_KEY_ID")
+os.getenv("R2_SECRET_ACCESS_KEY")
+os.getenv("R2_BUCKET_NAME")
+os.getenv("R2_PUBLIC_URL")
 
 
 # ============================================================

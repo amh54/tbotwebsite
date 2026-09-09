@@ -30,7 +30,6 @@ from .views.admin_keep_or_scrap import (
     admin_keep_or_scrap,
     admin_keep_or_scrap_detail,
     admin_keep_or_scrap_image_upload,
-    admin_keep_or_scrap_cloudinary_signature,
 )
 
 from .views.auth import (
@@ -298,11 +297,6 @@ path(
         "admin/keeporscrap/image-upload/",
         admin_keep_or_scrap_image_upload,
         name="admin-keep-or-scrap-image-upload",
-    ),
-    path(
-        "admin/keeporscrap/cloudinary-signature/",
-        admin_keep_or_scrap_cloudinary_signature,
-        name="admin-keep-or-scrap-cloudinary-signature",
     ),
 
     path(

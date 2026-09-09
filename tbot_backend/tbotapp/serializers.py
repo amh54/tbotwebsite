@@ -1,4 +1,5 @@
 import logging
+
 from rest_framework import serializers
 
 from .models import (
@@ -14,6 +15,8 @@ from .models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
 class PublicDeckSerializer(serializers.ModelSerializer):
     class Meta:
         model = Decklist
@@ -121,14 +124,10 @@ class UserDeckSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "profile_id",
-
-            # User information
             "username",
             "display_name",
             "profile_slug",
             "avatar",
-
-            # Deck information
             "name",
             "hero",
             "side",
@@ -148,7 +147,6 @@ class UserDeckSerializer(serializers.ModelSerializer):
             "created_at",
             "modified_at",
         ]
-
         read_only_fields = [
             "id",
             "profile_id",
@@ -172,34 +170,26 @@ class UserDeckSerializer(serializers.ModelSerializer):
 
     def get_username(self, obj):
         profile = self._get_profile(obj)
-
         if not profile:
             return ""
-
         return profile.username or ""
 
     def get_display_name(self, obj):
         profile = self._get_profile(obj)
-
         if not profile:
             return ""
-
         return profile.display_name or ""
 
     def get_profile_slug(self, obj):
         profile = self._get_profile(obj)
-
         if not profile:
             return ""
-
         return profile.profile_slug or ""
 
     def get_avatar(self, obj):
         profile = self._get_profile(obj)
-
         if not profile:
             return ""
-
         return profile.avatar or ""
 
     def validate(self, attrs):
@@ -210,10 +200,8 @@ class UserDeckSerializer(serializers.ModelSerializer):
 
         if isinstance(cards, str):
             lines = cards.splitlines()
-
         elif isinstance(cards, list):
             lines = cards
-
         else:
             raise serializers.ValidationError({
                 "cards": "Cards must be a valid card ratio list."
@@ -237,12 +225,9 @@ class UserDeckSerializer(serializers.ModelSerializer):
 
                 try:
                     ratio = int(parts[1].strip())
-
                 except (TypeError, ValueError):
                     raise serializers.ValidationError({
-                        "cards": (
-                            f"Invalid ratio for {card_name}."
-                        )
+                        "cards": f"Invalid ratio for {card_name}."
                     })
 
             elif isinstance(line, dict):
@@ -254,12 +239,9 @@ class UserDeckSerializer(serializers.ModelSerializer):
 
                 try:
                     ratio = int(line.get("count", 0))
-
                 except (TypeError, ValueError):
                     raise serializers.ValidationError({
-                        "cards": (
-                            f"Invalid ratio for {card_name}."
-                        )
+                        "cards": f"Invalid ratio for {card_name}."
                     })
 
             else:
@@ -318,7 +300,6 @@ class UserCardSerializer(serializers.ModelSerializer):
                 return None
 
             return WebCardSerializer(card).data
-
         except Exception:
             return None
 
@@ -488,8 +469,9 @@ class KeepOrScrapSerializer(serializers.ModelSerializer):
 
 
 class BugReportSerializer(serializers.ModelSerializer):
-    screenshot = serializers.ImageField(
+    screenshot = serializers.CharField(
         required=False,
+        allow_blank=True,
         allow_null=True,
     )
 
@@ -533,8 +515,6 @@ class BugReportSerializer(serializers.ModelSerializer):
 
         if discord_id:
             try:
-                from .models import UserProfile
-
                 profile = (
                     UserProfile.objects
                     .filter(discord_id=discord_id)
@@ -580,16 +560,7 @@ class BugReportSerializer(serializers.ModelSerializer):
             data["screenshot"] = ""
             return data
 
-        try:
-            data["screenshot"] = str(
-                screenshot.url
-            )
-        except Exception:
-            logger.exception(
-                "Unable to resolve screenshot URL for bug report %s",
-                getattr(instance, "id", "unknown"),
-            )
-            data["screenshot"] = ""
+        data["screenshot"] = str(screenshot)
 
         return data
 

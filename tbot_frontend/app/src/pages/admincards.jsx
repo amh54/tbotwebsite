@@ -43,7 +43,9 @@ const getCookie = (name) => {
     const trimmed = cookie.trim();
 
     if (trimmed.startsWith(`${name}=`)) {
-      return decodeURIComponent(trimmed.slice(name.length + 1));
+      return decodeURIComponent(
+        trimmed.slice(name.length + 1),
+      );
     }
   }
 
@@ -57,10 +59,13 @@ const ensureCsrfToken = async () => {
     return existingToken;
   }
 
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/tbotapp/csrf/`,
+    {
+      method: "GET",
+      credentials: "include",
+    },
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -71,7 +76,9 @@ const ensureCsrfToken = async () => {
   const token = getCookie("csrftoken");
 
   if (!token) {
-    throw new Error("Django did not provide a CSRF token.");
+    throw new Error(
+      "Django did not provide a CSRF token.",
+    );
   }
 
   return token;
@@ -82,7 +89,10 @@ const normalizeSide = (value) => {
     .trim()
     .toLowerCase();
 
-  if (normalized === "zombie" || normalized === "zombies") {
+  if (
+    normalized === "zombie" ||
+    normalized === "zombies"
+  ) {
     return "Zombies";
   }
 
@@ -178,8 +188,13 @@ function AdminCards() {
         },
       );
 
-      if (response.status === 401 || response.status === 403) {
-        throw new Error("You are not authorized to manage cards.");
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+        throw new Error(
+          "You are not authorized to manage cards.",
+        );
       }
 
       if (!response.ok) {
@@ -198,8 +213,14 @@ function AdminCards() {
             : [],
       );
     } catch (err) {
-      console.error("Unable to load admin cards:", err);
-      setError(err?.message || "Unable to load cards.");
+      console.error(
+        "Unable to load admin cards:",
+        err,
+      );
+
+      setError(
+        err?.message || "Unable to load cards.",
+      );
     } finally {
       setLoading(false);
     }
@@ -277,101 +298,112 @@ function AdminCards() {
       [field]: value,
     }));
   };
-const handleImageUpload = async (event) => {
-  const file = event.target.files?.[0];
 
-  if (!file) {
-    return;
-  }
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
 
-  if (!form.card_name?.trim()) {
-    setError("Card name is required before uploading an image.");
-    event.target.value = "";
-    return;
-  }
-
-  setUploadingImage(true);
-  setError("");
-  setSuccess("");
-
-  try {
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      throw new Error(
-        "Unsupported image type. Use JPEG, PNG, WebP, or GIF.",
-      );
+    if (!file) {
+      return;
     }
 
-    const maxSize = 10 * 1024 * 1024;
-
-    if (file.size > maxSize) {
-      throw new Error(
-        "Image is too large. Maximum size is 10 MB.",
+    if (!form.card_name?.trim()) {
+      setError(
+        "Card name is required before uploading an image.",
       );
+
+      event.target.value = "";
+      return;
     }
 
-    const csrfToken = await ensureCsrfToken();
+    setUploadingImage(true);
+    setError("");
+    setSuccess("");
 
-    const formData = new FormData();
+    try {
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+      ];
 
-    formData.append("image", file);
-    formData.append(
-      "card_name",
-      String(form.card_name).trim(),
-    );
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error(
+          "Unsupported image type. Use JPEG, PNG, WebP, or GIF.",
+        );
+      }
 
-    const response = await fetch(
-      `${API_BASE_URL}/tbotapp/admin/cards/image-upload/`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "X-CSRFToken": csrfToken,
+      const maxSize = 10 * 1024 * 1024;
+
+      if (file.size > maxSize) {
+        throw new Error(
+          "Image is too large. Maximum size is 10 MB.",
+        );
+      }
+
+      const csrfToken = await ensureCsrfToken();
+
+      const formData = new FormData();
+
+      formData.append("image", file);
+      formData.append(
+        "card_name",
+        String(form.card_name).trim(),
+      );
+
+      const response = await fetch(
+        `${API_BASE_URL}/tbotapp/admin/cards/image-upload/`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: formData,
         },
-        body: formData,
-      },
-    );
-
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-          data.detail ||
-          `Unable to upload image (${response.status}).`,
       );
-    }
 
-    if (!data.secure_url && !data.url) {
-      throw new Error(
-        "Cloudinary upload succeeded, but no image URL was returned.",
+      const data = await response
+        .json()
+        .catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            data.detail ||
+            `Unable to upload image (${response.status}).`,
+        );
+      }
+
+      if (!data.secure_url && !data.url) {
+        throw new Error(
+          "Image upload succeeded, but no image URL was returned.",
+        );
+      }
+
+      const imageUrl =
+        data.secure_url || data.url;
+
+      updateField("thumbnail", imageUrl);
+
+      setSuccess(
+        `${form.card_name} image uploaded successfully.`,
       );
+    } catch (err) {
+      console.error(
+        "Unable to upload card image:",
+        err,
+      );
+
+      setError(
+        err?.message ||
+          "Unable to upload image.",
+      );
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
     }
-
-    const imageUrl = data.secure_url || data.url;
-
-    updateField("thumbnail", imageUrl);
-
-    setSuccess(
-      `${form.card_name} image uploaded successfully.`,
-    );
-  } catch (err) {
-    console.error("Unable to upload card image:", err);
-
-    setError(
-      err?.message || "Unable to upload image.",
-    );
-  } finally {
-    setUploadingImage(false);
-    event.target.value = "";
-  }
-};
+  };
 
   const handleSave = async (event) => {
     event.preventDefault();
@@ -395,7 +427,9 @@ const handleImageUpload = async (event) => {
       ).trim();
 
       if (!thumbnail) {
-        throw new Error("Card image is required.");
+        throw new Error(
+          "Card image is required.",
+        );
       }
 
       const payload = {
@@ -416,7 +450,9 @@ const handleImageUpload = async (event) => {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json().catch(() => ({}));
+      const data = await response
+        .json()
+        .catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(
@@ -427,7 +463,11 @@ const handleImageUpload = async (event) => {
       }
 
       setSuccess(
-        `${data.card_name || editingCard.card_name || "Card"} image updated successfully.`,
+        `${
+          data.card_name ||
+          editingCard.card_name ||
+          "Card"
+        } image updated successfully.`,
       );
 
       setEditorOpen(false);
@@ -436,10 +476,14 @@ const handleImageUpload = async (event) => {
 
       await loadCards();
     } catch (err) {
-      console.error("Unable to update card image:", err);
+      console.error(
+        "Unable to update card image:",
+        err,
+      );
 
       setError(
-        err?.message || "Unable to update card image.",
+        err?.message ||
+          "Unable to update card image.",
       );
     } finally {
       setSaving(false);
@@ -448,7 +492,9 @@ const handleImageUpload = async (event) => {
 
   const handleDelete = async (card) => {
     const confirmed = window.confirm(
-      `Delete "${card.card_name || "this card"}"?\n\nThis cannot be undone.`,
+      `Delete "${
+        card.card_name || "this card"
+      }"?\n\nThis cannot be undone.`,
     );
 
     if (!confirmed) {
@@ -473,7 +519,9 @@ const handleImageUpload = async (event) => {
         },
       );
 
-      const data = await response.json().catch(() => ({}));
+      const data = await response
+        .json()
+        .catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(
@@ -485,21 +533,28 @@ const handleImageUpload = async (event) => {
 
       if (
         selectedCard &&
-        Number(selectedCard.cardid) === Number(card.cardid)
+        Number(selectedCard.cardid) ===
+          Number(card.cardid)
       ) {
         setSelectedCard(null);
       }
 
       setSuccess(
-        `${card.card_name || "Card"} deleted successfully.`,
+        `${
+          card.card_name || "Card"
+        } deleted successfully.`,
       );
 
       await loadCards();
     } catch (err) {
-      console.error("Unable to delete card:", err);
+      console.error(
+        "Unable to delete card:",
+        err,
+      );
 
       setError(
-        err?.message || "Unable to delete card.",
+        err?.message ||
+          "Unable to delete card.",
       );
     } finally {
       setDeleting(false);
@@ -522,6 +577,7 @@ const handleImageUpload = async (event) => {
         <div className="admin-cards-header">
           <div>
             <h1>Card Manager</h1>
+
             <p>
               Add, edit, delete, and inspect Tbot cards.
             </p>
@@ -595,6 +651,7 @@ const handleImageUpload = async (event) => {
         {loading ? (
           <div className="admin-cards-loading">
             <div className="admin-cards-spinner" />
+
             <p>Loading cards...</p>
           </div>
         ) : filteredCards.length === 0 ? (
@@ -792,7 +849,7 @@ const handleImageUpload = async (event) => {
                             </strong>
 
                             <span>
-                              Cloudinary image
+                              R2 image
                             </span>
                           </div>
                         </div>
@@ -810,15 +867,17 @@ const handleImageUpload = async (event) => {
                           event.target.value,
                         )
                       }
-                      maxLength={330}
-                      placeholder="Cloudinary URL"
+                      maxLength={500}
+                      placeholder="Image URL"
                     />
                   </div>
                 </div>
               </section>
 
               <section className="admin-card-form-section">
-                <h3>Existing Card Information</h3>
+                <h3>
+                  Existing Card Information
+                </h3>
 
                 <div className="admin-card-form-grid">
                   <label>

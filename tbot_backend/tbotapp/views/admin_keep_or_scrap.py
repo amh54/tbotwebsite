@@ -1,9 +1,10 @@
+
 import logging
+import os
+import re
 
-import cloudinary
-import cloudinary.uploader
+import boto3
 
-from django.conf import settings
 from django.db import DatabaseError
 
 from rest_framework import status
@@ -20,20 +21,118 @@ from .permissions import is_discord_owner
 logger = logging.getLogger(__name__)
 
 
-# ============================================================
-# CLOUDINARY CONFIGURATION
-# ============================================================
+R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID", "").strip()
+R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "").strip()
+R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "").strip()
+R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "").strip()
+R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "").strip().rstrip("/")
 
-cloudinary.config(
-    cloud_name=getattr(settings, "CLOUDINARY_CLOUD_NAME", ""),
-    api_key=getattr(settings, "CLOUDINARY_API_KEY", ""),
-    api_secret=getattr(settings, "CLOUDINARY_API_SECRET", ""),
-)
+MAX_IMAGE_SIZE = 15 * 1024 * 1024
+
+CONTENT_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+}
 
 
-# ============================================================
-# ADMIN KEEP OR SCRAP
-# ============================================================
+def _get_r2_client():
+    if not all(
+        [
+            R2_ACCOUNT_ID,
+            R2_ACCESS_KEY_ID,
+            R2_SECRET_ACCESS_KEY,
+            R2_BUCKET_NAME,
+            R2_PUBLIC_URL,
+        ]
+    ):
+        raise RuntimeError("R2 storage is not configured correctly.")
+
+    return boto3.client(
+        "s3",
+        endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        region_name="auto",
+    )
+
+
+def _slugify(value):
+    value = str(value or "").strip().lower()
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    return value.strip("-")
+
+
+def _get_extension(image):
+    extension = os.path.splitext(
+        getattr(image, "name", "")
+    )[1].lower()
+
+    if extension in CONTENT_TYPES:
+        return extension
+
+    content_type = (
+        getattr(image, "content_type", "") or ""
+    ).lower()
+
+    for extension, allowed_type in CONTENT_TYPES.items():
+        if content_type == allowed_type:
+            return extension
+
+    raise ValueError(
+        "Unsupported image type. Use JPEG, PNG, WebP, or GIF."
+    )
+
+
+def _upload_keep_or_scrap_image(image, card_class):
+    if not image:
+        raise ValueError("No image was provided.")
+
+    if not getattr(image, "size", 0):
+        raise ValueError("Image is empty.")
+
+    if image.size > MAX_IMAGE_SIZE:
+        raise ValueError(
+            "Image is too large. Maximum size is 15 MB."
+        )
+
+    card_slug = _slugify(card_class)
+
+    if not card_slug:
+        raise ValueError(
+            "Card class is required before uploading an image."
+        )
+
+    extension = _get_extension(image)
+
+    filename = f"{card_slug}{extension}"
+    key = f"keep_or_scrap/{filename}"
+
+    image.seek(0)
+    content = image.read()
+
+    if not content:
+        raise ValueError("Image is empty.")
+
+    client = _get_r2_client()
+
+    client.put_object(
+        Bucket=R2_BUCKET_NAME,
+        Key=key,
+        Body=content,
+        ContentType=CONTENT_TYPES[extension],
+        CacheControl="public, max-age=31536000",
+    )
+
+    client.head_object(
+        Bucket=R2_BUCKET_NAME,
+        Key=key,
+    )
+
+    return f"{R2_PUBLIC_URL}/{key}", key
+
 
 @api_view(["GET", "POST"])
 def admin_keep_or_scrap(request):
@@ -44,10 +143,6 @@ def admin_keep_or_scrap(request):
         )
 
     try:
-        # ----------------------------------------------------
-        # GET
-        # ----------------------------------------------------
-
         if request.method == "GET":
             queryset = (
                 KeepOrScrap.objects
@@ -68,10 +163,6 @@ def admin_keep_or_scrap(request):
                 serializer.data,
                 status=status.HTTP_200_OK,
             )
-
-        # ----------------------------------------------------
-        # POST
-        # ----------------------------------------------------
 
         data = request.data.copy()
 
@@ -131,10 +222,6 @@ def admin_keep_or_scrap(request):
         )
 
 
-# ============================================================
-# ADMIN KEEP OR SCRAP DETAIL
-# ============================================================
-
 @api_view(["PATCH", "DELETE"])
 def admin_keep_or_scrap_detail(request, tierid):
     if not is_discord_owner(request):
@@ -148,20 +235,12 @@ def admin_keep_or_scrap_detail(request, tierid):
             tierid=tierid
         )
 
-        # ----------------------------------------------------
-        # DELETE
-        # ----------------------------------------------------
-
         if request.method == "DELETE":
             entry.delete()
 
             return Response(
                 status=status.HTTP_204_NO_CONTENT
             )
-
-        # ----------------------------------------------------
-        # PATCH
-        # ----------------------------------------------------
 
         serializer = KeepOrScrapSerializer(
             entry,
@@ -207,10 +286,6 @@ def admin_keep_or_scrap_detail(request, tierid):
         )
 
 
-# ============================================================
-# ADMIN KEEP OR SCRAP CLOUDINARY IMAGE UPLOAD
-# ============================================================
-
 @api_view(["POST"])
 def admin_keep_or_scrap_image_upload(request):
     if not is_discord_owner(request):
@@ -223,141 +298,55 @@ def admin_keep_or_scrap_image_upload(request):
 
     if not image:
         return Response(
-            {
-                "error": "No image was provided."
-            },
+            {"error": "No image was provided."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # --------------------------------------------------------
-    # Basic image validation
-    # --------------------------------------------------------
+    card_class = str(
+        request.data.get("card_class", "")
+    ).strip()
 
-    allowed_content_types = {
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/gif",
-    }
-
-    content_type = getattr(
-        image,
-        "content_type",
-        "",
-    )
-
-    if content_type not in allowed_content_types:
+    if not card_class:
         return Response(
             {
                 "error": (
-                    "Invalid image type. "
-                    "Please upload a JPG, PNG, WEBP, "
-                    "or GIF image."
+                    "Card class is required before "
+                    "uploading an image."
                 )
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-
-    # 15 MB maximum upload size.
-
-    max_size = 15 * 1024 * 1024
-
-    if image.size > max_size:
-        return Response(
-            {
-                "error": (
-                    "Image is too large. "
-                    "Maximum size is 15 MB."
-                )
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    # --------------------------------------------------------
-    # Verify Cloudinary configuration
-    # --------------------------------------------------------
-
-    cloud_name = getattr(
-        settings,
-        "CLOUDINARY_CLOUD_NAME",
-        "",
-    )
-
-    api_key = getattr(
-        settings,
-        "CLOUDINARY_API_KEY",
-        "",
-    )
-
-    api_secret = getattr(
-        settings,
-        "CLOUDINARY_API_SECRET",
-        "",
-    )
-
-    if not cloud_name or not api_key or not api_secret:
-        logger.error(
-            "Cloudinary is not configured correctly."
-        )
-
-        return Response(
-            {
-                "error": (
-                    "Cloudinary is not configured "
-                    "on the server."
-                )
-            },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-    # --------------------------------------------------------
-    # Upload
-    # --------------------------------------------------------
 
     try:
-        result = cloudinary.uploader.upload(
-            image,
-            folder="tbot/keep-or-scrap",
-            resource_type="image",
+        secure_url, key = _upload_keep_or_scrap_image(
+            image=image,
+            card_class=card_class,
         )
-
-        secure_url = result.get("secure_url")
-
-        if not secure_url:
-            logger.error(
-                "Cloudinary upload returned no secure URL: %s",
-                result,
-            )
-
-            return Response(
-                {
-                    "error": (
-                        "Cloudinary did not return "
-                        "an image URL."
-                    )
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
 
         return Response(
             {
+                "success": True,
                 "url": secure_url,
                 "secure_url": secure_url,
-                "public_id": result.get("public_id"),
-                "width": result.get("width"),
-                "height": result.get("height"),
-                "format": result.get("format"),
+                "key": key,
+                "card_class": card_class,
             },
             status=status.HTTP_201_CREATED,
         )
 
+    except ValueError as exc:
+        return Response(
+            {"error": str(exc)},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     except Exception as exc:
         logger.exception(
-            "Keep or Scrap Cloudinary upload failed"
+            "Keep or Scrap R2 image upload failed"
         )
 
         payload = {
-            "error": "Cloudinary upload failed.",
+            "error": "Unable to upload image to R2.",
             "error_type": exc.__class__.__name__,
         }
 
@@ -366,83 +355,5 @@ def admin_keep_or_scrap_image_upload(request):
 
         return Response(
             payload,
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-# ============================================================
-# ADMIN KEEP OR SCRAP CLOUDINARY SIGNATURE
-# ============================================================
-
-@api_view(["GET"])
-def admin_keep_or_scrap_cloudinary_signature(request):
-
-    if not is_discord_owner(request):
-        return Response(
-            {"error": "Unauthorized."},
-            status=status.HTTP_403_FORBIDDEN,
-        )
-
-    cloud_name = getattr(settings, "CLOUDINARY_CLOUD_NAME", "")
-    api_key = getattr(settings, "CLOUDINARY_API_KEY", "")
-    api_secret = getattr(settings, "CLOUDINARY_API_SECRET", "")
-
-    if not cloud_name or not api_key or not api_secret:
-        return Response(
-            {"error": "Cloudinary is not configured on the server."},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-    timestamp = request.GET.get("timestamp")
-
-    if not timestamp:
-        return Response(
-            {"error": "Missing timestamp."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    try:
-        timestamp = int(timestamp)
-    except (TypeError, ValueError):
-        return Response(
-            {"error": "Invalid timestamp."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    params_to_sign = {}
-
-    for key, value in request.GET.items():
-        if key == "signature":
-            continue
-
-        if value is not None and value != "":
-            params_to_sign[key] = value
-
-    params_to_sign["folder"] = "tbot/keep-or-scrap"
-    params_to_sign["timestamp"] = timestamp
-
-    try:
-        signature = cloudinary.utils.api_sign_request(
-            params_to_sign,
-            api_secret,
-        )
-
-        return Response(
-            {
-                "signature": signature,
-                "timestamp": timestamp,
-                "cloud_name": cloud_name,
-                "api_key": api_key,
-            },
-            status=status.HTTP_200_OK,
-        )
-
-    except Exception as exc:
-        logger.exception(
-            "Cloudinary signature generation failed"
-        )
-
-        return Response(
-            {
-                "error": "Unable to generate Cloudinary signature.",
-                "error_type": exc.__class__.__name__,
-            },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status=status.HTTP_502_BAD_GATEWAY,
         )
