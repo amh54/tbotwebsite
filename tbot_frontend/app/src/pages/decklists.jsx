@@ -920,11 +920,7 @@ function DecklistsPage() {
         <h1>Decklists</h1>
 
         <div className="deck-browser">
-          <img
-            className="deck-banner"
-            src="https://i.ibb.co/8nBNRL66/deckbannerbyairheadz.webp"
-            alt="Deck Banner"
-          />
+  
 
           <div className="tabs">
             <button
@@ -1073,7 +1069,7 @@ function DecklistsPage() {
         )}
       </main>
 
-      <Footer credits="Special thanks to rip for uploading all of the deck images, and to everyone in the PVZH community who continues to contribute great decks and help grow the Tbot website and Discord bot. Credit to AirheadZ for designing the deck banner used on this page." />
+      <Footer credits="Special thanks to everyone in the PVZH community who continues to contribute great decks and help grow the Tbot website and Discord bot." />
     </div>
   );
 }
