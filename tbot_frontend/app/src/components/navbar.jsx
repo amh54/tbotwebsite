@@ -6,7 +6,7 @@ import "../css/navbar.css";
 import NavbarDesktop from "./NavbarDesktop";
 import NavbarMobile from "./NavbarMobile";
 import NavbarAccount, { MobileAccount } from "./NavbarAccount";
-import BugReportModal from "./BugReportModal";
+import BugReportModal from "../components/modals/BugReportModal.jsx";
 
 import { API_BASE_URL, ensureCsrfToken } from "../utils/api";
 import NAVIGATION from "../utils/navigation";
