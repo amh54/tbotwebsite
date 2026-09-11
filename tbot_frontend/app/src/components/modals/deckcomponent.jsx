@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 
 import AddDeckModal from "./AddDeckModal";
 import EditDeckModal from "./EditDeckModal";
-import "../css/deckmodal.css";
+import "../../css/deckmodal.css";
 
 const HERO_COLORS = {
   "Beta-Carrotina": ["brown", "gray"],
