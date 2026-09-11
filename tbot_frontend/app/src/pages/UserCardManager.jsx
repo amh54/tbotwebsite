@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+
 import Select from "react-select";
+
 import { Link } from "react-router-dom";
+
+import AddCardsModal from "../components/modals/AddCardsModal.jsx";
+
 import Footer from "../components/footer";
+
 import "../css/cardinfo.css";
 import "../css/cardmanager.css";
 import "../css/loading.css";
@@ -18,21 +24,7 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-const SIDE_OPTIONS = [
-  {
-    value: "Plants",
-    label: "Plants",
-  },
-  {
-    value: "Zombie",
-    label: "Zombies",
-  },
-];
-
 const MAX_QUANTITY = 4;
-
-// Card data only stores raw fields like card_type, stats, and set_rarity.
-// Class, cost, set, and rarity all have to be parsed out of those.
 
 const normalizeText = (value) =>
   String(value ?? "")
@@ -199,18 +191,18 @@ const selectStyles = {
   }),
 
   valueContainer: (base) => ({
-  ...base,
-  minWidth: 0,
-  flexWrap: "wrap",
-  maxHeight: "140px",
-  overflowY: "auto",
-  overflowX: "hidden",
-  scrollbarWidth: "none",
-  msOverflowStyle: "none",
-  "::-webkit-scrollbar": {
-    display: "none",
-  },
-}),
+    ...base,
+    minWidth: 0,
+    flexWrap: "wrap",
+    maxHeight: "140px",
+    overflowY: "auto",
+    overflowX: "hidden",
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+    "::-webkit-scrollbar": {
+      display: "none",
+    },
+  }),
 
   indicatorsContainer: (base) => ({
     ...base,
@@ -261,7 +253,7 @@ const selectStyles = {
   multiValueRemove: (base) => ({
     ...base,
     color: "#aaa",
-    ":hover": {
+    "&:hover": {
       backgroundColor: "#555",
       color: "white",
     },
@@ -326,11 +318,7 @@ const ensureCsrfToken = async () => {
     );
   }
 
-  // Prefer the token Django returned directly.
-  const token =
-    data?.csrfToken ||
-    data?.csrf_token ||
-    getCsrfToken();
+  const token = data?.csrfToken || data?.csrf_token || getCsrfToken();
 
   if (!token) {
     throw new Error("Unable to obtain CSRF token");
@@ -344,19 +332,16 @@ const requestJson = async (url, options = {}) => {
 
   const headers = {
     Accept: "application/json",
-
     ...(options.body
       ? {
           "Content-Type": "application/json",
         }
       : {}),
-
     ...(options.headers || {}),
   };
 
   if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
     const csrfToken = await ensureCsrfToken();
-
     headers["X-CSRFToken"] = csrfToken;
   }
 
@@ -369,26 +354,26 @@ const requestJson = async (url, options = {}) => {
 
   let data = null;
 
-const contentType = response.headers.get("content-type") || "";
+  const contentType = response.headers.get("content-type") || "";
 
-if (contentType.includes("application/json")) {
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
-  }
-} else {
-  const text = await response.text();
+  if (contentType.includes("application/json")) {
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+  } else {
+    const text = await response.text();
 
-  if (text) {
-    data = {
-      error: text
-        .replace(/<[^>]*>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim(),
-    };
+    if (text) {
+      data = {
+        error: text
+          .replace(/<[^>]*>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim(),
+      };
+    }
   }
-}
 
   if (!response.ok) {
     const errorMessage =
@@ -398,7 +383,6 @@ if (contentType.includes("application/json")) {
       `Request failed with status ${response.status}`;
 
     const error = new Error(errorMessage);
-
     error.status = response.status;
     error.data = data;
 
@@ -418,36 +402,15 @@ const getQuantityValue = (value) => {
   return Math.min(MAX_QUANTITY, Math.max(0, parsed));
 };
 
-const getSelectedQuantity = (value) => {
-  const parsed = Number.parseInt(value, 10);
-
-  if (!Number.isFinite(parsed)) {
-    return 1;
-  }
-
-  return Math.min(MAX_QUANTITY, Math.max(1, parsed));
-};
-
-const getCardKey = (card) => {
-  return String(card.cardid ?? card.card_id ?? card.card_name);
-};
-
 const UserCardManager = () => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCardData, setSelectedCardData] = useState({});
-  const [loadingCards, setLoadingCards] = useState(false);
   const [savingCardId, setSavingCardId] = useState(null);
   const [deletingCardId, setDeletingCardId] = useState(null);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Add-card filters are multi-select.
-  const [selectedSides, setSelectedSides] = useState([]);
-  const [selectedClasses, setSelectedClasses] = useState([]);
-
-  const [search, setSearch] = useState("");
   const [collectionSearch, setCollectionSearch] = useState("");
   const [collectionSide, setCollectionSide] = useState([]);
   const [collectionType, setCollectionType] = useState([]);
@@ -455,67 +418,6 @@ const UserCardManager = () => {
   const [collectionCost, setCollectionCost] = useState([]);
   const [collectionRarity, setCollectionRarity] = useState([]);
   const [collectionSet, setCollectionSet] = useState([]);
-
-  const [classes, setClasses] = useState([]);
-  const [availableCards, setAvailableCards] = useState([]);
-  const [selectedCards, setSelectedCards] = useState({});
-  const [selectedQuantities, setSelectedQuantities] = useState({});
-  const [loadingClasses, setLoadingClasses] = useState(false);
-  const [addingCards, setAddingCards] = useState(false);
-
-  const setAllVisibleToFour = () => {
-    if (!availableCards.length) {
-      return;
-    }
-
-    setSelectedCards((current) => {
-      const nextSelected = { ...current };
-
-      availableCards.forEach((card) => {
-        const key = getCardKey(card);
-
-        if (card.already_owned) {
-          return;
-        }
-
-        nextSelected[key] = true;
-      });
-
-      return nextSelected;
-    });
-
-    setSelectedCardData((current) => {
-      const nextSelectedCardData = { ...current };
-
-      availableCards.forEach((card) => {
-        const key = getCardKey(card);
-
-        if (card.already_owned) {
-          return;
-        }
-
-        nextSelectedCardData[key] = card;
-      });
-
-      return nextSelectedCardData;
-    });
-
-    setSelectedQuantities((current) => {
-      const nextQuantities = { ...current };
-
-      availableCards.forEach((card) => {
-        const key = getCardKey(card);
-
-        if (card.already_owned) {
-          return;
-        }
-
-        nextQuantities[key] = MAX_QUANTITY;
-      });
-
-      return nextQuantities;
-    });
-  };
 
   const loadCollection = useCallback(async () => {
     setLoading(true);
@@ -536,135 +438,15 @@ const UserCardManager = () => {
     }
   }, []);
 
-  /*
-   * Load classes for every selected side.
-   *
-   * Plants
-   *   -> Guardian, Kabloom, Mega-Grow, Smarty, Solar
-   *
-   * Zombie
-   *   -> Beastly, Brainy, Crazy, Hearty, Sneaky
-   *
-   * Plants + Zombie
-   *   -> all ten classes
-   */
-  const loadClasses = useCallback(async (sides) => {
-    if (!sides?.length) {
-      setClasses([]);
-      return;
-    }
-
-    setLoadingClasses(true);
-    setError("");
-
-    try {
-      const params = new URLSearchParams();
-
-      sides.forEach((side) => {
-        params.append("side", side.value);
-      });
-
-      const data = await requestJson(
-        `${API_BASE_URL}/tbotapp/user-cards/classes/?${params.toString()}`,
-      );
-
-      const loadedClasses = Array.isArray(data.classes) ? data.classes : [];
-
-      const uniqueClasses = [
-        ...new Set(
-          loadedClasses
-            .map((cardClass) => normalizeClassName(cardClass))
-            .filter(Boolean),
-        ),
-      ].sort((a, b) =>
-        a.localeCompare(b, undefined, {
-          sensitivity: "base",
-        }),
-      );
-
-      setClasses(uniqueClasses);
-    } catch (requestError) {
-      setClasses([]);
-      setError(requestError.message || "Unable to load card classes.");
-    } finally {
-      setLoadingClasses(false);
-    }
-  }, []);
-
-  const loadAvailableCards = useCallback(async () => {
-    if (!selectedSides.length || !selectedClasses.length) {
-      setAvailableCards([]);
-      setLoadingCards(false);
-      return;
-    }
-
-    setLoadingCards(true);
-
-    try {
-      const params = new URLSearchParams();
-
-      selectedSides.forEach((side) => {
-        params.append("side", side.value);
-      });
-
-      selectedClasses.forEach((cardClass) => {
-        params.append("class", cardClass.value);
-      });
-
-      if (search.trim()) {
-        params.set("search", search.trim());
-      }
-
-      const data = await requestJson(
-        `${API_BASE_URL}/tbotapp/user-cards/available/?${params.toString()}`,
-      );
-
-      setAvailableCards(Array.isArray(data.cards) ? data.cards : []);
-    } catch (requestError) {
-      setAvailableCards([]);
-      setError(requestError.message || "Unable to load available cards.");
-    } finally {
-      setLoadingCards(false);
-    }
-  }, [selectedSides, selectedClasses, search]);
-
   useEffect(() => {
     loadCollection();
   }, [loadCollection]);
 
-  useEffect(() => {
-    if (!isAddModalOpen) {
-      return;
-    }
-
-    loadClasses(selectedSides);
-  }, [isAddModalOpen, selectedSides, loadClasses]);
-
-  useEffect(() => {
-    if (!isAddModalOpen) {
-      return;
-    }
-
-    if (!selectedSides.length || !selectedClasses.length) {
-      setAvailableCards([]);
-      setLoadingCards(false);
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      loadAvailableCards();
-    }, 150);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [
-    isAddModalOpen,
-    selectedSides,
-    selectedClasses,
-    search,
-    loadAvailableCards,
-  ]);
+  const handleCardsAdded = async () => {
+    setIsAddModalOpen(false);
+    await loadCollection();
+    setSuccessMessage("Cards added to your collection.");
+  };
 
   const ownedCount = useMemo(() => {
     return cards.length;
@@ -677,7 +459,6 @@ const UserCardManager = () => {
     );
   }, [cards]);
 
-  // Derived filter values pulled from the collection.
   const collectionFilterOptions = useMemo(() => {
     const sides = new Set();
     const types = new Set();
@@ -693,11 +474,13 @@ const UserCardManager = () => {
         sides.add(cardData.side);
       }
 
-      getCardTypes(cardData).forEach((type) => types.add(type));
+      getCardTypes(cardData).forEach((type) => {
+        types.add(type);
+      });
 
-      getClassNames(cardData.card_type).forEach((className) =>
-        classes.add(className),
-      );
+      getClassNames(cardData.card_type).forEach((className) => {
+        classes.add(className);
+      });
 
       const stats = getCardStats(cardData.stats);
 
@@ -782,13 +565,11 @@ const UserCardManager = () => {
 
     const matches = cards.filter((card) => {
       const cardData = card.card || card;
-
       const name = card.card_name?.toLowerCase() || "";
 
       const searchMatch = !searchValue || name.includes(searchValue);
 
       const cardClasses = getClassNames(cardData.card_type);
-
       const cardTypes = getCardTypes(cardData);
       const stats = getCardStats(cardData.stats);
       const setName = getSetName(cardData.set_rarity);
@@ -907,10 +688,6 @@ const UserCardManager = () => {
     collectionRarity,
   ]);
 
-  const selectedCount = useMemo(() => {
-    return Object.values(selectedCards).filter(Boolean).length;
-  }, [selectedCards]);
-
   const clearMessages = () => {
     setError("");
     setSuccessMessage("");
@@ -926,246 +703,13 @@ const UserCardManager = () => {
     setCollectionRarity([]);
   };
 
-  const resetAddModalState = () => {
-    setSelectedSides([]);
-    setSelectedClasses([]);
-    setSearch("");
-    setClasses([]);
-    setAvailableCards([]);
-    setSelectedCards({});
-    setSelectedCardData({});
-    setSelectedQuantities({});
-  };
-
   const openAddModal = () => {
     clearMessages();
-    resetAddModalState();
     setIsAddModalOpen(true);
   };
 
   const closeAddModal = () => {
-    if (addingCards) {
-      return;
-    }
-
     setIsAddModalOpen(false);
-    resetAddModalState();
-  };
-
-  const handleSideChange = (sides) => {
-    clearMessages();
-
-    setSelectedSides(sides || []);
-
-    // Changing the side selection invalidates the
-    // current class selection because the available
-    // classes may change.
-    setSelectedClasses([]);
-
-    setSearch("");
-    setSelectedCards({});
-    setSelectedCardData({});
-    setSelectedQuantities({});
-    setAvailableCards([]);
-  };
-
-  const handleClassChange = (cardClasses) => {
-    clearMessages();
-
-    setSelectedClasses(cardClasses || []);
-    setSelectedCards({});
-    setSelectedCardData({});
-    setSelectedQuantities({});
-    setAvailableCards([]);
-  };
-
-  const toggleCardSelection = (card) => {
-    if (card.already_owned) {
-      return;
-    }
-
-    const key = getCardKey(card);
-
-    setSelectedCards((current) => {
-      const isCurrentlySelected = Boolean(current[key]);
-
-      return {
-        ...current,
-        [key]: !isCurrentlySelected,
-      };
-    });
-
-    setSelectedCardData((current) => {
-      if (current[key]) {
-        const next = { ...current };
-        delete next[key];
-        return next;
-      }
-
-      return {
-        ...current,
-        [key]: card,
-      };
-    });
-
-    setSelectedQuantities((current) => {
-      if (current[key] !== undefined) {
-        return current;
-      }
-
-      return {
-        ...current,
-        [key]: 1,
-      };
-    });
-  };
-
-  const increaseSelectedQuantity = (card) => {
-    const key = getCardKey(card);
-
-    setSelectedQuantities((current) => {
-      const currentQuantity = getSelectedQuantity(current[key] ?? 1);
-
-      return {
-        ...current,
-        [key]: Math.min(MAX_QUANTITY, currentQuantity + 1),
-      };
-    });
-  };
-
-  const decreaseSelectedQuantity = (card) => {
-    const key = getCardKey(card);
-
-    setSelectedQuantities((current) => {
-      const currentQuantity = getSelectedQuantity(current[key] ?? 1);
-
-      return {
-        ...current,
-        [key]: Math.max(1, currentQuantity - 1),
-      };
-    });
-  };
-
-  const selectAllVisible = () => {
-    if (!availableCards.length) {
-      return;
-    }
-
-    setSelectedCards((current) => {
-      const nextSelected = { ...current };
-
-      availableCards.forEach((card) => {
-        const key = getCardKey(card);
-
-        if (card.already_owned) {
-          return;
-        }
-
-        nextSelected[key] = true;
-      });
-
-      return nextSelected;
-    });
-
-    setSelectedCardData((current) => {
-      const nextSelectedCardData = { ...current };
-
-      availableCards.forEach((card) => {
-        const key = getCardKey(card);
-
-        if (card.already_owned) {
-          return;
-        }
-
-        nextSelectedCardData[key] = card;
-      });
-
-      return nextSelectedCardData;
-    });
-
-    setSelectedQuantities((current) => {
-      const nextQuantities = { ...current };
-
-      availableCards.forEach((card) => {
-        const key = getCardKey(card);
-
-        if (card.already_owned) {
-          return;
-        }
-
-        if (nextQuantities[key] === undefined) {
-          nextQuantities[key] = 1;
-        }
-      });
-
-      return nextQuantities;
-    });
-  };
-
-  const clearSelectedCards = () => {
-    setSelectedCards({});
-    setSelectedCardData({});
-    setSelectedQuantities({});
-  };
-
-  const handleAddSelected = async () => {
-    const selected = Object.values(selectedCardData).filter(
-      (card) => !card.already_owned,
-    );
-
-    if (!selected.length) {
-      setError("Select at least one card to add.");
-      return;
-    }
-
-    setAddingCards(true);
-    clearMessages();
-
-    let addedCount = 0;
-    const failedCards = [];
-
-    try {
-      /*
-       * requestJson() now handles CSRF automatically.
-       * There is no need to manually retrieve the token here.
-       */
-      for (const card of selected) {
-        const key = getCardKey(card);
-
-        const quantity = getSelectedQuantity(selectedQuantities[key] ?? 1);
-
-        try {
-          await requestJson(`${API_BASE_URL}/tbotapp/user-cards/create/`, {
-            method: "POST",
-            body: JSON.stringify({
-              card_name: card.card_name,
-              quantity,
-            }),
-          });
-
-          addedCount++;
-        } catch (requestError) {
-          failedCards.push(`${card.card_name}: ${requestError.message}`);
-        }
-      }
-
-      await loadCollection();
-
-      if (failedCards.length) {
-        setError(
-          `Added ${addedCount} cards, but failed: ${failedCards.join(" | ")}`,
-        );
-      } else {
-        setSuccessMessage(`${addedCount} cards added to your collection.`);
-
-        setIsAddModalOpen(false);
-        resetAddModalState();
-      }
-    } catch (requestError) {
-      setError(requestError.message || "Unable to add cards.");
-    } finally {
-      setAddingCards(false);
-    }
   };
 
   const handleQuantityChange = (cardId, value) => {
@@ -1397,11 +941,13 @@ const UserCardManager = () => {
         <section className="card-manager-summary">
           <div className="summary-item">
             <span className="summary-label">Unique Cards</span>
+
             <strong>{ownedCount}</strong>
           </div>
 
           <div className="summary-item">
             <span className="summary-label">Total Copies</span>
+
             <strong>{totalQuantity}</strong>
           </div>
         </section>
@@ -1410,6 +956,7 @@ const UserCardManager = () => {
           <div className="card-manager-section-header">
             <div>
               <h2>My Collection</h2>
+
               <span>
                 {ownedCount} unique card
                 {ownedCount === 1 ? "" : "s"}
@@ -1531,6 +1078,7 @@ const UserCardManager = () => {
           ) : cards.length === 0 ? (
             <div className="card-manager-empty">
               <h3>Your collection is empty</h3>
+
               <p>Add cards to start building your collection.</p>
 
               <button
@@ -1540,6 +1088,12 @@ const UserCardManager = () => {
               >
                 Add Cards
               </button>
+            </div>
+          ) : filteredCollection.length === 0 ? (
+            <div className="card-manager-empty">
+              <h3>No cards match your filters</h3>
+
+              <p>Try changing your search or collection filters.</p>
             </div>
           ) : (
             <div className="card-manager-grid">
@@ -1551,303 +1105,11 @@ const UserCardManager = () => {
 
       <Footer />
 
-      {isAddModalOpen && (
-        <div
-          className="card-manager-modal-backdrop"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeAddModal();
-            }
-          }}
-        >
-          <div
-            className="card-manager-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-cards-title"
-          >
-            <div className="card-manager-modal-header">
-              <div>
-                <h2 id="add-cards-title">Add Cards</h2>
-
-                <p>
-                  Select one or more sides and classes, then choose the cards
-                  you want to add.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="modal-close-button"
-                onClick={closeAddModal}
-                disabled={addingCards}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="card-manager-filters">
-              <div className="filter-group">
-                <label htmlFor="card-side">Side</label>
-
-                <Select
-                  inputId="card-side"
-                  styles={selectStyles}
-                  menuPortalTarget={document.body}
-                  placeholder="Select sides..."
-                  options={SIDE_OPTIONS}
-                  value={selectedSides}
-                  onChange={handleSideChange}
-                  isMulti
-                  closeMenuOnSelect={false}
-                  isDisabled={addingCards}
-                />
-              </div>
-
-              <div className="filter-group">
-                <label htmlFor="card-class">Class</label>
-
-                <Select
-                  inputId="card-class"
-                  styles={selectStyles}
-                  menuPortalTarget={document.body}
-                  placeholder={
-                    !selectedSides.length
-                      ? "Select sides first..."
-                      : loadingClasses
-                        ? "Loading classes..."
-                        : "Select classes..."
-                  }
-                  options={classes.map((cardClass) => ({
-                    value: cardClass,
-                    label: cardClass,
-                  }))}
-                  value={selectedClasses}
-                  onChange={handleClassChange}
-                  isMulti
-                  closeMenuOnSelect={false}
-                  isDisabled={
-                    !selectedSides.length || loadingClasses || addingCards
-                  }
-                />
-              </div>
-
-              <div className="filter-group search-group">
-                <label htmlFor="card-search">Search</label>
-
-                <input
-                  id="card-search"
-                  type="search"
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                  }}
-                  placeholder={
-                    selectedClasses.length
-                      ? "Search cards..."
-                      : "Select a class first..."
-                  }
-                  disabled={!selectedClasses.length || addingCards}
-                />
-              </div>
-            </div>
-
-            {!selectedSides.length ? (
-              <div className="modal-empty-state">
-                <h3>Choose a side to begin</h3>
-
-                <p>Select Plants or Zombies to load the available classes.</p>
-              </div>
-            ) : !selectedClasses.length ? (
-              <div className="modal-empty-state">
-                <h3>Choose a class to see cards</h3>
-
-                <p>
-                  Select at least one class above before the available cards are
-                  displayed.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="available-cards-toolbar">
-                  <span>
-                    {loadingCards
-                      ? "Loading cards..."
-                      : `${availableCards.length} card${
-                          availableCards.length === 1 ? "" : "s"
-                        }`}
-                  </span>
-
-                  <div className="selection-actions">
-                    <button
-                      type="button"
-                      onClick={selectAllVisible}
-                      disabled={
-                        loadingCards || !availableCards.length || addingCards
-                      }
-                    >
-                      Select Available
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={setAllVisibleToFour}
-                      disabled={
-                        loadingCards || !availableCards.length || addingCards
-                      }
-                    >
-                      Set All +4
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={clearSelectedCards}
-                      disabled={selectedCount === 0 || addingCards}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-
-                <div className="available-card-list">
-                  {loadingCards ? (
-                    <div className="modal-loading">
-                      Loading available cards...
-                    </div>
-                  ) : availableCards.length === 0 ? (
-                    <div className="modal-empty-state small">
-                      <h3>No cards found</h3>
-
-                      <p>Try another class or search term.</p>
-                    </div>
-                  ) : (
-                    availableCards.map((card) => {
-                      const key = getCardKey(card);
-
-                      const isSelected = Boolean(selectedCards[key]);
-
-                      const quantity = getSelectedQuantity(
-                        selectedQuantities[key] ?? 1,
-                      );
-
-                      return (
-                        <div
-                          className={`available-card-row ${
-                            isSelected ? "selected" : ""
-                          } ${card.already_owned ? "already-owned" : ""}`}
-                          key={key}
-                          onClick={() => {
-                            toggleCardSelection(card);
-                          }}
-                        >
-                          <div className="available-card-main">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleCardSelection(card)}
-                              onClick={(event) => event.stopPropagation()}
-                              disabled={card.already_owned || addingCards}
-                            />
-
-                            {card.thumbnail ? (
-                              <img
-                                src={card.thumbnail}
-                                alt=""
-                                className="available-card-thumbnail"
-                              />
-                            ) : (
-                              <div className="available-card-thumbnail-placeholder">
-                                {card.card_name?.charAt(0)?.toUpperCase() ||
-                                  "?"}
-                              </div>
-                            )}
-
-                            <div className="available-card-info">
-                              <strong>{card.card_name}</strong>
-
-                              <span>{card.card_type}</span>
-                            </div>
-                          </div>
-
-                          <div className="available-card-actions">
-                            {card.already_owned ? (
-                              <span className="already-owned-label">
-                                Already Owned
-                              </span>
-                            ) : (
-                              <div
-                                className="card-ratio-controls"
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                <button
-                                  type="button"
-                                  className="card-ratio-button"
-                                  onClick={() => decreaseSelectedQuantity(card)}
-                                  disabled={
-                                    !isSelected || quantity <= 1 || addingCards
-                                  }
-                                  aria-label={`Decrease ${card.card_name} quantity`}
-                                >
-                                  −
-                                </button>
-
-                                <div className="card-ratio-count">
-                                  {quantity}
-                                </div>
-
-                                <button
-                                  type="button"
-                                  className="card-ratio-button"
-                                  onClick={() => increaseSelectedQuantity(card)}
-                                  disabled={
-                                    !isSelected ||
-                                    quantity >= MAX_QUANTITY ||
-                                    addingCards
-                                  }
-                                  aria-label={`Increase ${card.card_name} quantity`}
-                                >
-                                  +
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </>
-            )}
-
-            <div className="card-manager-modal-footer">
-              <span className="selected-count">{selectedCount} selected</span>
-
-              <div className="modal-footer-actions">
-                <button
-                  type="button"
-                  className="modal-cancel-button"
-                  onClick={closeAddModal}
-                  disabled={addingCards}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  className="modal-add-button"
-                  onClick={handleAddSelected}
-                  disabled={addingCards || selectedCount === 0}
-                >
-                  {addingCards
-                    ? "Adding..."
-                    : `Add ${selectedCount || ""} Selected`}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddCardsModal
+        isOpen={isAddModalOpen}
+        onClose={closeAddModal}
+        onCardsAdded={handleCardsAdded}
+      />
     </div>
   );
 };

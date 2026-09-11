@@ -445,7 +445,10 @@ button:disabled {
   width: min(900px, 100%);
   max-height: min(850px, calc(100vh - 50px));
   min-height: 0;
+  margin: 0;
+  padding: 0;
   background: #171b1e;
+  color: #ffffff;
   border: 1px solid #353d41;
   border-radius: 12px;
   box-shadow: 0 25px 70px rgba(0, 0, 0, 0.55);
@@ -616,7 +619,16 @@ button:disabled {
   justify-content: space-between;
   gap: 15px;
   padding: 10px 20px;
+  border: none;
   border-bottom: 1px solid #252b2f;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  appearance: none;
   cursor: pointer;
   transition:
     background 0.12s ease,

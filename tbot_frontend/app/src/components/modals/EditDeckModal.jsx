@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import { calculateDeckCost } from "../utils/deckCost";
+import { calculateDeckCost } from "../../utils/deckCost";
 import Select from "react-select";
 import "../css/adminmodal.css";
 import "../css/deckmodal.css";
