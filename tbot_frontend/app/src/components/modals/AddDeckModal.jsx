@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import Select from "react-select";
 import { calculateDeckCost } from "../../utils/deckCost";
-import "../css/deckmodal.css";
+import "../../css/deckmodal.css";
 
 const HERO_CLASSES = {
   "Beta-Carrotina": ["Guardian", "Smarty"],

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import "../css/cardmodal.css";
+import "../../css/cardmodal.css";
 
 const MANUAL_STAT_IMAGE_LINKS = {
   cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",

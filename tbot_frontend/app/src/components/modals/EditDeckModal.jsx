@@ -10,8 +10,8 @@ import {
 
 import { calculateDeckCost } from "../../utils/deckCost";
 import Select from "react-select";
-import "../css/adminmodal.css";
-import "../css/deckmodal.css";
+import "../../css/adminmodal.css";
+import "../../css/deckmodal.css";
 
 const HERO_CLASSES = {
   "Beta-Carrotina": ["Guardian", "Smarty"],

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL, ensureCsrfToken } from "../../utils/api";
 import { getBrowser, getOperatingSystem } from "../../utils/browserInfo";
 
-import "../css/navbar.css";
+import "../../css/navbar.css";
 
 function BugReportModal({ open, user, profile, onClose }) {
   const [title, setTitle] = useState("");
