@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { useParams } from "react-router-dom";
 
-import DeckCard from "../components/deckcomponent";
+import DeckCard from "../components/modals/deckcomponent.jsx";
 
 import Navbar from "../components/navbar";
 

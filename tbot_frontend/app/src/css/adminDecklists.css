@@ -490,20 +490,10 @@
   font-weight: 700;
 }
 
-/* ============================================================
-   ADMIN DECK GRID
-   IMPORTANT:
-   Do not change the normal deck-grid/card dimensions here.
-   DeckCard controls its own appearance.
-   ============================================================ */
 
 .admin-decklists-page .deck-grid {
   width: 100%;
 }
-
-/* ============================================================
-   MOBILE
-   ============================================================ */
 
 @media (max-width: 700px) {
   .admin-decklists-topbar {

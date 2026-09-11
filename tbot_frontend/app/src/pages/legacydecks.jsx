@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import DeckCard from "../components/deckcomponent";
+import DeckCard from "../components/modals/deckcomponent.jsx";
 import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";

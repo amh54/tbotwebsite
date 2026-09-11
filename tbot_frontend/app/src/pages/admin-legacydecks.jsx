@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-import DeckCard from "../components/deckcomponent";
+import DeckCard from "../components/modals/deckcomponent.jsx";
 import FilterDropdown from "../components/filterdropdown";
 import Footer from "../components/footer";
 import "../css/adminDecklists.css";

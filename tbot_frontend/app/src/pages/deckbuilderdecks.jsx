@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
-import DeckCard from "../components/deckcomponent";
+import DeckCard from "../components/modals/deckcomponent.jsx";
 
 import FilterDropdown from "../components/filterdropdown";
 
