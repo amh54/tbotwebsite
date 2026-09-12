@@ -107,7 +107,7 @@ function SuggestionModal({ open, user, profile, onClose }) {
 
   const selectedPage =
     SUGGESTION_PAGES.find((item) => item.value === page) || null;
-
+  const requiresPage = category === "improvement" || category === "ui" || category === "performance";
   useEffect(() => {
     if (!open) {
       return;
@@ -208,7 +208,7 @@ function SuggestionModal({ open, user, profile, onClose }) {
       return;
     }
 
-    if (category === "improvement" && !page) {
+    if (requiresPage && !page) {
       setMessage("Please select the page your suggestion is about.");
       return;
     }
@@ -221,9 +221,7 @@ function SuggestionModal({ open, user, profile, onClose }) {
       const csrfToken = await ensureCsrfToken();
 
       const pageUrl =
-        category === "improvement" && page
-          ? `${window.location.origin}${page}`
-          : "";
+        requiresPage && page ? `${window.location.origin}${page}` : "";
 
       const response = await fetch(
         `${API_BASE_URL}/tbotapp/suggestions/create/`,
@@ -413,7 +411,7 @@ function SuggestionModal({ open, user, profile, onClose }) {
               <small>{selectedCategory.description}</small>
             </div>
 
-            {category === "improvement" && (
+            {requiresPage && (
               <div className="bug-report-field">
                 <label id="suggestion-page-label">
                   <span>Page</span>
@@ -475,7 +473,7 @@ function SuggestionModal({ open, user, profile, onClose }) {
                 </div>
 
                 <small>
-                  Select the Tbot page your improvement suggestion is about.
+                  Select the Tbot page your  suggestion is about.
                 </small>
               </div>
             )}
