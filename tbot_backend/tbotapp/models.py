@@ -560,6 +560,94 @@ class BugReport(models.Model):
     class Meta:
         db_table = "bug_reports"
         managed = False
+class UserSuggestion(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("reviewing", "Reviewing"),
+        ("planned", "Planned"),
+        ("completed", "Completed"),
+        ("declined", "Declined"),
+    ]
+
+    CATEGORY_CHOICES = [
+        ("improvement", "Improvement"),
+        ("feature", "New Feature"),
+        ("ui", "UI / Design"),
+        ("performance", "Performance"),
+        ("other", "Other"),
+    ]
+    discord_thread_id = models.BigIntegerField(null=True, blank=True)
+    discord_message_id = models.BigIntegerField(null=True, blank=True)
+    discord_thread_url = models.TextField(blank=True, default="")
+    id = models.BigAutoField(primary_key=True)
+
+    discord_id = models.BigIntegerField()
+
+    discord_username = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    title = models.CharField(
+        max_length=255,
+    )
+
+    description = models.TextField()
+
+    category = models.CharField(
+        max_length=30,
+        choices=CATEGORY_CHOICES,
+        default="improvement",
+    )
+
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default="pending",
+    )
+
+    admin_response = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    admin_notes = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    page_url = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    browser = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    operating_system = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    created_at = models.DateTimeField(
+        db_default=Now(),
+    )
+
+    updated_at = models.DateTimeField(
+        db_default=Now(),
+    )
+
+    def __str__(self):
+        return f"#{self.id} - {self.title}"
+
+    class Meta:
+        db_table = "user_suggestions"
+        managed = False
+        ordering = ["-created_at"]
 class SiteUpdate(models.Model):
     CATEGORY_CHOICES = [
         ("new", "New"),

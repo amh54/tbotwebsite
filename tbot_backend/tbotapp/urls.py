@@ -117,7 +117,13 @@ from .views.user_bugs import (
     user_bug_reports,
     user_bug_report_detail,
 )
-
+from .views.suggestions import (
+    suggestion_create,
+    user_suggestions,
+    user_suggestion_detail,
+    admin_suggestions,
+    admin_suggestion_detail,
+)
 
 urlpatterns = [
     path(
@@ -464,5 +470,30 @@ path(
         user_card_delete,
         name="user_card_delete",
     ),
+    path(
+    "suggestions/create/",
+    suggestion_create,
+    name="suggestion-create",
+),
+path(
+    "suggestions/my/",
+    user_suggestions,
+    name="user-suggestions",
+),
+path(
+    "suggestions/my/<int:suggestion_id>/",
+    user_suggestion_detail,
+    name="user-suggestion-detail",
+),
+path(
+    "admin/suggestions/",
+    admin_suggestions,
+    name="admin-suggestions",
+),
+path(
+    "admin/suggestions/<int:suggestion_id>/",
+    admin_suggestion_detail,
+    name="admin-suggestion-detail",
+),
     path("site-updates/", site_updates, name="site-updates"),
 ]

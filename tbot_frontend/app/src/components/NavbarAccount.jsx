@@ -70,6 +70,9 @@ function NavbarAccount({
           <Link to="/my-bug-reports" onClick={closeMenus}>
             My Bug Reports
           </Link>
+          <Link to="/my-suggestions" onClick={closeMenus}>
+            My Suggestions
+          </Link>
 
           {user.is_owner && (
             <Link to="/admin" onClick={closeMenus}>
@@ -167,7 +170,9 @@ export function MobileAccount({
         <Link to="/my-bug-reports" onClick={closeMenus}>
           My Bug Reports
         </Link>
-
+        <Link to="/my-suggestions" onClick={closeMenus}>
+          My Suggestions
+        </Link>
         {user.is_owner && (
           <Link to="/admin" onClick={closeMenus}>
             Admin

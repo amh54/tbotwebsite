@@ -12,6 +12,7 @@ from .models import (
     UserProfile,
     WebDeckbuilder,
     BugReport,
+    UserSuggestion,
 )
 
 logger = logging.getLogger(__name__)
@@ -575,6 +576,182 @@ class BugReportSerializer(serializers.ModelSerializer):
         if value not in valid_statuses:
             raise serializers.ValidationError(
                 "Status must be one of: open, in_progress, resolved, or closed."
+            )
+
+        return value
+class UserSuggestionSerializer(serializers.ModelSerializer):
+    discord_username = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserSuggestion
+        fields = [
+            "id",
+            "discord_id",
+            "discord_username",
+            "title",
+            "description",
+            "category",
+            "status",
+            "admin_response",
+            "admin_notes",
+            "page_url",
+            "browser",
+            "operating_system",
+            "discord_thread_url",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "discord_username",
+            "status",
+            "admin_response",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_discord_username(self, obj):
+        discord_id = str(
+            getattr(obj, "discord_id", "") or ""
+        ).strip()
+
+        if discord_id:
+            try:
+                profile = (
+                    UserProfile.objects
+                    .filter(discord_id=discord_id)
+                    .first()
+                )
+
+                if profile:
+                    display_name = str(
+                        getattr(profile, "display_name", "") or ""
+                    ).strip()
+
+                    username = str(
+                        getattr(profile, "username", "") or ""
+                    ).strip()
+
+                    if display_name:
+                        return display_name
+
+                    if username:
+                        return username
+            except Exception:
+                logger.exception(
+                    "Unable to resolve Discord profile for suggestion %s.",
+                    getattr(obj, "id", "unknown"),
+                )
+
+        stored_username = str(
+            getattr(obj, "discord_username", "") or ""
+        ).strip()
+
+        if stored_username:
+            return stored_username
+
+        return "Unknown User"
+
+
+class AdminUserSuggestionSerializer(serializers.ModelSerializer):
+    discord_username = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserSuggestion
+        fields = [
+            "id",
+            "discord_id",
+            "discord_username",
+            "title",
+            "description",
+            "category",
+            "status",
+            "admin_response",
+            "admin_notes",
+            "page_url",
+            "browser",
+            "operating_system",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "discord_id",
+            "discord_username",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_discord_username(self, obj):
+        discord_id = str(
+            getattr(obj, "discord_id", "") or ""
+        ).strip()
+
+        if discord_id:
+            try:
+                profile = (
+                    UserProfile.objects
+                    .filter(discord_id=discord_id)
+                    .first()
+                )
+
+                if profile:
+                    display_name = str(
+                        getattr(profile, "display_name", "") or ""
+                    ).strip()
+
+                    username = str(
+                        getattr(profile, "username", "") or ""
+                    ).strip()
+
+                    if display_name:
+                        return display_name
+
+                    if username:
+                        return username
+            except Exception:
+                logger.exception(
+                    "Unable to resolve Discord profile for suggestion %s.",
+                    getattr(obj, "id", "unknown"),
+                )
+
+        stored_username = str(
+            getattr(obj, "discord_username", "") or ""
+        ).strip()
+
+        if stored_username:
+            return stored_username
+
+        return "Unknown User"
+
+    def validate_category(self, value):
+        valid_categories = {
+            "improvement",
+            "feature",
+            "ui",
+            "performance",
+            "other",
+        }
+
+        if value not in valid_categories:
+            raise serializers.ValidationError(
+                "Category must be one of: improvement, feature, ui, performance, or other."
+            )
+
+        return value
+
+    def validate_status(self, value):
+        valid_statuses = {
+            "pending",
+            "reviewing",
+            "planned",
+            "completed",
+            "declined",
+        }
+
+        if value not in valid_statuses:
+            raise serializers.ValidationError(
+                "Status must be one of: pending, reviewing, planned, completed, or declined."
             )
 
         return value

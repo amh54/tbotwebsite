@@ -8,17 +8,23 @@ function NavbarMobile({
   closeMenus,
   closeMobileMenu,
   openBugReport,
+  openSuggestion,
   account,
 }) {
   return (
     <div className={`navbar-mobile-overlay ${mobileOpen ? "open" : ""}`}>
       <div className="navbar-mobile-header">
-        <Link to="/" className="navbar-logo" onClick={closeMenus}>
+        <Link
+          to="/"
+          className="navbar-logo"
+          onClick={closeMenus}
+        >
           <img
             src="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
             alt="Tbot"
             className="navbar-logo-image"
           />
+
           <span className="navbar-logo-main">TBOT</span>
         </Link>
 
@@ -52,22 +58,43 @@ function NavbarMobile({
             </button>
 
             <div className="navbar-mobile-section-menu">
-              {menu.links.map((link) =>
-                link.action === "reportBug" ? (
-                  <button
-                    key={link.label}
-                    type="button"
-                    className="navbar-mobile-link-button"
-                    onClick={openBugReport}
+              {menu.links.map((link) => {
+                if (link.action === "reportBug") {
+                  return (
+                    <button
+                      key={link.label}
+                      type="button"
+                      className="navbar-mobile-link-button"
+                      onClick={openBugReport}
+                    >
+                      {link.label}
+                    </button>
+                  );
+                }
+
+                if (link.action === "suggestion") {
+                  return (
+                    <button
+                      key={link.label}
+                      type="button"
+                      className="navbar-mobile-link-button"
+                      onClick={openSuggestion}
+                    >
+                      {link.label}
+                    </button>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={closeMenus}
                   >
                     {link.label}
-                  </button>
-                ) : (
-                  <Link key={link.path} to={link.path} onClick={closeMenus}>
-                    {link.label}
                   </Link>
-                ),
-              )}
+                );
+              })}
             </div>
           </div>
         ))}

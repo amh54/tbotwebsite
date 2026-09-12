@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import "../css/navbar.css";
-
+import SuggestionModal from "../components/modals/suggestionModal.jsx";
 import NavbarDesktop from "./NavbarDesktop";
 import NavbarMobile from "./NavbarMobile";
 import NavbarAccount, { MobileAccount } from "./NavbarAccount";
@@ -21,7 +21,7 @@ function Navbar() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [bugReportOpen, setBugReportOpen] = useState(false);
-
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
   useEffect(() => {
     let cancelled = false;
 
@@ -126,7 +126,14 @@ function Navbar() {
     setMobileOpen(false);
     setMobileOpenSection(null);
   };
+  const openSuggestion = () => {
+    closeMenus();
+    setSuggestionOpen(true);
+  };
 
+  const closeSuggestion = () => {
+    setSuggestionOpen(false);
+  };
   const openBugReport = () => {
     closeMenus();
     setBugReportOpen(true);
@@ -234,6 +241,7 @@ function Navbar() {
             toggleMenu={toggleMenu}
             closeMenus={closeMenus}
             openBugReport={openBugReport}
+            openSuggestion={openSuggestion}
             account={
               <NavbarAccount
                 user={user}
@@ -278,7 +286,13 @@ function Navbar() {
         open={bugReportOpen}
         user={user}
         profile={profile}
-        onClose={() => setBugReportOpen(false)}
+        onClose={closeBugReport}
+      />
+      <SuggestionModal
+        open={suggestionOpen}
+        user={user}
+        profile={profile}
+        onClose={closeSuggestion}
       />
     </>
   );

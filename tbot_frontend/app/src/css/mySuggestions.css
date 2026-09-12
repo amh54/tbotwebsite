@@ -1,19 +1,18 @@
-.my-bug-reports-page {
+.my-suggestions-page {
   min-height: calc(100vh - 80px);
   padding: 48px 20px 80px;
   background: #101416;
   color: #f2f5f3;
 }
 
-.my-bug-reports-container {
+.my-suggestions-container {
   width: min(1100px, 100%);
   margin: 0 auto;
 }
 
+/* Header */
 
-
-
-.my-bug-reports-header {
+.my-suggestions-header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -21,7 +20,7 @@
   margin-bottom: 30px;
 }
 
-.my-bug-reports-eyebrow {
+.my-suggestions-eyebrow {
   display: block;
   margin-bottom: 7px;
   color: #7f8a85;
@@ -30,13 +29,13 @@
   letter-spacing: 0.15em;
 }
 
-.my-bug-reports-header h1 {
+.my-suggestions-header h1 {
   margin: 0;
   font-size: clamp(2rem, 4vw, 2.8rem);
   line-height: 1.05;
 }
 
-.my-bug-reports-header p {
+.my-suggestions-header p {
   max-width: 680px;
   margin: 11px 0 0;
   color: #89938f;
@@ -44,20 +43,20 @@
   line-height: 1.6;
 }
 
-.my-bug-reports-total {
+.my-suggestions-total {
   min-width: 90px;
   padding: 0 0 2px;
   text-align: right;
 }
 
-.my-bug-reports-total strong {
+.my-suggestions-total strong {
   display: block;
   color: #dce2df;
   font-size: 1.7rem;
   line-height: 1;
 }
 
-.my-bug-reports-total span {
+.my-suggestions-total span {
   display: block;
   margin-top: 6px;
   color: #68736e;
@@ -69,7 +68,7 @@
 
 /* Filters */
 
-.my-bug-reports-filters {
+.my-suggestions-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -78,7 +77,7 @@
   border-bottom: 1px solid #292f31;
 }
 
-.my-bug-reports-filters button {
+.my-suggestions-filters button {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -97,17 +96,17 @@
     border-color 0.15s ease;
 }
 
-.my-bug-reports-filters button:hover {
+.my-suggestions-filters button:hover {
   color: #c7cfcc;
 }
 
-.my-bug-reports-filters button.active {
+.my-suggestions-filters button.active {
   border-bottom-color: #8fe38b;
   background: transparent;
   color: #dce4df;
 }
 
-.my-bug-reports-filters button span {
+.my-suggestions-filters button span {
   min-width: 20px;
   padding: 1px 5px;
   border-radius: 4px;
@@ -117,14 +116,14 @@
   text-align: center;
 }
 
-.my-bug-reports-filters button.active span {
+.my-suggestions-filters button.active span {
   background: #202725;
   color: #8fe38b;
 }
 
 /* Loading */
 
-.my-bug-reports-loading {
+.my-suggestions-loading {
   min-height: 280px;
   display: flex;
   flex-direction: column;
@@ -133,17 +132,17 @@
   color: #7d8783;
 }
 
-.my-bug-reports-loading .loading-spinner {
+.my-suggestions-loading .loading-spinner {
   width: 30px;
   height: 30px;
   margin-bottom: 13px;
   border: 2px solid #2b3133;
   border-top-color: #8fe38b;
   border-radius: 50%;
-  animation: myBugReportsSpin 0.8s linear infinite;
+  animation: mySuggestionsSpin 0.8s linear infinite;
 }
 
-@keyframes myBugReportsSpin {
+@keyframes mySuggestionsSpin {
   to {
     transform: rotate(360deg);
   }
@@ -151,7 +150,7 @@
 
 /* Empty / Error */
 
-.my-bug-reports-state {
+.my-suggestions-state {
   padding: 65px 25px;
   border: 1px solid #292f31;
   border-radius: 10px;
@@ -159,7 +158,7 @@
   text-align: center;
 }
 
-.my-bug-reports-state-icon {
+.my-suggestions-state-icon {
   width: 46px;
   height: 46px;
   display: flex;
@@ -174,29 +173,29 @@
   font-weight: 800;
 }
 
-.my-bug-reports-state h2 {
+.my-suggestions-state h2 {
   margin: 0 0 8px;
   font-size: 1.2rem;
 }
 
-.my-bug-reports-state p {
+.my-suggestions-state p {
   max-width: 560px;
   margin: 0 auto;
   color: #858f8b;
   line-height: 1.6;
 }
 
-.my-bug-reports-state p strong {
+.my-suggestions-state p strong {
   color: #c1c9c5;
 }
 
-.my-bug-reports-error .my-bug-reports-state-icon {
+.my-suggestions-error .my-suggestions-state-icon {
   border-color: #443536;
   background: #21191a;
   color: #d98282;
 }
 
-.my-bug-reports-state button {
+.my-suggestions-state button {
   margin-top: 20px;
   padding: 9px 16px;
   border: 1px solid #343b3d;
@@ -211,21 +210,21 @@
     border-color 0.15s ease;
 }
 
-.my-bug-reports-state button:hover {
+.my-suggestions-state button:hover {
   border-color: #41494b;
   background: #22282a;
   color: #e0e5e3;
 }
 
-/* Report Cards */
+/* Suggestion Cards */
 
-.my-bug-reports-list {
+.my-suggestions-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.my-bug-report-card {
+.my-suggestion-card {
   overflow: hidden;
   border: 1px solid #292f31;
   border-radius: 9px;
@@ -233,11 +232,11 @@
   transition: border-color 0.15s ease;
 }
 
-.my-bug-report-card:hover {
+.my-suggestion-card:hover {
   border-color: #3a4244;
 }
 
-.my-bug-report-card-top {
+.my-suggestion-card-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -245,21 +244,21 @@
   padding: 19px 20px 13px;
 }
 
-.my-bug-report-card-title {
+.my-suggestion-card-title {
   min-width: 0;
   display: flex;
   align-items: baseline;
   gap: 10px;
 }
 
-.my-bug-report-number {
+.my-suggestion-number {
   flex-shrink: 0;
   color: #59635f;
   font-size: 0.76rem;
   font-weight: 800;
 }
 
-.my-bug-report-card h2 {
+.my-suggestion-card h2 {
   min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
@@ -268,7 +267,7 @@
   font-weight: 700;
 }
 
-.my-bug-report-status {
+.my-suggestion-status {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -284,25 +283,31 @@
   letter-spacing: 0.04em;
 }
 
-.status-open {
+.status-pending {
   border-color: #46422d;
   background: #211f18;
   color: #c9bd68;
 }
 
-.status-in_progress {
+.status-reviewing {
   border-color: #35434e;
   background: #1b242b;
   color: #83b8dc;
 }
 
-.status-resolved {
+.status-planned {
+  border-color: #35434e;
+  background: #1b242b;
+  color: #83b8dc;
+}
+
+.status-completed {
   border-color: #304637;
   background: #1b241e;
   color: #85c781;
 }
 
-.status-closed {
+.status-declined {
   border-color: #333839;
   background: #1c2021;
   color: #858f8b;
@@ -310,7 +315,7 @@
 
 /* Metadata */
 
-.my-bug-report-meta {
+.my-suggestion-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 7px 18px;
@@ -319,12 +324,20 @@
   font-size: 0.74rem;
 }
 
-.my-bug-report-meta strong {
+.my-suggestion-meta strong {
   color: #969f9b;
   font-weight: 700;
 }
 
-.my-bug-report-description {
+.my-suggestion-response-indicator {
+  color: #8fcf8b;
+}
+
+.my-suggestion-response-indicator strong {
+  color: #a5e0a1;
+}
+
+.my-suggestion-description {
   margin: 0;
   padding: 0 20px 18px;
   color: #a5aeaa;
@@ -333,7 +346,7 @@
   overflow-wrap: anywhere;
 }
 
-.my-bug-report-card-bottom {
+.my-suggestion-card-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -343,32 +356,32 @@
   background: #121719;
 }
 
-.my-bug-report-status-message {
+.my-suggestion-status-message {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-.my-bug-report-status-message strong {
+.my-suggestion-status-message strong {
   color: #aeb7b3;
   font-size: 0.78rem;
 }
 
-.my-bug-report-status-message span {
+.my-suggestion-status-message span {
   color: #68726e;
   font-size: 0.72rem;
   line-height: 1.45;
 }
 
-.my-bug-report-actions {
+.my-suggestion-actions {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.my-bug-report-button {
+.my-suggestion-button {
   padding: 8px 12px;
   border: 1px solid #353c3e;
   border-radius: 6px;
@@ -383,37 +396,37 @@
     color 0.15s ease;
 }
 
-.my-bug-report-button:hover {
+.my-suggestion-button:hover {
   border-color: #464e50;
   background: #23292b;
   color: #e0e5e3;
 }
 
-.my-bug-report-button.secondary {
+.my-suggestion-button.secondary {
   border-color: #303638;
   background: transparent;
   color: #858f8b;
 }
 
-.my-bug-report-button.secondary:hover {
+.my-suggestion-button.secondary:hover {
   background: #1b2022;
   color: #c7cfcc;
 }
 
 /* Modal */
 
-.my-bug-report-modal-overlay {
+.my-suggestion-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 10000;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: 40px 20px 20px;
+  padding: 20px;
   background: rgba(5, 7, 8, 0.88);
 }
 
-.my-bug-report-modal {
+.my-suggestion-modal {
   width: min(820px, 100%);
   max-height: calc(100vh - 40px);
   overflow-y: auto;
@@ -422,7 +435,7 @@
   background: #14191b;
 }
 
-.my-bug-report-modal-header {
+.my-suggestion-modal-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -431,7 +444,7 @@
   border-bottom: 1px solid #292f31;
 }
 
-.my-bug-report-modal-eyebrow {
+.my-suggestion-modal-eyebrow {
   display: block;
   margin-bottom: 6px;
   color: #69736f;
@@ -440,14 +453,14 @@
   letter-spacing: 0.11em;
 }
 
-.my-bug-report-modal-header h2 {
+.my-suggestion-modal-header h2 {
   margin: 0;
   overflow-wrap: anywhere;
   color: #dce2df;
   font-size: 1.3rem;
 }
 
-.my-bug-report-modal-close {
+.my-suggestion-modal-close {
   width: 33px;
   height: 33px;
   flex-shrink: 0;
@@ -460,13 +473,13 @@
   line-height: 1;
 }
 
-.my-bug-report-modal-close:hover {
+.my-suggestion-modal-close:hover {
   border-color: #41494b;
   background: #222729;
   color: #e4e8e6;
 }
 
-.my-bug-report-modal-status {
+.my-suggestion-modal-status {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -475,7 +488,7 @@
   background: #121719;
 }
 
-.my-bug-report-modal-status p {
+.my-suggestion-modal-status p {
   margin: 0;
   color: #7c8682;
   font-size: 0.8rem;
@@ -484,22 +497,22 @@
 
 /* Detail Grid */
 
-.my-bug-report-detail-grid {
+.my-suggestion-detail-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border-bottom: 1px solid #292f31;
 }
 
-.my-bug-report-detail-grid > div {
+.my-suggestion-detail-grid > div {
   padding: 14px 18px;
   border-right: 1px solid #292f31;
 }
 
-.my-bug-report-detail-grid > div:last-child {
+.my-suggestion-detail-grid > div:last-child {
   border-right: 0;
 }
 
-.my-bug-report-detail-grid span {
+.my-suggestion-detail-grid span {
   display: block;
   margin-bottom: 5px;
   color: #606a66;
@@ -509,7 +522,7 @@
   letter-spacing: 0.06em;
 }
 
-.my-bug-report-detail-grid strong {
+.my-suggestion-detail-grid strong {
   display: block;
   color: #b9c1bd;
   font-size: 0.8rem;
@@ -517,18 +530,18 @@
 
 /* Detail Sections */
 
-.my-bug-report-detail-section {
+.my-suggestion-detail-section {
   padding: 19px 22px;
   border-bottom: 1px solid #292f31;
 }
 
-.my-bug-report-detail-section h3 {
+.my-suggestion-detail-section h3 {
   margin: 0 0 10px;
   color: #c7cfcc;
   font-size: 0.86rem;
 }
 
-.my-bug-report-description-box {
+.my-suggestion-description-box {
   padding: 13px 14px;
   border: 1px solid #2a3032;
   border-radius: 6px;
@@ -539,7 +552,7 @@
   overflow-wrap: anywhere;
 }
 
-.my-bug-report-page-url {
+.my-suggestion-page-url {
   display: block;
   color: #8fcf8b;
   font-size: 0.8rem;
@@ -548,58 +561,14 @@
   text-decoration: none;
 }
 
-.my-bug-report-page-url:hover {
+.my-suggestion-page-url:hover {
   color: #a5e0a1;
   text-decoration: underline;
 }
 
-.my-bug-report-detail-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-  margin-bottom: 10px;
-}
+/* Admin Response */
 
-.my-bug-report-detail-heading h3 {
-  margin: 0;
-}
-
-.my-bug-report-detail-heading button {
-  padding: 6px 10px;
-  border: 1px solid #343b3d;
-  border-radius: 6px;
-  background: #1a2022;
-  color: #9eaaa5;
-  cursor: pointer;
-  font-size: 0.7rem;
-  font-weight: 800;
-}
-
-.my-bug-report-detail-heading button:hover {
-  border-color: #444c4e;
-  background: #22282a;
-  color: #d4dbd8;
-}
-
-.my-bug-report-screenshot {
-  overflow: hidden;
-  border: 1px solid #2b3133;
-  border-radius: 7px;
-  background: #0d1011;
-  text-align: center;
-}
-
-.my-bug-report-screenshot img {
-  display: block;
-  width: 100%;
-  max-height: 500px;
-  object-fit: contain;
-}
-
-/* Admin Notes */
-
-.my-bug-report-admin-notes {
+.my-suggestion-admin-response {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -610,7 +579,7 @@
   background: #171c1e;
 }
 
-.my-bug-report-admin-notes-icon {
+.my-suggestion-admin-response-icon {
   width: 28px;
   height: 28px;
   flex-shrink: 0;
@@ -625,7 +594,7 @@
   font-weight: 900;
 }
 
-.my-bug-report-admin-notes span {
+.my-suggestion-admin-response span {
   display: block;
   margin-bottom: 5px;
   color: #7f8a85;
@@ -635,14 +604,14 @@
   letter-spacing: 0.07em;
 }
 
-.my-bug-report-admin-notes p {
+.my-suggestion-admin-response p {
   margin: 0;
   color: #aeb7b3;
   line-height: 1.6;
   white-space: pre-wrap;
 }
 
-.my-bug-report-modal-footer {
+.my-suggestion-modal-footer {
   display: flex;
   justify-content: flex-end;
   padding: 14px 22px;
@@ -652,131 +621,131 @@
 /* Responsive */
 
 @media (max-width: 760px) {
-  .my-bug-reports-page {
+  .my-suggestions-page {
     padding: 32px 14px 60px;
   }
 
-  .my-bug-reports-header {
+  .my-suggestions-header {
     align-items: flex-start;
   }
 
-  .my-bug-reports-total {
+  .my-suggestions-total {
     min-width: 70px;
   }
 
-  .my-bug-reports-total strong {
+  .my-suggestions-total strong {
     font-size: 1.45rem;
   }
 
-  .my-bug-report-card-top {
+  .my-suggestion-card-top {
     flex-direction: column;
     gap: 11px;
   }
 
-  .my-bug-report-card-bottom {
+  .my-suggestion-card-bottom {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .my-bug-report-actions {
+  .my-suggestion-actions {
     width: 100%;
   }
 
-  .my-bug-report-actions .my-bug-report-button {
+  .my-suggestion-actions .my-suggestion-button {
     flex: 1;
   }
 
-  .my-bug-report-detail-grid {
+  .my-suggestion-detail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .my-bug-report-detail-grid > div:nth-child(2) {
+  .my-suggestion-detail-grid > div:nth-child(2) {
     border-right: 0;
   }
 
-  .my-bug-report-detail-grid > div:nth-child(-n + 2) {
+  .my-suggestion-detail-grid > div:nth-child(-n + 2) {
     border-bottom: 1px solid #292f31;
   }
 }
 
 @media (max-width: 520px) {
-  .my-bug-reports-header {
+  .my-suggestions-header {
     flex-direction: column;
   }
 
-  .my-bug-reports-total {
+  .my-suggestions-total {
     align-self: flex-start;
     text-align: left;
   }
 
-  .my-bug-reports-filters {
+  .my-suggestions-filters {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .my-bug-reports-filters button {
+  .my-suggestions-filters button {
     justify-content: center;
   }
 
-  .my-bug-reports-filters button:first-child {
+  .my-suggestions-filters button:first-child {
     grid-column: 1 / -1;
   }
 
-  .my-bug-report-card-title {
+  .my-suggestion-card-title {
     align-items: flex-start;
     flex-direction: column;
     gap: 4px;
   }
 
-  .my-bug-report-actions {
+  .my-suggestion-actions {
     flex-direction: column;
   }
 
-  .my-bug-report-actions .my-bug-report-button {
+  .my-suggestion-actions .my-suggestion-button {
     width: 100%;
   }
 
-  .my-bug-report-modal-overlay {
+  .my-suggestion-modal-overlay {
     padding: 8px;
   }
 
-  .my-bug-report-modal {
+  .my-suggestion-modal {
     max-height: calc(100vh - 16px);
     border-radius: 8px;
   }
 
-  .my-bug-report-modal-header,
-  .my-bug-report-detail-section {
+  .my-suggestion-modal-header,
+  .my-suggestion-detail-section {
     padding-left: 17px;
     padding-right: 17px;
   }
 
-  .my-bug-report-modal-status {
+  .my-suggestion-modal-status {
     align-items: flex-start;
     flex-direction: column;
     padding-left: 17px;
     padding-right: 17px;
   }
 
-  .my-bug-report-detail-grid {
+  .my-suggestion-detail-grid {
     grid-template-columns: 1fr;
   }
 
-  .my-bug-report-detail-grid > div {
+  .my-suggestion-detail-grid > div {
     border-right: 0;
     border-bottom: 1px solid #292f31;
   }
 
-  .my-bug-report-detail-grid > div:last-child {
+  .my-suggestion-detail-grid > div:last-child {
     border-bottom: 0;
   }
 
-  .my-bug-report-admin-notes {
+  .my-suggestion-admin-response {
     margin-left: 17px;
     margin-right: 17px;
   }
 
-  .my-bug-report-modal-footer {
+  .my-suggestion-modal-footer {
     padding-left: 17px;
     padding-right: 17px;
   }

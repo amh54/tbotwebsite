@@ -4,7 +4,8 @@ import "./css/App.css";
 import "./css/navbar.css";
 
 import { Link, Route, Routes } from "react-router-dom";
-
+import MySuggestions from "./pages/mySuggestions";
+import AdminSuggestions from "./pages/adminSuggestions";
 import SiteUpdates from "./pages/SiteUpdates.jsx";
 import AdminKeepOrScrap from "./pages/admin-keeporscrap.jsx";
 import Tutorial from "./pages/tutorial.jsx";
@@ -686,7 +687,7 @@ function App() {
         <Route path="/deckbuilders" element={<Deckbuilders />} />
 
         <Route path="/admin/cards" element={<AdminCards />} />
-
+        <Route path="/my-suggestions" element={<MySuggestions />} />
         <Route
           path="/deckbuilders/:deckbuilder_name/decks"
           element={<DeckbuilderDecks />}
@@ -729,7 +730,7 @@ function App() {
         <Route path="/admin/decklists/add" element={<AdminDecklists />} />
 
         <Route path="/admin/legacy-decks/*" element={<AdminLegacyDecks />} />
-
+        <Route path="/admin/suggestions" element={<AdminSuggestions />} />
         <Route path="/admin/user-decks" element={<AdminUserDecks />} />
 
         <Route

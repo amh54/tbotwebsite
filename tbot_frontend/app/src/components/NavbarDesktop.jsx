@@ -6,6 +6,7 @@ function NavbarDesktop({
   toggleMenu,
   closeMenus,
   openBugReport,
+  openSuggestion,
   account,
 }) {
   return (
@@ -28,22 +29,43 @@ function NavbarDesktop({
             </button>
 
             <div className="navbar-dropdown-menu">
-              {menu.links.map((link) =>
-                link.action === "reportBug" ? (
-                  <button
-                    key={link.label}
-                    type="button"
-                    className="navbar-dropdown-link-button"
-                    onClick={openBugReport}
+              {menu.links.map((link) => {
+                if (link.action === "reportBug") {
+                  return (
+                    <button
+                      key={link.label}
+                      type="button"
+                      className="navbar-dropdown-link-button"
+                      onClick={openBugReport}
+                    >
+                      {link.label}
+                    </button>
+                  );
+                }
+
+                if (link.action === "suggestion") {
+                  return (
+                    <button
+                      key={link.label}
+                      type="button"
+                      className="navbar-dropdown-link-button"
+                      onClick={openSuggestion}
+                    >
+                      {link.label}
+                    </button>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={closeMenus}
                   >
                     {link.label}
-                  </button>
-                ) : (
-                  <Link key={link.path} to={link.path} onClick={closeMenus}>
-                    {link.label}
                   </Link>
-                ),
-              )}
+                );
+              })}
             </div>
           </div>
         ))}

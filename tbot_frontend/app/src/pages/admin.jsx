@@ -107,6 +107,11 @@ function Admin() {
             <span className="admin-card-label">Bug Reports</span>
             <span className="admin-card-action">Manage →</span>
           </Link>
+
+          <Link to="/admin/suggestions" className="admin-dashboard-card">
+            <span className="admin-card-label">Suggestions</span>
+            <span className="admin-card-action">Manage →</span>
+          </Link>
         </div>
       </main>
     </div>

@@ -3,7 +3,22 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL, ensureCsrfToken } from "../../utils/api";
 import { getBrowser, getOperatingSystem } from "../../utils/browserInfo";
 
-import "../../css/navbar.css";
+import "../../css/bugReportModal.css";
+
+const BUG_CATEGORIES = [
+  { value: "ui", label: "UI" },
+  { value: "decklists", label: "Decklists" },
+  { value: "cards", label: "Cards" },
+  { value: "account", label: "Account" },
+  { value: "discord", label: "Discord" },
+  { value: "other", label: "Other" },
+];
+
+const BUG_PRIORITIES = [
+  { value: "low", label: "Low" },
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "High" },
+];
 
 function BugReportModal({ open, user, profile, onClose }) {
   const [title, setTitle] = useState("");
@@ -215,6 +230,7 @@ function BugReportModal({ open, user, profile, onClose }) {
                 <span>Title</span>
                 <span className="bug-report-required">*</span>
               </label>
+
               <input
                 id="bug-report-title"
                 type="text"
@@ -265,16 +281,16 @@ function BugReportModal({ open, user, profile, onClose }) {
 
                 <select
                   id="bug-report-category"
+                  className="bug-report-native-select"
                   value={category}
                   onChange={(event) => setCategory(event.target.value)}
                   disabled={submitting}
                 >
-                  <option value="ui">UI</option>
-                  <option value="decklists">Decklists</option>
-                  <option value="cards">Cards</option>
-                  <option value="account">Account</option>
-                  <option value="discord">Discord</option>
-                  <option value="other">Other</option>
+                  {BUG_CATEGORIES.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -283,13 +299,16 @@ function BugReportModal({ open, user, profile, onClose }) {
 
                 <select
                   id="bug-report-priority"
+                  className="bug-report-native-select"
                   value={priority}
                   onChange={(event) => setPriority(event.target.value)}
                   disabled={submitting}
                 >
-                  <option value="low">Low</option>
-                  <option value="normal">Normal</option>
-                  <option value="high">High</option>
+                  {BUG_PRIORITIES.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -357,7 +376,6 @@ function BugReportModal({ open, user, profile, onClose }) {
 
               <div>
                 <h3>Add a screenshot</h3>
-
                 <p>Screenshots can make visual bugs much easier to diagnose.</p>
               </div>
             </div>

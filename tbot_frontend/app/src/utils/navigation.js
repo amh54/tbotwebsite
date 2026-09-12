@@ -5,12 +5,21 @@ const NAVIGATION = [
       { label: "Home", path: "/" },
       { label: "Tutorial", path: "/tutorial" },
       { label: "Site Donations", path: "https://buymeacoffee.com/pvzhtbot" },
-      { label: "Discord Server", path: "https://discord.gg/gU53MGSgWA" },
       { label: "Site Updates", path: "/updates" },
-      { label: "Users", path: "/users" },
       { label: "Terms of Service", path: "/termsofservice" },
       { label: "Privacy Policy", path: "/privacypolicy" },
       { label: "Report a Bug", action: "reportBug" },
+      {
+        label: "Submit a Suggestion",
+        action: "suggestion",
+      },
+    ],
+  },
+  {
+    label: "Community",
+    links: [
+      { label: "Users", path: "/users" },
+      { label: "Discord Server", path: "https://discord.gg/gU53MGSgWA" },
     ],
   },
   {
@@ -30,7 +39,9 @@ const NAVIGATION = [
   },
   {
     label: "Guides",
-    links: [{ label: "Keep or Scrap", path: "/keeporscrap" }],
+    links: [
+      { label: "Keep or Scrap", path: "/keeporscrap" },
+    ],
   },
 ];
 
