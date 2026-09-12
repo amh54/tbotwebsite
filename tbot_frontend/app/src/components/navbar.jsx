@@ -267,6 +267,7 @@ function Navbar() {
           closeMenus={closeMenus}
           closeMobileMenu={closeMobileMenu}
           openBugReport={openBugReport}
+          openSuggestion={openSuggestion}
           account={
             <MobileAccount
               user={user}
