@@ -7,7 +7,7 @@ import boto3
 
 from django.db import DatabaseError
 from django.shortcuts import get_object_or_404
-
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
@@ -320,7 +320,6 @@ def public_profile_decks_count(
         status=status.HTTP_200_OK,
     )
 
-
 @api_view(["POST"])
 @parser_classes([
     JSONParser,
@@ -359,8 +358,6 @@ def user_deck_create(request):
         "cards",
         "inspiration",
         "optimization",
-        "suggested_date",
-        "updated_date",
         "deck_doc",
     }
 
@@ -395,6 +392,8 @@ def user_deck_create(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    deck_data["suggested_date"] = timezone.now()
+
     image_file = request.FILES.get("image_file")
 
     if image_file:
@@ -406,7 +405,6 @@ def user_deck_create(request):
             creator=creator,
             **deck_data,
         )
-
     except DatabaseError as exc:
         logger.exception(
             "User deck creation failed"
@@ -525,14 +523,11 @@ def user_deck_update(request, deck_id):
 
         update_data = request.data.copy()
 
-        image_file = request.FILES.get(
-            "image_file"
-        )
+        image_file = request.FILES.get("image_file")
 
-        update_data.pop(
-            "image_file",
-            None,
-        )
+        update_data.pop("image_file", None)
+        update_data.pop("suggested_date", None)
+        update_data.pop("updated_date", None)
 
         if image_file:
             side = update_data.get(
@@ -549,21 +544,6 @@ def user_deck_update(request, deck_id):
                 "name",
                 deck.name,
             )
-
-            serializer = UserDeckSerializer(
-                deck,
-                data=update_data,
-                partial=True,
-            )
-
-            if not serializer.is_valid():
-                return Response(
-                    {
-                        "error": "Unable to update deck.",
-                        "fields": serializer.errors,
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
 
             try:
                 image_url = upload_deck_image(
@@ -616,6 +596,11 @@ def user_deck_update(request, deck_id):
         )
 
         if not serializer.is_valid():
+            logger.error(
+                "User deck serializer validation failed: %s",
+                serializer.errors,
+            )
+
             return Response(
                 {
                     "error": "Unable to update deck.",
@@ -624,7 +609,9 @@ def user_deck_update(request, deck_id):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        updated_deck = serializer.save()
+        updated_deck = serializer.save(
+            updated_date=timezone.now()
+        )
 
         return Response(
             {

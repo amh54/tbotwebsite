@@ -222,7 +222,7 @@ function DecklistsPage() {
 
     const fetchDiscordUser = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/discord/me/`, {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/auth/discord/me/`, {
           method: "GET",
           credentials: "include",
           headers: {
@@ -922,7 +922,7 @@ function DecklistsPage() {
         <div className="deck-browser">
           <img
             className="deck-banner"
-            src="https://i.ibb.co/8nBNRL66/deckbannerbyairheadz.webp"
+            src="https://i.ibb.co/4Z6khSvq/deckbannerbyairheadz.webp"
             alt="Deck Banner"
           />
 

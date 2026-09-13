@@ -17,7 +17,7 @@ function UserDashboard() {
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/discord/me/`, {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/auth/discord/me/`, {
           method: "GET",
           credentials: "include",
         });

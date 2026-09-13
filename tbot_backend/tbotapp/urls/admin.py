@@ -1,0 +1,126 @@
+from django.urls import path
+
+from ..views.admin_cards import (
+    admin_card_detail,
+    admin_card_image_upload,
+    admin_cards,
+)
+from ..views.admin_decks import (
+    admin_decklist_create,
+    admin_decklist_delete,
+    admin_decklist_update,
+    admin_decklists,
+)
+from ..views.admin_keep_or_scrap import (
+    admin_keep_or_scrap,
+    admin_keep_or_scrap_detail,
+    admin_keep_or_scrap_image_upload,
+)
+from ..views.admin_legacy_decks import (
+    admin_legacy_decklist_delete,
+    admin_legacy_decklist_update,
+    admin_legacy_decklists,
+)
+from ..views.admin_user_decks import (
+    admin_user_deck_delete,
+    admin_user_deck_update,
+    admin_user_decks,
+)
+from ..views.permissions import (
+    admin_check,
+    owner_action,
+)
+
+
+urlpatterns = [
+    path(
+        "admin/check/",
+        admin_check,
+        name="admin_check",
+    ),
+    path(
+        "admin/action/",
+        owner_action,
+        name="owner_action",
+    ),
+    path(
+        "admin/decklists/",
+        admin_decklists,
+        name="admin_decklists",
+    ),
+    path(
+        "admin/decklists/create/",
+        admin_decklist_create,
+        name="admin_decklist_create",
+    ),
+    path(
+        "admin/decklists/<str:deckid>/",
+        admin_decklist_update,
+        name="admin_decklist_update",
+    ),
+    path(
+        "admin/decklists/<str:deckid>/delete/",
+        admin_decklist_delete,
+        name="admin_decklist_delete",
+    ),
+    path(
+        "admin/legacy-decklists/",
+        admin_legacy_decklists,
+        name="admin_legacy_decklists",
+    ),
+    path(
+        "admin/legacy-decklists/<str:deckid>/",
+        admin_legacy_decklist_update,
+        name="admin_legacy_decklist_update",
+    ),
+    path(
+        "admin/legacy-decklists/<str:deckid>/delete/",
+        admin_legacy_decklist_delete,
+        name="admin_legacy_decklist_delete",
+    ),
+    path(
+        "admin/user-decks/",
+        admin_user_decks,
+        name="admin_user_decks",
+    ),
+    path(
+        "admin/user-decks/<int:deck_id>/",
+        admin_user_deck_update,
+        name="admin_user_deck_update",
+    ),
+    path(
+        "admin/user-decks/<int:deck_id>/delete/",
+        admin_user_deck_delete,
+        name="admin_user_deck_delete",
+    ),
+    path(
+        "admin/cards/",
+        admin_cards,
+        name="admin-cards",
+    ),
+    path(
+        "admin/cards/<int:cardid>/",
+        admin_card_detail,
+        name="admin-card-detail",
+    ),
+    path(
+        "admin/cards/image-upload/",
+        admin_card_image_upload,
+        name="admin-card-image-upload",
+    ),
+    path(
+        "admin/keeporscrap/",
+        admin_keep_or_scrap,
+        name="admin-keep-or-scrap",
+    ),
+    path(
+        "admin/keeporscrap/<int:tierid>/",
+        admin_keep_or_scrap_detail,
+        name="admin-keep-or-scrap-detail",
+    ),
+    path(
+        "admin/keeporscrap/image-upload/",
+        admin_keep_or_scrap_image_upload,
+        name="admin-keep-or-scrap-image-upload",
+    ),
+]

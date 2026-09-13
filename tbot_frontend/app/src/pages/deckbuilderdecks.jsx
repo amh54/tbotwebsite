@@ -269,16 +269,13 @@ function DeckbuilderDecks() {
     return () => controller.abort();
   }, []);
 
-  // --------------------------------------------------------------------------
-  // Check Discord authentication
-  // --------------------------------------------------------------------------
 
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchDiscordUser = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/discord/me/`, {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/auth/discord/me/`, {
           method: "GET",
           credentials: "include",
           headers: {
