@@ -922,7 +922,7 @@ function DecklistsPage() {
         <div className="deck-browser">
           <img
             className="deck-banner"
-            src="https://i.ibb.co/4Z6khSvq/deckbannerbyairheadz.webp"
+            src="https://cdn.pvzhtbot.com/art/deckbannerbyairheadz.webp"
             alt="Deck Banner"
           />
 
