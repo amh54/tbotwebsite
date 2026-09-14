@@ -17,8 +17,8 @@ class Decklist(models.Model):
     cost = models.CharField(max_length=50, blank=True, null=True)
     aliases = models.TextField()
     cards = models.TextField()
-    suggested_date = models.DateTimeField()
-    updated_date = models.DateTimeField()
+    suggested_date = models.TextField()
+    updated_date = models.TextField()
 
     class Meta:
         managed = False
@@ -41,8 +41,8 @@ class LegacyDecklist(models.Model):
     cost = models.CharField(max_length=50, blank=True, null=True)
     aliases = models.TextField()
     cards = models.CharField(max_length=1000)
-    suggested_date = models.DateTimeField()
-    updated_date = models.DateTimeField()
+    suggested_date = models.TextField()
+    updated_date = models.TextField()
 
     class Meta:
         managed = False
