@@ -9,7 +9,11 @@ logger = logging.getLogger(__name__)
 
 class UserSuggestionSerializer(serializers.ModelSerializer):
     discord_username = serializers.SerializerMethodField()
-
+    page_url = serializers.CharField(
+    required=False,
+    allow_blank=True,
+    allow_null=True,
+)
     class Meta:
         model = UserSuggestion
         fields = [
@@ -20,11 +24,7 @@ class UserSuggestionSerializer(serializers.ModelSerializer):
             "description",
             "category",
             "status",
-            "admin_response",
-            "admin_notes",
             "page_url",
-            "browser",
-            "operating_system",
             "discord_thread_url",
             "created_at",
             "updated_at",
@@ -79,8 +79,6 @@ class AdminUserSuggestionSerializer(serializers.ModelSerializer):
             "admin_response",
             "admin_notes",
             "page_url",
-            "browser",
-            "operating_system",
             "created_at",
             "updated_at",
         ]

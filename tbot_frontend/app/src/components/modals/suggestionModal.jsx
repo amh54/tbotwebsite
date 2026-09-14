@@ -107,7 +107,10 @@ function SuggestionModal({ open, user, profile, onClose }) {
 
   const selectedPage =
     SUGGESTION_PAGES.find((item) => item.value === page) || null;
-  const requiresPage = category === "improvement" || category === "ui" || category === "performance";
+  const requiresPage =
+    category === "improvement" ||
+    category === "ui" ||
+    category === "performance";
   useEffect(() => {
     if (!open) {
       return;
@@ -250,11 +253,26 @@ function SuggestionModal({ open, user, profile, onClose }) {
       }
 
       if (!response.ok) {
+        const validationError =
+          typeof data === "object"
+            ? Object.entries(data)
+                .map(([field, errors]) => {
+                  const messages = Array.isArray(errors)
+                    ? errors.join(", ")
+                    : String(errors);
+
+                  return `${field}: ${messages}`;
+                })
+                .join(" | ")
+            : "";
+
         throw new Error(
-          data.detail || data.error || "Unable to submit suggestion.",
+          validationError ||
+            data.detail ||
+            data.error ||
+            `Unable to submit bug report. HTTP ${response.status}`,
         );
       }
-
       setMessage("Suggestion submitted successfully!");
 
       setTitle("");
@@ -472,9 +490,7 @@ function SuggestionModal({ open, user, profile, onClose }) {
                   )}
                 </div>
 
-                <small>
-                  Select the Tbot page your  suggestion is about.
-                </small>
+                <small>Select the Tbot page your suggestion is about.</small>
               </div>
             )}
           </div>
