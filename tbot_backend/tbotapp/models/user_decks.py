@@ -13,7 +13,7 @@ class UserDeck(models.Model):
     creator = models.CharField(max_length=255)
     description = models.TextField()
     image = models.TextField(null=True)
-    cost = models.IntegerField(null=True)
+    cost = models.CharField(max_length=255)
     aliases = models.TextField(null=True)
     cards = models.TextField(null=True)
     inspiration = models.TextField(null=True)
