@@ -53,6 +53,7 @@ const SIDES = [
     key: "All",
     label: "Keep or Scrap",
   },
+  { key: "FAQ", label: "FAQ" },
 ];
 
 const normalizeText = (value) =>
@@ -203,15 +204,10 @@ const renderCreatorText = (text) => {
 
 function KeepOrScrap() {
   const [entries, setEntries] = useState(keepOrScrapCache.entries);
-
   const [side, setSide] = useState("Intro");
-
   const [selectedGroup, setSelectedGroup] = useState(null);
-
   const [loading, setLoading] = useState(!keepOrScrapCache.loaded);
-
   const [error, setError] = useState("");
-
   const [totalEntries, setTotalEntries] = useState(
     keepOrScrapCache.totalEntries,
   );
@@ -246,7 +242,6 @@ function KeepOrScrap() {
         }
 
         const data = await response.json();
-
         const apiCount = Number(data?.count);
 
         if (!Number.isFinite(apiCount)) {
@@ -257,7 +252,6 @@ function KeepOrScrap() {
         const actualCount = Math.max(0, apiCount - 1);
 
         keepOrScrapCache.totalEntries = actualCount;
-
         setTotalEntries(actualCount);
       } catch (fetchError) {
         if (fetchError.name === "AbortError") {
@@ -265,7 +259,6 @@ function KeepOrScrap() {
         }
 
         console.error("Keep or Scrap count loading failed:", fetchError);
-
         setTotalEntries(null);
       }
     };
@@ -414,6 +407,10 @@ function KeepOrScrap() {
     });
   }, [entries]);
 
+  const faqEntries = useMemo(() => {
+    return entries.filter((entry) => hasValue(entry.faq));
+  }, [entries]);
+
   const groupedClasses = useMemo(() => {
     const filtered = entries.filter(
       (entry) => !isIntroEntry(entry) && hasValue(entry.card_class),
@@ -438,7 +435,6 @@ function KeepOrScrap() {
     return [...groups.values()]
       .map((group) => ({
         ...group,
-
         entries: group.entries.sort(
           (a, b) => Number(a.tierid) - Number(b.tierid),
         ),
@@ -602,6 +598,34 @@ function KeepOrScrap() {
                   </section>
                 );
               })
+            )}
+          </div>
+        )}
+
+        {!error && side === "FAQ" && (
+          <div className="kos-intro">
+            {faqEntries.length === 0 ? (
+              <p className="no-kos-results">
+                No frequently asked questions available.
+              </p>
+            ) : (
+              faqEntries.map((entry) => (
+                <div className="kos-intro-item" key={entry.tierid}>
+                  <div className="kos-intro-media">
+                    {hasValue(entry.image) && (
+                      <img src={entry.image} alt="FAQ" />
+                    )}
+                  </div>
+
+                  <div className="kos-intro-body">
+                    {hasValue(entry.faq) && (
+                      <div className="kos-intro-text">
+                        {renderIntroText(entry.faq)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
             )}
           </div>
         )}

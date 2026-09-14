@@ -37,4 +37,5 @@ class KeepOrScrapSerializer(serializers.ModelSerializer):
             "image",
             "reasoning",
             "creator",
+            "faq"
         ]

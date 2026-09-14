@@ -31,6 +31,7 @@ class KeepOrScrap(models.Model):
     card_class = models.CharField(max_length=100, db_column="class")
     image = models.TextField()
     reasoning = models.TextField()
+    faq = models.TextField()
     creator = models.CharField(max_length=255)
 
     class Meta:
