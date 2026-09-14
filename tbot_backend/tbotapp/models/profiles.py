@@ -10,7 +10,7 @@ class UserProfile(models.Model):
     profile_slug = models.CharField(max_length=255, unique=True)
     avatar = models.TextField(blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
-    is_public = models.BooleanField(default=True)
+    is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
 
