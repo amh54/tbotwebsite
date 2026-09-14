@@ -28,9 +28,8 @@ class BugReportSerializer(serializers.ModelSerializer):
             "priority",
             "status",
             "browser",
-            "operating_system",
             "screenshot",
-            "admin_notes",
+            "operating_system",
             "created_at",
             "updated_at",
         ]
