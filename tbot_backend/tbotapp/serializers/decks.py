@@ -59,6 +59,22 @@ class PublicLegacyDeckSerializer(serializers.ModelSerializer):
 
 
 class AdminDeckSerializer(serializers.ModelSerializer):
+    
+    inspiration = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    optimization = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    deck_doc = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
     class Meta:
         model = Decklist
         fields = [
