@@ -2,9 +2,9 @@
 import logging
 import os
 import re
-
+import requests
 import boto3
-
+from django.http import HttpResponse
 from django.db import DatabaseError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -799,3 +799,63 @@ def shared_user_deck(
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+@api_view(["GET"])
+def download_user_deck_image(request, deck_id):
+    deck = get_object_or_404(
+        UserDeck,
+        id=deck_id,
+    )
+
+    if not deck.image:
+        return HttpResponse(status=404)
+
+    try:
+        response = requests.get(
+            deck.image,
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.RequestException:
+        return HttpResponse(status=502)
+
+    content_type = response.headers.get(
+        "Content-Type",
+        "image/webp",
+    ).split(";")[0]
+
+    extension = {
+        "image/webp": "webp",
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/gif": "gif",
+    }.get(
+        content_type,
+        "webp",
+    )
+
+    filename = str(
+        deck.name or "decklist"
+    ).strip()
+
+    filename = re.sub(
+        r"[^a-zA-Z0-9]+",
+        "-",
+        filename,
+    )
+
+    filename = filename.strip("-").lower()
+
+    if not filename:
+        filename = "decklist"
+
+    filename = f"{deck.id}-{filename}.{extension}"
+
+    return HttpResponse(
+        response.content,
+        content_type=content_type,
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{filename}"'
+            ),
+        },
+    )

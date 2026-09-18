@@ -31,6 +31,7 @@ class UserDeck(models.Model):
 
 class UserDeckSuggestion(models.Model):
     id = models.BigAutoField(primary_key=True)
+
     deck_id = models.BigIntegerField()
     deck_name = models.CharField(max_length=255)
     hero = models.CharField(max_length=100)
@@ -48,20 +49,32 @@ class UserDeckSuggestion(models.Model):
     suggested_date = models.DateTimeField()
     updated_date = models.DateTimeField()
     deck_doc = models.TextField()
-    suggested_by_discord_id = models.BigIntegerField()
+
+    suggested_by_discord_id = models.TextField()
     suggested_by_profile_id = models.BigIntegerField(null=True)
     suggested_by_username = models.CharField(max_length=255)
     suggested_by_display_name = models.CharField(max_length=255)
     suggested_by_profile_slug = models.CharField(max_length=255)
     suggested_by_avatar = models.TextField(null=True)
+
     status = models.CharField(max_length=50, default="pending")
-    consent_type = models.CharField(max_length=50, default="self_created")
-    consent_status = models.CharField(max_length=50, default="confirmed")
-    consent_creator_discord_id = models.BigIntegerField(null=True)
+
+    consent_type = models.CharField(
+        max_length=50,
+        default="self_created",
+    )
+    consent_status = models.CharField(
+        max_length=50,
+        default="confirmed",
+    )
+
+    consent_creator_discord_id = models.TextField(null=True)
     consent_given_at = models.DateTimeField(null=True)
     consent_denied_at = models.DateTimeField(null=True)
+
     created_at = models.DateTimeField(db_default=Now())
     updated_at = models.DateTimeField(db_default=Now())
+
     discord_message_id = models.BigIntegerField(null=True)
     discord_update_pending = models.BooleanField(default=False)
     discord_thread_id = models.BigIntegerField(null=True)

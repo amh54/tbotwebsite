@@ -1,254 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "../../utils/api";
+import {
+  getHeroColors,
+  getImageUrl,
+  hasValue,
+  getOwnerName,
+  formatCost,
+  formatDeckDate,
+  toExternalUrl,
+  formatCardsDisplay,
+  normalizeDeckShareValue,
+} from "../../utils/deckCardHelpers";
+import { useDiscordLoginStatus } from "../../hooks/useDiscordLoginStatus";
+import { useDeckSuggestion } from "../../hooks/useDeckSuggestion";
 import AddDeckModal from "./AddDeckModal";
 import EditDeckModal from "./EditDeckModal";
+import DeckCardActions from "../decks/DeckCardActions.jsx";
+import DeckSuggestMessage from "../decks/DeckSuggestMessage.jsx";
 import "../../css/deckmodal.css";
-
-const HERO_COLORS = {
-  "Beta-Carrotina": ["brown", "gray"],
-  Citron: ["brown", "gray"],
-  "Captain Combustible": ["red", "green"],
-  Chompzilla: ["green", "yellow"],
-  "Grass Knuckles": ["green", "brown"],
-  "Green Shadow": ["green", "gray"],
-  "Night Cap": ["red", "gray"],
-  Rose: ["gray", "yellow"],
-  "Solar Flare": ["red", "yellow"],
-  Spudow: ["red", "brown"],
-  "Wall-Knight": ["brown", "yellow"],
-  "Brain Freeze": ["black", "blue"],
-  "Electric Boogaloo": ["blue", "purple"],
-  "Huge-Gigantacus": ["pink", "black"],
-  "Super Brainz": ["pink", "black"],
-  Immorticia: ["pink", "blue"],
-  Impfinity: ["black", "purple"],
-  Neptuna: ["orange", "black"],
-  "Professor Brainstorm": ["pink", "purple"],
-  Rustbolt: ["pink", "orange"],
-  "The Smash": ["orange", "blue"],
-  "Z-mech": ["orange", "purple"],
-};
-
-const normalizeHeroName = (hero) =>
-  String(hero || "")
-    .trim()
-    .replace(/\s+/g, " ")
-    .toLowerCase();
-
-const getHeroColors = (hero) => {
-  const normalizedHero = normalizeHeroName(hero);
-
-  const entry = Object.entries(HERO_COLORS).find(
-    ([name]) => normalizeHeroName(name) === normalizedHero,
-  );
-
-  return entry?.[1] || ["default", "default"];
-};
-
-const getImageUrl = (value) => {
-  const image = String(value || "").trim();
-
-  if (!image) {
-    return "";
-  }
-
-  if (
-    image.startsWith("http://") ||
-    image.startsWith("https://") ||
-    image.startsWith("blob:") ||
-    image.startsWith("data:")
-  ) {
-    return image;
-  }
-
-  if (image.startsWith("/media/")) {
-    return `${API_BASE_URL}${image}`;
-  }
-
-  if (image.startsWith("/")) {
-    return `${API_BASE_URL}${image}`;
-  }
-
-  if (image.startsWith("decklists/")) {
-    return `${API_BASE_URL}/media/${image}`;
-  }
-
-  return `${API_BASE_URL}/${image}`;
-};
-
-const hasValue = (value) => {
-  if (value === null || value === undefined) {
-    return false;
-  }
-
-  return String(value).trim() !== "";
-};
-
-const normalizeText = (value) => {
-  return String(value ?? "").trim();
-};
-
-const getOwnerName = (deck) => {
-  return (
-    normalizeText(deck?.owner) ||
-    normalizeText(deck?.owner_username) ||
-    normalizeText(deck?.owner_name) ||
-    normalizeText(deck?.username) ||
-    normalizeText(deck?.profile_display_name) ||
-    normalizeText(deck?.display_name) ||
-    normalizeText(deck?.profile_slug) ||
-    normalizeText(deck?.user) ||
-    ""
-  );
-};
-
-const formatSuggestionCooldown = (value) => {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return String(value).split(".")[0];
-  }
-
-  return date.toLocaleString("en-US", {
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-};
-
-const formatCost = (value) => {
-  if (!hasValue(value)) {
-    return "-";
-  }
-
-  const raw = String(value).trim();
-  const numericValue = Number(raw.replace(/,/g, ""));
-
-  if (Number.isFinite(numericValue)) {
-    return numericValue.toLocaleString("en-US");
-  }
-
-  return raw;
-};
-
-const formatDeckDate = (value) => {
-  if (!value) {
-    return "";
-  }
-
-  const raw = String(value).trim();
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    const [year, month, day] = raw.split("-").map(Number);
-
-    return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return raw;
-  }
-
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-const toExternalUrl = (value) => {
-  const raw = String(value || "").trim();
-
-  if (!raw) {
-    return "";
-  }
-
-  const markdownMatch = /\((https?:\/\/[^)]+)\)/i.exec(raw);
-  const inlineUrlMatch = /https?:\/\/\S+/i.exec(raw);
-
-  let candidate = (markdownMatch?.[1] || inlineUrlMatch?.[0] || raw)
-    .trim()
-    .replace(/\s+/g, "");
-
-  const trimChars = "'\"<>[]";
-
-  while (candidate && trimChars.includes(candidate[0])) {
-    candidate = candidate.slice(1);
-  }
-
-  while (candidate && trimChars.includes(candidate.at(-1))) {
-    candidate = candidate.slice(0, -1);
-  }
-
-  if (!candidate) {
-    return "";
-  }
-
-  if (!/^https?:\/\//i.test(candidate)) {
-    candidate = `https://${candidate}`;
-  }
-
-  try {
-    return new URL(candidate).toString();
-  } catch {
-    return "";
-  }
-};
-
-const parseCardRatioLines = (value) =>
-  String(value ?? "")
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [namePart, countPart] = line.split("|");
-      const name = String(namePart || "").trim();
-      const parsedCount = Number(countPart);
-
-      const count =
-        Number.isFinite(parsedCount) && parsedCount > 0
-          ? Math.min(parsedCount, 4)
-          : 1;
-
-      return {
-        name,
-        count,
-      };
-    })
-    .filter((entry) => entry.name);
-
-const formatCardsDisplay = (value) => {
-  const entries = parseCardRatioLines(value);
-
-  if (entries.length === 0) {
-    return "";
-  }
-
-  return entries.map((entry) => `${entry.name} x${entry.count}`).join(", ");
-};
-
-const normalizeDeckShareValue = (value) => {
-  try {
-    return decodeURIComponent(String(value || "").trim()).toLowerCase();
-  } catch {
-    return String(value || "")
-      .trim()
-      .toLowerCase();
-  }
-};
 
 function DeckCard({
   decklist,
@@ -269,6 +39,7 @@ function DeckCard({
   decklists = false,
   deckbuilder = false,
   showSuggestDeck = false,
+  isUserDeck = false
 }) {
   const deck = decklist ?? {};
 
@@ -318,14 +89,22 @@ function DeckCard({
 
   const editModalRef = useRef(null);
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [checkingLogin, setCheckingLogin] = useState(true);
+  const { isLoggedIn, setIsLoggedIn, checkingLogin } =
+    useDiscordLoginStatus(showSuggestDeck);
 
-  const [suggesting, setSuggesting] = useState(false);
-  const [suggestStatus, setSuggestStatus] = useState(null);
-  const [suggestMessage, setSuggestMessage] = useState("");
-  const [suggestCooldown, setSuggestCooldown] = useState(null);
-  const [suggestionId, setSuggestionId] = useState(null);
+  const {
+    suggesting,
+    suggestStatus,
+    suggestMessage,
+    suggestCooldown,
+    suggestionId,
+    handleSuggestDeck,
+  } = useDeckSuggestion({
+    showSuggestDeck,
+    deckId,
+    isLoggedIn,
+    setIsLoggedIn,
+  });
 
   const deckImage = getImageUrl(deck.image);
 
@@ -334,72 +113,6 @@ function DeckCard({
     : "No description available.";
 
   const ownerName = getOwnerName(deck);
-
-  useEffect(() => {
-    if (!showSuggestDeck) {
-      setCheckingLogin(false);
-      setIsLoggedIn(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const checkLogin = async () => {
-      setCheckingLogin(true);
-
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/auth/discord/me/`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-            },
-          },
-        );
-
-        if (cancelled) {
-          return;
-        }
-
-        if (!response.ok) {
-          setIsLoggedIn(false);
-          return;
-        }
-
-        const data = await response.json();
-
-        if (cancelled) {
-          return;
-        }
-
-        const loggedIn =
-          data?.authenticated === true ||
-          data?.is_authenticated === true ||
-          data?.logged_in === true ||
-          data?.loggedIn === true ||
-          Boolean(data?.discord_id);
-
-        setIsLoggedIn(loggedIn);
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Unable to check Discord login status:", error);
-          setIsLoggedIn(false);
-        }
-      } finally {
-        if (!cancelled) {
-          setCheckingLogin(false);
-        }
-      }
-    };
-
-    checkLogin();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [showSuggestDeck]);
 
   useEffect(() => {
     if (addMode || autoOpen) {
@@ -592,264 +305,6 @@ function DeckCard({
     }
   };
 
-  const handleSuggestDeck = async () => {
-    if (!showSuggestDeck || suggesting) {
-      return;
-    }
-
-    if (!isLoggedIn) {
-      setSuggestStatus("login");
-      setSuggestMessage(
-        "You must be logged in with Discord to suggest a deck.",
-      );
-      return;
-    }
-
-    if (!deckId) {
-      setSuggestStatus("error");
-      setSuggestMessage("This deck does not have a valid deck ID.");
-      return;
-    }
-
-    if (
-      suggestStatus === "success" ||
-      suggestStatus === "confirmed" ||
-      suggestStatus === "awaiting_creator" ||
-      suggestStatus === "already_suggested" ||
-      suggestStatus === "cooldown"
-    ) {
-      return;
-    }
-
-    setSuggesting(true);
-    setSuggestStatus(null);
-    setSuggestMessage("");
-    setSuggestCooldown(null);
-    setSuggestionId(null);
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/tbotapp/user-deck-suggestions/create/`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            deck_id: deckId,
-          }),
-        },
-      );
-
-      let data = {};
-
-      try {
-        data = await response.json();
-      } catch {
-        data = {};
-      }
-
-      if (
-        response.status === 201 &&
-        (data?.consent_status === "confirmed" ||
-          data?.status === "confirmed" ||
-          data?.status === "success")
-      ) {
-        setSuggestionId(data?.suggestion_id || null);
-        setSuggestStatus("success");
-        setSuggestMessage(
-          data?.message || "Your deck suggestion was submitted successfully!",
-        );
-        return;
-      }
-
-      if (
-        response.status === 202 ||
-        data?.status === "awaiting_creator" ||
-        data?.status === "pending_creator" ||
-        data?.consent_status === "awaiting_creator"
-      ) {
-        setSuggestionId(data?.suggestion_id || null);
-        setSuggestStatus("awaiting_creator");
-        setSuggestMessage(
-          data?.message ||
-            data?.detail ||
-            "The deck creator must approve this suggestion in Discord before it can be confirmed.",
-        );
-        return;
-      }
-
-      if (response.status === 401) {
-        setIsLoggedIn(false);
-        setSuggestStatus("login");
-        setSuggestMessage(
-          data?.message ||
-            data?.detail ||
-            "You must be logged in with Discord to suggest a deck.",
-        );
-        return;
-      }
-
-      if (
-        response.status === 409 ||
-        data?.status === "already_suggested" ||
-        data?.reason === "already_suggested"
-      ) {
-        setSuggestStatus("already_suggested");
-        setSuggestMessage(
-          data?.message ||
-            data?.detail ||
-            "You have already suggested this deck.",
-        );
-        return;
-      }
-
-      if (
-        response.status === 429 ||
-        data?.status === "cooldown" ||
-        data?.reason === "cooldown"
-      ) {
-        setSuggestStatus("cooldown");
-        setSuggestMessage(
-          data?.message ||
-            data?.detail ||
-            "You are currently on cooldown before you can suggest another deck.",
-        );
-
-        setSuggestCooldown(
-          data?.next_available ||
-            data?.available_at ||
-            data?.cooldown_until ||
-            data?.nextSuggestionAt ||
-            null,
-        );
-
-        return;
-      }
-
-      if (
-        data?.status === "denied" ||
-        data?.reason === "denied" ||
-        data?.consent_status === "denied"
-      ) {
-        setSuggestStatus("denied");
-        setSuggestMessage(
-          data?.message ||
-            data?.detail ||
-            "The deck creator did not approve this suggestion.",
-        );
-        return;
-      }
-
-      setSuggestStatus("error");
-      setSuggestMessage(
-        data?.message ||
-          data?.detail ||
-          "Unable to submit the deck suggestion. Please try again.",
-      );
-    } catch (error) {
-      console.error("Unable to suggest deck:", error);
-
-      setSuggestStatus("error");
-      setSuggestMessage("Unable to connect to the server. Please try again.");
-    } finally {
-      setSuggesting(false);
-    }
-  };
-
-  useEffect(() => {
-    if (
-      !showSuggestDeck ||
-      !isLoggedIn ||
-      !suggestionId ||
-      suggestStatus !== "awaiting_creator"
-    ) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const checkSuggestionStatus = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/user-deck-suggestions/${encodeURIComponent(
-            suggestionId,
-          )}/status/`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-            },
-          },
-        );
-
-        if (cancelled) {
-          return;
-        }
-
-        if (response.status === 401) {
-          setIsLoggedIn(false);
-          return;
-        }
-
-        if (response.status === 404) {
-          console.warn(
-            `Suggestion ${suggestionId} was not found when checking status.`,
-          );
-          return;
-        }
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-
-        if (cancelled) {
-          return;
-        }
-
-        if (data?.suggestion_id) {
-          setSuggestionId(data.suggestion_id);
-        }
-
-        if (
-          data?.consent_status === "confirmed" ||
-          data?.status === "confirmed"
-        ) {
-          setSuggestStatus("success");
-          setSuggestMessage(
-            "Your deck suggestion was approved by the creator and has been confirmed!",
-          );
-          return;
-        }
-
-        if (data?.consent_status === "denied" || data?.status === "denied") {
-          setSuggestStatus("denied");
-          setSuggestMessage(
-            "The deck creator did not approve this suggestion.",
-          );
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Unable to check deck suggestion status:", error);
-        }
-      }
-    };
-
-    checkSuggestionStatus();
-
-    const interval = window.setInterval(checkSuggestionStatus, 5000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, [showSuggestDeck, isLoggedIn, suggestionId, suggestStatus]);
-
   const handleShare = async () => {
     if (isAdmin || !deckKey) {
       return;
@@ -907,25 +362,39 @@ function DeckCard({
       console.error("Failed to copy link", error);
     }
   };
+ const handleDownload = () => {
+  if (isUserDeck) {
+    const downloadDeckId = deck.id;
 
+    if (!downloadDeckId) {
+      return;
+    }
 
-const handleDownload = () => {
-  if (!deck?.deckid) {
+    window.location.href =
+      `${API_BASE_URL}/tbotapp/user-decks/${downloadDeckId}/download/`;
+
+    return;
+  }
+
+  const downloadDeckId =
+    deck.deckid ?? deck.deckID ?? deck.deckId;
+
+  if (!downloadDeckId) {
     return;
   }
 
   window.location.href =
-    `${API_BASE_URL}/tbotapp/decks/${deck.deckid}/download/`;
+    `${API_BASE_URL}/tbotapp/decks/${downloadDeckId}/download/`;
 };
-const handleAddComplete = (result) => {
-  if (typeof onComplete === "function") {
-    onComplete(result);
-  }
+  const handleAddComplete = (result) => {
+    if (typeof onComplete === "function") {
+      onComplete(result);
+    }
 
-  if (result) {
-    setOpen(false);
-  }
-};
+    if (result) {
+      setOpen(false);
+    }
+  };
 
   const handleEditComplete = (result) => {
     if (!result) {
@@ -1139,64 +608,18 @@ const handleAddComplete = (result) => {
                     )}
 
                   {!editing && (
-                    <div className="modal-actions">
-                      {!isAdmin && (
-                        <>
-                          <button
-                            type="button"
-                            className="share-btn"
-                            onClick={handleShare}
-                          >
-                            {copied ? "Link Copied!" : "Share Deck"}
-                          </button>
-
-                          {showSuggestDeck && !checkingLogin && (
-                            <button
-                              type="button"
-                              className={`suggest-deck-btn ${
-                                suggesting ? "suggesting" : ""
-                              } ${
-                                suggestStatus ? `suggest-${suggestStatus}` : ""
-                              }`}
-                              onClick={handleSuggestDeck}
-                              disabled={
-                                suggesting ||
-                                suggestStatus === "success" ||
-                                suggestStatus === "confirmed" ||
-                                suggestStatus === "awaiting_creator" ||
-                                suggestStatus === "already_suggested" ||
-                                suggestStatus === "cooldown"
-                              }
-                            >
-                              {suggesting
-                                ? "Submitting..."
-                                : suggestStatus === "success" ||
-                                    suggestStatus === "confirmed"
-                                  ? "Deck Suggested!"
-                                  : suggestStatus === "awaiting_creator"
-                                    ? "Awaiting Creator Approval"
-                                    : suggestStatus === "already_suggested"
-                                      ? "Already Suggested"
-                                      : suggestStatus === "cooldown"
-                                        ? "Suggestion On Cooldown"
-                                        : suggestStatus === "denied"
-                                          ? "Suggestion Denied"
-                                          : "Suggest Deck"}
-                            </button>
-                          )}
-                        </>
-                      )}
-
-                      {hasValue(deck.image) && (
-                        <button
-                          type="button"
-                          className="download-btn"
-                          onClick={handleDownload}
-                        >
-                          Download Decklist
-                        </button>
-                      )}
-                    </div>
+                    <DeckCardActions
+                      isAdmin={isAdmin}
+                      copied={copied}
+                      onShare={handleShare}
+                      showSuggestDeck={showSuggestDeck}
+                      checkingLogin={checkingLogin}
+                      suggesting={suggesting}
+                      suggestStatus={suggestStatus}
+                      onSuggestDeck={handleSuggestDeck}
+                      deckHasImage={hasValue(deck.image)}
+                      onDownload={handleDownload}
+                    />
                   )}
 
                   {isAdmin && (
@@ -1340,151 +763,14 @@ const handleAddComplete = (result) => {
                         </section>
                       )}
 
-                      {showSuggestDeck && !isAdmin && suggestStatus && (
-                        <div
-                          className={`suggest-deck-message suggest-message-${suggestStatus}`}
-                          role="status"
-                        >
-                          {(suggestStatus === "success" ||
-                            suggestStatus === "confirmed") && (
-                            <>
-                              <strong>Thanks for suggesting this deck!</strong>
-
-                              <p>
-                                Your suggestion has been approved by the creator
-                                and confirmed successfully.
-                              </p>
-
-                              <p>
-                                If you want to help defend and discuss the deck,
-                                join the Discord community and let everyone know
-                                why you think this deck deserves attention.
-                                <br />
-                                <a
-                                  href="https://discord.gg/PdZb2hGt7G"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  Discord link
-                                </a>
-                              </p>
-                            </>
-                          )}
-
-                          {suggestStatus === "awaiting_creator" && (
-                            <>
-                              <strong>Awaiting creator approval.</strong>
-
-                              <p>
-                                The deck creator has been sent a Discord request
-                                to approve this suggestion.
-                              </p>
-
-                              <p>
-                                The suggestion will only be confirmed if the
-                                creator approves it.
-                              </p>
-
-                              <p>
-                                You can join the Discord community while you
-                                wait.
-                                <br />
-                                <a
-                                  href="https://discord.gg/PdZb2hGt7G"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  Discord link
-                                </a>
-                              </p>
-
-                              {suggestionId && (
-                                <p>
-                                  <small>Waiting for creator consent...</small>
-                                </p>
-                              )}
-                            </>
-                          )}
-
-                          {suggestStatus === "already_suggested" && (
-                            <>
-                              <strong>This deck was already suggested.</strong>
-
-                              <p>
-                                This deck has already been suggested. Join the
-                                Discord server below to find the suggestion.
-                                <br />
-                                <a
-                                  href="https://discord.gg/PdZb2hGt7G"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  Discord link
-                                </a>
-                              </p>
-                            </>
-                          )}
-
-                          {suggestStatus === "cooldown" && (
-                            <>
-                              <strong>You are on suggestion cooldown.</strong>
-
-                              <p>{suggestMessage}</p>
-
-                              {suggestCooldown && (
-                                <p>
-                                  Next available:{" "}
-                                  {formatSuggestionCooldown(suggestCooldown)}
-                                </p>
-                              )}
-
-                              <p>
-                                In the meantime, consider joining the Discord
-                                and helping defend or discuss decks that have
-                                already been suggested.
-                                <br />
-                                <a
-                                  href="https://discord.gg/PdZb2hGt7G"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  Discord link
-                                </a>
-                              </p>
-                            </>
-                          )}
-
-                          {suggestStatus === "denied" && (
-                            <>
-                              <strong>Suggestion not approved.</strong>
-
-                              <p>
-                                {suggestMessage ||
-                                  "The deck creator did not approve this suggestion."}
-                              </p>
-                            </>
-                          )}
-
-                          {suggestStatus === "login" && (
-                            <>
-                              <strong>Discord login required.</strong>
-
-                              <p>
-                                You must log in with Discord before you can
-                                suggest a deck.
-                              </p>
-                            </>
-                          )}
-
-                          {suggestStatus === "error" && (
-                            <>
-                              <strong>Suggestion failed.</strong>
-
-                              <p>{suggestMessage}</p>
-                            </>
-                          )}
-                        </div>
-                      )}
+                      <DeckSuggestMessage
+                        show={showSuggestDeck && !isAdmin}
+                        suggestStatus={suggestStatus}
+                        suggestMessage={suggestMessage}
+                        suggestCooldown={suggestCooldown}
+                        suggestionId={suggestionId}
+                        isUserDeck = {false}
+                      />
                     </>
                   )}
                 </div>

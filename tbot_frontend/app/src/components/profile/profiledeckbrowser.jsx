@@ -654,6 +654,7 @@ function ProfileDeckBrowser({
       profileIsPublic={profileIsPublic}
       showSuggestDeck={true}
       autoOpen={isSharedDeck}
+      isUserDeck={true}
     />
   )
           })}

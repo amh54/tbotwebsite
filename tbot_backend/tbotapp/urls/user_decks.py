@@ -5,6 +5,7 @@ from ..views.user_deck_suggestions import (
     user_deck_suggestion_status,
 )
 from ..views.user_decks import (
+    download_user_deck_image,
     public_profile_decks_count,
     shared_user_deck,
     user_deck_create,
@@ -55,4 +56,9 @@ urlpatterns = [
         user_deck_suggestion_status,
         name="user_deck_suggestion_status",
     ),
+    path(
+    "user-decks/<int:deck_id>/download/",
+    download_user_deck_image,
+    name="download_user_deck_image",
+),
 ]
