@@ -3,115 +3,24 @@ import { useEffect, useMemo, useState } from "react";
 import DeckCard from "../components/modals/deckcomponent.jsx";
 import FilterDropdown from "../components/filterdropdown";
 import Footer from "../components/footer";
-import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
+
+import {
+  API_BASE_URL,
+  ensureCsrfToken,
+  getApiErrorMessage,
+} from "../utils/api.js";
+
+import {
+  getHeroOptions,
+  getCategoryOptions,
+  getArchetypeOptions,
+  normalizeSide,
+  sortDecks,
+  filterDecks,
+} from "../utils/deckFilters.js";
+
 import "../css/decklists.css";
 import "../css/loading.css";
-
-function normalizeText(value) {
-  return String(value ?? "").trim();
-}
-
-function normalizeKey(value) {
-  return normalizeText(value).toLowerCase();
-}
-
-/* ============================================================
-   API ERROR
-   ============================================================ */
-
-const getApiErrorMessage = async (response, fallback) => {
-  let message = fallback;
-
-  try {
-    const data = await response.json();
-
-    if (data?.detail) {
-      message += `: ${data.detail}`;
-    } else if (data?.error) {
-      message += `: ${data.error}`;
-    } else if (data?.fields) {
-      const fieldMessages = Object.entries(data.fields)
-        .map(([field, messages]) => {
-          const text = Array.isArray(messages)
-            ? messages.join(", ")
-            : String(messages);
-
-          return `${field}: ${text}`;
-        })
-        .join(" | ");
-
-      if (fieldMessages) {
-        message += `: ${fieldMessages}`;
-      }
-    }
-  } catch {
-    return message;
-  }
-
-  return message;
-};
-
-/* ============================================================
-   ARCHETYPE META
-   ============================================================ */
-
-const ARCHETYPE_META = {
-  aggro: {
-    icon: "⚡",
-    description:
-      "Attempts to kill the opponent as soon as possible, usually winning the game by turn 4-7.",
-  },
-
-  combo: {
-    icon: "🧩",
-    description:
-      "Uses a specific card synergy to do massive damage to the opponent.",
-  },
-
-  midrange: {
-    icon: "⚖️",
-    description:
-      "Slower than aggro, usually setting up early boards into mid-cost cards.",
-  },
-
-  control: {
-    icon: "🛡️",
-    description:
-      "Focuses on removal and card advantage, winning in the late game.",
-  },
-
-  tempo: {
-    icon: "🏃",
-    description:
-      "Focuses on building a strong board, winning trades and overwhelming the opponent.",
-  },
-};
-
-const CATEGORY_META = {
-  budget: {
-    icon: "💵",
-    description: "Decks that are cheap for new players",
-  },
-
-  competitive: {
-    icon: "🏆",
-    description: "Some of the best decks in the game",
-  },
-
-  ladder: {
-    icon: "🪜",
-    description: "Decks that are mostly only good for ranked games",
-  },
-
-  meme: {
-    icon: "😂",
-    description: "Decks built for fun or unusual combos",
-  },
-};
-
-/* ============================================================
-   COMPONENT
-   ============================================================ */
 
 function AdminDecklists() {
   const [decks, setDecks] = useState([]);
@@ -135,10 +44,6 @@ function AdminDecklists() {
 
   const [addingDeck, setAddingDeck] = useState(false);
 
-  /* ============================================================
-     PAGE TITLE
-     ============================================================ */
-
   useEffect(() => {
     document.title = "Admin - Decklists";
 
@@ -146,10 +51,6 @@ function AdminDecklists() {
       document.title = "Tbot";
     };
   }, []);
-
-  /* ============================================================
-     FETCH DECKS
-     ============================================================ */
 
   const fetchDecks = async () => {
     try {
@@ -165,11 +66,6 @@ function AdminDecklists() {
       });
 
       if (!response.ok) {
-        const message = await getApiErrorMessage(
-          response,
-          `Request failed with status ${response.status}`,
-        );
-
         if (response.status === 401) {
           throw new Error(
             "You must be logged in with Discord to access the admin page.",
@@ -182,7 +78,12 @@ function AdminDecklists() {
           );
         }
 
-        throw new Error(message);
+        throw new Error(
+          await getApiErrorMessage(
+            response,
+            `Request failed with status ${response.status}`,
+          ),
+        );
       }
 
       const data = await response.json();
@@ -196,7 +97,6 @@ function AdminDecklists() {
       setDecks(results);
     } catch (err) {
       console.error("Unable to load admin decklists:", err);
-
       setError(err.message || "Unable to load decklists right now.");
     } finally {
       setLoading(false);
@@ -206,10 +106,6 @@ function AdminDecklists() {
   useEffect(() => {
     fetchDecks();
   }, []);
-
-  /* ============================================================
-     FETCH CARDS
-     ============================================================ */
 
   useEffect(() => {
     const controller = new AbortController();
@@ -246,254 +142,64 @@ function AdminDecklists() {
               : [],
         );
       } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Unable to load card information:", err);
-
-          setCardsError(
-            err.message || "Unable to load card information right now.",
-          );
+        if (err.name === "AbortError") {
+          return;
         }
+
+        console.error("Unable to load card information:", err);
+
+        setCardsError(
+          err.message || "Unable to load card information right now.",
+        );
       }
     };
 
     fetchCards();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
   }, []);
-
-  /* ============================================================
-     SIDE FILTER
-     ============================================================ */
 
   const sideFilteredDecks = useMemo(() => {
     if (side === "All") {
       return decks;
     }
 
-    const selectedSide = normalizeKey(side);
+    const selectedSide = normalizeSide(side);
 
-    return decks.filter((deck) => normalizeKey(deck.side) === selectedSide);
+    return decks.filter((deck) => normalizeSide(deck?.side) === selectedSide);
   }, [decks, side]);
 
-  /* ============================================================
-     HERO OPTIONS
-     ============================================================ */
+  const heroOptions = useMemo(
+    () => getHeroOptions(sideFilteredDecks, allCards),
+    [sideFilteredDecks, allCards],
+  );
 
-  const heroOptions = useMemo(() => {
-    const heroMap = new Map();
+  const categoryOptions = useMemo(
+    () => getCategoryOptions(sideFilteredDecks),
+    [sideFilteredDecks],
+  );
 
-    sideFilteredDecks.forEach((deck) => {
-      const heroName = normalizeText(deck.hero);
+  const archetypeOptions = useMemo(
+    () => getArchetypeOptions(sideFilteredDecks),
+    [sideFilteredDecks],
+  );
 
-      if (!heroName) {
-        return;
-      }
+  const sortedDecks = useMemo(() => sortDecks(decks), [decks]);
 
-      const key = normalizeKey(heroName);
-
-      if (!heroMap.has(key)) {
-        heroMap.set(key, {
-          value: heroName,
-          label: heroName,
-          count: 0,
-          side: normalizeKey(deck.side),
-        });
-      }
-
-      heroMap.get(key).count += 1;
-    });
-
-    return Array.from(heroMap.values())
-      .map((option) => {
-        const matchedCard = allCards.find(
-          (card) => normalizeKey(card.card_name) === normalizeKey(option.label),
-        );
-
-        return {
-          ...option,
-          description: matchedCard?.flavor_text || "",
-          image: matchedCard?.thumbnail || "",
-        };
-      })
-      .sort((a, b) =>
-        a.label.localeCompare(b.label, undefined, {
-          sensitivity: "base",
-        }),
-      );
-  }, [sideFilteredDecks, allCards]);
-
-  /* ============================================================
-     CATEGORY OPTIONS
-     ============================================================ */
-
-  const categoryOptions = useMemo(() => {
-    const categoryMap = new Map();
-
-    sideFilteredDecks.forEach((deck) => {
-      const categoryName = normalizeText(deck.category);
-
-      if (!categoryName) {
-        return;
-      }
-
-      const key = normalizeKey(categoryName);
-
-      if (!categoryMap.has(key)) {
-        categoryMap.set(key, {
-          value: categoryName,
-          label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
-          count: 0,
-          ...(CATEGORY_META[key] || {}),
-        });
-      }
-
-      categoryMap.get(key).count += 1;
-    });
-
-    return Array.from(categoryMap.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, undefined, {
-        sensitivity: "base",
+  const filteredDecks = useMemo(
+    () =>
+      filterDecks({
+        decks: sortedDecks,
+        search,
+        side,
+        hero,
+        category,
+        archetype,
       }),
-    );
-  }, [sideFilteredDecks]);
-
-  /* ============================================================
-     ARCHETYPE OPTIONS
-     ============================================================ */
-
-  const archetypeOptions = useMemo(() => {
-    const counts = {};
-
-    Object.keys(ARCHETYPE_META).forEach((key) => {
-      counts[key] = 0;
-    });
-
-    sideFilteredDecks.forEach((deck) => {
-      const deckArchetype = normalizeKey(deck.archetype);
-
-      if (!deckArchetype) {
-        return;
-      }
-
-      Object.keys(ARCHETYPE_META).forEach((archetypeName) => {
-        if (deckArchetype.includes(archetypeName)) {
-          counts[archetypeName] += 1;
-        }
-      });
-    });
-
-    return Object.entries(ARCHETYPE_META)
-      .map(([value, meta]) => ({
-        value,
-        label: value.charAt(0).toUpperCase() + value.slice(1),
-        count: counts[value] || 0,
-        ...meta,
-      }))
-      .filter((option) => option.count > 0);
-  }, [sideFilteredDecks]);
-
-  /* ============================================================
-     SORT DECKS
-     ============================================================ */
-
-  const sortedDecks = useMemo(() => {
-    return [...decks].sort((a, b) => {
-      const sideOrder = {
-        plants: 0,
-        zombies: 1,
-      };
-
-      const sideA = normalizeKey(a.side);
-      const sideB = normalizeKey(b.side);
-
-      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
-
-      if (sideCompare !== 0) {
-        return sideCompare;
-      }
-
-      const heroCompare = normalizeText(a.hero).localeCompare(
-        normalizeText(b.hero),
-        undefined,
-        {
-          sensitivity: "base",
-        },
-      );
-
-      if (heroCompare !== 0) {
-        return heroCompare;
-      }
-
-      return normalizeText(a.name).localeCompare(
-        normalizeText(b.name),
-        undefined,
-        {
-          sensitivity: "base",
-        },
-      );
-    });
-  }, [decks]);
-
-  /* ============================================================
-     FILTER DECKS
-     ============================================================ */
-
-  const filteredDecks = useMemo(() => {
-    const searchValue = normalizeKey(search);
-
-    return sortedDecks.filter((deck) => {
-      const searchableValues = [
-        deck.name,
-        deck.creator,
-        deck.optimization,
-        deck.hero,
-        deck.archetype,
-        deck.category,
-        deck.cards,
-      ]
-        .filter(Boolean)
-        .map(normalizeKey);
-
-      const searchMatch =
-        !searchValue ||
-        searchableValues.some((value) => value.includes(searchValue));
-
-      const deckSide = normalizeKey(deck.side);
-
-      const sideMatch = side === "All" || deckSide === normalizeKey(side);
-
-      const heroMatch =
-        hero.length === 0 ||
-        hero.some(
-          (selectedHero) =>
-            normalizeKey(deck.hero) === normalizeKey(selectedHero.value),
-        );
-
-      const categoryMatch =
-        category.length === 0 ||
-        category.some(
-          (selectedCategory) =>
-            normalizeKey(deck.category) ===
-            normalizeKey(selectedCategory.value),
-        );
-
-      const deckArchetype = normalizeKey(deck.archetype);
-
-      const archetypeMatch =
-        archetype.length === 0 ||
-        archetype.every((selectedArchetype) =>
-          deckArchetype.includes(normalizeKey(selectedArchetype.value)),
-        );
-
-      return (
-        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
-      );
-    });
-  }, [sortedDecks, search, side, hero, category, archetype]);
-
-  /* ============================================================
-     FILTER CONTROLS
-     ============================================================ */
+    [sortedDecks, search, side, hero, category, archetype],
+  );
 
   const clearFilters = () => {
     setSearch("");
@@ -507,10 +213,6 @@ function AdminDecklists() {
     clearFilters();
   };
 
-  /* ============================================================
-     EDIT DECK
-     ============================================================ */
-
   const handleEdit = async (deck, form) => {
     const deckId = deck?.deckid ?? deck?.deckID ?? deck?.id;
 
@@ -522,10 +224,6 @@ function AdminDecklists() {
     setEditSaving(true);
 
     try {
-      /*
-       * IMPORTANT:
-       * Fetch a fresh CSRF token immediately before PATCH.
-       */
       const csrfToken = await ensureCsrfToken();
 
       const url =
@@ -604,12 +302,11 @@ function AdminDecklists() {
       }
 
       if (!response.ok) {
-        const message =
+        throw new Error(
           data?.detail ||
-          data?.error ||
-          `Failed to save deck (${response.status}).`;
-
-        throw new Error(message);
+            data?.error ||
+            `Failed to save deck (${response.status}).`,
+        );
       }
 
       const updatedDeck = data?.deck ?? data?.result ?? data;
@@ -631,29 +328,21 @@ function AdminDecklists() {
       );
 
       return updatedDeck;
-    } catch (error) {
-      console.error("Deck update failed:", error);
+    } catch (err) {
+      console.error("Deck update failed:", err);
 
-      setEditError(error?.message || "Failed to save deck.");
+      setEditError(err?.message || "Failed to save deck.");
 
-      throw error;
+      throw err;
     } finally {
       setEditSaving(false);
     }
   };
 
-  /* ============================================================
-     ADD DECK
-     ============================================================ */
-
   const handleAdd = async (form) => {
     setError("");
 
     try {
-      /*
-       * IMPORTANT:
-       * Fetch a fresh CSRF token immediately before POST.
-       */
       const csrfToken = await ensureCsrfToken();
 
       const hasImageFile = form?.image_file instanceof File;
@@ -730,12 +419,11 @@ function AdminDecklists() {
       }
 
       if (!response.ok) {
-        const message =
+        throw new Error(
           data?.detail ||
-          data?.error ||
-          `Failed to add deck (${response.status}).`;
-
-        throw new Error(message);
+            data?.error ||
+            `Failed to add deck (${response.status}).`,
+        );
       }
 
       const newDeck = data?.deck ?? data?.result ?? data;
@@ -749,17 +437,12 @@ function AdminDecklists() {
       setAddingDeck(false);
 
       return newDeck;
-    } catch (error) {
-      console.error("Unable to add deck:", error);
+    } catch (err) {
+      console.error("Unable to add deck:", err);
 
-      throw error;
+      throw err;
     }
   };
-
-  /* ============================================================
-     DELETE DECK
-     DELETE /admin/decklists/<id>/delete/
-     ============================================================ */
 
   const handleDelete = async (deck) => {
     const deckId = deck?.deckid ?? deck?.deckID ?? deck?.id;
@@ -782,10 +465,6 @@ function AdminDecklists() {
     setDeleteError("");
 
     try {
-      /*
-       * IMPORTANT:
-       * Fetch a fresh CSRF token immediately before DELETE.
-       */
       const csrfToken = await ensureCsrfToken();
 
       const deleteUrl =
@@ -802,18 +481,18 @@ function AdminDecklists() {
       });
 
       if (!response.ok) {
-        const message = await getApiErrorMessage(
-          response,
-          `Delete failed with status ${response.status}`,
-        );
-
         if (response.status === 403) {
           throw new Error(
             "Owner permissions are required to delete decklists.",
           );
         }
 
-        throw new Error(message);
+        throw new Error(
+          await getApiErrorMessage(
+            response,
+            `Delete failed with status ${response.status}`,
+          ),
+        );
       }
 
       setDecks((currentDecks) =>
@@ -833,10 +512,6 @@ function AdminDecklists() {
     }
   };
 
-  /* ============================================================
-     LOADING
-     ============================================================ */
-
   if (loading) {
     return (
       <div className="loading-page">
@@ -855,10 +530,6 @@ function AdminDecklists() {
       </div>
     );
   }
-
-  /* ============================================================
-     RENDER
-     ============================================================ */
 
   return (
     <div className="deck-page">
@@ -916,7 +587,7 @@ function AdminDecklists() {
             onComplete={() => {
               setAddingDeck(false);
             }}
-            adminForm={true}
+            adminForm
           />
         )}
 
@@ -1020,7 +691,9 @@ function AdminDecklists() {
             <div className="deck-grid">
               {filteredDecks.map((deck) => (
                 <div
-                  key={`${deck.side}-${deck.deckid || deck.id || deck.name}`}
+                  key={`${deck.side}-${
+                    deck.deckid || deck.deckID || deck.id || deck.name
+                  }`}
                 >
                   <DeckCard
                     decklist={deck}

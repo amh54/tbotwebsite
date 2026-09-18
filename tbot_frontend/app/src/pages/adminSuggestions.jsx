@@ -5,38 +5,7 @@ import Footer from "../components/footer";
 import "../css/adminbugreports.css";
 
 import "../css/loading.css";
-import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
-const getApiErrorMessage = async (response, fallback) => {
-  let message = fallback;
-
-  try {
-    const data = await response.json();
-
-    if (data?.detail) {
-      message += `: ${data.detail}`;
-    } else if (data?.error) {
-      message += `: ${data.error}`;
-    } else if (data && typeof data === "object") {
-      const fieldMessages = Object.entries(data)
-        .map(([field, messages]) => {
-          const text = Array.isArray(messages)
-            ? messages.join(", ")
-            : String(messages);
-
-          return `${field}: ${text}`;
-        })
-        .join(" | ");
-
-      if (fieldMessages) {
-        message += `: ${fieldMessages}`;
-      }
-    }
-  } catch {
-    return message;
-  }
-
-  return message;
-};
+import { API_BASE_URL, ensureCsrfToken, getApiErrorMessage } from "../utils/api.js";
 
 const normalizeText = (value) =>
   String(value ?? "")

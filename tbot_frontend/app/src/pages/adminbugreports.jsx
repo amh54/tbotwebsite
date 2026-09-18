@@ -1,232 +1,37 @@
-
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import Footer from "../components/footer";
 
+import AdminBugReportCard from "../components/admin/AdminBugReportCard";
+import AdminBugReportDetails from "../components/admin/AdminBugReportDetails";
+import AdminBugReportImageModal from "../components/admin/AdminBugReportImageModal";
+import AdminBugReportStats from "../components/admin/AdminBugReportStats";
+import AdminBugReportsToolbar from "../components/admin/AdminBugReportsToolbar";
+
 import "../css/adminbugreports.css";
 import "../css/loading.css";
-import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
-const getApiErrorMessage = async (
-  response,
-  fallback,
-) => {
-  let message = fallback;
 
-  try {
-    const data = await response.json();
+import {
+  API_BASE_URL,
+  ensureCsrfToken,
+  getApiErrorMessage,
+} from "../utils/api.js";
 
-    if (data?.detail) {
-      message += `: ${data.detail}`;
-    } else if (data?.error) {
-      message += `: ${data.error}`;
-    } else if (
-      data &&
-      typeof data === "object"
-    ) {
-      const fieldMessages = Object.entries(data)
-        .map(([field, messages]) => {
-          const text = Array.isArray(messages)
-            ? messages.join(", ")
-            : String(messages);
-
-          return `${field}: ${text}`;
-        })
-        .join(" | ");
-
-      if (fieldMessages) {
-        message += `: ${fieldMessages}`;
-      }
-    }
-  } catch {
-    // Keep fallback.
-  }
-
-  return message;
-};
-
-const normalizeText = (value) =>
-  String(value ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[\s_-]+/g, " ");
-
-const getReportId = (report) =>
-  report?.id ??
-  report?.report_id ??
-  report?.reportId ??
-  report?.bug_id ??
-  report?.bugId;
-
-const getReportTitle = (report) =>
-  report?.title ||
-  report?.subject ||
-  report?.bug_title ||
-  report?.bugTitle ||
-  "Untitled Bug Report";
-
-const getReportDescription = (report) =>
-  report?.description ||
-  report?.details ||
-  report?.message ||
-  report?.bug_description ||
-  report?.bugDescription ||
-  "";
-
-const getReportCategory = (report) =>
-  report?.category ||
-  report?.type ||
-  report?.bug_type ||
-  report?.bugType ||
-  "other";
-
-const getReportStatus = (report) =>
-  report?.status ||
-  report?.state ||
-  "open";
-
-const getReporterName = (report) =>
-  report?.discord_username ||
-  report?.username ||
-  report?.display_name ||
-  report?.displayName ||
-  report?.discordUsername ||
-  report?.user?.username ||
-  report?.user?.display_name ||
-  report?.user?.displayName ||
-  "Unknown User";
-
-const getReporterAvatar = (report) =>
-  report?.avatar ||
-  report?.avatar_url ||
-  report?.avatarUrl ||
-  report?.discord_avatar ||
-  report?.discordAvatar ||
-  report?.user?.avatar ||
-  report?.user?.avatar_url ||
-  "";
-const getScreenshotUrl = (report) => {
-  const possibleScreenshot =
-    report?.screenshot ??
-    report?.screenshot_url ??
-    report?.screenshotUrl ??
-    report?.image ??
-    report?.image_url ??
-    report?.imageUrl ??
-    report?.uploaded_image ??
-    report?.uploadedImage ??
-    null;
-
-  if (!possibleScreenshot) {
-    return "";
-  }
-
-  if (
-    typeof possibleScreenshot === "string"
-  ) {
-    return possibleScreenshot.trim();
-  }
-
-  if (
-    typeof possibleScreenshot === "object"
-  ) {
-    return (
-      possibleScreenshot?.url ||
-      possibleScreenshot?.secure_url ||
-      possibleScreenshot?.secureUrl ||
-      possibleScreenshot?.screenshot_url ||
-      possibleScreenshot?.screenshotUrl ||
-      possibleScreenshot?.image_url ||
-      possibleScreenshot?.imageUrl ||
-      ""
-    );
-  }
-
-  return "";
-};
-
-const getCreatedDate = (report) =>
-  report?.created_at ||
-  report?.createdAt ||
-  report?.submitted_at ||
-  report?.submittedAt ||
-  report?.date ||
-  null;
-
-const formatDate = (value) => {
-  if (!value) {
-    return "Unknown date";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return String(value);
-  }
-
-  return date.toLocaleString([], {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-};
-
-const normalizeStatus = (status) => {
-  const value = normalizeText(status);
-
-  if (
-    value === "in progress" ||
-    value === "in_progress"
-  ) {
-    return "in_progress";
-  }
-
-  if (value === "resolved") {
-    return "resolved";
-  }
-
-  if (value === "closed") {
-    return "closed";
-  }
-
-  return "open";
-};
-
-const formatStatus = (status) => {
-  const normalized = normalizeStatus(status);
-
-  if (normalized === "in_progress") {
-    return "In Progress";
-  }
-
-  if (normalized === "resolved") {
-    return "Resolved";
-  }
-
-  if (normalized === "closed") {
-    return "Closed";
-  }
-
-  return "Open";
-};
-
-const formatCategory = (category) => {
-  const value = normalizeText(category);
-
-  if (!value) {
-    return "Other";
-  }
-
-  return value
-    .split(" ")
-    .map(
-      (word) =>
-        word.charAt(0).toUpperCase() +
-        word.slice(1),
-    )
-    .join(" ");
-};
+import {
+  getCreatedDate,
+  getReportCategory,
+  getReportDescription,
+  getReportId,
+  getReportStatus,
+  getReportTitle,
+  getReporterName,
+  normalizeStatus,
+  normalizeText,
+} from "../utils/bugReports.js";
 
 function AdminBugReports() {
   const [reports, setReports] = useState([]);
@@ -236,6 +41,8 @@ function AdminBugReports() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] =
+    useState("");
 
   const [selectedReport, setSelectedReport] =
     useState(null);
@@ -250,9 +57,6 @@ function AdminBugReports() {
 
   const [deletingId, setDeletingId] =
     useState(null);
-
-  const [actionError, setActionError] =
-    useState("");
 
   useEffect(() => {
     document.title = "Admin - Bug Reports";
@@ -318,19 +122,6 @@ function AdminBugReports() {
           : Array.isArray(data?.reports)
             ? data.reports
             : [];
-
-      console.log(
-        "ADMIN BUG REPORTS:",
-        results,
-      );
-
-      results.forEach((report) => {
-        console.log(
-          "BUG REPORT SCREENSHOT:",
-          getScreenshotUrl(report),
-          report,
-        );
-      });
 
       setReports(results);
     } catch (err) {
@@ -421,58 +212,42 @@ function AdminBugReports() {
     return result;
   }, [reports]);
 
-const handleStatusChange = async (
-  report,
-  newStatus,
-) => {
-  const reportId = getReportId(report);
+  const handleStatusChange = async (
+    report,
+    newStatus,
+  ) => {
+    const reportId = getReportId(report);
 
-  if (
-    reportId === undefined ||
-    reportId === null
-  ) {
-    setActionError(
-      "This bug report does not have a valid ID.",
-    );
-    return;
-  }
+    if (
+      reportId === undefined ||
+      reportId === null
+    ) {
+      setActionError(
+        "This bug report does not have a valid ID.",
+      );
 
-  const normalizedStatus =
-    normalizeStatus(newStatus);
+      return;
+    }
 
-  try {
-    setUpdatingId(reportId);
-    setActionError("");
+    const normalizedStatus =
+      normalizeStatus(newStatus);
 
-    let token = await ensureCsrfToken();
+    try {
+      setUpdatingId(reportId);
+      setActionError("");
 
-    let response = await fetch(
-      `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
-      {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "X-CSRFToken": token,
-        },
-        body: JSON.stringify({
-          status: normalizedStatus,
-        }),
-      },
-    );
+      let token =
+        await ensureCsrfToken();
 
-    if (response.status === 403) {
-      token = await ensureCsrfToken(true);
-
-      response = await fetch(
+      let response = await fetch(
         `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
         {
           method: "PATCH",
           credentials: "include",
           headers: {
             Accept: "application/json",
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
             "X-CSRFToken": token,
           },
           body: JSON.stringify({
@@ -480,113 +255,131 @@ const handleStatusChange = async (
           }),
         },
       );
-    }
 
-    if (!response.ok) {
-      const message =
-        await getApiErrorMessage(
-          response,
-          `Unable to update bug report. Status ${response.status}`,
+      if (response.status === 403) {
+        token =
+          await ensureCsrfToken(true);
+
+        response = await fetch(
+          `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
+          {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+              "Content-Type":
+                "application/json",
+              "X-CSRFToken": token,
+            },
+            body: JSON.stringify({
+              status: normalizedStatus,
+            }),
+          },
         );
+      }
 
-      throw new Error(message);
-    }
+      if (!response.ok) {
+        const message =
+          await getApiErrorMessage(
+            response,
+            `Unable to update bug report. Status ${response.status}`,
+          );
 
-    let updatedReport = null;
+        throw new Error(message);
+      }
 
-    try {
-      updatedReport = await response.json();
-    } catch {
-      updatedReport = null;
-    }
+      let updatedReport = null;
 
-    if (updatedReport) {
+      try {
+        updatedReport =
+          await response.json();
+      } catch {
+        updatedReport = null;
+      }
+
       setReports((currentReports) =>
-        currentReports.map((currentReport) =>
-          String(getReportId(currentReport)) ===
-          String(reportId)
-            ? updatedReport
-            : currentReport,
+        currentReports.map(
+          (currentReport) =>
+            String(
+              getReportId(
+                currentReport,
+              ),
+            ) === String(reportId)
+              ? updatedReport || {
+                  ...currentReport,
+                  status:
+                    normalizedStatus,
+                }
+              : currentReport,
         ),
       );
-    } else {
-      setReports((currentReports) =>
-        currentReports.map((currentReport) =>
-          String(getReportId(currentReport)) ===
-          String(reportId)
-            ? {
-                ...currentReport,
-                status: normalizedStatus,
-              }
-            : currentReport,
-        ),
+
+      setSelectedReport(
+        (current) => {
+          if (
+            !current ||
+            String(
+              getReportId(current),
+            ) !== String(reportId)
+          ) {
+            return current;
+          }
+
+          return updatedReport || {
+            ...current,
+            status: normalizedStatus,
+          };
+        },
       );
+    } catch (err) {
+      console.error(
+        "Unable to update bug report:",
+        err,
+      );
+
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : "Unable to update bug report.",
+      );
+    } finally {
+      setUpdatingId(null);
     }
-  } catch (error) {
-    console.error(
-      "Unable to update bug report:",
-      error,
-    );
+  };
 
-    setActionError(
-      error instanceof Error
-        ? error.message
-        : "Unable to update bug report.",
-    );
-  } finally {
-    setUpdatingId(null);
-  }
-};
+  const handleDelete = async (report) => {
+    const reportId = getReportId(report);
 
-const handleDelete = async (report) => {
-  const reportId = getReportId(report);
+    if (
+      reportId === undefined ||
+      reportId === null
+    ) {
+      setActionError(
+        "This bug report does not have a valid ID.",
+      );
 
-  if (
-    reportId === undefined ||
-    reportId === null
-  ) {
-    setActionError(
-      "This bug report does not have a valid ID.",
-    );
-    return;
-  }
+      return;
+    }
 
-  const title =
-    getReportTitle(report);
+    const title =
+      getReportTitle(report);
 
-  const confirmed =
-    window.confirm(
+    const confirmed = window.confirm(
       `Delete "${title}"?\n\nThis cannot be undone.`,
     );
 
-  if (!confirmed) {
-    return;
-  }
+    if (!confirmed) {
+      return;
+    }
 
-  try {
-    setDeletingId(reportId);
-    setActionError("");
+    try {
+      setDeletingId(reportId);
+      setActionError("");
 
-    let token =
-      await ensureCsrfToken();
+      let token =
+        await ensureCsrfToken();
 
-    let response = await fetch(
-      `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
-      {
-        method: "DELETE",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-          "X-CSRFToken": token,
-        },
-      },
-    );
-
-    if (response.status === 403) {
-      token =
-        await ensureCsrfToken(true);
-
-      response = await fetch(
+      let response = await fetch(
         `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
         {
           method: "DELETE",
@@ -597,62 +390,77 @@ const handleDelete = async (report) => {
           },
         },
       );
-    }
 
-    if (!response.ok) {
-      const message =
-        await getApiErrorMessage(
-          response,
-          `Unable to delete bug report. Status ${response.status}`,
+      if (response.status === 403) {
+        token =
+          await ensureCsrfToken(true);
+
+        response = await fetch(
+          `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
+          {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+              "X-CSRFToken": token,
+            },
+          },
         );
+      }
 
-      throw new Error(message);
+      if (!response.ok) {
+        const message =
+          await getApiErrorMessage(
+            response,
+            `Unable to delete bug report. Status ${response.status}`,
+          );
+
+        throw new Error(message);
+      }
+
+      setReports(
+        (currentReports) =>
+          currentReports.filter(
+            (currentReport) =>
+              String(
+                getReportId(
+                  currentReport,
+                ),
+              ) !== String(reportId),
+          ),
+      );
+
+      setSelectedReport(
+        (current) => {
+          if (!current) {
+            return null;
+          }
+
+          return String(
+            getReportId(current),
+          ) === String(reportId)
+            ? null
+            : current;
+        },
+      );
+    } catch (err) {
+      console.error(
+        "Unable to delete bug report:",
+        err,
+      );
+
+      setActionError(
+        err.message ||
+          "Unable to delete bug report.",
+      );
+    } finally {
+      setDeletingId(null);
     }
+  };
 
-    setReports(
-      (currentReports) =>
-        currentReports.filter(
-          (currentReport) =>
-            String(
-              getReportId(
-                currentReport,
-              ),
-            ) !==
-            String(reportId),
-        ),
-    );
-
-    setSelectedReport(
-      (current) => {
-        if (!current) {
-          return null;
-        }
-
-        return String(
-          getReportId(current),
-        ) === String(reportId)
-          ? null
-          : current;
-      },
-    );
-  } catch (err) {
-    console.error(
-      "Unable to delete bug report:",
-      err,
-    );
-
-    setActionError(
-      err.message ||
-        "Unable to delete bug report.",
-    );
-  } finally {
-    setDeletingId(null);
-  }
-};
-
-
-  const closeDetails = () => {
-    setSelectedReport(null);
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
   };
 
   if (loading) {
@@ -667,8 +475,8 @@ const handleDelete = async (report) => {
 
           <p>
             Preparing the bug report
-            dashboard and loading submitted
-            reports.
+            dashboard and loading
+            submitted reports.
           </p>
 
           <div className="loading-status">
@@ -694,9 +502,7 @@ const handleDelete = async (report) => {
               ADMINISTRATION
             </span>
 
-            <h1>
-              Bug Reports
-            </h1>
+            <h1>Bug Reports</h1>
 
             <p>
               Review, manage, and resolve
@@ -733,9 +539,7 @@ const handleDelete = async (report) => {
               Unable to load reports
             </strong>
 
-            <span>
-              {error}
-            </span>
+            <span>{error}</span>
           </div>
         )}
 
@@ -745,9 +549,7 @@ const handleDelete = async (report) => {
               Action failed
             </strong>
 
-            <span>
-              {actionError}
-            </span>
+            <span>{actionError}</span>
 
             <button
               type="button"
@@ -762,173 +564,22 @@ const handleDelete = async (report) => {
 
         {!error && (
           <>
-            <section className="admin-bugreports-stats">
-              <button
-                type="button"
-                className={
-                  statusFilter === "all"
-                    ? "admin-bugreports-stat active"
-                    : "admin-bugreports-stat"
-                }
-                onClick={() =>
-                  setStatusFilter("all")
-                }
-              >
-                <span className="admin-bugreports-stat-label">
-                  All Reports
-                </span>
+            <AdminBugReportStats
+              counts={counts}
+              statusFilter={statusFilter}
+              onStatusChange={
+                setStatusFilter
+              }
+            />
 
-                <strong>
-                  {counts.all}
-                </strong>
-              </button>
-
-              <button
-                type="button"
-                className={
-                  statusFilter === "open"
-                    ? "admin-bugreports-stat active"
-                    : "admin-bugreports-stat"
-                }
-                onClick={() =>
-                  setStatusFilter("open")
-                }
-              >
-                <span className="admin-bugreports-stat-label">
-                  Open
-                </span>
-
-                <strong>
-                  {counts.open}
-                </strong>
-              </button>
-
-              <button
-                type="button"
-                className={
-                  statusFilter ===
-                  "in_progress"
-                    ? "admin-bugreports-stat active"
-                    : "admin-bugreports-stat"
-                }
-                onClick={() =>
-                  setStatusFilter(
-                    "in_progress",
-                  )
-                }
-              >
-                <span className="admin-bugreports-stat-label">
-                  In Progress
-                </span>
-
-                <strong>
-                  {counts.in_progress}
-                </strong>
-              </button>
-
-              <button
-                type="button"
-                className={
-                  statusFilter === "resolved"
-                    ? "admin-bugreports-stat active"
-                    : "admin-bugreports-stat"
-                }
-                onClick={() =>
-                  setStatusFilter(
-                    "resolved",
-                  )
-                }
-              >
-                <span className="admin-bugreports-stat-label">
-                  Resolved
-                </span>
-
-                <strong>
-                  {counts.resolved}
-                </strong>
-              </button>
-
-              <button
-                type="button"
-                className={
-                  statusFilter === "closed"
-                    ? "admin-bugreports-stat active"
-                    : "admin-bugreports-stat"
-                }
-                onClick={() =>
-                  setStatusFilter("closed")
-                }
-              >
-                <span className="admin-bugreports-stat-label">
-                  Closed
-                </span>
-
-                <strong>
-                  {counts.closed}
-                </strong>
-              </button>
-            </section>
-
-            <section className="admin-bugreports-toolbar">
-              <div className="admin-bugreports-search">
-                <span>
-                  ⌕
-                </span>
-
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) =>
-                    setSearch(
-                      event.target.value,
-                    )
-                  }
-                  placeholder="Search reports, users, categories..."
-                />
-
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSearch("")
-                    }
-                    aria-label="Clear search"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-
-              <select
-                value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(
-                    event.target.value,
-                  )
-                }
-                className="admin-bugreports-status-filter"
-              >
-                <option value="all">
-                  All Statuses
-                </option>
-
-                <option value="open">
-                  Open
-                </option>
-
-                <option value="in_progress">
-                  In Progress
-                </option>
-
-                <option value="resolved">
-                  Resolved
-                </option>
-
-                <option value="closed">
-                  Closed
-                </option>
-              </select>
-            </section>
+            <AdminBugReportsToolbar
+              search={search}
+              setSearch={setSearch}
+              statusFilter={statusFilter}
+              setStatusFilter={
+                setStatusFilter
+              }
+            />
 
             <div className="admin-bugreports-results">
               <span>
@@ -965,12 +616,7 @@ const handleDelete = async (report) => {
                     "all") && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setSearch("");
-                      setStatusFilter(
-                        "all",
-                      );
-                    }}
+                    onClick={clearFilters}
                   >
                     Clear Filters
                   </button>
@@ -979,276 +625,35 @@ const handleDelete = async (report) => {
             ) : (
               <section className="admin-bugreports-list">
                 {filteredReports.map(
-                  (report) => {
-                    const reportId =
-                      getReportId(report);
-
-                    const title =
-                      getReportTitle(
-                        report,
-                      );
-
-                    const description =
-                      getReportDescription(
-                        report,
-                      );
-
-                    const category =
-                      getReportCategory(
-                        report,
-                      );
-
-                    const status =
-                      normalizeStatus(
-                        getReportStatus(
+                  (report) => (
+                    <AdminBugReportCard
+                      key={
+                        getReportId(
                           report,
-                        ),
-                      );
-
-                    const screenshot =
-                      getScreenshotUrl(
-                        report,
-                      );
-
-                    const reporter =
-                      getReporterName(
-                        report,
-                      );
-
-                    const avatar =
-                      getReporterAvatar(
-                        report,
-                      );
-
-                    return (
-                      <article
-                        key={
-                          reportId ??
-                          `${title}-${getCreatedDate(
-                            report,
-                          )}`
-                        }
-                        className={`admin-bugreport-card status-${status}`}
-                      >
-                        <div className="admin-bugreport-card-accent" />
-
-                        <div className="admin-bugreport-card-main">
-                          <div className="admin-bugreport-card-header">
-                            <div className="admin-bugreport-card-title">
-                              <div className="admin-bugreport-card-meta">
-                                <span className="admin-bugreport-category">
-                                  {formatCategory(
-                                    category,
-                                  )}
-                                </span>
-
-                                <span
-                                  className={`admin-bugreport-status status-${status}`}
-                                >
-                                  {formatStatus(
-                                    status,
-                                  )}
-                                </span>
-                              </div>
-
-                              <h2>
-                                {title}
-                              </h2>
-
-                              <div className="admin-bugreport-reporter">
-                                {avatar ? (
-                                  <img
-                                    src={avatar}
-                                    alt={
-                                      reporter
-                                    }
-                                  />
-                                ) : (
-                                  <span className="admin-bugreport-avatar-fallback">
-                                    {reporter
-                                      .charAt(
-                                        0,
-                                      )
-                                      .toUpperCase()}
-                                  </span>
-                                )}
-
-                                <span>
-                                  <strong>
-                                    {reporter}
-                                  </strong>
-
-                                  <small>
-                                    {formatDate(
-                                      getCreatedDate(
-                                        report,
-                                      ),
-                                    )}
-                                  </small>
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="admin-bugreport-card-controls">
-                              <select
-                                value={
-                                  status
-                                }
-                                disabled={
-                                  updatingId !==
-                                    null &&
-                                  String(
-                                    updatingId,
-                                  ) ===
-                                    String(
-                                      reportId,
-                                    )
-                                }
-                                onChange={(
-                                  event,
-                                ) =>
-                                  handleStatusChange(
-                                    report,
-                                    event
-                                      .target
-                                      .value,
-                                  )
-                                }
-                                aria-label={`Change status for ${title}`}
-                              >
-                                <option value="open">
-                                  Open
-                                </option>
-
-                                <option value="in_progress">
-                                  In Progress
-                                </option>
-
-                                <option value="resolved">
-                                  Resolved
-                                </option>
-
-                                <option value="closed">
-                                  Closed
-                                </option>
-                              </select>
-
-                              <button
-                                type="button"
-                                className="admin-bugreport-delete"
-                                disabled={
-                                  deletingId !==
-                                    null &&
-                                  String(
-                                    deletingId,
-                                  ) ===
-                                    String(
-                                      reportId,
-                                    )
-                                }
-                                onClick={() =>
-                                  handleDelete(
-                                    report,
-                                  )
-                                }
-                              >
-                                {deletingId !==
-                                    null &&
-                                String(
-                                  deletingId,
-                                ) ===
-                                  String(
-                                    reportId,
-                                  )
-                                  ? "Deleting..."
-                                  : "Delete"}
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="admin-bugreport-description">
-                            {description ? (
-                              <p>
-                                {
-                                  description
-                                }
-                              </p>
-                            ) : (
-                              <p className="empty-description">
-                                No description
-                                provided.
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="admin-bugreport-footer">
-                            <div className="admin-bugreport-details">
-                              {report?.browser && (
-                                <span>
-                                  <strong>
-                                    Browser:
-                                  </strong>{" "}
-                                  {
-                                    report.browser
-                                  }
-                                </span>
-                              )}
-
-                              {report?.operating_system && (
-                                <span>
-                                  <strong>
-                                    OS:
-                                  </strong>{" "}
-                                  {
-                                    report.operating_system
-                                  }
-                                </span>
-                              )}
-
-                              {report?.page_url && (
-                                <span>
-                                  <strong>
-                                    Page:
-                                  </strong>{" "}
-                                  {
-                                    report.page_url
-                                  }
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="admin-bugreport-footer-actions">
-                              {screenshot && (
-                                <button
-                                  type="button"
-                                  className="admin-bugreport-screenshot-button"
-                                  onClick={() =>
-                                    setSelectedScreenshot(
-                                      screenshot,
-                                    )
-                                  }
-                                >
-                                  ▣ View Screenshot
-                                </button>
-                              )}
-
-                              <button
-                                type="button"
-                                className="admin-bugreport-view-button"
-                                onClick={() =>
-                                  setSelectedReport(
-                                    report,
-                                  )
-                                }
-                              >
-                                View Details →
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </article>
-                    );
-                  },
+                        ) ??
+                        `${getReportTitle(
+                          report,
+                        )}-${getCreatedDate(
+                          report,
+                        )}`
+                      }
+                      report={report}
+                      updatingId={updatingId}
+                      deletingId={deletingId}
+                      onStatusChange={
+                        handleStatusChange
+                      }
+                      onDelete={
+                        handleDelete
+                      }
+                      onViewDetails={
+                        setSelectedReport
+                      }
+                      onViewScreenshot={
+                        setSelectedScreenshot
+                      }
+                    />
+                  ),
                 )}
               </section>
             )}
@@ -1259,333 +664,28 @@ const handleDelete = async (report) => {
       <Footer credits />
 
       {selectedReport && (
-        <div
-          className="admin-bugreport-modal-overlay"
-          onMouseDown={(event) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              closeDetails();
-            }
-          }}
-        >
-          <div className="admin-bugreport-modal">
-            <div className="admin-bugreport-modal-header">
-              <div>
-                <span className="admin-bugreports-eyebrow">
-                  BUG REPORT
-                </span>
-
-                <h2>
-                  {getReportTitle(
-                    selectedReport,
-                  )}
-                </h2>
-
-                <p>
-                  Submitted by{" "}
-                  <strong>
-                    {getReporterName(
-                      selectedReport,
-                    )}
-                  </strong>
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="admin-bugreport-modal-close"
-                onClick={closeDetails}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="admin-bugreport-modal-body">
-              <div className="admin-bugreport-modal-status-row">
-                <span
-                  className={`admin-bugreport-status status-${normalizeStatus(
-                    getReportStatus(
-                      selectedReport,
-                    ),
-                  )}`}
-                >
-                  {formatStatus(
-                    getReportStatus(
-                      selectedReport,
-                    ),
-                  )}
-                </span>
-
-                <span>
-                  {formatDate(
-                    getCreatedDate(
-                      selectedReport,
-                    ),
-                  )}
-                </span>
-              </div>
-
-              <div className="admin-bugreport-detail-section">
-                <span className="admin-bugreport-detail-label">
-                  CATEGORY
-                </span>
-
-                <strong>
-                  {formatCategory(
-                    getReportCategory(
-                      selectedReport,
-                    ),
-                  )}
-                </strong>
-              </div>
-
-              <div className="admin-bugreport-detail-section">
-                <span className="admin-bugreport-detail-label">
-                  DESCRIPTION
-                </span>
-
-                <p>
-                  {getReportDescription(
-                    selectedReport,
-                  ) ||
-                    "No description provided."}
-                </p>
-              </div>
-
-              <div className="admin-bugreport-detail-grid">
-                {selectedReport?.browser && (
-                  <div>
-                    <span>
-                      Browser
-                    </span>
-
-                    <strong>
-                      {
-                        selectedReport.browser
-                      }
-                    </strong>
-                  </div>
-                )}
-
-                {selectedReport?.operating_system && (
-                  <div>
-                    <span>
-                      Operating System
-                    </span>
-
-                    <strong>
-                      {
-                        selectedReport.operating_system
-                      }
-                    </strong>
-                  </div>
-                )}
-
-                {selectedReport?.page_url && (
-                  <div>
-                    <span>
-                      Page URL
-                    </span>
-
-                    <strong>
-                      {
-                        selectedReport.page_url
-                      }
-                    </strong>
-                  </div>
-                )}
-
-                {selectedReport?.discord_id && (
-                  <div>
-                    <span>
-                      Discord ID
-                    </span>
-
-                    <strong>
-                      {
-                        selectedReport.discord_id
-                      }
-                    </strong>
-                  </div>
-                )}
-              </div>
-
-              {selectedReport?.admin_notes && (
-                <div className="admin-bugreport-detail-section">
-                  <span className="admin-bugreport-detail-label">
-                    ADMIN NOTES
-                  </span>
-
-                  <p>
-                    {
-                      selectedReport.admin_notes
-                    }
-                  </p>
-                </div>
-              )}
-
-              {getScreenshotUrl(
-                selectedReport,
-              ) && (
-                <div className="admin-bugreport-modal-screenshot">
-                  <div className="admin-bugreport-modal-screenshot-heading">
-                    <span className="admin-bugreport-detail-label">
-                      SCREENSHOT
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedScreenshot(
-                          getScreenshotUrl(
-                            selectedReport,
-                          ),
-                        )
-                      }
-                    >
-                      Open Full Size
-                    </button>
-                  </div>
-
-                  <img
-                    src={getScreenshotUrl(
-                      selectedReport,
-                    )}
-                    alt="Bug report screenshot"
-                    onError={(event) => {
-                      console.error(
-                        "Failed to load bug report screenshot:",
-                        getScreenshotUrl(
-                          selectedReport,
-                        ),
-                      );
-
-                      event.currentTarget.style.display =
-                        "none";
-                    }}
-                    onClick={() =>
-                      setSelectedScreenshot(
-                        getScreenshotUrl(
-                          selectedReport,
-                        ),
-                      )
-                    }
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="admin-bugreport-modal-actions">
-              <select
-                value={normalizeStatus(
-                  getReportStatus(
-                    selectedReport,
-                  ),
-                )}
-                disabled={
-                  updatingId !== null &&
-                  String(
-                    updatingId,
-                  ) ===
-                    String(
-                      getReportId(
-                        selectedReport,
-                      ),
-                    )
-                }
-                onChange={(event) =>
-                  handleStatusChange(
-                    selectedReport,
-                    event.target.value,
-                  )
-                }
-              >
-                <option value="open">
-                  Open
-                </option>
-
-                <option value="in_progress">
-                  In Progress
-                </option>
-
-                <option value="resolved">
-                  Resolved
-                </option>
-
-                <option value="closed">
-                  Closed
-                </option>
-              </select>
-
-              <button
-                type="button"
-                className="admin-bugreport-modal-delete"
-                onClick={() =>
-                  handleDelete(
-                    selectedReport,
-                  )
-                }
-              >
-                Delete Report
-              </button>
-
-              <button
-                type="button"
-                className="admin-bugreport-modal-cancel"
-                onClick={closeDetails}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <AdminBugReportDetails
+          report={selectedReport}
+          updatingId={updatingId}
+          onStatusChange={
+            handleStatusChange
+          }
+          onDelete={handleDelete}
+          onClose={() =>
+            setSelectedReport(null)
+          }
+          onViewScreenshot={
+            setSelectedScreenshot
+          }
+        />
       )}
 
-      {selectedScreenshot && (
-        <div
-          className="admin-bugreport-image-overlay"
-          onMouseDown={(event) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              setSelectedScreenshot(
-                null,
-              );
-            }
-          }}
-        >
-          <button
-            type="button"
-            className="admin-bugreport-image-close"
-            onClick={() =>
-              setSelectedScreenshot(
-                null,
-              )
-            }
-            aria-label="Close screenshot"
-          >
-            ×
-          </button>
-
-          <img
-            src={selectedScreenshot}
-            alt="Bug report screenshot enlarged"
-            onError={(event) => {
-              console.error(
-                "Failed to load enlarged screenshot:",
-                selectedScreenshot,
-              );
-
-              event.currentTarget.alt =
-                "Unable to load screenshot";
-            }}
-          />
-        </div>
-      )}
+      <AdminBugReportImageModal
+        screenshot={selectedScreenshot}
+        onClose={() =>
+          setSelectedScreenshot(null)
+        }
+      />
     </div>
   );
 }

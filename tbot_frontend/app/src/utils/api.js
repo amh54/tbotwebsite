@@ -76,3 +76,39 @@ export async function ensureCsrfToken() {
 
   return csrfToken;
 }
+export const getApiErrorMessage = async (
+  response,
+  fallback,
+) => {
+  let message = fallback;
+
+  try {
+    const data = await response.json();
+
+    if (data?.detail) {
+      message += `: ${data.detail}`;
+    } else if (data?.error) {
+      message += `: ${data.error}`;
+    } else if (
+      data &&
+      typeof data === "object"
+    ) {
+      const fieldMessages = Object.entries(data)
+        .map(([field, messages]) => {
+          const text = Array.isArray(messages)
+            ? messages.join(", ")
+            : String(messages);
+
+          return `${field}: ${text}`;
+        })
+        .join(" | ");
+
+      if (fieldMessages) {
+        message += `: ${fieldMessages}`;
+      }
+    }
+  } catch {
+  }
+
+  return message;
+};

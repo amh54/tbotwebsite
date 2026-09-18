@@ -1,117 +1,47 @@
 import { useEffect, useMemo, useState } from "react";
+
 import { Link } from "react-router-dom";
 
 import DeckCard from "../components/modals/deckcomponent.jsx";
+
 import FilterDropdown from "../components/filterdropdown";
+
 import Footer from "../components/footer";
+
+import {
+  getHeroOptions,
+  getCategoryOptions,
+  getArchetypeOptions,
+  filterDecks,
+  sortDecks,
+} from "../utils/deckFilters";
+
 import "../css/adminDecklists.css";
 
 import "../css/decklists.css";
+
 import "../css/loading.css";
-import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
 
-const getApiErrorMessage = async (response, fallback) => {
-  let message = fallback;
-
-  try {
-    const data = await response.json();
-
-    if (data?.detail) {
-      message += `: ${data.detail}`;
-    } else if (data?.error) {
-      message += `: ${data.error}`;
-    } else if (data?.fields) {
-      const fields = Object.entries(data.fields)
-        .map(([field, messages]) => {
-          const text = Array.isArray(messages)
-            ? messages.join(", ")
-            : String(messages);
-
-          return `${field}: ${text}`;
-        })
-        .join(" | ");
-
-      if (fields) {
-        message += `: ${fields}`;
-      }
-    }
-  } catch {
-    return message;
-  }
-
-  return message;
-};
-
-const ARCHETYPE_META = {
-  aggro: {
-    icon: "⚡",
-    description:
-      "Attempts to kill the opponent as soon as possible, usually winning the game by turn 4-7.",
-  },
-  combo: {
-    icon: "🧩",
-    description:
-      "Uses a specific card synergy to do massive damage to the opponent.",
-  },
-  midrange: {
-    icon: "⚖️",
-    description:
-      "Slower than aggro, usually likes to set up earlygame boards into mid-cost cards to win the game.",
-  },
-  control: {
-    icon: "🛡️",
-    description:
-      "Focuses on removal and card advantage, winning in the late game.",
-  },
-  tempo: {
-    icon: "🏃",
-    description:
-      "Focuses on slowly building a big board, winning trades and overwhelming the opponent.",
-  },
-};
-
-const CATEGORY_META = {
-  budget: {
-    icon: "💵",
-    description: "Decks that are cheap for new players",
-  },
-  competitive: {
-    icon: "🏆",
-    description: "Some of the best decks in the game",
-  },
-  ladder: {
-    icon: "🪜",
-    description: "Decks that are mostly only good for ranked games",
-  },
-  meme: {
-    icon: "😂",
-    description: "Decks built for fun or unusual combos",
-  },
-};
-
-const normalizeText = (value) => String(value ?? "").trim();
-
-const normalizeKey = (value) => normalizeText(value).toLowerCase();
+import {
+  API_BASE_URL,
+  ensureCsrfToken,
+  getApiErrorMessage,
+} from "../utils/api.js";
 
 function AdminLegacyDecks() {
-
   const [decks, setDecks] = useState([]);
   const [allCards, setAllCards] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
   const [hero, setHero] = useState([]);
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cardsError, setCardsError] = useState("");
-
   const [editError, setEditError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
-
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
@@ -237,192 +167,46 @@ function AdminLegacyDecks() {
     return () => controller.abort();
   }, []);
 
-  const sideFilteredDecks = useMemo(() => {
-    if (side === "All") {
-      return decks;
-    }
+  const sortedDecks = useMemo(() => sortDecks(decks), [decks]);
 
-    return decks.filter(
-      (deck) => normalizeKey(deck.side) === normalizeKey(side),
-    );
-  }, [decks, side]);
+  const filterOptions = useMemo(
+    () => ({
+      search,
+      side,
+      hero,
+      category,
+      archetype,
+    }),
+    [search, side, hero, category, archetype],
+  );
 
-  const heroOptions = useMemo(() => {
-    const map = new Map();
+  const heroOptions = useMemo(
+    () => getHeroOptions(sortedDecks, filterOptions),
+    [sortedDecks, filterOptions],
+  );
 
-    sideFilteredDecks.forEach((deck) => {
-      const value = normalizeText(deck.hero);
+  const categoryOptions = useMemo(
+    () => getCategoryOptions(sortedDecks, filterOptions),
+    [sortedDecks, filterOptions],
+  );
 
-      if (!value) {
-        return;
-      }
+  const archetypeOptions = useMemo(
+    () => getArchetypeOptions(sortedDecks, filterOptions),
+    [sortedDecks, filterOptions],
+  );
 
-      const key = normalizeKey(value);
-
-      if (!map.has(key)) {
-        map.set(key, {
-          value,
-          label: value,
-          count: 0,
-        });
-      }
-
-      map.get(key).count += 1;
-    });
-
-    return Array.from(map.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, undefined, {
-        sensitivity: "base",
+  const filteredDecks = useMemo(
+    () =>
+      filterDecks({
+        decks: sortedDecks,
+        search,
+        side,
+        hero,
+        category,
+        archetype,
       }),
-    );
-  }, [sideFilteredDecks]);
-
-  const categoryOptions = useMemo(() => {
-    const map = new Map();
-
-    sideFilteredDecks.forEach((deck) => {
-      const value = normalizeText(deck.category);
-
-      if (!value) {
-        return;
-      }
-
-      const key = normalizeKey(value);
-
-      if (!map.has(key)) {
-        map.set(key, {
-          value,
-          label: value.charAt(0).toUpperCase() + value.slice(1),
-          count: 0,
-          ...(CATEGORY_META[key] || {}),
-        });
-      }
-
-      map.get(key).count += 1;
-    });
-
-    return Array.from(map.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, undefined, {
-        sensitivity: "base",
-      }),
-    );
-  }, [sideFilteredDecks]);
-
-  const archetypeOptions = useMemo(() => {
-    const counts = {};
-
-    Object.keys(ARCHETYPE_META).forEach((key) => {
-      counts[key] = 0;
-    });
-
-    sideFilteredDecks.forEach((deck) => {
-      const value = normalizeKey(deck.archetype);
-
-      Object.keys(ARCHETYPE_META).forEach((key) => {
-        if (value.includes(key)) {
-          counts[key] += 1;
-        }
-      });
-    });
-
-    return Object.entries(ARCHETYPE_META)
-      .map(([value, meta]) => ({
-        value,
-        label: value.charAt(0).toUpperCase() + value.slice(1),
-        count: counts[value] || 0,
-        ...meta,
-      }))
-      .filter((option) => option.count > 0);
-  }, [sideFilteredDecks]);
-
-  const sortedDecks = useMemo(() => {
-    return [...decks].sort((a, b) => {
-      const sideOrder = {
-        plants: 0,
-        zombies: 1,
-      };
-
-      const sideA = normalizeKey(a.side);
-      const sideB = normalizeKey(b.side);
-
-      const sideCompare = (sideOrder[sideA] ?? 99) - (sideOrder[sideB] ?? 99);
-
-      if (sideCompare !== 0) {
-        return sideCompare;
-      }
-
-      const heroCompare = normalizeText(a.hero).localeCompare(
-        normalizeText(b.hero),
-        undefined,
-        {
-          sensitivity: "base",
-        },
-      );
-
-      if (heroCompare !== 0) {
-        return heroCompare;
-      }
-
-      return normalizeText(a.name).localeCompare(
-        normalizeText(b.name),
-        undefined,
-        {
-          sensitivity: "base",
-        },
-      );
-    });
-  }, [decks]);
-
-  const filteredDecks = useMemo(() => {
-    const searchValue = normalizeKey(search);
-
-    return sortedDecks.filter((deck) => {
-      const searchableValues = [
-        deck.name,
-        deck.creator,
-        deck.optimization,
-        deck.hero,
-        deck.archetype,
-        deck.category,
-        deck.cards,
-      ]
-        .filter(Boolean)
-        .map(normalizeKey);
-
-      const searchMatch =
-        !searchValue ||
-        searchableValues.some((value) => value.includes(searchValue));
-
-      const sideMatch =
-        side === "All" || normalizeKey(deck.side) === normalizeKey(side);
-
-      const heroMatch =
-        hero.length === 0 ||
-        hero.some(
-          (selected) =>
-            normalizeKey(deck.hero) === normalizeKey(selected.value),
-        );
-
-      const categoryMatch =
-        category.length === 0 ||
-        category.some(
-          (selected) =>
-            normalizeKey(deck.category) === normalizeKey(selected.value),
-        );
-
-      const deckArchetype = normalizeKey(deck.archetype);
-
-      const archetypeMatch =
-        archetype.length === 0 ||
-        archetype.every((selected) =>
-          deckArchetype.includes(normalizeKey(selected.value)),
-        );
-
-      return (
-        searchMatch && sideMatch && heroMatch && categoryMatch && archetypeMatch
-      );
-    });
-  }, [sortedDecks, search, side, hero, category, archetype]);
+    [sortedDecks, search, side, hero, category, archetype],
+  );
 
   const clearFilters = () => {
     setSearch("");
@@ -515,6 +299,7 @@ function AdminLegacyDecks() {
       return updatedDeck;
     } catch (err) {
       setEditError(err.message || "Unable to update legacy deck.");
+
       throw err;
     } finally {
       setEditSaving(false);
@@ -580,11 +365,13 @@ function AdminLegacyDecks() {
       const createdDeck = await response.json();
 
       setDecks((current) => [createdDeck, ...current]);
+
       setIsAddModalOpen(false);
 
       return createdDeck;
     } catch (err) {
       setEditError(err.message || "Unable to add legacy deck.");
+
       throw err;
     } finally {
       setEditSaving(false);
@@ -661,6 +448,7 @@ function AdminLegacyDecks() {
 
           <div className="loading-status">
             <span>Loading legacy deck data</span>
+
             <strong>
               {decks.length > 0 ? `${decks.length} decks` : "Loading..."}
             </strong>
