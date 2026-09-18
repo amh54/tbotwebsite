@@ -7,10 +7,7 @@ import Footer from "../components/footer";
 import "../css/mybugreports.css";
 
 import "../css/loading.css";
-
-const API_BASE_URL = String(
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
-).replace(/\/+$/, "");
+import { API_BASE_URL } from "../utils/api.js";
 
 const STATUS_LABELS = {
   pending: "Pending",

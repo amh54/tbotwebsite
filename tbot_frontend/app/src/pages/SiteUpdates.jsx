@@ -5,10 +5,7 @@ import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 
 import "../css/siteupdates.css";
-
-const API_BASE_URL = String(
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
-).replace(/\/+$/, "");
+import { API_BASE_URL } from "../utils/api.js";
 
 const CATEGORY_LABELS = {
   new: "New",

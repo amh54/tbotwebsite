@@ -8,7 +8,7 @@ import "../css/cardinfo.css";
 import "../css/navbar.css";
 import "../css/loading.css";
 
-const API_BASE_URL = "http://localhost:8000";
+import { API_BASE_URL } from "../utils/api.js";
 
 export default function ProfileCards() {
   const [userCards, setUserCards] = useState([]);

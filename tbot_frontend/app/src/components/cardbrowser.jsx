@@ -7,15 +7,14 @@ import Filters from "../components/cardInfo/filters.jsx";
 import Loading from "../components/cardInfo/loading.jsx";
 
 import GridItem from "../components/cardInfo/gridItem.jsx";
-
+import { API_BASE_URL } from "../utils/api.js";
 import {
-  API_BASE_URL,
   CARD_CACHE_KEY,
   getCardCountMemoryCache,
   getCardInfoMemoryCache,
   setCardCountMemoryCache,
   setCardInfoMemoryCache,
-} from "../utils/cardInfo/apiConfig.js";
+} from "../utils/cardInfo/cardCache.js";
 
 import {
   extractTribes,

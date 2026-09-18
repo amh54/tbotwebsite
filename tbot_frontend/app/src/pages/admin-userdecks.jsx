@@ -6,31 +6,7 @@ import Footer from "../components/footer";
 
 import "../css/decklists.css";
 import "../css/loading.css";
-
-const getApiBaseUrl = () => {
-  const envBaseUrl = String(
-    import.meta.env.VITE_API_BASE_URL || "",
-  ).trim();
-
-  if (envBaseUrl) {
-    return envBaseUrl.replace(/\/+$/, "");
-  }
-
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1"
-    ) {
-      return "http://localhost:8000";
-    }
-  }
-
-  return "";
-};
-
-const API_BASE_URL = getApiBaseUrl();
+import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
 
 const ADMIN_USER_DECKS_ENDPOINT =
   `${API_BASE_URL}/tbotapp/admin/user-decks/`;
@@ -96,61 +72,6 @@ function normalizeText(value) {
 function normalizeKey(value) {
   return normalizeText(value).toLowerCase();
 }
-
-const getCookie = (name) => {
-  const cookies = document.cookie.split(";");
-
-  for (const cookie of cookies) {
-    const [key, ...valueParts] = cookie.trim().split("=");
-
-    if (key === name) {
-      return decodeURIComponent(valueParts.join("="));
-    }
-  }
-
-  return null;
-};
-
-const ensureCsrfToken = async () => {
-  let csrfToken = getCookie("csrftoken");
-
-  if (csrfToken) {
-    return csrfToken;
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}/tbotapp/csrf/`,
-    {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-      },
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      "Unable to initialize CSRF protection. Please refresh the page.",
-    );
-  }
-
-  const data = await response.json();
-
-  csrfToken =
-    data?.csrfToken ||
-    data?.csrf_token ||
-    data?.token ||
-    getCookie("csrftoken");
-
-  if (!csrfToken) {
-    throw new Error(
-      "CSRF token is missing. Please refresh the page and try again.",
-    );
-  }
-
-  return csrfToken;
-};
 
 const getApiErrorMessage = async (response, fallback) => {
   let message = fallback;

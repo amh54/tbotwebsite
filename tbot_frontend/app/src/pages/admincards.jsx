@@ -4,14 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import CardModal from "../components/modals/cardmodal.jsx";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
-
+import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
 import "../css/admincards.css";
 import "../css/cardmodal.css";
 import "../css/loading.css";
-
-const API_BASE_URL = String(
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
-).replace(/\/+$/, "");
 
 const EMPTY_FORM = {
   cardid: "",
@@ -34,54 +30,6 @@ const EMPTY_FORM = {
   button_emoji: "",
   button2: "",
   button_emoji2: "",
-};
-
-const getCookie = (name) => {
-  const cookies = document.cookie.split(";");
-
-  for (const cookie of cookies) {
-    const trimmed = cookie.trim();
-
-    if (trimmed.startsWith(`${name}=`)) {
-      return decodeURIComponent(
-        trimmed.slice(name.length + 1),
-      );
-    }
-  }
-
-  return "";
-};
-
-const ensureCsrfToken = async () => {
-  const existingToken = getCookie("csrftoken");
-
-  if (existingToken) {
-    return existingToken;
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}/tbotapp/csrf/`,
-    {
-      method: "GET",
-      credentials: "include",
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      `Unable to initialize CSRF protection (${response.status}).`,
-    );
-  }
-
-  const token = getCookie("csrftoken");
-
-  if (!token) {
-    throw new Error(
-      "Django did not provide a CSRF token.",
-    );
-  }
-
-  return token;
 };
 
 const normalizeSide = (value) => {

@@ -7,36 +7,7 @@ import ReactMarkdown from "react-markdown";
 
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
-
-const getApiBaseUrl = () => {
-  const stripTrailingSlashes = (value) => {
-    let normalized = value;
-
-    while (normalized.endsWith("/")) {
-      normalized = normalized.slice(0, -1);
-    }
-
-    return normalized;
-  };
-
-  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
-
-  if (envBaseUrl) {
-    return stripTrailingSlashes(envBaseUrl);
-  }
-
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:8000";
-    }
-  }
-
-  return "";
-};
-
-const API_BASE_URL = getApiBaseUrl();
+import { API_BASE_URL } from "../utils/api.js";
 
 let keepOrScrapCache = {
   loaded: false,

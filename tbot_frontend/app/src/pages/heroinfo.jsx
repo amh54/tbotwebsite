@@ -5,13 +5,10 @@ import Navbar from "../components/navbar.jsx";
 import Footer from "../components/footer.jsx";
 import HeroCard from "../components/heroInfo/heroCard.jsx";
 import HeroLoading from "../components/heroInfo/heroLoading.jsx";
-
-import { API_BASE_URL, CARD_CACHE_KEY } from "../utils/cardInfo/apiConfig.js";
-
+import { API_BASE_URL} from "../utils/api.js";
+import { CARD_CACHE_KEY } from "../utils/cardInfo/cardCache.js";
 import { getRarityName } from "../utils/cardInfo/dataUtils.js";
-
 import { normalizeText } from "../utils/cardInfo/textUtils.js";
-
 import { HERO_CACHE_KEY } from "../utils/heroInfo/heroConfig.js";
 
 import {

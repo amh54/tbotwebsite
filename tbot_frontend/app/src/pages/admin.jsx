@@ -3,10 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import "../css/admin.css";
-
-const API_BASE_URL = String(
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
-).replace(/\/+$/, "");
+import { API_BASE_URL} from "../utils/api.js";
 
 function Admin() {
   const navigate = useNavigate();

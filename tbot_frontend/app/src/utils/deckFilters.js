@@ -227,16 +227,6 @@ export function parseDeckCardRequirements(value) {
   cards.forEach((rawCard) => {
     let cardName = rawCard;
     let quantity = 1;
-
-    /*
-     * Supported formats:
-     *
-     * Card Name|4
-     * Card Name | 4
-     * Card Name x4
-     * Card Name X4
-     */
-
     const pipeMatch = rawCard.match(/^(.+?)\s*\|\s*(\d+)\s*$/);
 
     if (pipeMatch) {
@@ -330,10 +320,6 @@ export function getCollectionCardQuantity(item) {
     if (xMatch) {
       return Math.max(0, Number(xMatch[2]) || 0);
     }
-
-    /*
-     * A plain string in the collection represents one copy.
-     */
     return 1;
   }
 

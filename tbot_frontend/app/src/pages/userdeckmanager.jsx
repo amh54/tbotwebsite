@@ -9,26 +9,7 @@ import Footer from "../components/footer";
 import "../css/decklists.css";
 import "../css/loading.css";
 import "../css/userdecklists.css";
-
-const getApiBaseUrl = () => {
-  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
-
-  if (envBaseUrl) {
-    return envBaseUrl.replace(/\/+$/, "");
-  }
-
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:8000";
-    }
-  }
-
-  return "";
-};
-
-const API_BASE_URL = getApiBaseUrl();
+import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
 
 const ARCHETYPE_META = {
   aggro: {
@@ -80,87 +61,6 @@ const CATEGORY_META = {
 const normalizeText = (value) => String(value ?? "").trim();
 
 const normalizeKey = (value) => normalizeText(value).toLowerCase();
-
-const getCookie = (name) => {
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  const cookies = document.cookie.split(";");
-
-  for (const cookie of cookies) {
-    const trimmed = cookie.trim();
-
-    if (!trimmed) {
-      continue;
-    }
-
-    const separatorIndex = trimmed.indexOf("=");
-
-    if (separatorIndex === -1) {
-      continue;
-    }
-
-    const key = trimmed.slice(0, separatorIndex);
-    const value = trimmed.slice(separatorIndex + 1);
-
-    if (key === name) {
-      try {
-        return decodeURIComponent(value);
-      } catch {
-        return value;
-      }
-    }
-  }
-
-  return null;
-};
-
-const ensureCsrfToken = async () => {
-  const response = await fetch(
-    `${API_BASE_URL}/tbotapp/csrf/`,
-    {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-      },
-    },
-  );
-
-  const responseText = await response.text();
-
-  let data = null;
-
-  try {
-    data = responseText ? JSON.parse(responseText) : null;
-  } catch {
-    data = null;
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      data?.detail ||
-        data?.error ||
-        `Unable to initialize CSRF protection (${response.status}).`,
-    );
-  }
-
-  // Django's get_token(request) is the authoritative token.
-  const csrfToken = String(
-    data?.csrfToken ||
-      data?.csrf_token ||
-      "",
-  ).trim();
-
-  if (!csrfToken) {
-    throw new Error(
-      "CSRF token was not returned by the server.",
-    );
-  }
-
-  return csrfToken;
-};
 
 const getApiErrorMessage = async (response, fallback) => {
   let message = fallback;

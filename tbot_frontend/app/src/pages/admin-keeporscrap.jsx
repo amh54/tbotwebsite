@@ -3,34 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "../css/admin-keeporscrap.css";
 import "../css/loading.css";
 import ReactMarkdown from "react-markdown";
-
-const getApiBaseUrl = () => {
-  const stripTrailingSlashes = (value) => {
-    let normalized = value;
-    while (normalized.endsWith("/")) {
-      normalized = normalized.slice(0, -1);
-    }
-    return normalized;
-  };
-
-  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
-
-  if (envBaseUrl) {
-    return stripTrailingSlashes(envBaseUrl);
-  }
-
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:8000";
-    }
-  }
-
-  return "";
-};
-
-const API_BASE_URL = getApiBaseUrl();
+import { API_BASE_URL, ensureCsrfToken } from "../utils/api";
 
 const SIDES = [
   {
@@ -66,38 +39,6 @@ const isIntroEntry = (entry) => {
   return side === "intro" || side === "intro/explanation";
 };
 
-const getCsrfToken = () => {
-  const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
-
-  return match ? decodeURIComponent(match[1]) : "";
-};
-
-const ensureCsrfToken = async () => {
-  let token = getCsrfToken();
-
-  if (token) {
-    return token;
-  }
-
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Unable to initialize CSRF protection (${response.status}).`,
-    );
-  }
-
-  token = getCsrfToken();
-
-  if (!token) {
-    throw new Error("Unable to obtain a CSRF token.");
-  }
-
-  return token;
-};
 
 const renderBoldText = (text) => {
   if (!hasValue(text)) {

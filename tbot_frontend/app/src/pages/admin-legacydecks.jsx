@@ -8,71 +8,7 @@ import "../css/adminDecklists.css";
 
 import "../css/decklists.css";
 import "../css/loading.css";
-
-const getApiBaseUrl = () => {
-  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
-
-  if (envBaseUrl) {
-    return envBaseUrl.replace(/\/+$/, "");
-  }
-
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:8000";
-    }
-  }
-
-  return "";
-};
-
-const API_BASE_URL = getApiBaseUrl();
-
-const getCookie = (name) => {
-  const cookies = document.cookie ? document.cookie.split("; ") : [];
-
-  for (const cookie of cookies) {
-    const [key, ...valueParts] = cookie.split("=");
-
-    if (key === name) {
-      return decodeURIComponent(valueParts.join("="));
-    }
-  }
-
-  return null;
-};
-
-
-const ensureCsrfToken = async () => {
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-    cache: "no-store",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      "Unable to initialize CSRF protection. Please refresh the page.",
-    );
-  }
-
-  const data = await response.json();
-
-  const token = data?.csrfToken;
-
-  if (!token) {
-    throw new Error(
-      "CSRF token is missing. Please refresh the page and try again.",
-    );
-  }
-
-  return token;
-};
-
+import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
 
 const getApiErrorMessage = async (response, fallback) => {
   let message = fallback;

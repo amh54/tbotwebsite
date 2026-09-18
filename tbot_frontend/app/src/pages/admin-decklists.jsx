@@ -3,29 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import DeckCard from "../components/modals/deckcomponent.jsx";
 import FilterDropdown from "../components/filterdropdown";
 import Footer from "../components/footer";
-
+import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
 import "../css/decklists.css";
 import "../css/loading.css";
-
-const getApiBaseUrl = () => {
-  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
-
-  if (envBaseUrl) {
-    return envBaseUrl.replace(/\/+$/, "");
-  }
-
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:8000";
-    }
-  }
-
-  return "";
-};
-
-const API_BASE_URL = getApiBaseUrl();
 
 function normalizeText(value) {
   return String(value ?? "").trim();
@@ -34,36 +14,6 @@ function normalizeText(value) {
 function normalizeKey(value) {
   return normalizeText(value).toLowerCase();
 }
-
-
-const ensureCsrfToken = async () => {
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      "Unable to initialize CSRF protection. Please refresh the page.",
-    );
-  }
-
-  const data = await response.json();
-
-  // Django's endpoint gives us the authoritative token.
-  const csrfToken = data?.csrfToken;
-
-  if (!csrfToken) {
-    throw new Error(
-      "CSRF token is missing. Please refresh the page and try again.",
-    );
-  }
-
-  return csrfToken;
-};
 
 /* ============================================================
    API ERROR

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import Select from "react-select";
 
-import { API_BASE_URL } from "../../utils/api";
+import { API_BASE_URL, ensureCsrfToken } from "../../utils/api.js";
 
 const MAX_QUANTITY = 4;
 
@@ -112,43 +112,6 @@ const getCookie = (name) => {
   return null;
 };
 
-const getCsrfToken = () => {
-  return getCookie("csrftoken");
-};
-
-const ensureCsrfToken = async () => {
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  let data = null;
-
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      data?.error ||
-        data?.detail ||
-        `Unable to get CSRF token (${response.status})`,
-    );
-  }
-
-  const token = data?.csrfToken || data?.csrf_token || getCsrfToken();
-
-  if (!token) {
-    throw new Error("Unable to obtain CSRF token");
-  }
-
-  return token;
-};
 
 const parseResponseData = async (response) => {
   let data = null;

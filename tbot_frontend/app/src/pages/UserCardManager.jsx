@@ -11,18 +11,7 @@ import Footer from "../components/footer";
 import "../css/cardinfo.css";
 import "../css/cardmanager.css";
 import "../css/loading.css";
-
-const getApiBaseUrl = () => {
-  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
-
-  if (envBaseUrl) {
-    return envBaseUrl.replace(/\/+$/, "");
-  }
-
-  return "http://localhost:8000";
-};
-
-const API_BASE_URL = getApiBaseUrl();
+import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
 
 const MAX_QUANTITY = 4;
 
@@ -273,58 +262,6 @@ const selectStyles = {
     ...base,
     color: "white",
   }),
-};
-
-const getCookie = (name) => {
-  const cookies = document.cookie ? document.cookie.split(";") : [];
-
-  for (const cookie of cookies) {
-    const trimmed = cookie.trim();
-
-    if (trimmed.startsWith(`${name}=`)) {
-      return decodeURIComponent(trimmed.substring(name.length + 1));
-    }
-  }
-
-  return null;
-};
-
-const getCsrfToken = () => {
-  return getCookie("csrftoken");
-};
-
-const ensureCsrfToken = async () => {
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  let data = null;
-
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      data?.error ||
-        data?.detail ||
-        `Unable to get CSRF token (${response.status})`,
-    );
-  }
-
-  const token = data?.csrfToken || data?.csrf_token || getCsrfToken();
-
-  if (!token) {
-    throw new Error("Unable to obtain CSRF token");
-  }
-
-  return token;
 };
 
 const requestJson = async (url, options = {}) => {

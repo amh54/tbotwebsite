@@ -29,26 +29,7 @@ import "../css/loading.css";
 import "../css/profilecards.css";
 
 import "../css/userdecklists.css";
-
-const getApiBaseUrl = () => {
-  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
-
-  if (envBaseUrl) {
-    return envBaseUrl.replace(/\/+$/, "");
-  }
-
-  if (
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1")
-  ) {
-    return "http://localhost:8000";
-  }
-
-  return "";
-};
-
-const API_BASE_URL = getApiBaseUrl();
+import { API_BASE_URL } from "../utils/api.js";
 
 const PROFILE_CACHE_DURATION = 30 * 60 * 1000;
 

@@ -7,26 +7,7 @@ import Footer from "../components/footer";
 import "../css/users.css";
 import "../css/navbar.css";
 import "../css/loading.css";
-
-const getApiBaseUrl = () => {
-  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
-
-  if (envBaseUrl) {
-    return envBaseUrl.replace(/\/+$/, "");
-  }
-
-  if (
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1")
-  ) {
-    return "http://localhost:8000";
-  }
-
-  return "";
-};
-
-const API_BASE_URL = getApiBaseUrl();
+import { API_BASE_URL } from "../utils/api";
 
 const DECKBUILDERS_CACHE_KEY = "tbot_deckbuilders_cache";
 const DECKBUILDERS_COUNT_CACHE_KEY = "tbot_deckbuilders_count_cache";
