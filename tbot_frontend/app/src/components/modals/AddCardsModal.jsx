@@ -832,7 +832,8 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
       : `${availableCards.length} cards`;
 
   const allCardsOwned =
-    availableCards.length || availableCards.every((card) => card.already_owned);
+    availableCards.length > 0 &&
+    availableCards.every((card) => card.already_owned);
 
   const selectAvailableDisabled = loadingCards || addingCards || allCardsOwned;
 
@@ -846,11 +847,11 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
 
   return (
     <div ref={backdropRef} className="card-manager-modal-backdrop">
-    <dialog
-  className="card-manager-modal"
-  aria-labelledby="add-cards-title"
-  open
->
+      <dialog
+        className="card-manager-modal"
+        aria-labelledby="add-cards-title"
+        open
+      >
         <div className="card-manager-modal-header">
           <div>
             <h2 id="add-cards-title">Add Cards</h2>
