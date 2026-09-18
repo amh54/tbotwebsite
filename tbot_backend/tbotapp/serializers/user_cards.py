@@ -5,7 +5,8 @@ from .cards import WebCardSerializer
 
 
 class UserCardSerializer(serializers.ModelSerializer):
-    amount = serializers.IntegerField(source="quantity")
+    amount = serializers.IntegerField(source="quantity", min_value=1,
+    max_value=4)
     card = serializers.SerializerMethodField()
 
     class Meta:
