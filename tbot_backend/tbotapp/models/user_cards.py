@@ -1,17 +1,13 @@
 from django.db import models
 from django.db.models.functions import Now
-from django.core.validators import MaxValueValidator, MinValueValidator
+
 
 class UserCard(models.Model):
     id = models.BigAutoField(primary_key=True)
     profile_id = models.BigIntegerField()
     card_name = models.CharField(max_length=255)
     quantity = models.IntegerField(
-    default=1,
-    validators=[
-        MinValueValidator(1),
-        MaxValueValidator(4),
-    ],
+    default=1
 )
     created_at = models.DateTimeField(db_default=Now())
     updated_at = models.DateTimeField(db_default=Now())
