@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import "./css/App.css";
 import "./css/navbar.css";
-
+import { Analytics } from "@vercel/analytics/react";
 import { Link, Route, Routes } from "react-router-dom";
 import MySuggestions from "./pages/mySuggestions";
 import AdminSuggestions from "./pages/adminSuggestions";
@@ -748,6 +748,7 @@ function App() {
           }
         />
       </Routes>
+        <Analytics />
     </>
   );
 }

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
+    "@vercel/analytics": "^2.0.1",
     "dejavu-fonts-ttf": "^2.37.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
