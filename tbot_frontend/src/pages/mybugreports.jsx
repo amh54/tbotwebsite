@@ -200,19 +200,6 @@ function MyBugReports() {
     setSelectedBug(null);
   };
 
-  const openScreenshot = (bug) => {
-    const screenshotUrl = getScreenshotUrl(bug?.screenshot);
-
-    if (!screenshotUrl) {
-      return;
-    }
-
-    window.open(
-      screenshotUrl,
-      "_blank",
-      "noopener,noreferrer",
-    );
-  };
 
   return (
     <>
@@ -358,10 +345,6 @@ function MyBugReports() {
             filteredBugReports.length > 0 && (
               <section className="my-bug-reports-list">
                 {filteredBugReports.map((bug) => {
-                  const screenshotUrl = getScreenshotUrl(
-                    bug.screenshot,
-                  );
-
                   return (
                     <article
                       key={bug.id}
