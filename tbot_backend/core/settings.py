@@ -101,7 +101,7 @@ DISCORD_CLIENT_SECRET = os.getenv(
 
 DISCORD_REDIRECT_URI = os.getenv(
     "DISCORD_REDIRECT_URI",
-    "http://localhost:8000/auth/discord/callback/",
+    "http://localhost:8000/tbotapp/auth/discord/callback/",
 )
 
 
