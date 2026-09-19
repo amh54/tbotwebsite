@@ -1,664 +1,40 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 import Select from "react-select";
+
 import { calculateDeckCost } from "../../utils/deckCost";
+
 import "../../css/deckmodal.css";
 
-const HERO_CLASSES = {
-  "Beta-Carrotina": ["Guardian", "Smarty"],
-  Citron: ["Guardian", "Smarty"],
-  "Captain Combustible": ["Kabloom", "Mega-Grow"],
-  Chompzilla: ["Mega-Grow", "Solar"],
-  "Grass Knuckles": ["Guardian", "Mega-Grow"],
-  "Green Shadow": ["Mega-Grow", "Smarty"],
-  "Night Cap": ["Kabloom", "Smarty"],
-  Rose: ["Smarty", "Solar"],
-  "Solar Flare": ["Kabloom", "Solar"],
-  Spudow: ["Guardian", "Kabloom"],
-  "Wall-Knight": ["Guardian", "Solar"],
-  "Brain Freeze": ["Sneaky", "Beastly"],
-  "Electric Boogaloo": ["Crazy", "Beastly"],
-  "Huge-Gigantacus": ["Brainy", "Sneaky"],
-  "Super Brainz": ["Brainy", "Sneaky"],
-  Immorticia: ["Brainy", "Beastly"],
-  Impfinity: ["Crazy", "Sneaky"],
-  Neptuna: ["Hearty", "Sneaky"],
-  "Professor Brainstorm": ["Brainy", "Crazy"],
-  Rustbolt: ["Hearty", "Brainy"],
-  "The Smash": ["Beastly", "Hearty"],
-  "Z-Mech": ["Crazy", "Hearty"],
-};
+import CardRatioEditor from "../../components/admin/CardRatioEditor";
+import DatePicker from "../../components/admin/DatePicker";
+import RequiredLabel from "../../components/admin/RequiredLabel";
+import TextArea from "../../components/admin/TextArea";
+import TextField from "../../components/admin/TextField";
+
+import {
+  ARCHETYPE_OPTIONS,
+  CATEGORY_OPTIONS,
+  HERO_CLASSES,
+  MAX_CARD_RATIO,
+  SIDE_OPTIONS,
+  TARGET_CARD_RATIO_TOTAL,
+} from "../../utils/addDeckModalConstants";
+
+import {
+  cardOptionsToRatioLines,
+  getCardSide,
+  getTodayDate,
+  isValidDeckTutorialUrl,
+  normalizeCardType,
+  normalizeSide,
+  optionsToCombinedValue,
+  scrollToError,
+  selectStyles,
+  sumCardRatios,
+  validationErrorStyle,
+} from "../../utils/addDeckModalUtils";
 
-const CATEGORY_OPTIONS = ["Budget", "Competitive", "Ladder", "Meme"].map(
-  (value) => ({
-    value,
-    label: value,
-  }),
-);
-
-const ARCHETYPE_OPTIONS = [
-  "Aggro",
-  "Combo",
-  "Control",
-  "Midrange",
-  "Tempo",
-].map((value) => ({
-  value,
-  label: value,
-}));
-const MAX_CARD_RATIO = 4;
-const TARGET_CARD_RATIO_TOTAL = 40;
-
-const normalizeSide = (side) => {
-  const value = String(side || "")
-    .trim()
-    .toLowerCase();
-
-  if (value === "plant" || value === "plants") {
-    return "Plants";
-  }
-
-  if (value === "zombie" || value === "zombies") {
-    return "Zombies";
-  }
-
-  return "";
-};
-
-const getCardSide = (card) => {
-  const side = String(card?.side ?? "")
-    .trim()
-    .toLowerCase();
-
-  if (side === "plant" || side === "plants") {
-    return "Plants";
-  }
-
-  if (side === "zombie" || side === "zombies") {
-    return "Zombies";
-  }
-
-  return "";
-};
-const scrollToError = (field) => {
-  const element = document.querySelector(`[data-field="${field}"]`);
-
-  if (element) {
-    element.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-
-    element.focus?.();
-  }
-};
-const normalizeCardType = (value) =>
-  String(value || "")
-    .trim()
-    .toLowerCase();
-
-const optionsToCombinedValue = (options) =>
-  (options || [])
-    .map((option) => String(option?.value || "").trim())
-    .filter(Boolean)
-    .join(" ");
-
-const cardOptionsToRatioLines = (options) =>
-  (options || [])
-    .map((option) => {
-      const name = String(option?.value || "").trim();
-      const count = Number(option?.count) || 0;
-
-      if (!name || count <= 0) {
-        return "";
-      }
-
-      return `${name}|${count}`;
-    })
-    .filter(Boolean)
-    .join("\n");
-
-const sumCardRatios = (options) =>
-  (options || []).reduce(
-    (sum, option) => sum + (Number(option?.count) || 0),
-    0,
-  );
-
-const isValidDeckTutorialUrl = (value) => {
-  const url = String(value ?? "").trim();
-
-  if (!url) {
-    return true;
-  }
-
-  try {
-    const parsed = new URL(url);
-
-    if (parsed.protocol !== "https:") {
-      return false;
-    }
-
-    const hostname = parsed.hostname.toLowerCase();
-
-    // Google Docs
-    if (
-      hostname === "docs.google.com" ||
-      hostname.endsWith(".docs.google.com")
-    ) {
-      return true;
-    }
-
-    // YouTube
-    if (
-      hostname === "youtube.com" ||
-      hostname === "www.youtube.com" ||
-      hostname === "m.youtube.com" ||
-      hostname === "youtu.be"
-    ) {
-      return true;
-    }
-
-    // Microsoft Word / Office
-    if (
-      hostname === "word.office.com" ||
-      hostname === "office.com" ||
-      hostname.endsWith(".office.com") ||
-      hostname === "1drv.ms" ||
-      hostname.endsWith(".sharepoint.com")
-    ) {
-      return true;
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
-};
-
-const selectStyles = {
-  control: (base, state) => ({
-    ...base,
-    backgroundColor: "#1b1f23",
-    borderColor: state.isFocused ? "#8b949e" : "#3b4148",
-    borderRadius: "8px",
-    minHeight: "45px",
-    boxShadow: state.isFocused ? "0 0 0 2px rgba(139, 148, 158, 0.12)" : "none",
-    cursor: "pointer",
-    "&:hover": {
-      borderColor: "#646d76",
-    },
-  }),
-
-  menu: (base) => ({
-    ...base,
-    backgroundColor: "#1b1f23",
-    border: "1px solid #3b4148",
-    borderRadius: "12px",
-    overflow: "hidden",
-    zIndex: 100000,
-  }),
-
-  menuList: (base) => ({
-    ...base,
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
-    "::-webkit-scrollbar": {
-      display: "none",
-    },
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isSelected
-      ? "#343b43"
-      : state.isFocused
-        ? "#2a3036"
-        : "#1b1f23",
-    color: "#f2f2f2",
-    cursor: "pointer",
-    padding: "10px 12px",
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    gap: "6px",
-    padding: "6px 8px",
-    minWidth: 0,
-    overflow: "hidden",
-  }),
-
-  multiValue: (base) => ({
-    ...base,
-    backgroundColor: "#303740",
-    border: "1px solid #505a65",
-    borderRadius: "999px",
-    overflow: "hidden",
-    margin: 0,
-    maxWidth: "100%",
-    flexShrink: 0,
-  }),
-
-  multiValueLabel: (base) => ({
-    ...base,
-    color: "#d7dce1",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    padding: "3px 4px 3px 10px",
-    whiteSpace: "nowrap",
-    overflow: "visible",
-  }),
-
-  multiValueRemove: (base) => ({
-    ...base,
-    color: "#aeb5bc",
-    borderRadius: "0 999px 999px 0",
-    padding: "3px 8px 3px 4px",
-    flexShrink: 0,
-    "&:hover": {
-      backgroundColor: "#4a535d",
-      color: "#ffffff",
-    },
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    position: "static",
-    transform: "none",
-    maxWidth: "100%",
-    width: "fit-content",
-    minWidth: 0,
-    overflow: "visible",
-    textOverflow: "clip",
-    whiteSpace: "nowrap",
-    backgroundColor: "#303740",
-    border: "1px solid #505a65",
-    borderRadius: "999px",
-    color: "#d7dce1",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    padding: "3px 10px",
-    margin: 0,
-    flexShrink: 1,
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    color: "#7d858e",
-    fontSize: "0.9rem",
-  }),
-
-  input: (base) => ({
-    ...base,
-    color: "#ffffff",
-    margin: 0,
-    padding: 0,
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  dropdownIndicator: (base) => ({
-    ...base,
-    color: "#737b84",
-    padding: "8px",
-    flexShrink: 0,
-    "&:hover": {
-      color: "#c7cbd1",
-    },
-  }),
-
-  clearIndicator: (base) => ({
-    ...base,
-    color: "#aeb5bc",
-    padding: "0",
-    width: "22px",
-    height: "22px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "50%",
-    flexShrink: 0,
-    "&:hover": {
-      backgroundColor: "#4a535d",
-      color: "#ffffff",
-    },
-  }),
-};
-const validationErrorStyle = {
-  color: "#ff4d4d",
-  fontSize: "0.82rem",
-  fontWeight: 600,
-  marginTop: "6px",
-};
-
-const requiredLabelStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "4px",
-};
-
-const requiredStarStyle = {
-  color: "#8b949e",
-};
-
-function RequiredLabel({ children }) {
-  return (
-    <span style={requiredLabelStyle}>
-      {children}
-      <span style={requiredStarStyle}>*</span>
-    </span>
-  );
-}
-
-function TextField({
-  label,
-  value,
-  onChange,
-  required = false,
-  error = "",
-  type = "text",
-}) {
-  return (
-    <label className="admin-modal-field">
-      <span className="admin-modal-label">
-        {required ? <RequiredLabel>{label}</RequiredLabel> : label}
-      </span>
-
-      <input
-        data-field={label.toLowerCase()}
-        type={type}
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value)}
-      />
-
-      {error && <span style={validationErrorStyle}>{error}</span>}
-    </label>
-  );
-}
-
-function TextArea({ label, value, onChange, required = false, error = "" }) {
-  return (
-    <label className="admin-modal-field admin-modal-textarea-field">
-      {label && (
-        <span className="admin-modal-label">
-          {required ? <RequiredLabel>{label}</RequiredLabel> : label}
-        </span>
-      )}
-
-      <textarea
-        data-field={label.toLowerCase()}
-        className="admin-modal-textarea"
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value)}
-        rows={7}
-      />
-      {error && <span style={validationErrorStyle}>{error}</span>}
-    </label>
-  );
-}
-
-function CardRatioEditor({ options, onChange, disabled, total, error }) {
-  if (!options?.length) {
-    return null;
-  }
-
-  return (
-    <div className="admin-modal-field admin-modal-cards-ratio">
-      <span className="admin-modal-label">
-        <RequiredLabel>
-          Card Ratios (must total {TARGET_CARD_RATIO_TOTAL})
-        </RequiredLabel>
-      </span>
-
-      {options.map((option) => {
-        const count = option.count ?? 1;
-
-        return (
-          <div className="admin-modal-ratio-row" key={option.value}>
-            <span className="admin-modal-ratio-name">{option.label}</span>
-
-            <button
-              type="button"
-              onClick={() => onChange(option.value, -1)}
-              disabled={disabled}
-              aria-label={`Decrease ${option.label} count`}
-            >
-              −
-            </button>
-
-            <span className="admin-modal-ratio-count">{count}</span>
-
-            <button
-              type="button"
-              onClick={() => onChange(option.value, 1)}
-              disabled={disabled || count >= MAX_CARD_RATIO}
-              aria-label={`Increase ${option.label} count`}
-            >
-              +
-            </button>
-          </div>
-        );
-      })}
-
-      <div
-        className={`admin-modal-ratio-total ${
-          total === TARGET_CARD_RATIO_TOTAL ? "is-valid" : "is-invalid"
-        }`}
-      >
-        Total: {total} / {TARGET_CARD_RATIO_TOTAL}
-      </div>
-
-      {error && <div style={validationErrorStyle}>{error}</div>}
-    </div>
-  );
-}
-
-function DatePicker({
-  label,
-  value,
-  onChange,
-  pickerId,
-  openPicker,
-  setOpenPicker,
-}) {
-  const open = openPicker === pickerId;
-  const [viewDate, setViewDate] = useState(() => {
-    if (value) {
-      const [year, month, day] = value.split("-").map(Number);
-      if (year && month && day) return new Date(year, month - 1, day);
-    }
-    return new Date();
-  });
-
-  const wrapperRef = useRef(null);
-
-  useEffect(() => {
-    const handleOutsideClick = (event) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-        setOpenPicker(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
-
-  useEffect(() => {
-    if (value) {
-      const [year, month, day] = value.split("-").map(Number);
-      if (year && month && day) {
-        setViewDate(new Date(year, month - 1, 1));
-      }
-    }
-  }, [value]);
-
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const days = [];
-  for (let i = 0; i < firstDay; i += 1) days.push(null);
-  for (let day = 1; day <= daysInMonth; day += 1) days.push(day);
-
-  const selectedDate = value
-    ? (() => {
-        const [y, m, d] = value.split("-").map(Number);
-        return y && m && d ? new Date(y, m - 1, d) : null;
-      })()
-    : null;
-
-  const today = new Date();
-
-  const isSameDate = (a, b) =>
-    a &&
-    b &&
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-
-  const formatDate = (date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-      date.getDate(),
-    ).padStart(2, "0")}`;
-
-  const displayValue = selectedDate
-    ? selectedDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "";
-
-  const selectDay = (day) => {
-    onChange(formatDate(new Date(year, month, day)));
-    setOpenPicker(null);
-  };
-
-  return (
-    <div className="admin-modal-field custom-date-picker" ref={wrapperRef}>
-      <span className="admin-modal-label">{label}</span>
-
-      <button
-        type="button"
-        className={`custom-date-input${open ? " is-open" : ""}${
-          value ? " has-value" : ""
-        }`}
-        onClick={() =>
-          setOpenPicker((current) => (current === pickerId ? null : pickerId))
-        }
-        aria-haspopup="dialog"
-        aria-expanded={open}
-      >
-        <span>{displayValue || "Select date..."}</span>
-        <span className="custom-date-calendar-icon" aria-hidden="true">
-          📅
-        </span>
-      </button>
-
-      {open && (
-        <div className="custom-date-calendar" role="dialog" aria-label={label}>
-          <div className="custom-date-calendar-header">
-            <button
-              type="button"
-              className="custom-date-nav"
-              onClick={() => setViewDate(new Date(year, month - 1, 1))}
-              aria-label="Previous month"
-            >
-              ‹
-            </button>
-
-            <strong>
-              {viewDate.toLocaleDateString("en-US", {
-                month: "long",
-                year: "numeric",
-              })}
-            </strong>
-
-            <button
-              type="button"
-              className="custom-date-nav"
-              onClick={() => setViewDate(new Date(year, month + 1, 1))}
-              aria-label="Next month"
-            >
-              ›
-            </button>
-          </div>
-
-          <div className="custom-date-weekdays">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <span key={day}>{day}</span>
-            ))}
-          </div>
-
-          <div className="custom-date-grid">
-            {days.map((day, index) =>
-              day === null ? (
-                <span key={`empty-${index}`} className="custom-date-empty" />
-              ) : (
-                <button
-                  key={day}
-                  type="button"
-                  className={`custom-date-day${
-                    selectedDate &&
-                    isSameDate(new Date(year, month, day), selectedDate)
-                      ? " selected"
-                      : ""
-                  }${
-                    isSameDate(new Date(year, month, day), today)
-                      ? " today"
-                      : ""
-                  }`}
-                  onClick={() => selectDay(day)}
-                >
-                  {day}
-                </button>
-              ),
-            )}
-          </div>
-
-          <div className="custom-date-calendar-footer">
-            <button
-              type="button"
-              className="custom-date-clear"
-              onClick={() => {
-                onChange("");
-                setOpenPicker(null);
-              }}
-            >
-              Clear
-            </button>
-
-            <button
-              type="button"
-              className="custom-date-today"
-              onClick={() => {
-                const current = new Date();
-
-                onChange(formatDate(current));
-
-                setViewDate(
-                  new Date(current.getFullYear(), current.getMonth(), 1),
-                );
-
-                setOpenPicker(null);
-              }}
-            >
-              Today
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-const getTodayDate = () => {
-  const today = new Date();
-
-  return `${String(today.getMonth() + 1).padStart(2, "0")}/${String(
-    today.getDate(),
-  ).padStart(2, "0")}/${today.getFullYear()}`;
-};
 function AddDeckModal({
   open,
   allCards = [],
@@ -681,10 +57,7 @@ function AddDeckModal({
     description: "",
     image: "",
     image_file: null,
-
-    // CREATOR IS REQUIRED
     creator: "",
-
     inspiration: "",
     optimization: "",
     suggested_date: "",
@@ -859,6 +232,7 @@ function AddDeckModal({
     () => calculateDeckCost(form.cardsSelected, allCards),
     [form.cardsSelected, allCards],
   );
+
   const selectedHero =
     heroOptions.find(
       (option) =>
@@ -1096,6 +470,7 @@ function AddDeckModal({
           "Tutorial URL must be a Google Docs, Microsoft Word, or YouTube link.",
       };
     }
+
     const creator = String(form.creator ?? "").trim();
 
     if (!creator) {
@@ -1152,8 +527,11 @@ function AddDeckModal({
 
     try {
       setSaving(true);
+
       const hasNewImage = form.image_file instanceof File;
+
       const creator = String(form.creator ?? "").trim();
+
       if (!creator) {
         setValidationError({
           field: "creator",
@@ -1161,6 +539,7 @@ function AddDeckModal({
         });
 
         setSaving(false);
+
         return;
       }
 
@@ -1168,35 +547,31 @@ function AddDeckModal({
         name: String(form.name ?? "").trim(),
         hero: String(form.hero ?? "").trim(),
         side: normalizedFormSide,
-
         category: optionsToCombinedValue(form.categorySelected),
-
         archetype: optionsToCombinedValue(form.archetypeSelected),
-
         description: String(form.description ?? "").trim(),
-
         image: hasNewImage ? "" : String(form.image || "").trim(),
-
         image_file: hasNewImage ? form.image_file : null,
         creator,
         cost: Number(calculatedDeckCost),
-
         inspiration: String(form.inspiration ?? "").trim(),
-
         optimization: String(form.optimization ?? "").trim(),
-
         suggested_date: isAdmin
           ? (() => {
               const value = String(form.suggested_date ?? "").trim();
-              if (!value) return "";
+
+              if (!value) {
+                return "";
+              }
 
               const [year, month, day] = value.split("-");
-              return `${Number(month)}/${Number(day)}/${String(year).slice(-2)}`;
+
+              return `${Number(month)}/${Number(
+                day,
+              )}/${String(year).slice(-2)}`;
             })()
           : getTodayDate(),
-
         deck_doc: String(form.deck_doc ?? "").trim(),
-
         cards: cardOptionsToRatioLines(form.cardsSelected),
       };
 
@@ -1336,16 +711,7 @@ function AddDeckModal({
                     <Select
                       className="admin-modal-single-select"
                       classNamePrefix="admin-select"
-                      options={[
-                        {
-                          value: "Plants",
-                          label: "Plants",
-                        },
-                        {
-                          value: "Zombies",
-                          label: "Zombies",
-                        },
-                      ]}
+                      options={SIDE_OPTIONS}
                       value={selectedSide}
                       onChange={handleSideChange}
                       placeholder="Select side..."
@@ -1476,18 +842,16 @@ function AddDeckModal({
                   />
 
                   {isAdmin && (
-                    <>
-                      <DatePicker
-                        label="Suggested Date"
-                        value={form.suggested_date}
-                        onChange={(value) =>
-                          handleChange("suggested_date", value)
-                        }
-                        pickerId="suggested"
-                        openPicker={openDatePicker}
-                        setOpenPicker={setOpenDatePicker}
-                      />
-                    </>
+                    <DatePicker
+                      label="Suggested Date"
+                      value={form.suggested_date}
+                      onChange={(value) =>
+                        handleChange("suggested_date", value)
+                      }
+                      pickerId="suggested"
+                      openPicker={openDatePicker}
+                      setOpenPicker={setOpenDatePicker}
+                    />
                   )}
 
                   <TextField

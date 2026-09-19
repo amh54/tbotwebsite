@@ -676,7 +676,6 @@ export function sortDecks(decks = []) {
     );
   });
 }
-
 export function getHeroOptions(decks = [], allCards = [], filterOptions = {}) {
   const heroMap = new Map();
 
@@ -710,9 +709,12 @@ export function getHeroOptions(decks = [], allCards = [], filterOptions = {}) {
     heroMap.get(key).count += 1;
   });
 
+  // Always work with an array.
+  const cards = Array.isArray(allCards) ? allCards : [];
+
   return Array.from(heroMap.values())
     .map((option) => {
-      const matchedCard = allCards.find(
+      const matchedCard = cards.find(
         (card) =>
           normalizeCardName(card?.card_name) ===
           normalizeCardName(option.label),
