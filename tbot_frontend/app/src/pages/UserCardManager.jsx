@@ -1,279 +1,43 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import Select from "react-select";
-
-import { Link } from "react-router-dom";
-
 import AddCardsModal from "../components/modals/AddCardsModal.jsx";
-
 import Footer from "../components/footer";
+import CardManagerHeader from "../components/cardmanager/CardManagerHeader.jsx";
+import CardManagerSummary from "../components/cardmanager/CardManagerSummary.jsx";
+import CardManagerFilters from "../components/cardmanager/CardManagerFilters.jsx";
+import CollectionCard from "../components/cardmanager/CollectionCard.jsx";
 
 import "../css/cardinfo.css";
 import "../css/cardmanager.css";
 import "../css/loading.css";
+
 import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
 
-const MAX_QUANTITY = 4;
-
-const normalizeText = (value) =>
-  String(value ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-
-const removeDiscordEmojis = (value) =>
-  String(value ?? "").replace(/<a?:[^:>]+:\d+>/gi, "");
-
-const normalizeClassName = (className) => {
-  const value = removeDiscordEmojis(className)
-    .replace(/[\_\~\`]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  const normalized = normalizeText(value);
-
-  const canonicalClasses = {
-    guardian: "Guardian",
-    kabloom: "Kabloom",
-    megagrow: "Mega-Grow",
-    "mega-grow": "Mega-Grow",
-    smarty: "Smarty",
-    solar: "Solar",
-    beastly: "Beastly",
-    brainy: "Brainy",
-    crazy: "Crazy",
-    hearty: "Hearty",
-    sneaky: "Sneaky",
-  };
-
-  return canonicalClasses[normalized] || value;
-};
-
-const getClassNames = (classes) => {
-  if (!classes) {
-    return [];
-  }
-
-  return [
-    ...new Set(
-      String(classes)
-        .split(/[,|;]/)
-        .map((className) => normalizeClassName(className))
-        .filter(Boolean),
-    ),
-  ];
-};
-
-const getCardTypes = (card) => {
-  const types = [];
-
-  const addType = (type) => {
-    if (!types.includes(type)) {
-      types.push(type);
-    }
-  };
-
-  const sideValue = normalizeText(
-    card?.side || card?.faction || card?.team || "",
-  );
-
-  const descriptionValue = normalizeText(
-    removeDiscordEmojis(card?.description || ""),
-  );
-
-  if (
-    sideValue === "plant" ||
-    sideValue === "plants" ||
-    sideValue.includes("plant")
-  ) {
-    addType("Plants");
-  }
-
-  if (
-    sideValue === "zombie" ||
-    sideValue === "zombies" ||
-    sideValue.includes("zombie")
-  ) {
-    addType("Zombies");
-  }
-
-  if (/\btrick\b|\btricks\b/.test(descriptionValue)) {
-    addType("Tricks");
-  }
-
-  if (/\benvironment\b|\benvironments\b/.test(descriptionValue)) {
-    addType("Environment");
-  }
-
-  if (/\bsuperpower\b|\bsuperpowers\b/.test(descriptionValue)) {
-    addType("Superpower");
-  }
-
-  return types;
-};
-
-const getCardStats = (stats) => {
-  const cleanStats = removeDiscordEmojis(stats).replace(/\s+/g, " ").trim();
-
-  const numbers = cleanStats.match(/\d+/g) || [];
-
-  return {
-    cost: numbers[0] !== undefined ? Number(numbers[0]) : null,
-    attack: numbers[1] !== undefined ? Number(numbers[1]) : null,
-    health: numbers[2] !== undefined ? Number(numbers[2]) : null,
-  };
-};
-
-const getSetName = (setRarity) => {
-  if (!setRarity) {
-    return "";
-  }
-
-  const value = String(setRarity).trim();
-  const separatorIndex = value.lastIndexOf(" - ");
-
-  if (separatorIndex === -1) {
-    return "";
-  }
-
-  return value.slice(0, separatorIndex).trim();
-};
-
-const getRarityName = (setRarity) => {
-  if (!setRarity) {
-    return "";
-  }
-
-  const value = String(setRarity).trim();
-  const separatorIndex = value.lastIndexOf(" - ");
-
-  if (separatorIndex === -1) {
-    const normalized = normalizeText(value);
-
-    const knownRarities = new Set([
-      "common",
-      "uncommon",
-      "rare",
-      "super-rare",
-      "legendary",
-      "event",
-      "token",
-      "hero",
-    ]);
-
-    return knownRarities.has(normalized) ? value : "";
-  }
-
-  return value.slice(separatorIndex + 3).trim();
-};
-
-const selectStyles = {
-  control: (base, state) => ({
-    ...base,
-    backgroundColor: "#202020",
-    borderColor: state.isFocused ? "#8fe38b" : "#444",
-    minHeight: "45px",
-    boxShadow: "none",
-    "&:hover": {
-      borderColor: "#8fe38b",
-    },
-  }),
-
-  valueContainer: (base) => ({
-    ...base,
-    minWidth: 0,
-    flexWrap: "wrap",
-    maxHeight: "140px",
-    overflowY: "auto",
-    overflowX: "hidden",
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
-    "::-webkit-scrollbar": {
-      display: "none",
-    },
-  }),
-
-  indicatorsContainer: (base) => ({
-    ...base,
-    alignSelf: "flex-start",
-    flexShrink: 0,
-  }),
-
-  menuPortal: (base) => ({
-    ...base,
-    zIndex: 9999,
-  }),
-
-  menu: (base) => ({
-    ...base,
-    backgroundColor: "#202020",
-  }),
-
-  menuList: (base) => ({
-    ...base,
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
-    "::-webkit-scrollbar": {
-      display: "none",
-    },
-  }),
-
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isFocused ? "#333" : "#202020",
-    color: "white",
-    cursor: "pointer",
-  }),
-
-  multiValue: (base) => ({
-    ...base,
-    backgroundColor: "#333",
-    maxWidth: "100%",
-  }),
-
-  multiValueLabel: (base) => ({
-    ...base,
-    color: "white",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  }),
-
-  multiValueRemove: (base) => ({
-    ...base,
-    color: "#aaa",
-    "&:hover": {
-      backgroundColor: "#555",
-      color: "white",
-    },
-  }),
-
-  singleValue: (base) => ({
-    ...base,
-    color: "white",
-  }),
-
-  placeholder: (base) => ({
-    ...base,
-    color: "#888",
-  }),
-
-  input: (base) => ({
-    ...base,
-    color: "white",
-  }),
-};
+import {
+  MAX_QUANTITY,
+  getCardData,
+  getCardStats,
+  getCardTypes,
+  getClassNames,
+  getQuantityValue,
+  getRarityName,
+  getSetName,
+  getSideRank,
+  normalizeText,
+} from "../utils/cardManagerUtils.js";
 
 const requestJson = async (url, options = {}) => {
   const method = (options.method || "GET").toUpperCase();
 
   const headers = {
     Accept: "application/json",
+
     ...(options.body
       ? {
           "Content-Type": "application/json",
         }
       : {}),
+
     ...(options.headers || {}),
   };
 
@@ -320,6 +84,7 @@ const requestJson = async (url, options = {}) => {
       `Request failed with status ${response.status}`;
 
     const error = new Error(errorMessage);
+
     error.status = response.status;
     error.data = data;
 
@@ -329,31 +94,29 @@ const requestJson = async (url, options = {}) => {
   return data;
 };
 
-const getQuantityValue = (value) => {
-  const parsed = Number.parseInt(value, 10);
-
-  if (!Number.isFinite(parsed)) {
-    return 0;
-  }
-
-  return Math.min(MAX_QUANTITY, Math.max(0, parsed));
-};
-
 const UserCardManager = () => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingCardId, setSavingCardId] = useState(null);
   const [deletingCardId, setDeletingCardId] = useState(null);
+
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const [collectionSearch, setCollectionSearch] = useState("");
+
   const [collectionSide, setCollectionSide] = useState([]);
+
   const [collectionType, setCollectionType] = useState([]);
+
   const [collectionClass, setCollectionClass] = useState([]);
+
   const [collectionCost, setCollectionCost] = useState([]);
+
   const [collectionRarity, setCollectionRarity] = useState([]);
+
   const [collectionSet, setCollectionSet] = useState([]);
 
   const loadCollection = useCallback(async () => {
@@ -381,7 +144,9 @@ const UserCardManager = () => {
 
   const handleCardsAdded = async () => {
     setIsAddModalOpen(false);
+
     await loadCollection();
+
     setSuccessMessage("Cards added to your collection.");
   };
 
@@ -405,7 +170,7 @@ const UserCardManager = () => {
     const rarities = new Set();
 
     cards.forEach((card) => {
-      const cardData = card.card || card;
+      const cardData = getCardData(card);
 
       if (cardData.side) {
         sides.add(cardData.side);
@@ -426,6 +191,7 @@ const UserCardManager = () => {
       }
 
       const setName = getSetName(cardData.set_rarity);
+
       const rarityName = getRarityName(cardData.set_rarity);
 
       if (setName) {
@@ -501,15 +267,20 @@ const UserCardManager = () => {
       : [];
 
     const matches = cards.filter((card) => {
-      const cardData = card.card || card;
+      const cardData = getCardData(card);
+
       const name = card.card_name?.toLowerCase() || "";
 
       const searchMatch = !searchValue || name.includes(searchValue);
 
       const cardClasses = getClassNames(cardData.card_type);
+
       const cardTypes = getCardTypes(cardData);
+
       const stats = getCardStats(cardData.stats);
+
       const setName = getSetName(cardData.set_rarity);
+
       const rarityName = getRarityName(cardData.set_rarity);
 
       const sideMatch =
@@ -560,23 +331,9 @@ const UserCardManager = () => {
       );
     });
 
-    const getSideRank = (cardData) => {
-      const sideValue = normalizeText(cardData.side);
-
-      if (sideValue.includes("plant")) {
-        return 0;
-      }
-
-      if (sideValue.includes("zombie")) {
-        return 1;
-      }
-
-      return 2;
-    };
-
     matches.sort((a, b) => {
-      const aData = a.card || a;
-      const bData = b.card || b;
+      const aData = getCardData(a);
+      const bData = getCardData(b);
 
       const sideDifference = getSideRank(aData) - getSideRank(bData);
 
@@ -746,128 +503,10 @@ const UserCardManager = () => {
     }
   };
 
-  const renderCollectionCard = (card) => {
-    const fullCard = card.card || card;
-    const quantity = getQuantityValue(card.quantity);
-
-    return (
-      <div className="collection-card" key={card.id}>
-        <div className="collection-card-image-wrapper">
-          {fullCard?.thumbnail ? (
-            <img
-              className="collection-card-image"
-              src={fullCard.thumbnail}
-              alt={card.card_name}
-            />
-          ) : (
-            <div className="collection-card-placeholder">
-              {card.card_name?.charAt(0)?.toUpperCase() || "?"}
-            </div>
-          )}
-        </div>
-
-        <div className="collection-card-content">
-          <h3 className="collection-card-name">{card.card_name}</h3>
-
-          {fullCard && (
-            <div className="collection-card-meta">
-              <span>{fullCard.side || "Unknown side"}</span>
-
-              <span>{fullCard.card_type || "Unknown type"}</span>
-
-              {fullCard.cost !== undefined && (
-                <span>Cost: {fullCard.cost}</span>
-              )}
-            </div>
-          )}
-
-          <div className="collection-card-quantity">
-            <button
-              type="button"
-              className="quantity-button"
-              onClick={() => changeQuantity(card, -1)}
-              disabled={
-                quantity <= 0 ||
-                savingCardId === card.id ||
-                deletingCardId === card.id
-              }
-            >
-              −
-            </button>
-
-            <input
-              type="number"
-              min="0"
-              max={MAX_QUANTITY}
-              value={card.quantity}
-              onChange={(event) =>
-                handleQuantityChange(card.id, event.target.value)
-              }
-              className="quantity-input"
-              disabled={savingCardId === card.id || deletingCardId === card.id}
-            />
-
-            <button
-              type="button"
-              className="quantity-button"
-              onClick={() => changeQuantity(card, 1)}
-              disabled={
-                quantity >= MAX_QUANTITY ||
-                savingCardId === card.id ||
-                deletingCardId === card.id
-              }
-            >
-              +
-            </button>
-          </div>
-
-          <div className="collection-card-actions">
-            <button
-              type="button"
-              className="card-save-button"
-              onClick={() => saveQuantity(card)}
-              disabled={savingCardId === card.id || deletingCardId === card.id}
-            >
-              {savingCardId === card.id ? "Saving..." : "Save"}
-            </button>
-
-            <button
-              type="button"
-              className="card-delete-button"
-              onClick={() => handleDelete(card)}
-              disabled={savingCardId === card.id || deletingCardId === card.id}
-            >
-              {deletingCardId === card.id ? "Removing..." : "Delete"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="card-manager-page">
       <main className="card-manager-content">
-        <div className="card-manager-header">
-          <div>
-            <h1>Card Manager</h1>
-            <p>Manage the cards in your collection.</p>
-          </div>
-
-          <div className="user-card-manager-actions">
-            <Link to="/dashboard" className="user-card-manager-back-admin">
-              ← Back to Dashboard
-            </Link>
-
-            <button
-              type="button"
-              className="add-cards-button"
-              onClick={openAddModal}
-            >
-              Add Cards
-            </button>
-          </div>
-        </div>
+        <CardManagerHeader onAddCards={openAddModal} />
 
         {error && <div className="card-manager-message error">{error}</div>}
 
@@ -875,19 +514,10 @@ const UserCardManager = () => {
           <div className="card-manager-message success">{successMessage}</div>
         )}
 
-        <section className="card-manager-summary">
-          <div className="summary-item">
-            <span className="summary-label">Unique Cards</span>
-
-            <strong>{ownedCount}</strong>
-          </div>
-
-          <div className="summary-item">
-            <span className="summary-label">Total Copies</span>
-
-            <strong>{totalQuantity}</strong>
-          </div>
-        </section>
+        <CardManagerSummary
+          ownedCount={ownedCount}
+          totalQuantity={totalQuantity}
+        />
 
         <section className="card-manager-list-section">
           <div className="card-manager-section-header">
@@ -909,104 +539,29 @@ const UserCardManager = () => {
             </button>
           </div>
 
-          <div className="card-search-container">
-            <input
-              className="card-search"
-              placeholder="Search your collection..."
-              value={collectionSearch}
-              onChange={(event) => setCollectionSearch(event.target.value)}
-            />
-          </div>
-
-          <div className="card-filters-actions">
-            <button
-              type="button"
-              className="clear-card-filter-btn"
-              onClick={clearCollectionFilters}
-            >
-              Clear
-            </button>
-          </div>
-
-          <div className="card-filters">
-            <div className="card-select-wrapper">
-              <Select
-                styles={selectStyles}
-                menuPortalTarget={document.body}
-                placeholder="Side"
-                options={collectionSideOptions}
-                value={collectionSide}
-                onChange={setCollectionSide}
-                isMulti
-                closeMenuOnSelect={false}
-              />
-            </div>
-
-            <div className="card-select-wrapper">
-              <Select
-                styles={selectStyles}
-                menuPortalTarget={document.body}
-                placeholder="Type"
-                options={collectionTypeOptions}
-                value={collectionType}
-                onChange={setCollectionType}
-                isMulti
-                closeMenuOnSelect={false}
-              />
-            </div>
-
-            <div className="card-select-wrapper">
-              <Select
-                styles={selectStyles}
-                menuPortalTarget={document.body}
-                placeholder="Class"
-                options={collectionClassOptions}
-                value={collectionClass}
-                onChange={setCollectionClass}
-                isMulti
-                closeMenuOnSelect={false}
-              />
-            </div>
-
-            <div className="card-select-wrapper">
-              <Select
-                styles={selectStyles}
-                menuPortalTarget={document.body}
-                placeholder="Cost"
-                options={collectionCostOptions}
-                value={collectionCost}
-                onChange={setCollectionCost}
-                isMulti
-                closeMenuOnSelect={false}
-              />
-            </div>
-
-            <div className="card-select-wrapper">
-              <Select
-                styles={selectStyles}
-                menuPortalTarget={document.body}
-                placeholder="Set"
-                options={collectionSetOptions}
-                value={collectionSet}
-                onChange={setCollectionSet}
-                isMulti
-                closeMenuOnSelect={false}
-              />
-            </div>
-
-            <div className="card-select-wrapper">
-              <Select
-                styles={selectStyles}
-                menuPortalTarget={document.body}
-                placeholder="Rarity"
-                options={collectionRarityOptions}
-                value={collectionRarity}
-                onChange={setCollectionRarity}
-                isMulti
-                closeMenuOnSelect={false}
-              />
-            </div>
-          </div>
+          <CardManagerFilters
+            search={collectionSearch}
+            onSearchChange={setCollectionSearch}
+            side={collectionSide}
+            type={collectionType}
+            cardClass={collectionClass}
+            cost={collectionCost}
+            set={collectionSet}
+            rarity={collectionRarity}
+            sideOptions={collectionSideOptions}
+            typeOptions={collectionTypeOptions}
+            classOptions={collectionClassOptions}
+            costOptions={collectionCostOptions}
+            setOptions={collectionSetOptions}
+            rarityOptions={collectionRarityOptions}
+            onSideChange={setCollectionSide}
+            onTypeChange={setCollectionType}
+            onClassChange={setCollectionClass}
+            onCostChange={setCollectionCost}
+            onSetChange={setCollectionSet}
+            onRarityChange={setCollectionRarity}
+            onClear={clearCollectionFilters}
+          />
 
           {loading ? (
             <div className="card-manager-loading">
@@ -1034,7 +589,19 @@ const UserCardManager = () => {
             </div>
           ) : (
             <div className="card-manager-grid">
-              {filteredCollection.map(renderCollectionCard)}
+              {filteredCollection.map((card) => (
+                <CollectionCard
+                  key={card.id}
+                  card={card}
+                  saving={savingCardId === card.id}
+                  deleting={deletingCardId === card.id}
+                  onQuantityChange={handleQuantityChange}
+                  onDecrease={(item) => changeQuantity(item, -1)}
+                  onIncrease={(item) => changeQuantity(item, 1)}
+                  onSave={saveQuantity}
+                  onDelete={handleDelete}
+                />
+              ))}
             </div>
           )}
         </section>
