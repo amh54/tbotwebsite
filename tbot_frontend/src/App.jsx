@@ -133,7 +133,8 @@ function HomePage() {
 
             <p>
               Browse and click on Public Tbot users to find the personal decklists other players
-              have uploaded. You can also see any cards this player has unlocked in plants vs zombies heroes by checking out their card collection
+              have uploaded. You can also see any cards this player has unlocked in plants vs zombies heroes by checking out their card collection. <br/>
+              Make sure your account is on public and not private if you want your account to show up here in users page
             </p>
 
             <Link to="/users">Browse Users →</Link>
@@ -232,7 +233,7 @@ function HomePage() {
             <p>
               A public profile lets other players browse your decks. A private
               profile can't be browsed, but every personal deck still has its
-              own shareable link.
+              own shareable link. Accounts are set to private on default if you want your account to public change that below.
             </p>
 
             {profileSlug ? (
