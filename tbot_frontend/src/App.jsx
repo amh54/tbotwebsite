@@ -94,6 +94,28 @@ function HomePage() {
       <section className="features">
         <div className="feature-grid">
           <div className="feature-command">
+            <h3>Decklists</h3>
+
+            <p>
+              Browse community decklists and find decks by hero, class,
+              archetype, category, name, and other information.
+            </p>
+
+            <Link to="/decklists">Explore Decklists →</Link>
+          </div>
+
+          <div className="feature-command">
+            <h3>Legacy Decks</h3>
+
+            <p>
+              Explore the older Tbot deck database and browse legacy community
+              decklists alongside the current deck collection.
+            </p>
+
+            <Link to="/legacydecks">Explore Legacy Decks →</Link>
+          </div>
+
+          <div className="feature-command">
             <h3>Keep or Scrap</h3>
 
             <p>
@@ -141,17 +163,6 @@ function HomePage() {
           </div>
 
           <div className="feature-command">
-            <h3>Decklists</h3>
-
-            <p>
-              Browse community decklists and find decks by hero, class,
-              archetype, category, name, and other information.
-            </p>
-
-            <Link to="/decklists">Explore Decklists →</Link>
-          </div>
-
-          <div className="feature-command">
             <h3>Card Information</h3>
 
             <p>
@@ -182,17 +193,6 @@ function HomePage() {
             </p>
 
             <Link to="/deckbuilders">Explore Deckbuilders →</Link>
-          </div>
-
-          <div className="feature-command">
-            <h3>Legacy Decks</h3>
-
-            <p>
-              Explore the older Tbot deck database and browse legacy community
-              decklists alongside the current deck collection.
-            </p>
-
-            <Link to="/legacydecks">Explore Legacy Decks →</Link>
           </div>
         </div>
       </section>
