@@ -109,7 +109,7 @@ function HomePage() {
 
             <p>
               Log in with Discord and enter your collection in the Card Manager,
-              then use the Buildable and Close filters on the Decklists page to
+              then use the Buildable and Close to building filters on amy page that showcases decklists
               see the decks you can build now and the ones you're only a few
               cards away from.
             </p>
