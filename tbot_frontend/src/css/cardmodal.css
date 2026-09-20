@@ -371,6 +371,11 @@ h3.label {
     width: 100%;
     text-align: left;
   }
+  .ability-related-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
   .card-modal-close {
     top: 6px;
     right: 6px;

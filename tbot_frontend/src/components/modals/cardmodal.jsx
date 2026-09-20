@@ -901,65 +901,59 @@ function CardModal({
             )}
 
             <section className="modal-metadata">
-              {hasValue(card.ability) && (
-                <div className="metadata-item">
-                  <span className="label">
-                    <span className="label">
-                      {showShareHero ? "Superpowers" : "Ability"}
-                    </span>
-                  </span>
+  {hasValue(card.ability) && (
+    <div className="metadata-item">
+      <span className="label">
+        {showShareHero ? "Superpowers" : "Ability"}
+      </span>
+      <span className="value ability-value">
+        {renderAbilityText(card.ability)}
+      </span>
+    </div>
+  )}
 
-                  <span className="value ability-value">
-                    {renderAbilityText(card.ability)}
-                  </span>
-                </div>
-              )}
+  {relatedCards.length > 0 && (
+    <section className="modal-section linked-cards-section">
+      <h3 className="label">Related Cards</h3>
 
-              {hasValue(card.traits) && (
-                <div className="metadata-item trait-item">
-                  <span className="label">Traits</span>
+      <div className="card-modal-linked-buttons">
+        {relatedCards.map(({ label, card: linkedCard }) => (
+          <button
+            key={linkedCard.cardid ?? linkedCard.card_name}
+            type="button"
+            className="card-modal-linked-button"
+            onClick={() => openLinkedCard(linkedCard)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </section>
+  )}
 
-                  <span className="value trait-value">
-                    {renderTraitText(card.traits)}
-                  </span>
-                </div>
-              )}
+  {hasValue(card.traits) && (
+    <div className="metadata-item trait-item">
+      <span className="label">Traits</span>
+      <span className="value trait-value">
+        {renderTraitText(card.traits)}
+      </span>
+    </div>
+  )}
 
-              {hasValue(card.set_rarity) && (
-                <div className="metadata-item">
-                  <span className="label">Rarity</span>
+  {hasValue(card.set_rarity) && (
+    <div className="metadata-item">
+      <span className="label">Rarity</span>
+      <span className="value">{card.set_rarity}</span>
+    </div>
+  )}
 
-                  <span className="value">{card.set_rarity}</span>
-                </div>
-              )}
-
-              {hasValue(card.flavor_text) && (
-                <div className="metadata-item full-width-item">
-                  <span className="label">Flavor Text</span>
-
-                  <span className="value">{card.flavor_text}</span>
-                </div>
-              )}
-
-              {relatedCards.length > 0 && (
-                <section className="modal-section linked-cards-section">
-                  <h3 className="label">Related Cards</h3>
-
-                  <div className="card-modal-linked-buttons">
-                    {relatedCards.map(({ label, card: linkedCard }) => (
-                      <button
-                        key={linkedCard.cardid ?? linkedCard.card_name}
-                        type="button"
-                        className="card-modal-linked-button"
-                        onClick={() => openLinkedCard(linkedCard)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )}
-            </section>
+  {hasValue(card.flavor_text) && (
+    <div className="metadata-item full-width-item">
+      <span className="label">Flavor Text</span>
+      <span className="value">{card.flavor_text}</span>
+    </div>
+  )}
+</section>
           </div>
         </div>
       </div>
