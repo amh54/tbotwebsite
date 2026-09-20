@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import CardModal from "../components/modals/cardmodal.jsx";
-
 import Filters from "../components/cardInfo/filters.jsx";
-
 import Loading from "../components/cardInfo/loading.jsx";
-
 import GridItem from "../components/cardInfo/gridItem.jsx";
 import { API_BASE_URL } from "../utils/api.js";
+
 import {
   CARD_CACHE_KEY,
   getCardCountMemoryCache,
@@ -33,19 +31,33 @@ import {
 } from "../utils/cardInfo/filterUtils.js";
 
 import { renderFilterLabel } from "../utils/cardInfo/renderUtils.jsx";
-
 import { normalizeText } from "../utils/cardInfo/textUtils.js";
 
 import "../css/cardinfo.css";
 import "../css/loading.css";
 
-const getInitialCards = (
-  providedCards,
-  userCollection,
-) => {
+const hasValue = (value) => {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  const normalized = String(value).trim();
+
+  return normalized !== "" && normalized.toUpperCase() !== "NULL";
+};
+
+const getCleanValue = (value) => {
+  if (!hasValue(value)) {
+    return "";
+  }
+
+  return String(value).trim();
+};
+
+const getInitialCards = (providedCards, userCollection) => {
   if (userCollection) {
     return providedCards
-      .filter((userCard) => userCard.card)
+      .filter((userCard) => userCard?.card)
       .map((userCard) => ({
         ...userCard.card,
         quantity: userCard.quantity,
@@ -60,33 +72,25 @@ const getInitialCards = (
   }
 
   try {
-    const cachedCards = sessionStorage.getItem(
-      CARD_CACHE_KEY,
-    );
+    const cachedCards = sessionStorage.getItem(CARD_CACHE_KEY);
 
     if (cachedCards) {
       const parsedCards = JSON.parse(cachedCards);
 
-      if (
-        Array.isArray(parsedCards) &&
-        parsedCards.length > 0
-      ) {
+      if (Array.isArray(parsedCards) && parsedCards.length > 0) {
         setCardInfoMemoryCache(parsedCards);
         return parsedCards;
       }
     }
   } catch (error) {
-    console.error(
-      "Unable to read cached card data:",
-      error,
-    );
+    console.error("Unable to read cached card data:", error);
   }
 
   return [];
 };
 
 const findCardByQuery = (cards, cardQuery) => {
-  if (!cardQuery) {
+  if (!hasValue(cardQuery) || !Array.isArray(cards)) {
     return null;
   }
 
@@ -94,17 +98,23 @@ const findCardByQuery = (cards, cardQuery) => {
 
   return (
     cards.find((card) => {
+      if (!card) {
+        return false;
+      }
+
       const cardName = normalizeText(card.card_name);
+
       const title = normalizeText(card.title);
-      const aliases = normalizeText(card.aliases);
+
+      const aliases = String(card.aliases ?? "")
+        .split(/[,|;]/)
+        .map((alias) => normalizeText(alias))
+        .filter(Boolean);
 
       return (
         cardName === normalizedQuery ||
         title === normalizedQuery ||
-        aliases
-          .split(/[,|;]/)
-          .map((alias) => normalizeText(alias))
-          .includes(normalizedQuery)
+        aliases.includes(normalizedQuery)
       );
     }) || null
   );
@@ -121,32 +131,44 @@ const getErrorMessage = async (response) => {
     return message;
   }
 
-  const errorPayload = await response.json();
+  try {
+    const errorPayload = await response.json();
 
-  if (errorPayload?.detail) {
-    return `${message}: ${errorPayload.detail}`;
-  }
+    if (errorPayload?.detail) {
+      return `${message}: ${errorPayload.detail}`;
+    }
 
-  if (errorPayload?.error) {
-    return `${message}: ${errorPayload.error}`;
+    if (errorPayload?.error) {
+      return `${message}: ${errorPayload.error}`;
+    }
+  } catch {
+    return message;
   }
 
   return message;
 };
 
 const getSideMatches = (cardSide, selectedSide) => {
-  if (selectedSide === "plants") {
+  const normalizedCardSide = normalizeText(cardSide);
+
+  const normalizedSelectedSide = normalizeText(selectedSide);
+
+  if (!normalizedCardSide) {
+    return false;
+  }
+
+  if (normalizedSelectedSide === "plants") {
     return (
-      cardSide === "plant" ||
-      cardSide === "plants" ||
-      cardSide.includes("plant")
+      normalizedCardSide === "plant" ||
+      normalizedCardSide === "plants" ||
+      normalizedCardSide.includes("plant")
     );
   }
 
   return (
-    cardSide === "zombie" ||
-    cardSide === "zombies" ||
-    cardSide.includes("zombie")
+    normalizedCardSide === "zombie" ||
+    normalizedCardSide === "zombies" ||
+    normalizedCardSide.includes("zombie")
   );
 };
 
@@ -192,29 +214,25 @@ const buildFilterData = (normalCards) => {
       }
     });
 
-    extractTribes(
-      card.description,
-      card.side,
-      card.card_type,
-    ).forEach((tribe) => {
-      const key = normalizeText(tribe);
+    extractTribes(card.description, card.side, card.card_type).forEach(
+      (tribe) => {
+        const key = normalizeText(tribe);
 
-      if (!tribes.has(key)) {
-        tribes.set(key, tribe);
-      }
-    });
+        if (!tribes.has(key)) {
+          tribes.set(key, tribe);
+        }
+      },
+    );
 
     const rarityName = getRarityName(card.set_rarity);
+
     const setName = getSetName(card.set_rarity);
 
     if (setName) {
       sets.add(setName);
     }
 
-    if (
-      rarityName &&
-      normalizeText(rarityName) !== "hero"
-    ) {
+    if (rarityName && normalizeText(rarityName) !== "hero") {
       rarities.add(rarityName);
     }
   });
@@ -229,6 +247,7 @@ const buildFilterData = (normalCards) => {
 
   const sortedTypes = [...types].sort((a, b) => {
     const aOrder = typeOrder[normalizeText(a)] ?? 99;
+
     const bOrder = typeOrder[normalizeText(b)] ?? 99;
 
     if (aOrder !== bOrder) {
@@ -238,28 +257,24 @@ const buildFilterData = (normalCards) => {
     return a.localeCompare(b);
   });
 
-  const sortedTribes = [...tribes.values()].sort(
-    (a, b) => a.localeCompare(b),
-  );
-
   return {
-    classes: [...classes].sort((a, b) =>
-      a.localeCompare(b),
-    ),
+    classes: [...classes].sort((a, b) => a.localeCompare(b)),
+
     types: sortedTypes,
+
     costs: [...costs].sort((a, b) => a - b),
+
     attacks: [...attacks].sort((a, b) => a - b),
+
     healths: [...healths].sort((a, b) => a - b),
-    keywords: [...keywords.values()].sort((a, b) =>
-      a.localeCompare(b),
-    ),
-    tribes: sortedTribes,
-    sets: [...sets].sort((a, b) =>
-      a.localeCompare(b),
-    ),
-    rarities: [...rarities].sort((a, b) =>
-      a.localeCompare(b),
-    ),
+
+    keywords: [...keywords.values()].sort((a, b) => a.localeCompare(b)),
+
+    tribes: [...tribes.values()].sort((a, b) => a.localeCompare(b)),
+
+    sets: [...sets].sort((a, b) => a.localeCompare(b)),
+
+    rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
   };
 };
 
@@ -268,44 +283,151 @@ function CardBrowser({
   userCollection = false,
   allCards = [],
 }) {
-  const initialCards = getInitialCards(
-    providedCards,
-    userCollection,
+  const [cards, setCards] = useState(() =>
+    getInitialCards(providedCards, userCollection),
   );
 
-  const [cards, setCards] = useState(initialCards);
   const [totalCards, setTotalCards] = useState(0);
+
   const [loading, setLoading] = useState(
-    !userCollection && initialCards.length === 0,
+    !userCollection &&
+      getInitialCards(providedCards, userCollection).length === 0,
   );
+
   const [selectedCard, setSelectedCard] = useState(null);
+
   const [side, setSide] = useState("Plants");
+
   const [search, setSearch] = useState("");
+
   const [typeFilter, setTypeFilter] = useState([]);
+
   const [classFilter, setClassFilter] = useState([]);
+
   const [costFilter, setCostFilter] = useState([]);
+
   const [attackFilter, setAttackFilter] = useState([]);
+
   const [healthFilter, setHealthFilter] = useState([]);
+
   const [keywordFilter, setKeywordFilter] = useState([]);
+
   const [tribeFilter, setTribeFilter] = useState([]);
+
   const [setFilter, setSetFilter] = useState([]);
+
   const [rarityFilter, setRarityFilter] = useState([]);
+
   const [error, setError] = useState("");
 
-  const openCardModal = (card) => {
-    setSelectedCard(card);
+  const modalCards = useMemo(() => {
+    const result = [];
+    const seen = new Set();
 
-    const url = new URL(window.location.href);
-    url.searchParams.set("card", card.card_name);
+    const addCards = (source) => {
+      if (!Array.isArray(source)) {
+        return;
+      }
 
-    window.history.pushState(
-      {
-        card: card.card_name,
-      },
-      "",
-      url,
-    );
-  };
+      source.forEach((candidate) => {
+        if (!candidate || typeof candidate !== "object") {
+          return;
+        }
+
+        let key = null;
+
+        if (candidate.cardid !== null && candidate.cardid !== undefined) {
+          key = `id:${candidate.cardid}`;
+        } else if (hasValue(candidate.card_name)) {
+          key = `name:${normalizeText(candidate.card_name)}`;
+        }
+
+        if (!key || seen.has(key)) {
+          return;
+        }
+
+        seen.add(key);
+        result.push(candidate);
+      });
+    };
+
+    addCards(cards);
+    addCards(allCards);
+
+    return result;
+  }, [cards, allCards]);
+
+  const resolveCanonicalCard = useCallback(
+    (card) => {
+      if (!card) {
+        return null;
+      }
+
+      if (card.cardid !== null && card.cardid !== undefined) {
+        const byId = modalCards.find(
+          (candidate) =>
+            candidate?.cardid !== null &&
+            candidate?.cardid !== undefined &&
+            String(candidate.cardid) === String(card.cardid),
+        );
+
+        if (byId) {
+          return byId;
+        }
+      }
+
+      if (hasValue(card.card_name)) {
+        const normalizedName = normalizeText(card.card_name);
+
+        const byName = modalCards.find(
+          (candidate) => normalizeText(candidate?.card_name) === normalizedName,
+        );
+
+        if (byName) {
+          return byName;
+        }
+      }
+
+      return card;
+    },
+    [modalCards],
+  );
+
+  const openCardModal = useCallback(
+    (card) => {
+      if (!card) {
+        return;
+      }
+
+      const resolvedCard = resolveCanonicalCard(card);
+
+      if (!resolvedCard) {
+        return;
+      }
+
+      const cardName = getCleanValue(resolvedCard.card_name);
+
+      if (!cardName) {
+        return;
+      }
+
+      setSelectedCard(resolvedCard);
+
+      const url = new URL(window.location.href);
+
+      url.searchParams.set("card", cardName);
+
+      window.history.pushState(
+        {
+          ...(window.history.state || {}),
+          card: cardName,
+        },
+        "",
+        url,
+      );
+    },
+    [resolveCanonicalCard],
+  );
 
   useEffect(() => {
     const cachedCount = getCardCountMemoryCache();
@@ -319,9 +441,7 @@ function CardBrowser({
 
     const fetchCardCount = async () => {
       try {
-        const endpoint = `${API_BASE_URL}/tbotapp/card-count/`;
-
-        const response = await fetch(endpoint, {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/card-count/`, {
           signal: controller.signal,
         });
 
@@ -332,23 +452,23 @@ function CardBrowser({
         }
 
         const data = await response.json();
+
         const count = Number(data?.count) || 0;
 
         setCardCountMemoryCache(count);
         setTotalCards(count);
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error(
-            "Unable to load card count:",
-            err,
-          );
+          console.error("Unable to load card count:", err);
         }
       }
     };
 
     fetchCardCount();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -372,11 +492,7 @@ function CardBrowser({
         });
 
         if (!response.ok) {
-          const message = await getErrorMessage(
-            response,
-          );
-
-          throw new Error(message);
+          throw new Error(await getErrorMessage(response));
         }
 
         const contentType = (
@@ -385,41 +501,28 @@ function CardBrowser({
 
         const responseText = await response.text();
 
-        const hint = import.meta.env.VITE_API_BASE_URL
-          ? "Check that VITE_API_BASE_URL points to your backend domain."
-          : "VITE_API_BASE_URL is missing; set it in frontend deployment settings.";
-
         if (!contentType.includes("application/json")) {
           if (responseText.trim().startsWith("<")) {
-            throw new Error(
-              `Received HTML instead of JSON from ${endpoint}. ${hint}`,
-            );
+            throw new Error(`Received HTML instead of JSON from ${endpoint}.`);
           }
 
           throw new Error(
             `Unexpected response type ${
               contentType || "unknown"
-            } from ${endpoint}. ${hint}`,
+            } from ${endpoint}.`,
           );
         }
 
         const data = JSON.parse(responseText);
-        const loadedCards = Array.isArray(data)
-          ? data
-          : [];
+
+        const loadedCards = Array.isArray(data) ? data : [];
 
         setCardInfoMemoryCache(loadedCards);
 
         try {
-          sessionStorage.setItem(
-            CARD_CACHE_KEY,
-            JSON.stringify(loadedCards),
-          );
-        } catch (error) {
-          console.error(
-            "Unable to cache card data:",
-            error,
-          );
+          sessionStorage.setItem(CARD_CACHE_KEY, JSON.stringify(loadedCards));
+        } catch (cacheError) {
+          console.error("Unable to cache card data:", cacheError);
         }
 
         setCards(loadedCards);
@@ -432,9 +535,7 @@ function CardBrowser({
         console.error(fetchError);
 
         setError(
-          `Unable to load cards right now. ${
-            fetchError.message || ""
-          }`.trim(),
+          `Unable to load cards right now. ${fetchError.message || ""}`.trim(),
         );
       } finally {
         setLoading(false);
@@ -443,7 +544,9 @@ function CardBrowser({
 
     fetchCards();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
   }, [userCollection, cards.length]);
 
   useEffect(() => {
@@ -451,42 +554,32 @@ function CardBrowser({
       return;
     }
 
-    const initialParams = new URLSearchParams(
-      window.location.search,
-    );
+    const syncCardFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
 
-    const initialMatch = findCardByQuery(
-      cards,
-      initialParams.get("card"),
-    );
+      const cardQuery = params.get("card");
 
-    if (initialMatch) {
-      setSelectedCard(initialMatch);
-    }
+      if (!hasValue(cardQuery)) {
+        setSelectedCard(null);
+        return;
+      }
 
-    const handlePopState = () => {
-      const params = new URLSearchParams(
-        window.location.search,
-      );
-
-      const match = findCardByQuery(
-        cards,
-        params.get("card"),
-      );
+      const match = findCardByQuery(cards, cardQuery);
 
       setSelectedCard(match);
     };
 
-    window.addEventListener(
-      "popstate",
-      handlePopState,
-    );
+    syncCardFromUrl();
 
-    return () =>
-      window.removeEventListener(
-        "popstate",
-        handlePopState,
-      );
+    const handlePopState = () => {
+      syncCardFromUrl();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   }, [cards]);
 
   useEffect(() => {
@@ -498,12 +591,8 @@ function CardBrowser({
   }, []);
 
   const normalCards = useMemo(() => {
-    const selectedSide = normalizeText(side);
-
     return cards.filter((card) => {
-      const cardSide = normalizeText(card?.side);
-
-      if (!getSideMatches(cardSide, selectedSide)) {
+      if (!getSideMatches(card?.side, side)) {
         return false;
       }
 
@@ -511,79 +600,52 @@ function CardBrowser({
     });
   }, [cards, side]);
 
-  const filterData = useMemo(
-    () => buildFilterData(normalCards),
-    [normalCards],
-  );
+  const filterData = useMemo(() => buildFilterData(normalCards), [normalCards]);
 
   const typeOptions = filterData.types.map((value) => ({
     value,
     label: value,
   }));
 
-  const classOptions = filterData.classes.map(
-    (value) => ({
-      value,
-      label: value,
-    }),
-  );
+  const classOptions = filterData.classes.map((value) => ({
+    value,
+    label: value,
+  }));
 
   const costOptions = filterData.costs.map((value) => ({
     value,
-    label: renderFilterLabel(
-      `${value}`,
-      "cost",
-      side,
-    ),
+    label: renderFilterLabel(`${value}`, "cost", side),
   }));
 
-  const attackOptions = filterData.attacks.map(
-    (value) => ({
-      value,
-      label: renderFilterLabel(
-        `${value}`,
-        "attack",
-        side,
-      ),
-    }),
-  );
+  const attackOptions = filterData.attacks.map((value) => ({
+    value,
+    label: renderFilterLabel(`${value}`, "attack", side),
+  }));
 
-  const healthOptions = filterData.healths.map(
-    (value) => ({
-      value,
-      label: renderFilterLabel(
-        `${value}`,
-        "health",
-        side,
-      ),
-    }),
-  );
+  const healthOptions = filterData.healths.map((value) => ({
+    value,
+    label: renderFilterLabel(`${value}`, "health", side),
+  }));
 
-  const keywordOptions = filterData.keywords.map(
-    (value) => ({
-      value,
-      label: value,
-    }),
-  );
+  const keywordOptions = filterData.keywords.map((value) => ({
+    value,
+    label: value,
+  }));
 
-  const tribeOptions = filterData.tribes.map(
-    (value) => ({
-      value,
-      label: value,
-    }),
-  );
+  const tribeOptions = filterData.tribes.map((value) => ({
+    value,
+    label: value,
+  }));
 
   const setOptions = filterData.sets.map((value) => ({
     value,
     label: value,
   }));
 
-  const rarityOptions = filterData.rarities.map(
-    (value) => ({
-      value,
-      label: value,
-    }),
-  );
+  const rarityOptions = filterData.rarities.map((value) => ({
+    value,
+    label: value,
+  }));
 
   const filteredCards = useMemo(() => {
     const filters = buildCardFilters({
@@ -614,7 +676,7 @@ function CardBrowser({
     rarityFilter,
   ]);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSearch("");
     setTypeFilter([]);
     setClassFilter([]);
@@ -625,12 +687,26 @@ function CardBrowser({
     setTribeFilter([]);
     setSetFilter([]);
     setRarityFilter([]);
-  };
+  }, []);
 
-  const changeSide = (newSide) => {
-    setSide(newSide);
-    clearFilters();
-  };
+  const changeSide = useCallback(
+    (newSide) => {
+      setSide(newSide);
+      clearFilters();
+    },
+    [clearFilters],
+  );
+
+  const closeCardModal = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has("card")) {
+      window.history.back();
+      return;
+    }
+
+    setSelectedCard(null);
+  }, []);
 
   if (loading) {
     return <Loading totalCards={totalCards} />;
@@ -638,11 +714,7 @@ function CardBrowser({
 
   return (
     <div className="card-information-page">
-      <h1>
-        {userCollection
-          ? "Card Collection"
-          : "Card Information"}
-      </h1>
+      <h1>{userCollection ? "Card Collection" : "Card Information"}</h1>
 
       <Filters
         side={side}
@@ -678,9 +750,7 @@ function CardBrowser({
         setKeywordFilter={setKeywordFilter}
       />
 
-      {error && (
-        <p className="error-message">{error}</p>
-      )}
+      {error && <p className="error-message">{error}</p>}
 
       {!error && (
         <p className="card-results-count">
@@ -688,49 +758,30 @@ function CardBrowser({
         </p>
       )}
 
-      {!error && filteredCards.length === 0 ? (
-        <p className="no-card-results">
-          No {side} cards found.
-        </p>
-      ) : (
-        !error && (
-          <div className="card-grid">
-            {filteredCards.map((card) => (
-              <GridItem
-                key={card.cardid}
-                card={card}
-                userCollection={userCollection}
-                onOpen={openCardModal}
-              />
-            ))}
-          </div>
-        )
+      {!error && filteredCards.length === 0 && (
+        <p className="no-card-results">No {side} cards found.</p>
+      )}
+
+      {!error && filteredCards.length > 0 && (
+        <div className="card-grid">
+          {filteredCards.map((card) => (
+            <GridItem
+              key={card.cardid}
+              card={card}
+              userCollection={userCollection}
+              onOpen={openCardModal}
+            />
+          ))}
+        </div>
       )}
 
       {selectedCard && (
         <CardModal
           card={selectedCard}
-          allCards={allCards}
+          allCards={modalCards}
+          onOpenCard={openCardModal}
           showShareCard={!userCollection}
-          close={() => {
-            if (window.history.state?.card) {
-              window.history.back();
-            } else {
-              setSelectedCard(null);
-
-              const url = new URL(
-                window.location.href,
-              );
-
-              url.searchParams.delete("card");
-
-              window.history.replaceState(
-                {},
-                "",
-                url,
-              );
-            }
-          }}
+          close={closeCardModal}
         />
       )}
     </div>

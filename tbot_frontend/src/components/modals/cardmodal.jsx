@@ -42,7 +42,7 @@ const removeDiscordEmojis = (value) =>
 
 const normalizeTraitName = (trait) => {
   const value = removeDiscordEmojis(trait)
-    .replace(/[\_\~\`]/g, "")
+    .replace(/[\\_\\~\\`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -129,11 +129,134 @@ function CardModal({
   card,
   close,
   allCards,
+  onOpenCard,
   showShareCard = true,
   showShareHero = false,
 }) {
-  const hasValue = (value) =>
-    value !== null && value !== undefined && String(value).trim() !== "";
+  const hasValue = (value) => {
+    if (value === null || value === undefined) {
+      return false;
+    }
+
+    const normalized = String(value).trim();
+
+    return normalized !== "" && normalized.toUpperCase() !== "NULL";
+  };
+
+  const getCleanValue = (value) => {
+    if (!hasValue(value)) {
+      return "";
+    }
+
+    return String(value).trim();
+  };
+
+  /*
+   * Related Cards only use button and button2.
+   */
+  const findLinkedCard = (cardName) => {
+    const cleanCardName = getCleanValue(cardName);
+
+    if (!cleanCardName) {
+      return null;
+    }
+
+    if (!Array.isArray(allCards) || allCards.length === 0) {
+      return null;
+    }
+
+    const normalizedName = normalizeText(cleanCardName);
+
+    return (
+      allCards.find((candidate) => {
+        if (!candidate) {
+          return false;
+        }
+
+        const candidateName = normalizeText(candidate.card_name);
+        const candidateTitle = normalizeText(candidate.title);
+
+        const aliases = String(candidate.aliases ?? "")
+          .split(/[,|;]/)
+          .map((alias) => normalizeText(alias))
+          .filter(Boolean);
+
+        return (
+          candidateName === normalizedName ||
+          candidateTitle === normalizedName ||
+          aliases.includes(normalizedName)
+        );
+      }) || null
+    );
+  };
+
+  const relatedCards = [];
+
+  const relatedButtonValues = [
+    getCleanValue(card?.button),
+    getCleanValue(card?.button2),
+  ];
+
+  const seenRelatedCards = new Set();
+
+  relatedButtonValues.forEach((buttonValue) => {
+    if (!buttonValue) {
+      return;
+    }
+
+    const linkedCard = findLinkedCard(buttonValue);
+
+    if (!linkedCard) {
+      return;
+    }
+
+    const key =
+      linkedCard.cardid !== null && linkedCard.cardid !== undefined
+        ? `id:${linkedCard.cardid}`
+        : `name:${normalizeText(linkedCard.card_name)}`;
+
+    if (seenRelatedCards.has(key)) {
+      return;
+    }
+
+    seenRelatedCards.add(key);
+
+    relatedCards.push({
+      label: buttonValue,
+      card: linkedCard,
+    });
+  });
+
+  const openLinkedCard = (linkedCard) => {
+    if (!linkedCard) {
+      return;
+    }
+
+    if (typeof onOpenCard === "function") {
+      onOpenCard(linkedCard);
+      return;
+    }
+
+    const linkedCardName = getCleanValue(linkedCard.card_name);
+
+    if (!linkedCardName) {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("card", linkedCardName);
+
+    window.history.pushState(
+      {
+        ...(window.history.state || {}),
+        card: linkedCardName,
+      },
+      "",
+      url,
+    );
+
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  };
 
   const [copied, setCopied] = useState(false);
 
@@ -414,7 +537,6 @@ function CardModal({
       <div className="card-modal-title-content">
         <div className="card-modal-title-name-row">
           <span className="card-modal-title-name">{titleParts}</span>
-
           <span className="card-modal-title-icons">{classIcons}</span>
         </div>
 
@@ -608,6 +730,14 @@ function CardModal({
       return <span key={`tribe-${index}`}>{segment}</span>;
     });
   };
+
+  /*
+   * SUPERPOWERS
+   *
+   * Left unchanged.
+   * Superpowers still come only from matching card names
+   * inside the current card's ability text.
+   */
   const getSuperpowerCards = () => {
     if (!card?.ability || !Array.isArray(allCards) || allCards.length === 0) {
       return [];
@@ -619,6 +749,7 @@ function CardModal({
         .replace(/__/g, "")
         .replace(/`/g, ""),
     );
+
     const candidates = allCards
       .filter(
         (candidate) =>
@@ -643,10 +774,6 @@ function CardModal({
       }
     }
 
-    /*
-     * Restore the order in which the names actually appear
-     * in the hero's ability text.
-     */
     found.sort((a, b) => {
       const aName = normalizeText(a.card_name);
       const bName = normalizeText(b.card_name);
@@ -704,7 +831,6 @@ function CardModal({
         </button>
 
         <div className="card-modal-scroll-content">
-          {/* MAIN CARD IMAGE — KEPT */}
           <div className="card-modal-image-section">
             <img
               className="modal-card-image"
@@ -749,6 +875,7 @@ function CardModal({
                   <span className="card-type">{card.card_type}</span>
                 )}
             </div>
+
             {(hasValue(card.description) || hasValue(card.stats)) && (
               <div className="modal-top-row">
                 {hasValue(card.description) && (
@@ -812,6 +939,25 @@ function CardModal({
 
                   <span className="value">{card.flavor_text}</span>
                 </div>
+              )}
+
+              {relatedCards.length > 0 && (
+                <section className="modal-section linked-cards-section">
+                  <h3 className="label">Related Cards</h3>
+
+                  <div className="card-modal-linked-buttons">
+                    {relatedCards.map(({ label, card: linkedCard }) => (
+                      <button
+                        key={linkedCard.cardid ?? linkedCard.card_name}
+                        type="button"
+                        className="card-modal-linked-button"
+                        onClick={() => openLinkedCard(linkedCard)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </section>
               )}
             </section>
           </div>
