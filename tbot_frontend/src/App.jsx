@@ -201,7 +201,7 @@ function HomePage() {
         <h2>Your Tbot profile</h2>
 
         <p>
-          Log in with Discord to create a profile, build personal decks, and
+          Log in with Discord to create a profile, upload personal decks, and
           share them with other players. Your personal decks are separate from
           the main community deck database.
         </p>
