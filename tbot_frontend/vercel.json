@@ -196,6 +196,14 @@
       "destination": "/api/deck-og?path=/privacypolicy"
     },
     {
+      "source": "/sitemap.xml",
+      "destination": "https://api.pvzhtbot.com/sitemap.xml"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "https://api.pvzhtbot.com/robots.txt"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
