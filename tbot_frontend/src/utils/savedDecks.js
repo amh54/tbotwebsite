@@ -1,57 +1,7 @@
-import { API_BASE_URL } from "./api";
-
-const getCookie = (name) => {
-  const cookies = document.cookie
-    ? document.cookie.split(";")
-    : [];
-
-  for (const cookie of cookies) {
-    const trimmed = cookie.trim();
-
-    if (trimmed.startsWith(`${name}=`)) {
-      return decodeURIComponent(
-        trimmed.substring(name.length + 1),
-      );
-    }
-  }
-
-  return null;
-};
-
-const ensureCsrfToken = async () => {
-  let csrfToken = getCookie("csrftoken");
-
-  if (csrfToken) {
-    return csrfToken;
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}/tbotapp/csrf/`,
-    {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-      },
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      "Unable to initialize CSRF protection.",
-    );
-  }
-
-  csrfToken = getCookie("csrftoken");
-
-  if (!csrfToken) {
-    throw new Error(
-      "CSRF token was not provided.",
-    );
-  }
-
-  return csrfToken;
-};
+import {
+  API_BASE_URL,
+  ensureCsrfToken,
+} from "./api";
 
 const normalizeSourceType = (sourceType) => {
   const value = String(sourceType || "")

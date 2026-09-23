@@ -1,5 +1,7 @@
 export const getApiBaseUrl = () => {
-  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
+  const envBaseUrl = String(
+    import.meta.env.VITE_API_BASE_URL || "",
+  ).trim();
 
   if (envBaseUrl) {
     return envBaseUrl.replace(/\/+$/, "");
@@ -8,7 +10,10 @@ export const getApiBaseUrl = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
 
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1"
+    ) {
       return "http://localhost:8000";
     }
   }
@@ -31,7 +36,9 @@ export function getCsrfToken() {
     return null;
   }
 
-  return decodeURIComponent(cookie.substring("csrftoken=".length));
+  return decodeURIComponent(
+    cookie.substring("csrftoken=".length),
+  );
 }
 
 export async function ensureCsrfToken(forceRefresh = false) {
@@ -43,14 +50,17 @@ export async function ensureCsrfToken(forceRefresh = false) {
     }
   }
 
-  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
+  const response = await fetch(
+    `${API_BASE_URL}/tbotapp/csrf/`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
     },
-    cache: "no-store",
-  });
+  );
 
   let data = null;
 
@@ -68,14 +78,13 @@ export async function ensureCsrfToken(forceRefresh = false) {
     );
   }
 
-  /*
-   * Prefer the token returned by Django.
+  const cookieToken = getCsrfToken();
 
-   * This is important when refreshing because Django's response
-   * and the browser's csrftoken cookie need to stay synchronized.
-   */
   const csrfToken =
-    data?.csrfToken || data?.csrf_token || data?.token || getCsrfToken();
+    cookieToken ||
+    data?.csrfToken ||
+    data?.csrf_token ||
+    data?.token;
 
   if (!csrfToken) {
     throw new Error(
@@ -86,7 +95,10 @@ export async function ensureCsrfToken(forceRefresh = false) {
   return csrfToken;
 }
 
-export const getApiErrorMessage = async (response, fallback) => {
+export const getApiErrorMessage = async (
+  response,
+  fallback,
+) => {
   let message = fallback;
 
   try {
@@ -96,7 +108,10 @@ export const getApiErrorMessage = async (response, fallback) => {
       message += `: ${data.detail}`;
     } else if (data?.error) {
       message += `: ${data.error}`;
-    } else if (data && typeof data === "object") {
+    } else if (
+      data &&
+      typeof data === "object"
+    ) {
       const fieldMessages = Object.entries(data)
         .map(([field, messages]) => {
           const text = Array.isArray(messages)
