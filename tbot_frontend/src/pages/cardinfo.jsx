@@ -1,7 +1,7 @@
 import Navbar from "../components/navbar.jsx";
 import Footer from "../components/footer.jsx";
 import CardBrowser from "../components/cardbrowser.jsx";
-
+import Seo from "../components/seo.jsx";
 import "../css/cardinfo.css";
 import "../css/navbar.css";
 import "../css/loading.css";
