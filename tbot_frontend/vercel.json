@@ -197,7 +197,8 @@
     },
     {
       "source": "/sitemap.xml",
-      "destination": "https://api.pvzhtbot.com/sitemap.xml"
+      "destination": "https://api.pvzhtbot.com/sitemap.xml",
+      "permanent": false
     },
     {
       "source": "/robots.txt",
