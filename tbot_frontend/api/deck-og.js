@@ -611,16 +611,30 @@ async function resolveMetadata(pathname, query) {
     const parts = pathname.split("/").filter(Boolean);
 
     const slug = query.slug || parts[1] || "";
-    const key = query.key || parts[2] || "";
+    const sourceType = String(parts[2] || "")
+      .trim()
+      .toLowerCase();
+
+    const key = query.key || parts[3] || "";
+
+    if (!slug || !sourceType || !key) {
+      return null;
+    }
+
+    const validSourceTypes = new Set(["user", "deck", "legacy"]);
+
+    if (!validSourceTypes.has(sourceType)) {
+      return null;
+    }
 
     let deckId = null;
 
-    const numericMatch = /^(\d+)$/.exec(key);
+    const numericMatch = /^(\d+)$/.exec(String(key));
 
     if (numericMatch) {
       deckId = numericMatch[1];
     } else {
-      const slugIdMatch = /-(\d+)$/.exec(key);
+      const slugIdMatch = /-(\d+)$/.exec(String(key));
 
       if (slugIdMatch) {
         deckId = slugIdMatch[1];
@@ -634,10 +648,15 @@ async function resolveMetadata(pathname, query) {
     const data = await fetchJson(
       `${API}/tbotapp/user-decks/shared/` +
         `${encodeURIComponent(slug)}/` +
+        `${encodeURIComponent(sourceType)}/` +
         `${encodeURIComponent(deckId)}/`,
     );
 
-    return deckToOg(data);
+    if (!data) {
+      return null;
+    }
+
+    return deckToOg(data.deck || null);
   }
 
   if (
@@ -697,8 +716,10 @@ async function resolveMetadata(pathname, query) {
 
     return getStaticMetadata(pathname);
   }
-
-  if (pathname === "/cardinfo" || pathname === "/") {
+  if (pathname === "/") {
+    return getStaticMetadata("/");
+  }
+  if (pathname === "/cardinfo") {
     const cardQuery = query.card;
 
     if (cardQuery) {

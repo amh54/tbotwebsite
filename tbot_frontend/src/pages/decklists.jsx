@@ -7,7 +7,7 @@ import FilterDropdown from "../components/filterdropdown";
 import Navbar from "../components/navbar";
 
 import Footer from "../components/footer";
-
+import Seo from "../components/seo.jsx";
 import useTemporaryMessage from "../utils/useTemporaryMessage";
 
 import {
@@ -32,7 +32,6 @@ const STORAGE_KEYS = {
   cards: "tbot_cards",
   deckCount: "tbot_deck_count",
 };
-
 function readSessionCache(key, fallback) {
   if (typeof window === "undefined") {
     return fallback;
@@ -117,14 +116,6 @@ function DecklistsPage() {
   const [collectionLoading, setCollectionLoading] = useState(false);
 
   const [collectionLoaded, setCollectionLoaded] = useState(false);
-
-  useEffect(() => {
-    document.title = "Decklists";
-
-    return () => {
-      document.title = "Tbot";
-    };
-  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -535,10 +526,15 @@ function DecklistsPage() {
 
   return (
     <div className="deck-page">
+        <Seo
+      title="PVZ Heroes Decks - Plants vs. Zombies Heroes Decklists | Tbot"
+      description="Browse the best Plants vs. Zombies Heroes decks on Tbot. Find competitive, budget, ladder, meme, aggro, combo, control, midrange, and tempo PVZ Heroes decks."
+      canonical="/decklists"
+    />
       <Navbar />
 
       <main className="deck-content">
-        <h1>Decklists</h1>
+        <h1><h1>PVZ Heroes Decks & Decklists</h1></h1>
 
         <div className="deck-browser">
           <img

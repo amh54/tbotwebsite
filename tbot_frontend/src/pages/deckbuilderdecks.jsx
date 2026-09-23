@@ -11,7 +11,7 @@ import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 
 import useTemporaryMessage from "../utils/useTemporaryMessage";
-
+import Seo from "../components/seo.jsx";
 import {
   normalizeText,
   normalizeSide,
@@ -62,14 +62,6 @@ function DeckbuilderDecks() {
   const [userCollection, setUserCollection] = useState([]);
   const [collectionLoading, setCollectionLoading] = useState(false);
   const [collectionLoaded, setCollectionLoaded] = useState(false);
-
-  useEffect(() => {
-    document.title = `${decodedDeckbuilderName} Decklists`;
-
-    return () => {
-      document.title = "Tbot";
-    };
-  }, [decodedDeckbuilderName]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -504,6 +496,12 @@ function DeckbuilderDecks() {
   if (error) {
     return (
       <div className="deck-page">
+        <Seo
+        title="Deckbuilder Not Found | Tbot"
+        description="The requested Tbot deckbuilder could not be found."
+        canonical="/deckbuilders"
+        noindex
+      />
         <Navbar />
 
         <main className="deck-content">
@@ -518,8 +516,6 @@ function DeckbuilderDecks() {
     );
   }
 
-  const profile = deckbuilder?.profile || null;
-
   const displayName =
     normalizeText(deckbuilder?.display_name) ||
     normalizeText(deckbuilder?.deckbuilder_name) ||
@@ -529,6 +525,11 @@ function DeckbuilderDecks() {
 
   return (
     <div className="deck-page">
+      <Seo
+      title={`${displayName} Decklists - PVZ Heroes Decks | Tbot`}
+      description={`Browse ${displayName}'s Plants vs. Zombies Heroes decklists on Tbot.  Explore their PVZ Heroes decks and deckbuilding history.`}
+      canonical={`/deckbuilders/${encodeURIComponent(decodedDeckbuilderName)}/decks`}
+    />
       <Navbar />
 
       <main className="deck-content">

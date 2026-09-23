@@ -27,14 +27,20 @@ export function getCsrfToken() {
     .split("; ")
     .find((row) => row.startsWith("csrftoken="));
 
-  return cookie ? decodeURIComponent(cookie.split("=")[1]) : null;
+  if (!cookie) {
+    return null;
+  }
+
+  return decodeURIComponent(cookie.substring("csrftoken=".length));
 }
 
-export async function ensureCsrfToken() {
-  const existingToken = getCsrfToken();
+export async function ensureCsrfToken(forceRefresh = false) {
+  if (!forceRefresh) {
+    const existingToken = getCsrfToken();
 
-  if (existingToken) {
-    return existingToken;
+    if (existingToken) {
+      return existingToken;
+    }
   }
 
   const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
@@ -62,11 +68,14 @@ export async function ensureCsrfToken() {
     );
   }
 
+  /*
+   * Prefer the token returned by Django.
+
+   * This is important when refreshing because Django's response
+   * and the browser's csrftoken cookie need to stay synchronized.
+   */
   const csrfToken =
-    data?.csrfToken ||
-    data?.csrf_token ||
-    data?.token ||
-    getCsrfToken();
+    data?.csrfToken || data?.csrf_token || data?.token || getCsrfToken();
 
   if (!csrfToken) {
     throw new Error(
@@ -76,10 +85,8 @@ export async function ensureCsrfToken() {
 
   return csrfToken;
 }
-export const getApiErrorMessage = async (
-  response,
-  fallback,
-) => {
+
+export const getApiErrorMessage = async (response, fallback) => {
   let message = fallback;
 
   try {
@@ -89,10 +96,7 @@ export const getApiErrorMessage = async (
       message += `: ${data.detail}`;
     } else if (data?.error) {
       message += `: ${data.error}`;
-    } else if (
-      data &&
-      typeof data === "object"
-    ) {
+    } else if (data && typeof data === "object") {
       const fieldMessages = Object.entries(data)
         .map(([field, messages]) => {
           const text = Array.isArray(messages)
@@ -108,6 +112,7 @@ export const getApiErrorMessage = async (
       }
     }
   } catch {
+    // Response did not contain JSON.
   }
 
   return message;

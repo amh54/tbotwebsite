@@ -19,7 +19,7 @@ import EditDeckModal from "./EditDeckModal";
 import DeckCardActions from "../decks/DeckCardActions.jsx";
 import DeckSuggestMessage from "../decks/DeckSuggestMessage.jsx";
 import "../../css/deckmodal.css";
-
+import { removeSavedDeck, saveDeck } from "../../utils/savedDecks";
 function DeckCard({
   decklist,
   admin = false,
@@ -30,6 +30,7 @@ function DeckCard({
   onSave,
   onAdd,
   onComplete,
+  onRemoveSaved,
   editSaving = false,
   allCards = [],
   profileSlug = "",
@@ -39,15 +40,37 @@ function DeckCard({
   decklists = false,
   deckbuilder = false,
   showSuggestDeck = false,
-  isUserDeck = false
+  isUserDeck = false,
+  isSavedDeck = false,
+  savedDeckTab = false,
+  hideShare = false,
 }) {
   const deck = decklist ?? {};
 
   const isAdmin = admin || adminMode;
   const [heroColor1, heroColor2] = getHeroColors(deck.hero);
 
-  const deckId = deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? "";
+  const sourceDeckId =
+    deck.source_deck_id ??
+    deck.sourceDeckId ??
+    (isUserDeck
+      ? (deck.id ?? deck.deckid ?? deck.deckID ?? deck.deckId)
+      : (deck.deckid ?? deck.deckID ?? deck.deckId)) ??
+    "";
 
+  const deckId = sourceDeckId;
+
+  const sourceType = String(
+  deck.source_type ??
+    deck.sourceType ??
+    (isUserDeck
+      ? "user_deck"
+      : legacy
+        ? "legacy"
+        : "decklist"),
+)
+  .trim()
+  .toLowerCase();
   const deckKey = String(deckId || deck.name || "").trim();
 
   const deckName = String(deck.name || "deck")
@@ -86,11 +109,12 @@ function DeckCard({
   const [editImagePreview, setEditImagePreview] = useState("");
   const [editImgError, setEditImgError] = useState(false);
   const [editSavingLocal, setEditSavingLocal] = useState(false);
-
+  const [savingDeck, setSavingDeck] = useState(false);
+  const [deckSaved, setDeckSaved] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
   const editModalRef = useRef(null);
 
-  const { isLoggedIn, setIsLoggedIn, checkingLogin } =
-    useDiscordLoginStatus(showSuggestDeck);
+  const { isLoggedIn, setIsLoggedIn, checkingLogin } = useDiscordLoginStatus();
 
   const {
     suggesting,
@@ -114,26 +138,31 @@ function DeckCard({
 
   const ownerName = getOwnerName(deck);
 
-  useEffect(() => {
-    if (addMode || autoOpen) {
-      setOpen(true);
-      return;
-    }
+useEffect(() => {
+  if (addMode) {
+    setOpen(true);
+    return;
+  }
 
-    if (!deckKey) {
-      return;
-    }
+  if (!deckKey) {
+    setOpen(false);
+    setEditing(false);
+    return;
+  }
 
-    const urlDeck = searchParams.get("deck");
+  const urlDeck = searchParams.get("deck");
 
-    if (isDeckUrlMatch(urlDeck)) {
-      setOpen(true);
-      setEditing(false);
-    } else {
-      setOpen(false);
-      setEditing(false);
-    }
-  }, [searchParams, deckKey, shareDeckKey, addMode, autoOpen]);
+  if (isDeckUrlMatch(urlDeck)) {
+    setOpen(true);
+    setEditing(false);
+    return;
+  }
+
+  if (!autoOpen) {
+    setOpen(false);
+    setEditing(false);
+  }
+}, [searchParams, deckKey, shareDeckKey, addMode, autoOpen]);
 
   useEffect(() => {
     if (!open) {
@@ -196,7 +225,15 @@ function DeckCard({
     }
 
     const next = new URLSearchParams(searchParams);
+
     next.set("deck", shareDeckKey);
+
+    if (savedDeckTab) {
+      next.set("tab", "saved");
+    } else {
+      next.delete("tab");
+    }
+
     setSearchParams(next);
   };
 
@@ -229,11 +266,90 @@ function DeckCard({
 
     if (currentDeck && isDeckUrlMatch(currentDeck)) {
       const next = new URLSearchParams(searchParams);
+
       next.delete("deck");
+
+      if (savedDeckTab) {
+        next.delete("tab");
+      }
+
       setSearchParams(next);
     }
   };
+  const handleSaveDeck = async () => {
+    if (isSavedDeck) {
+      return;
+    }
 
+    if (checkingLogin) {
+      return;
+    }
+
+    if (!isLoggedIn) {
+      setSaveMessage("Please log in with Discord to save decks.");
+      return;
+    }
+
+    if (!deckId || savingDeck || deckSaved) {
+      return;
+    }
+
+    setSavingDeck(true);
+    setSaveMessage("");
+
+    try {
+      const result = await saveDeck(sourceType, deckId);
+
+      setDeckSaved(true);
+
+      setSaveMessage(
+        result.message || `${deck.name || "Deck"} was saved to your profile.`,
+      );
+    } catch (error) {
+      console.error("Unable to save deck:", error);
+      setSaveMessage(error.message || "Unable to save deck.");
+    } finally {
+      setSavingDeck(false);
+    }
+  };
+  const handleRemoveSavedDeck = async () => {
+    if (!isSavedDeck) {
+      return;
+    }
+
+    if (checkingLogin) {
+      return;
+    }
+
+    if (!isLoggedIn) {
+      setSaveMessage("Please log in with Discord to remove saved decks.");
+      return;
+    }
+
+    if (!deckId || savingDeck) {
+      return;
+    }
+
+    setSavingDeck(true);
+    setSaveMessage("");
+
+    try {
+      await removeSavedDeck(sourceType, deckId);
+
+      setSaveMessage(
+        `${deck.name || "Deck"} was removed from your saved decks.`,
+      );
+
+      if (typeof onRemoveSaved === "function") {
+        onRemoveSaved(deck);
+      }
+    } catch (error) {
+      console.error("Unable to remove saved deck:", error);
+      setSaveMessage(error.message || "Unable to remove saved deck.");
+    } finally {
+      setSavingDeck(false);
+    }
+  };
   const resetEditImageState = () => {
     setEditImageFile(null);
     setEditImagePreview(deck.image ?? "");
@@ -305,87 +421,200 @@ function DeckCard({
     }
   };
 
-  const handleShare = async () => {
-    if (isAdmin || !deckKey) {
+const handleShare = async () => {
+  if (isAdmin || !deckKey) {
+    return;
+  }
+
+  let shareUrl;
+
+  if (isSavedDeck) {
+    const resolvedProfileSlug = String(
+      profileSlug || deck.profile_slug || deck.profileSlug || "",
+    ).trim();
+
+    if (!resolvedProfileSlug || !sourceDeckId) {
+      console.error("Unable to create saved deck share link:", {
+        profileSlug: resolvedProfileSlug,
+        sourceDeckId,
+        savedDeckId: deck.id,
+        sourceType,
+        deck,
+      });
       return;
     }
 
-    let shareUrl;
+    const savedSourceType =
+      sourceType === "user_deck"
+        ? "user"
+        : sourceType === "legacy"
+          ? "legacy"
+          : "deck";
 
-    if (deckbuilder || decklists || legacy) {
-      shareUrl = new URL(window.location.pathname, window.location.origin);
+    shareUrl = new URL(
+      `/deck/${encodeURIComponent(
+        resolvedProfileSlug,
+      )}/${savedSourceType}/${encodeURIComponent(
+        shareDeckKey,
+      )}`,
+      window.location.origin,
+    );
+  } else if (deckbuilder || decklists || legacy) {
+    shareUrl = new URL(
+      window.location.pathname,
+      window.location.origin,
+    );
+
+    shareUrl.searchParams.set("deck", shareDeckKey);
+  } else {
+    const resolvedProfileSlug = String(
+      profileSlug || deck.profile_slug || deck.profileSlug || "",
+    ).trim();
+
+    const resolvedProfileIsPublic =
+      profileIsPublic !== null &&
+      profileIsPublic !== undefined
+        ? profileIsPublic === true
+        : deck.is_public === true ||
+          deck.profile_is_public === true ||
+          deck.profileIsPublic === true;
+
+    if (resolvedProfileIsPublic && resolvedProfileSlug) {
+      shareUrl = new URL(
+        `/profile/${encodeURIComponent(resolvedProfileSlug)}`,
+        window.location.origin,
+      );
 
       shareUrl.searchParams.set("deck", shareDeckKey);
+    } else if (isUserDeck) {
+      if (!resolvedProfileSlug || !sourceDeckId) {
+        console.error("Unable to create user deck share link:", {
+          profileSlug: resolvedProfileSlug,
+          sourceDeckId,
+          deck,
+        });
+        return;
+      }
+
+      shareUrl = new URL(
+        `/deck/${encodeURIComponent(
+          resolvedProfileSlug,
+        )}/user/${encodeURIComponent(shareDeckKey)}`,
+        window.location.origin,
+      );
+    } else if (resolvedProfileSlug) {
+      shareUrl = new URL(
+        `/deck/${encodeURIComponent(
+          resolvedProfileSlug,
+        )}/${encodeURIComponent(shareDeckKey)}`,
+        window.location.origin,
+      );
     } else {
-      const resolvedProfileSlug = String(
-        profileSlug || deck.profile_slug || deck.profileSlug || "",
-      ).trim();
+      console.error(
+        "Unable to create deck share link: profile slug is missing.",
+      );
+      return;
+    }
+  }
 
-      const resolvedProfileIsPublic =
-        profileIsPublic !== null && profileIsPublic !== undefined
-          ? profileIsPublic === true
-          : deck.is_public === true ||
-            deck.profile_is_public === true ||
-            deck.profileIsPublic === true;
+  try {
+    await navigator.clipboard.writeText(shareUrl.toString());
 
-      if (resolvedProfileIsPublic && resolvedProfileSlug) {
-        shareUrl = new URL(
-          `/profile/${encodeURIComponent(resolvedProfileSlug)}`,
-          window.location.origin,
-        );
+    setCopied(true);
 
-        shareUrl.searchParams.set("deck", shareDeckKey);
-      } else if (resolvedProfileSlug) {
-        shareUrl = new URL(
-          `/deck/${encodeURIComponent(
-            resolvedProfileSlug,
-          )}/${encodeURIComponent(shareDeckKey)}`,
-          window.location.origin,
-        );
-      } else {
+    window.setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  } catch (error) {
+    console.error("Failed to copy link", error);
+  }
+};
+  const handleDownload = () => {
+    console.log("Download clicked", {
+      deck,
+      isSavedDeck,
+      isUserDeck,
+      legacy,
+    });
+
+    if (isSavedDeck) {
+      const sourceDeckId = deck.source_deck_id ?? deck.sourceDeckId ?? "";
+
+      if (!sourceDeckId) {
         console.error(
-          "Unable to create deck share link: profile slug is missing.",
+          "Unable to download saved deck: source deck ID is missing.",
+          deck,
         );
         return;
       }
-    }
 
-    try {
-      await navigator.clipboard.writeText(shareUrl.toString());
+      const savedSourceType = String(deck.source_type ?? deck.sourceType ?? "")
+        .trim()
+        .toLowerCase();
 
-      setCopied(true);
+      if (!savedSourceType) {
+        console.error(
+          "Unable to download saved deck: source type is missing.",
+          deck,
+        );
+        return;
+      }
 
-      window.setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-    } catch (error) {
-      console.error("Failed to copy link", error);
-    }
-  };
- const handleDownload = () => {
-  if (isUserDeck) {
-    const downloadDeckId = deck.id;
+      if (savedSourceType === "user_deck") {
+        window.location.href = `${API_BASE_URL}/tbotapp/user-decks/${sourceDeckId}/download/`;
+        return;
+      }
 
-    if (!downloadDeckId) {
+      if (savedSourceType === "legacy") {
+        window.location.href = `${API_BASE_URL}/tbotapp/legacy-decks/${sourceDeckId}/download/`;
+        return;
+      }
+
+      if (savedSourceType === "decklist") {
+        window.location.href = `${API_BASE_URL}/tbotapp/decks/${sourceDeckId}/download/`;
+        return;
+      }
+
+      console.error("Unable to download saved deck: unknown source type.", {
+        sourceType: savedSourceType,
+        sourceDeckId,
+        deck,
+      });
+
       return;
     }
 
-    window.location.href =
-      `${API_BASE_URL}/tbotapp/user-decks/${downloadDeckId}/download/`;
+    if (isUserDeck) {
+      const downloadDeckId =
+        deck.id ?? deck.deckid ?? deck.deckID ?? deck.deckId;
 
-    return;
-  }
+      if (!downloadDeckId) {
+        console.error(
+          "Unable to download user deck: deck ID is missing.",
+          deck,
+        );
+        return;
+      }
 
-  const downloadDeckId =
-    deck.deckid ?? deck.deckID ?? deck.deckId;
+      window.location.href = `${API_BASE_URL}/tbotapp/user-decks/${downloadDeckId}/download/`;
 
-  if (!downloadDeckId) {
-    return;
-  }
+      return;
+    }
 
-  window.location.href =
-    `${API_BASE_URL}/tbotapp/decks/${downloadDeckId}/download/`;
-};
+    const downloadDeckId = deck.deckid ?? deck.deckID ?? deck.deckId;
+
+    if (!downloadDeckId) {
+      console.error("Unable to download deck: deck ID is missing.", deck);
+      return;
+    }
+
+    if (legacy) {
+      window.location.href = `${API_BASE_URL}/tbotapp/legacy-decks/${downloadDeckId}/download/`;
+      return;
+    }
+
+    window.location.href = `${API_BASE_URL}/tbotapp/decks/${downloadDeckId}/download/`;
+  };
   const handleAddComplete = (result) => {
     if (typeof onComplete === "function") {
       onComplete(result);
@@ -492,7 +721,20 @@ function DeckCard({
               <span>Optimized by:</span> {deck.optimization}
             </p>
           )}
-
+          {isSavedDeck && (
+            <div className="saved-deck-source">
+              Saved from:{" "}
+              {String(
+                deck.source_type || deck.sourceType || "",
+              ).toLowerCase() === "user_deck"
+                ? "User Decks"
+                : String(
+                      deck.source_type || deck.sourceType || "",
+                    ).toLowerCase() === "legacy"
+                  ? "Legacy Decks"
+                  : "Decklists"}
+            </div>
+          )}
           {isAdmin && hasValue(ownerName) && (
             <p>
               <span>Owner:</span> {ownerName}
@@ -619,9 +861,18 @@ function DeckCard({
                       onSuggestDeck={handleSuggestDeck}
                       deckHasImage={hasValue(deck.image)}
                       onDownload={handleDownload}
+                      hideShare={hideShare}
+                      onSaveDeck={
+                        isSavedDeck ? handleRemoveSavedDeck : handleSaveDeck
+                      }
+                      savingDeck={savingDeck}
+                      deckSaved={deckSaved}
+                      isSavedDeck={isSavedDeck}
                     />
                   )}
-
+                  {!isAdmin && saveMessage && (
+                    <p className="saved-deck-message">{saveMessage}</p>
+                  )}
                   {isAdmin && (
                     <div className="admin-modal-actions">
                       {!editing ? (
@@ -769,7 +1020,7 @@ function DeckCard({
                         suggestMessage={suggestMessage}
                         suggestCooldown={suggestCooldown}
                         suggestionId={suggestionId}
-                        isUserDeck = {false}
+                        isUserDeck={false}
                       />
                     </>
                   )}

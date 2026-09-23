@@ -6,11 +6,14 @@ import Navbar from "../components/navbar";
 
 import Footer from "../components/footer";
 
+import Seo from "../components/seo.jsx";
+
 import "../css/users.css";
 
 import "../css/navbar.css";
 
 import "../css/loading.css";
+
 import { API_BASE_URL } from "../utils/api.js";
 
 const STORAGE_KEYS = {
@@ -111,14 +114,6 @@ function Users() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    document.title = "Users";
-
-    return () => {
-      document.title = "Tbot";
-    };
-  }, []);
-
-  useEffect(() => {
     const controller = new AbortController();
 
     const fetchUserCount = async () => {
@@ -202,7 +197,6 @@ function Users() {
 
         setProfiles(results);
         setError("");
-
         writeSessionCache(STORAGE_KEYS.profiles, results);
 
         if (totalUsers === null || totalUsers === 0) {
@@ -294,14 +288,11 @@ function Users() {
       <div className="loading-page">
         <div className="loading-card">
           <div className="loading-spinner" />
-
           <h2>Loading users</h2>
-
           <p>Finding public Tbot profiles.</p>
 
           <div className="loading-status">
             <span>Loading user data</span>
-
             <strong>
               {totalUsers !== null
                 ? `${totalUsers} public users`
@@ -315,14 +306,22 @@ function Users() {
 
   return (
     <div className="users-page">
+      <Seo
+        title="PVZ Heroes Players & Community Profiles | Tbot"
+        description="Browse public Plants vs. Zombies Heroes player profiles on Tbot. Discover community members, their profiles, bios, and shared PVZ Heroes decklists."
+        canonical="/users"
+      />
+
       <Navbar />
 
       <main className="users-content">
         <div className="users-header">
           <div>
-            <h1>Users</h1>
-
-            <p>Browse public Tbot profiles and explore their decklists.</p>
+            <h1>PVZ Heroes Players & Community Profiles</h1>
+            <p>
+              Browse public Plants vs. Zombies Heroes player profiles and
+              explore their decklists.
+            </p>
           </div>
         </div>
 
@@ -390,7 +389,9 @@ function Users() {
                           src={avatar}
                           alt={`${displayName} avatar`}
                           onError={(event) => {
-                            const discordId = normalizeText(profile.discord_id);
+                            const discordId = normalizeText(
+                              profile.discord_id,
+                            );
 
                             if (discordId) {
                               try {

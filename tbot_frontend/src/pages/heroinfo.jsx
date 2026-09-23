@@ -10,7 +10,7 @@ import { CARD_CACHE_KEY } from "../utils/cardInfo/cardCache.js";
 import { getRarityName } from "../utils/cardInfo/dataUtils.js";
 import { normalizeText } from "../utils/cardInfo/textUtils.js";
 import { HERO_CACHE_KEY } from "../utils/heroInfo/heroConfig.js";
-
+import Seo from "../components/seo.jsx";
 import {
   getCachedData,
   findHeroByQuery,
@@ -66,26 +66,6 @@ function HeroInfo() {
       url,
     );
   };
-
-  useEffect(() => {
-    document.title = "Hero Info";
-
-    const faviconUrl = "https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp";
-
-    let favicon = document.querySelector('link[rel="icon"]');
-
-    if (!favicon) {
-      favicon = document.createElement("link");
-      favicon.rel = "icon";
-      document.head.appendChild(favicon);
-    }
-
-    favicon.href = faviconUrl;
-
-    return () => {
-      document.title = "Tbot";
-    };
-  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -293,10 +273,15 @@ function HeroInfo() {
 
   return (
     <>
+   <Seo
+  title="PVZ Heroes Hero Database - Plants vs. Zombies Heroes | Tbot"
+  description="Browse the Plants vs. Zombies Heroes hero database on Tbot. Explore Plant and Zombie heroes, their superpowers, abilities, rarities, and card information."
+  canonical="/heroinfo"
+/>
       <Navbar />
 
       <div className="card-information-page">
-        <h1>Hero Information</h1>
+        <h1>PVZ Heroes Hero Database</h1>
 
         <div className="card-side-tabs">
           <button

@@ -9,21 +9,28 @@ function DeckCardActions({
   onSuggestDeck,
   deckHasImage,
   onDownload,
+  hideShare = false,
+  onSaveDeck,
+  savingDeck = false,
+  deckSaved = false,
+  isSavedDeck = false,
 }) {
   return (
     <div className="modal-actions">
       {!isAdmin && (
         <>
-          <button type="button" className="share-btn" onClick={onShare}>
-            {copied ? "Link Copied!" : "Share Deck"}
-          </button>
+          {!hideShare && (
+            <button type="button" className="share-btn" onClick={onShare}>
+              {copied ? "Link Copied!" : "Share Deck"}
+            </button>
+          )}
 
           {showSuggestDeck && !checkingLogin && (
             <button
               type="button"
-              className={`suggest-deck-btn ${
-                suggesting ? "suggesting" : ""
-              } ${suggestStatus ? `suggest-${suggestStatus}` : ""}`}
+              className={`suggest-deck-btn ${suggesting ? "suggesting" : ""} ${
+                suggestStatus ? `suggest-${suggestStatus}` : ""
+              }`}
               onClick={onSuggestDeck}
               disabled={
                 suggesting ||
@@ -36,8 +43,7 @@ function DeckCardActions({
             >
               {suggesting
                 ? "Submitting..."
-                : suggestStatus === "success" ||
-                    suggestStatus === "confirmed"
+                : suggestStatus === "success" || suggestStatus === "confirmed"
                   ? "Deck Suggested!"
                   : suggestStatus === "awaiting_creator"
                     ? "Awaiting Creator Approval"
@@ -51,6 +57,29 @@ function DeckCardActions({
             </button>
           )}
         </>
+      )}
+
+      {!isAdmin && onSaveDeck && (
+        <button
+          type="button"
+          className={`save-deck-btn ${
+            deckSaved && !isSavedDeck ? "saved" : ""
+          }`}
+          onClick={onSaveDeck}
+          disabled={checkingLogin || savingDeck || (deckSaved && !isSavedDeck)}
+        >
+          {checkingLogin
+            ? "Checking Login..."
+            : savingDeck
+              ? isSavedDeck
+                ? "Removing..."
+                : "Saving..."
+              : isSavedDeck
+                ? "Remove Saved Deck"
+                : deckSaved
+                  ? "Deck Saved"
+                  : "Save Deck"}
+        </button>
       )}
 
       {deckHasImage && (

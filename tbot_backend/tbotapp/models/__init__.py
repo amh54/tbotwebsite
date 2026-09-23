@@ -6,3 +6,4 @@ from .user_cards import UserCard
 from .bug_reports import BugReport
 from .suggestions import UserSuggestion
 from .site_updates import SiteUpdate
+from .saved_decks import SavedDeck

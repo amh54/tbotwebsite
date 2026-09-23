@@ -12,7 +12,10 @@ from ..views.decklists import (
     legacy_decklist_count,
     legacy_decklists,
 )
-from ..views.download_deck import download_deck_image
+from ..views.download_deck import (
+    download_deck_image,
+    download_legacy_deck_image,
+)
 from ..views.keep_or_scrap import (
     keep_or_scrap,
     keep_or_scrap_count,
@@ -45,6 +48,11 @@ urlpatterns = [
         "decks/<int:deckid>/download/",
         download_deck_image,
         name="download-deck-image",
+    ),
+    path(
+        "legacy-decks/<int:deckid>/download/",
+        download_legacy_deck_image,
+        name="download-legacy-deck-image",
     ),
     path(
         "cardinfo/",

@@ -4,7 +4,7 @@ import "../css/keeporscrap.css";
 import "../css/loading.css";
 
 import ReactMarkdown from "react-markdown";
-
+import Seo from "../components/seo.jsx";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import { API_BASE_URL } from "../utils/api.js";
@@ -182,14 +182,6 @@ function KeepOrScrap() {
   const [totalEntries, setTotalEntries] = useState(
     keepOrScrapCache.totalEntries,
   );
-
-  useEffect(() => {
-    document.title = "Keep or Scrap";
-
-    return () => {
-      document.title = "Tbot";
-    };
-  }, []);
 
   useEffect(() => {
     if (keepOrScrapCache.loaded) {
@@ -465,10 +457,15 @@ function KeepOrScrap() {
 
   return (
     <div className="keep-or-scrap-page">
+       <Seo
+      title="PVZ Heroes Keep or Scrap - Card Guide | Tbot"
+      description="Use Tbot's Plants vs. Zombies Heroes Keep or Scrap guide to learn which PVZ Heroes cards to keep, scrap, or craft based on their usefulness and value."
+      canonical="/keeporscrap"
+    />
       <Navbar />
 
       <main className="kos-content">
-        <h1>Keep or Scrap</h1>
+        <h1>PVZ Heroes Keep or Scrap</h1>
 
         <div className="kos-browser">
           <div className="kos-side-tabs">

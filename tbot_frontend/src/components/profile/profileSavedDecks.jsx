@@ -7,8 +7,6 @@ import FilterDropdown from "../filterdropdown";
 import useTemporaryMessage from "../../utils/useTemporaryMessage";
 
 import {
-  normalizeSide,
-  normalizeKey,
   buildCollectionMap,
   sortDecks,
   getFilterOptions,
@@ -17,14 +15,30 @@ import {
 
 import "../../css/userdecklists.css";
 
-function ProfileDeckBrowser({
-  decks = [],
+function normalizeSavedSourceType(value) {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (normalized === "user_deck" || normalized === "user") {
+    return "user_deck";
+  }
+
+  if (normalized === "legacy") {
+    return "legacy";
+  }
+
+  return "decklist";
+}
+
+function ProfileSavedDecks({
+  savedDecks = [],
   allCards = [],
   viewerCards = [],
   profileSlug,
   profileIsPublic,
-  sharedDeckKey = "",
   isAuthenticated = false,
+  onRemoveSaved,
 }) {
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
@@ -33,8 +47,10 @@ function ProfileDeckBrowser({
   const [archetype, setArchetype] = useState([]);
   const [collection, setCollection] = useState([]);
 
-  const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
-    useTemporaryMessage(4000);
+  const {
+    visible: collectionLoginMessage,
+    show: showCollectionLoginMessage,
+  } = useTemporaryMessage(4000);
 
   const collectionMap = useMemo(() => {
     if (!isAuthenticated) {
@@ -44,28 +60,20 @@ function ProfileDeckBrowser({
     return buildCollectionMap(viewerCards);
   }, [viewerCards, isAuthenticated]);
 
-  const sortedDecks = useMemo(() => sortDecks(decks), [decks]);
+  const sortedDecks = useMemo(
+    () => sortDecks(savedDecks),
+    [savedDecks],
+  );
 
-  const { heroOptions, categoryOptions, archetypeOptions, collectionOptions } =
-    useMemo(
-      () =>
-        getFilterOptions({
-          decks: sortedDecks,
-          allCards,
-          search,
-          side,
-          hero,
-          category,
-          archetype,
-          collection,
-          collectionMap,
-          collectionLoading: false,
-          collectionLoaded: isAuthenticated,
-          discordUser: isAuthenticated ? {} : null,
-          authLoading: false,
-        }),
-      [
-        sortedDecks,
+  const {
+    heroOptions,
+    categoryOptions,
+    archetypeOptions,
+    collectionOptions,
+  } = useMemo(
+    () =>
+      getFilterOptions({
+        decks: sortedDecks,
         allCards,
         search,
         side,
@@ -74,9 +82,24 @@ function ProfileDeckBrowser({
         archetype,
         collection,
         collectionMap,
-        isAuthenticated,
-      ],
-    );
+        collectionLoading: false,
+        collectionLoaded: isAuthenticated,
+        discordUser: isAuthenticated ? {} : null,
+        authLoading: false,
+      }),
+    [
+      sortedDecks,
+      allCards,
+      search,
+      side,
+      hero,
+      category,
+      archetype,
+      collection,
+      collectionMap,
+      isAuthenticated,
+    ],
+  );
 
   const filteredDecks = useMemo(
     () =>
@@ -132,13 +155,14 @@ function ProfileDeckBrowser({
     <section className="profile-decks">
       <div className="profile-decks-header">
         <div>
-          <h2>PVZ Heroes Decklists</h2>
-
+          <h2>Saved Decks</h2>
           <p>
-            {decks.length === 0
-              ? "0 decklists"
-              : `${decks.length} ${
-                  decks.length === 1 ? "decklist" : "decklists"
+            {savedDecks.length === 0
+              ? "0 saved decks"
+              : `${savedDecks.length} ${
+                  savedDecks.length === 1
+                    ? "saved deck"
+                    : "saved decks"
                 }`}
           </p>
         </div>
@@ -184,7 +208,7 @@ function ProfileDeckBrowser({
         <div className="search-container">
           <input
             className="search"
-            placeholder="Search decks, creators, heroes, cards..."
+            placeholder="Search saved decks, creators, heroes, cards..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -246,54 +270,64 @@ function ProfileDeckBrowser({
         {collectionLoginMessage && (
           <div className="collection-login-message">
             <strong>Discord login required</strong>
-            <span>Log in with Discord to use the Collection filter.</span>
+            <span>
+              Log in with Discord to use the Collection filter.
+            </span>
           </div>
         )}
       </div>
 
       <div className="user-decklists-results-bar">
         <p className="results-count">
-          Showing {filteredDecks.length} of {decks.length} decks
+          Showing {filteredDecks.length} of {savedDecks.length} saved decks
         </p>
       </div>
 
       {filteredDecks.length === 0 ? (
         <div className="user-decklists-empty">
-          <h2>No decks found</h2>
+          <h2>
+            {savedDecks.length === 0
+              ? "No saved decks"
+              : "No decks found"}
+          </h2>
 
-          <p>This user hasn't added any decks matching these filters.</p>
+          <p>
+            {savedDecks.length === 0
+              ? "Save a deck to add it to your Saved Decks."
+              : "You don't have any saved decks matching these filters."}
+          </p>
         </div>
       ) : (
         <div className="deck-grid">
           {filteredDecks.map((deck) => {
-            const deckId =
-              deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? "";
+            const sourceDeckId =
+              deck.source_deck_id ??
+              deck.sourceDeckId ??
+              "";
 
-            const deckName = String(deck.name || "deck")
-              .trim()
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/^-+|-+$/g, "");
-
-            const shareDeckKey = deckName
-              ? `${deckName}-${deckId}`
-              : String(deckId);
-
-            const isSharedDeck =
-              Boolean(sharedDeckKey) &&
-              (String(sharedDeckKey) === String(deckId) ||
-                String(sharedDeckKey) === shareDeckKey);
+            const sourceType = normalizeSavedSourceType(
+              deck.source_type ?? deck.sourceType,
+            );
 
             return (
               <DeckCard
-                key={`user-deck-${deck.deckid || deck.deckID || deck.id || `${normalizeSide(deck.side)}-${normalizeKey(deck.name)}`}`}
-                decklist={deck}
+                key={`saved-deck-${sourceType}-${
+                  sourceDeckId || deck.id || "unknown"
+                }`}
+                decklist={{
+                  ...deck,
+                  source_type: sourceType,
+                  source_deck_id: sourceDeckId,
+                }}
                 allCards={allCards}
                 profileSlug={profileSlug}
                 profileIsPublic={profileIsPublic}
-                showSuggestDeck={true}
-                autoOpen={isSharedDeck}
-                isUserDeck={true}
+                showSuggestDeck={false}
+                autoOpen={false}
+                isUserDeck={false}
+                isSavedDeck={true}
+                savedDeckTab={true}
+                onRemoveSaved={onRemoveSaved}
               />
             );
           })}
@@ -303,4 +337,4 @@ function ProfileDeckBrowser({
   );
 }
 
-export default ProfileDeckBrowser;
+export default ProfileSavedDecks;

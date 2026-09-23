@@ -8,17 +8,15 @@ import Navbar from "../components/navbar";
 
 import Footer from "../components/footer";
 
+import Seo from "../components/seo.jsx";
+
 import useTemporaryMessage from "../utils/useTemporaryMessage";
 
 import {
-  normalizeText,
-  normalizeKey,
-  normalizeSide,
   sortDecks,
   buildCollectionMap,
   getFilterOptions,
   filterDecks,
-  getDeckKey,
 } from "../utils/deckFilters";
 
 import "../css/decklists.css";
@@ -87,7 +85,6 @@ function LegacyDecksPage() {
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
   const [collectionFilter, setCollectionFilter] = useState([]);
-
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [collectionCards, setCollectionCards] = useState([]);
 
@@ -100,14 +97,6 @@ function LegacyDecksPage() {
 
   const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
     useTemporaryMessage(4000);
-
-  useEffect(() => {
-    document.title = "Legacy Decks";
-
-    return () => {
-      document.title = "Tbot";
-    };
-  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -164,7 +153,6 @@ function LegacyDecksPage() {
 
         setDecks(normalizedResults);
         setError("");
-
         writeSessionCache(STORAGE_KEYS.decks, normalizedResults);
 
         if (normalizedResults.length > 0) {
@@ -279,7 +267,6 @@ function LegacyDecksPage() {
             : [];
 
         setAllCards(cards);
-
         writeSessionCache(STORAGE_KEYS.cards, cards);
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -451,14 +438,11 @@ function LegacyDecksPage() {
       <div className="loading-page">
         <div className="loading-card">
           <div className="loading-spinner" />
-
           <h2>Loading legacy decks</h2>
-
           <p>Preparing the legacy deck browser and loading available decks.</p>
 
           <div className="loading-status">
             <span>Legacy decks available</span>
-
             <strong>
               {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
             </strong>
@@ -470,10 +454,16 @@ function LegacyDecksPage() {
 
   return (
     <div className="deck-page">
+      <Seo
+        title="PVZ Heroes Legacy Decks | Tbot"
+        description="Browse legacy Plants vs. Zombies Heroes decks on Tbot. Explore classic PVZ Heroes decklists by hero, category, archetype, creator, and collection."
+        canonical="/legacy"
+      />
+
       <Navbar />
 
       <main className="deck-content">
-        <h1>Legacy Decks</h1>
+        <h1>PVZ Heroes Legacy Decks</h1>
 
         <div className="deck-browser">
           <div className="tabs">
@@ -577,7 +567,6 @@ function LegacyDecksPage() {
           {collectionLoginMessage && (
             <div className="collection-login-message">
               <strong>Discord login required</strong>
-
               <span>Log in with Discord to use the Collection filter.</span>
             </div>
           )}

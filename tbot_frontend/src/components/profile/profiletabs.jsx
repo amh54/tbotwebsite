@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const ProfileTabs = ({ activeTab = "cards", onTabChange }) => {
+const ProfileTabs = ({
+  activeTab = "cards",
+  onTabChange,
+  showSavedDecks = false,
+}) => {
   const [selectedTab, setSelectedTab] = useState(activeTab);
+
+  useEffect(() => {
+    setSelectedTab(activeTab);
+  }, [activeTab]);
 
   const handleTabChange = (tab) => {
     setSelectedTab(tab);
@@ -28,6 +36,16 @@ const ProfileTabs = ({ activeTab = "cards", onTabChange }) => {
       >
         Personal Decks
       </button>
+
+      {showSavedDecks && (
+        <button
+          type="button"
+          className={selectedTab === "saved" ? "active" : ""}
+          onClick={() => handleTabChange("saved")}
+        >
+          Saved Decks
+        </button>
+      )}
     </div>
   );
 };

@@ -1,11 +1,11 @@
 from django.urls import path
 
+from ..views.download_deck import download_user_deck_image
 from ..views.user_deck_suggestions import (
     user_deck_suggestion_create,
     user_deck_suggestion_status,
 )
 from ..views.user_decks import (
-    download_user_deck_image,
     public_profile_decks_count,
     shared_user_deck,
     user_deck_create,
@@ -42,10 +42,9 @@ urlpatterns = [
         name="user_deck_delete",
     ),
     path(
-        "user-decks/shared/<str:profile_slug>/<int:deck_id>/",
-        shared_user_deck,
-        name="shared_user_deck",
-    ),
+    "user-decks/shared/<slug:profile_slug>/<str:source_type>/<str:deck_id>/",
+    shared_user_deck,
+),
     path(
         "user-deck-suggestions/create/",
         user_deck_suggestion_create,
@@ -57,8 +56,8 @@ urlpatterns = [
         name="user_deck_suggestion_status",
     ),
     path(
-    "user-decks/<int:deck_id>/download/",
-    download_user_deck_image,
-    name="download_user_deck_image",
-),
+        "user-decks/<int:deck_id>/download/",
+        download_user_deck_image,
+        name="download_user_deck_image",
+    ),
 ]

@@ -5,7 +5,7 @@ import Filters from "../components/cardInfo/filters.jsx";
 import Loading from "../components/cardInfo/loading.jsx";
 import GridItem from "../components/cardInfo/gridItem.jsx";
 import { API_BASE_URL } from "../utils/api.js";
-
+import Seo from "../components/seo.jsx";
 import {
   CARD_CACHE_KEY,
   getCardCountMemoryCache,
@@ -419,7 +419,7 @@ function CardBrowser({
 
       window.history.pushState(
         {
-          ...(window.history.state || {}),
+          ...(window.history.state),
           card: cardName,
         },
         "",
@@ -581,15 +581,6 @@ function CardBrowser({
       window.removeEventListener("popstate", handlePopState);
     };
   }, [cards]);
-
-  useEffect(() => {
-    document.title = "Card Info";
-
-    return () => {
-      document.title = "Tbot";
-    };
-  }, []);
-
   const normalCards = useMemo(() => {
     return cards.filter((card) => {
       if (!getSideMatches(card?.side, side)) {
@@ -714,7 +705,23 @@ function CardBrowser({
 
   return (
     <div className="card-information-page">
-      <h1>{userCollection ? "Card Collection" : "Card Information"}</h1>
+        <Seo
+      title={
+        userCollection
+          ? "PVZ Heroes Card Collection | Tbot"
+          : "PVZ Heroes Cards - Plants vs. Zombies Heroes Card Database | Tbot"
+      }
+      description={
+        userCollection
+          ? "View and manage your Plants vs. Zombies Heroes card collection on Tbot."
+          : "Browse the complete Plants vs. Zombies Heroes card database on Tbot. Search and filter PVZ Heroes cards by class, type, cost, attack, health, tribe, rarity, set, and abilities."
+      }
+      canonical="/cardinfo"
+      noindex={userCollection}
+    />
+      <h1>
+  {userCollection ? "PVZ Heroes Card Collection" : "PVZ Heroes Card Database"}
+</h1>
 
       <Filters
         side={side}

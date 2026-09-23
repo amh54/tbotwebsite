@@ -15,12 +15,13 @@ import "../css/navbar.css";
 import "../css/loading.css";
 
 import "../css/userdecklists.css";
+
 import { API_BASE_URL } from "../utils/api.js";
 
 const normalizeText = (value) => String(value ?? "").trim();
 
 function StandaloneDeckPage() {
-  const { profile_slug, deckId } = useParams();
+  const { profile_slug, source_type, deckId } = useParams();
 
   const [profile, setProfile] = useState(null);
   const [deck, setDeck] = useState(null);
@@ -36,14 +37,6 @@ function StandaloneDeckPage() {
     };
   }, []);
 
-  /*
-   * Load ONLY the requested shared deck.
-   *
-   * This route is used for decks belonging to private profiles.
-   * Public-profile decks are accessed through:
-   *
-   * /profile/:profile_slug
-   */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -54,11 +47,12 @@ function StandaloneDeckPage() {
         setDeck(null);
         setProfile(null);
 
-        if (!profile_slug || !deckId) {
+        if (!profile_slug || !source_type || !deckId) {
           throw new Error("Invalid deck link.");
         }
 
         const sharedDeckKey = String(deckId).trim();
+
         const deckIdMatch = sharedDeckKey.match(/-(\d+)$/);
 
         if (!deckIdMatch) {
@@ -67,9 +61,21 @@ function StandaloneDeckPage() {
 
         const actualDeckId = deckIdMatch[1];
 
+        const normalizedSourceType =
+          String(source_type).trim().toLowerCase();
+
+        if (
+          normalizedSourceType !== "user" &&
+          normalizedSourceType !== "deck" &&
+          normalizedSourceType !== "legacy"
+        ) {
+          throw new Error("Invalid deck link.");
+        }
+
         const url =
           `${API_BASE_URL}/tbotapp/user-decks/shared/` +
           `${encodeURIComponent(profile_slug)}/` +
+          `${encodeURIComponent(normalizedSourceType)}/` +
           `${encodeURIComponent(actualDeckId)}/`;
 
         const response = await fetch(url, {
@@ -84,7 +90,9 @@ function StandaloneDeckPage() {
         const data = await response.json().catch(() => null);
 
         if (!response.ok) {
-          throw new Error(data?.error || "Unable to load this deck.");
+          throw new Error(
+            data?.error || "Unable to load this deck.",
+          );
         }
 
         if (!data?.deck) {
@@ -98,9 +106,14 @@ function StandaloneDeckPage() {
         });
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Unable to load standalone deck:", err);
+          console.error(
+            "Unable to load standalone deck:",
+            err,
+          );
 
-          setError(err.message || "Unable to load this deck.");
+          setError(
+            err.message || "Unable to load this deck.",
+          );
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -112,23 +125,23 @@ function StandaloneDeckPage() {
     loadDeck();
 
     return () => controller.abort();
-  }, [profile_slug, deckId]);
+  }, [profile_slug, source_type, deckId]);
 
-  /*
-   * Load card information.
-   */
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchCards = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/cardinfo/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
           },
-          signal: controller.signal,
-        });
+        );
 
         if (!response.ok) {
           return;
@@ -145,7 +158,10 @@ function StandaloneDeckPage() {
         );
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Unable to load card information:", err);
+          console.error(
+            "Unable to load card information:",
+            err,
+          );
         }
       }
     };
@@ -165,9 +181,7 @@ function StandaloneDeckPage() {
       <div className="loading-page">
         <div className="loading-card">
           <div className="loading-spinner" />
-
           <h2>Loading deck</h2>
-
           <p>Preparing this decklist.</p>
         </div>
       </div>
@@ -182,8 +196,9 @@ function StandaloneDeckPage() {
         <main className="deck-content">
           <div className="user-decklists-empty">
             <h2>Unable to load deck</h2>
-
-            <p>{error || "This deck could not be found."}</p>
+            <p>
+              {error || "This deck could not be found."}
+            </p>
           </div>
         </main>
 
@@ -201,7 +216,6 @@ function StandaloneDeckPage() {
           <div className="user-decklists-profile">
             <div className="user-decklists-profile-info">
               <h1>{deck.name || "Untitled Deck"}</h1>
-
               <p>Shared by {profileName}</p>
             </div>
           </div>
@@ -211,7 +225,10 @@ function StandaloneDeckPage() {
           <DeckCard
             decklist={deck}
             allCards={allCards}
-            profileSlug={normalizeText(profile?.profile_slug) || profile_slug}
+            profileSlug={
+              normalizeText(profile?.profile_slug) ||
+              profile_slug
+            }
             profileIsPublic={false}
             autoOpen={true}
           />

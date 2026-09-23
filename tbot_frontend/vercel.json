@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/deck/:slug/:key",
+      "source": "/",
       "has": [
         {
           "type": "header",
@@ -11,7 +11,20 @@
           }
         }
       ],
-      "destination": "/api/deck-og?path=/deck/:slug/:key"
+      "destination": "/api/deck-og?path=/"
+    },
+    {
+      "source": "/deck/:slug/:source_type/:key",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
+      "destination": "/api/deck-og?path=/deck/:slug/:source_type/:key"
     },
     {
       "source": "/profile/:slug",

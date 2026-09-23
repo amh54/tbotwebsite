@@ -13,7 +13,13 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from ..models import UserDeck, UserProfile
+from ..models import (
+    UserDeck,
+    UserProfile,
+    SavedDeck,
+    Decklist,
+    LegacyDecklist,
+)
 from ..serializers import UserDeckSerializer
 
 from .helpers import (
@@ -726,14 +732,13 @@ def user_deck_delete(request, deck_id):
 def shared_user_deck(
     request,
     profile_slug,
+    source_type,
     deck_id,
 ):
     try:
         profile = (
             UserProfile.objects
-            .filter(
-                profile_slug=profile_slug,
-            )
+            .filter(profile_slug=profile_slug)
             .first()
         )
 
@@ -745,29 +750,120 @@ def shared_user_deck(
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        deck = (
-            UserDeck.objects
-            .filter(
-                id=deck_id,
-                profile_id=profile.id,
-            )
-            .first()
-        )
+        normalized_source_type = str(source_type or "").strip().lower()
 
-        if not deck:
+        try:
+            source_id = int(deck_id)
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    "error": "Invalid deck ID.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if normalized_source_type == "user":
+            source_deck = (
+            UserDeck.objects
+            .filter(id=source_id)
+            .first()
+            )
+            resolved_source_type = "user_deck"
+
+        elif normalized_source_type == "deck":
+            source_deck = (
+                Decklist.objects
+                .filter(deckid=source_id)
+                .first()
+            )
+            resolved_source_type = "decklist"
+
+        elif normalized_source_type == "legacy":
+            source_deck = (
+                LegacyDecklist.objects
+                .filter(deckid=source_id)
+                .first()
+            )
+            resolved_source_type = "legacy"
+
+        else:
+            return Response(
+                {
+                    "error": "Invalid deck source type.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not source_deck:
+            logger.warning(
+                "Shared deck not found: profile=%s source_type=%s source_id=%s",
+                profile_slug,
+                normalized_source_type,
+                source_id,
+            )
+
             return Response(
                 {
                     "error": "Shared deck not found.",
+                    "profile_slug": profile_slug,
+                    "source_type": normalized_source_type,
+                    "source_id": source_id,
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = UserDeckSerializer(deck)
+        if resolved_source_type == "user_deck":
+            deck_data = {
+                "id": source_deck.id,
+                "deckid": source_deck.id,
+                "source_deck_id": source_deck.id,
+                "source_type": "user_deck",
+                "name": source_deck.name,
+                "hero": source_deck.hero,
+                "side": source_deck.side,
+                "category": source_deck.category,
+                "archetype": source_deck.archetype,
+                "creator": source_deck.creator,
+                "description": source_deck.description,
+                "image": source_deck.image,
+                "cost": source_deck.cost,
+                "aliases": source_deck.aliases,
+                "cards": source_deck.cards,
+                "inspiration": source_deck.inspiration,
+                "optimization": source_deck.optimization,
+                "deck_doc": source_deck.deck_doc,
+                "suggested_date": source_deck.suggested_date,
+                "updated_date": source_deck.updated_date,
+            }
+
+        else:
+            deck_data = {
+                "id": source_deck.deckid,
+                "deckid": source_deck.deckid,
+                "source_deck_id": source_deck.deckid,
+                "source_type": resolved_source_type,
+                "name": source_deck.name,
+                "hero": source_deck.hero,
+                "side": source_deck.side,
+                "category": source_deck.category,
+                "archetype": source_deck.archetype,
+                "creator": source_deck.creator,
+                "description": source_deck.description,
+                "image": source_deck.image,
+                "cost": source_deck.cost,
+                "aliases": source_deck.aliases,
+                "cards": source_deck.cards,
+                "inspiration": source_deck.inspiration,
+                "optimization": source_deck.optimization,
+                "deck_doc": source_deck.deck_doc,
+                "suggested_date": source_deck.suggested_date,
+                "updated_date": source_deck.updated_date,
+            }
 
         return Response(
             {
                 "success": True,
-                "deck": serializer.data,
+                "deck": deck_data,
                 "profile": {
                     "id": profile.id,
                     "profile_slug": profile.profile_slug,
@@ -780,15 +876,10 @@ def shared_user_deck(
         )
 
     except DatabaseError as exc:
-        logger.exception(
-            "Unable to load shared user deck"
-        )
+        logger.exception("Unable to load shared deck")
 
         payload = {
-            "error": (
-                "Database query failed while "
-                "loading shared deck."
-            ),
+            "error": "Database query failed while loading shared deck.",
             "error_type": exc.__class__.__name__,
         }
 
@@ -799,63 +890,3 @@ def shared_user_deck(
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-@api_view(["GET"])
-def download_user_deck_image(request, deck_id):
-    deck = get_object_or_404(
-        UserDeck,
-        id=deck_id,
-    )
-
-    if not deck.image:
-        return HttpResponse(status=404)
-
-    try:
-        response = requests.get(
-            deck.image,
-            timeout=30,
-        )
-        response.raise_for_status()
-    except requests.RequestException:
-        return HttpResponse(status=502)
-
-    content_type = response.headers.get(
-        "Content-Type",
-        "image/webp",
-    ).split(";")[0]
-
-    extension = {
-        "image/webp": "webp",
-        "image/png": "png",
-        "image/jpeg": "jpg",
-        "image/gif": "gif",
-    }.get(
-        content_type,
-        "webp",
-    )
-
-    filename = str(
-        deck.name or "decklist"
-    ).strip()
-
-    filename = re.sub(
-        r"[^a-zA-Z0-9]+",
-        "-",
-        filename,
-    )
-
-    filename = filename.strip("-").lower()
-
-    if not filename:
-        filename = "decklist"
-
-    filename = f"{deck.id}-{filename}.{extension}"
-
-    return HttpResponse(
-        response.content,
-        content_type=content_type,
-        headers={
-            "Content-Disposition": (
-                f'attachment; filename="{filename}"'
-            ),
-        },
-    )

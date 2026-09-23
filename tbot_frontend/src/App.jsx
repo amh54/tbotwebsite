@@ -131,9 +131,9 @@ function HomePage() {
 
             <p>
               Log in with Discord and enter your collection in the Card Manager,
-              then use the Buildable and Close to building filters on amy page that showcases decklists
-              see the decks you can build now and the ones you're only a few
-              cards away from.
+              then use the Buildable and Close to building filters on amy page
+              that showcases decklists see the decks you can build now and the
+              ones you're only a few cards away from.
             </p>
 
             <Link to="/dashboard/card-manager">Manage Your Collection →</Link>
@@ -144,7 +144,8 @@ function HomePage() {
 
             <p>
               Log in with Discord to upload your own decks, customize your
-              profile, and share your creations with other players from your profile page.
+              profile, and share your creations with other players from your
+              profile page.
             </p>
 
             <Link to="/dashboard/decks">Manage Your Decks →</Link>
@@ -154,9 +155,12 @@ function HomePage() {
             <h3>Find Player Decks</h3>
 
             <p>
-              Browse and click on Public Tbot users to find the personal decklists other players
-              have uploaded. You can also see any cards this player has unlocked in plants vs zombies heroes by checking out their card collection. <br/>
-              Make sure your account is on public and not private if you want your account to show up here in users page
+              Browse and click on Public Tbot users to find the personal
+              decklists other players have uploaded. You can also see any cards
+              this player has unlocked in plants vs zombies heroes by checking
+              out their card collection. <br />
+              Make sure your account is on public and not private if you want
+              your account to show up here in users page
             </p>
 
             <Link to="/users">Browse Users →</Link>
@@ -233,7 +237,8 @@ function HomePage() {
             <p>
               A public profile lets other players browse your decks. A private
               profile can't be browsed, but every personal deck still has its
-              own shareable link. Accounts are set to private on default if you want your account to public change that below.
+              own shareable link. Accounts are set to private on default if you
+              want your account to public change that below.
             </p>
 
             {profileSlug ? (
@@ -386,7 +391,7 @@ function App() {
         <Route path="/profile/:profile_slug" element={<Profile />} />
 
         <Route
-          path="/deck/:profile_slug/:deckId"
+          path="/deck/:profile_slug/:source_type/:deckId"
           element={<StandaloneDeckPage />}
         />
 

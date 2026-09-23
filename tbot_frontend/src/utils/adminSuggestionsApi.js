@@ -42,42 +42,59 @@ export const fetchSuggestions = async () => {
         : [];
 };
 
-const patchSuggestion = async (suggestionId, body) => {
+const makeRequest = async (suggestionId, method, body, errorFallback) => {
+  /*
+   * Get the current CSRF token before every mutating request.
+   */
   let token = await ensureCsrfToken();
 
-  let response = await fetch(getSuggestionUrl(suggestionId), {
-    method: "PATCH",
-    credentials: "include",
-    headers: {
+  const makeFetch = (csrfToken) => {
+    const headers = {
       Accept: "application/json",
-      "Content-Type": "application/json",
-      "X-CSRFToken": token,
-    },
-    body: JSON.stringify(body),
-  });
+      "X-CSRFToken": csrfToken,
+    };
 
+    if (body !== undefined) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    return fetch(getSuggestionUrl(suggestionId), {
+      method,
+      credentials: "include",
+      headers,
+      ...(body !== undefined
+        ? {
+            body: JSON.stringify(body),
+          }
+        : {}),
+    });
+  };
+
+  let response = await makeFetch(token);
+
+  /*
+   * A 403 can occur when the browser has an old CSRF token while
+   * Django has a newer one. Force a fresh token and retry once.
+   */
   if (response.status === 403) {
     token = await ensureCsrfToken(true);
-
-    response = await fetch(getSuggestionUrl(suggestionId), {
-      method: "PATCH",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "X-CSRFToken": token,
-      },
-      body: JSON.stringify(body),
-    });
+    response = await makeFetch(token);
   }
 
   if (!response.ok) {
     const message = await getApiErrorMessage(
       response,
-      `Unable to update suggestion. Status ${response.status}`,
+      `${errorFallback}. Status ${response.status}`,
     );
 
     throw new Error(message);
+  }
+
+  /*
+   * DELETE may return an empty response.
+   */
+  if (method === "DELETE") {
+    return true;
   }
 
   try {
@@ -88,89 +105,30 @@ const patchSuggestion = async (suggestionId, body) => {
 };
 
 export const updateSuggestionStatus = async (suggestionId, status) => {
-  return patchSuggestion(suggestionId, {
-    status,
-  });
+  return makeRequest(
+    suggestionId,
+    "PATCH",
+    {
+      status,
+    },
+    "Unable to update suggestion",
+  );
 };
 
 export const saveSuggestionDetails = async (suggestionId, details) => {
-  let token = await ensureCsrfToken();
-
-  let response = await fetch(getSuggestionUrl(suggestionId), {
-    method: "PATCH",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "X-CSRFToken": token,
-    },
-    body: JSON.stringify(details),
-  });
-
-  if (response.status === 403) {
-    token = await ensureCsrfToken(true);
-
-    response = await fetch(getSuggestionUrl(suggestionId), {
-      method: "PATCH",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "X-CSRFToken": token,
-      },
-      body: JSON.stringify(details),
-    });
-  }
-
-  if (!response.ok) {
-    const message = await getApiErrorMessage(
-      response,
-      `Unable to save suggestion details. Status ${response.status}`,
-    );
-
-    throw new Error(message);
-  }
-
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
+  return makeRequest(
+    suggestionId,
+    "PATCH",
+    details,
+    "Unable to save suggestion details",
+  );
 };
 
 export const deleteSuggestion = async (suggestionId) => {
-  let token = await ensureCsrfToken();
-
-  let response = await fetch(getSuggestionUrl(suggestionId), {
-    method: "DELETE",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-      "X-CSRFToken": token,
-    },
-  });
-
-  if (response.status === 403) {
-    token = await ensureCsrfToken(true);
-
-    response = await fetch(getSuggestionUrl(suggestionId), {
-      method: "DELETE",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-        "X-CSRFToken": token,
-      },
-    });
-  }
-
-  if (!response.ok) {
-    const message = await getApiErrorMessage(
-      response,
-      `Unable to delete suggestion. Status ${response.status}`,
-    );
-
-    throw new Error(message);
-  }
-
-  return true;
+  return makeRequest(
+    suggestionId,
+    "DELETE",
+    undefined,
+    "Unable to delete suggestion",
+  );
 };

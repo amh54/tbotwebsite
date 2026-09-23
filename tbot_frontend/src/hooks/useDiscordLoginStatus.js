@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../utils/api";
 
-export function useDiscordLoginStatus(showSuggestDeck) {
+export function useDiscordLoginStatus() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [checkingLogin, setCheckingLogin] = useState(true);
 
   useEffect(() => {
-    if (!showSuggestDeck) {
-      setCheckingLogin(false);
-      setIsLoggedIn(false);
-      return;
-    }
-
     let cancelled = false;
 
     const checkLogin = async () => {
@@ -54,7 +48,10 @@ export function useDiscordLoginStatus(showSuggestDeck) {
         setIsLoggedIn(loggedIn);
       } catch (error) {
         if (!cancelled) {
-          console.error("Unable to check Discord login status:", error);
+          console.error(
+            "Unable to check Discord login status:",
+            error,
+          );
           setIsLoggedIn(false);
         }
       } finally {
@@ -69,7 +66,11 @@ export function useDiscordLoginStatus(showSuggestDeck) {
     return () => {
       cancelled = true;
     };
-  }, [showSuggestDeck]);
+  }, []);
 
-  return { isLoggedIn, setIsLoggedIn, checkingLogin };
+  return {
+    isLoggedIn,
+    setIsLoggedIn,
+    checkingLogin,
+  };
 }

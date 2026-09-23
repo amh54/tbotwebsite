@@ -636,7 +636,7 @@ function AddDeckModal({
 
               <label className="admin-modal-field">
                 <span className="admin-modal-label">
-                  <RequiredLabel>Upload Image</RequiredLabel>
+                  <RequiredLabel>Please Upload screenshot of a deck built in game </RequiredLabel>
                 </span>
 
                 <input

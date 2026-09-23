@@ -29,7 +29,7 @@ from .helpers import (
     save_deck_image,
     TARGET_CARD_RATIO_TOTAL,
 )
-
+from ..utils.saved_decks import sync_saved_decks_for_deck
 
 logger = logging.getLogger(__name__)
 
@@ -1010,6 +1010,9 @@ def admin_decklist_update(
 
     try:
         updated_deck = serializer.save()
+        sync_saved_decks_for_deck(
+        updated_deck
+        )
 
     except DatabaseError as exc:
         logger.exception(

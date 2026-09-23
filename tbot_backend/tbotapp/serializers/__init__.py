@@ -6,7 +6,7 @@ from .decks import (
     PublicLegacyDeckSerializer,
     WebDeckbuilderSerializer,
 )
-
+from .saved_decks import SavedDeckSerializer
 from .cards import (
     KeepOrScrapSerializer,
     WebCardSerializer,

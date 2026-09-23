@@ -25,6 +25,7 @@ class UserSuggestionSerializer(serializers.ModelSerializer):
             "category",
             "status",
             "page_url",
+            "admin_response",
             "discord_thread_url",
             "created_at",
             "updated_at",
@@ -65,7 +66,11 @@ class UserSuggestionSerializer(serializers.ModelSerializer):
 
 class AdminUserSuggestionSerializer(serializers.ModelSerializer):
     discord_username = serializers.SerializerMethodField()
-
+    admin_notes = serializers.CharField(
+    required=False,
+    allow_blank=True,
+    allow_null=True,
+    )
     class Meta:
         model = UserSuggestion
         fields = [

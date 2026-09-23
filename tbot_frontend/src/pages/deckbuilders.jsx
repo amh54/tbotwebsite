@@ -8,7 +8,7 @@ import "../css/users.css";
 import "../css/navbar.css";
 import "../css/loading.css";
 import { API_BASE_URL } from "../utils/api";
-
+import Seo from "../components/seo.jsx";
 const DECKBUILDERS_CACHE_KEY = "tbot_deckbuilders_cache";
 const DECKBUILDERS_COUNT_CACHE_KEY = "tbot_deckbuilders_count_cache";
 
@@ -116,15 +116,6 @@ function Deckbuilders() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(!hasCachedDeckbuilders);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    document.title = "Deckbuilders";
-
-    return () => {
-      document.title = "Tbot";
-    };
-  }, []);
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -177,16 +168,13 @@ function Deckbuilders() {
 
         setError("");
 
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/deckbuilders/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
+        const response = await fetch(`${API_BASE_URL}/tbotapp/deckbuilders/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
           },
-        );
+          signal: controller.signal,
+        });
 
         const data = await response.json().catch(() => null);
 
@@ -315,12 +303,17 @@ function Deckbuilders() {
 
   return (
     <div className="users-page">
+      <Seo
+        title="PVZ Heroes Deck Builders - Plants vs. Zombies Heroes | Tbot"
+        description="Browse PVZ Heroes deck builders on Tbot. Explore community deckbuilders and discover their Plants vs. Zombies Heroes decks."
+        canonical="/deckbuilders"
+      />
       <Navbar />
 
       <main className="users-content">
         <div className="users-header">
           <div>
-            <h1>Deckbuilders</h1>
+            <h1>PVZ Heroes Deck Builders</h1>
 
             <p>Browse the people who have built decks for Tbot.</p>
           </div>
@@ -379,10 +372,7 @@ function Deckbuilders() {
                 <Link
                   to={deckbuilderUrl}
                   className="user-card user-card-link"
-                  key={
-                    deckbuilder.user_id ||
-                    deckbuilder.deckbuilder_name
-                  }
+                  key={deckbuilder.user_id || deckbuilder.deckbuilder_name}
                 >
                   <div className="user-card-top">
                     <div className="user-avatar">
@@ -403,10 +393,7 @@ function Deckbuilders() {
                                   Math.floor(numericId / 4194304) % 6
                                 }.png`;
 
-                                if (
-                                  event.currentTarget.src !==
-                                  fallbackUrl
-                                ) {
+                                if (event.currentTarget.src !== fallbackUrl) {
                                   event.currentTarget.src = fallbackUrl;
                                   return;
                                 }
@@ -415,13 +402,10 @@ function Deckbuilders() {
 
                             event.currentTarget.style.display = "none";
 
-                            const parent =
-                              event.currentTarget.parentElement;
+                            const parent = event.currentTarget.parentElement;
 
                             if (parent) {
-                              parent.classList.add(
-                                "user-avatar-fallback",
-                              );
+                              parent.classList.add("user-avatar-fallback");
 
                               parent.textContent = displayName
                                 .charAt(0)
@@ -430,9 +414,7 @@ function Deckbuilders() {
                           }}
                         />
                       ) : (
-                        <span>
-                          {displayName.charAt(0).toUpperCase()}
-                        </span>
+                        <span>{displayName.charAt(0).toUpperCase()}</span>
                       )}
                     </div>
 
@@ -440,9 +422,7 @@ function Deckbuilders() {
                       <h2>{displayName}</h2>
 
                       {username ? (
-                        <p className="user-card-username">
-                          @{username}
-                        </p>
+                        <p className="user-card-username">@{username}</p>
                       ) : (
                         <p className="user-card-slug">Deckbuilder</p>
                       )}
