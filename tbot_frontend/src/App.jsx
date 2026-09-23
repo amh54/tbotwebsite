@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import "./css/App.css";
 import "./css/navbar.css";
+import Seo from "./components/seo.jsx";
 import { Analytics } from "@vercel/analytics/react";
 import { Link, Route, Routes } from "react-router-dom";
 import MySuggestions from "./pages/mySuggestions";
@@ -71,6 +72,11 @@ function HomePage() {
 
   return (
     <div className="home">
+         <Seo
+      title="Tbot - Plants vs. Zombies Heroes Database, Decks & More"
+      description="Tbot is a Plants vs. Zombies Heroes community database featuring decks, decklists, cards, heroes, deck builders, guides, and more."
+      canonical="/"
+    />
       <Navbar />
 
       <section className="hero">
