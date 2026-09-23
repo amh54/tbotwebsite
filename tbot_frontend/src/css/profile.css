@@ -700,28 +700,14 @@
   .profile-share-button {
     width: 100%;
   }
-   .profile-tabs {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    width: 100%;
-    margin-top: 10px;
-    padding: 5px;
-    box-sizing: border-box;
-  }
 
-  .profile-tabs button {
-    width: 100%;
-    min-width: 0;
-    min-height: 44px;
-    margin: 0;
-    padding: 9px 8px;
-    box-sizing: border-box;
-    font-size: 13px;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: visible;
-  }
+ .profile-tabs {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  width: 100%;
+}
 
   .profile-tabs button,
   .profile-tabs button.active,
@@ -729,7 +715,6 @@
     -webkit-appearance: none;
     appearance: none;
   }
-
 
   .profile-decks {
     margin-top: 0;
