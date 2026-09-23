@@ -9,6 +9,11 @@ import "../css/loading.css";
 export default function CardInfo() {
   return (
     <>
+    <Seo
+  title="PVZ Heroes Cards - Plants vs. Zombies Heroes Card Database | Tbot"
+  description="Browse the complete Plants vs. Zombies Heroes card database on Tbot. Search and filter PVZ Heroes cards by class, type, cost, attack, health, tribe, rarity, set, and abilities."
+  canonical="/cardinfo"
+/>
       <Navbar />
       <CardBrowser />
       <Footer credits="Special thanks to The_Cute_Chick, otherwise known as TCC, for uploading all of the card images and transcribing most of the initial card information used here." />
