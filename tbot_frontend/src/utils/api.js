@@ -41,15 +41,7 @@ export function getCsrfToken() {
   );
 }
 
-export async function ensureCsrfToken(forceRefresh = false) {
-  if (!forceRefresh) {
-    const existingToken = getCsrfToken();
-
-    if (existingToken) {
-      return existingToken;
-    }
-  }
-
+export async function ensureCsrfToken() {
   const response = await fetch(
     `${API_BASE_URL}/tbotapp/csrf/`,
     {
@@ -78,17 +70,11 @@ export async function ensureCsrfToken(forceRefresh = false) {
     );
   }
 
-  const cookieToken = getCsrfToken();
-
-  const csrfToken =
-    cookieToken ||
-    data?.csrfToken ||
-    data?.csrf_token ||
-    data?.token;
+  const csrfToken = data?.csrfToken;
 
   if (!csrfToken) {
     throw new Error(
-      "CSRF token is missing. Please refresh the page and try again.",
+      "Django did not return a CSRF token.",
     );
   }
 
