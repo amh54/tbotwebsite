@@ -723,14 +723,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  
   .profile-tabs button,
   .profile-tabs button.active,
   .profile-tabs button[aria-selected="true"] {
     -webkit-appearance: none;
     appearance: none;
   }
-}
 
 
   .profile-decks {
