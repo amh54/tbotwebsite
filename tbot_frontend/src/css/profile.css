@@ -701,13 +701,23 @@
     width: 100%;
   }
 
- .profile-tabs {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: row;
-  gap: 5px;
-  width: 100%;
-}
+  .profile-tabs {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    width: 100%;
+    padding: 4px;
+  }
+
+  .profile-tabs button {
+    flex: 1 1 0;
+    min-height: 44px;
+    padding: 9px 6px;
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
 
   .profile-decks {
     margin-top: 0;

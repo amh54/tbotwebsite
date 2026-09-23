@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
-
+import Seo from "../components/seo";
 import "../css/siteupdates.css";
 import { API_BASE_URL } from "../utils/api.js";
 
@@ -84,6 +84,11 @@ function SiteUpdates() {
 
   return (
     <div className="site-updates-page">
+      <Seo
+        title="Tbot Site Updates - Plants vs. Zombies Heroes"
+        description="See the latest Tbot updates, improvements, bug fixes, and new features for the Plants vs. Zombies Heroes community."
+        canonical="/updates"
+      />
       <Navbar />
 
       <main className="site-updates-main">
