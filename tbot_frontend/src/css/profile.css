@@ -720,9 +720,10 @@
     font-size: 13px;
     line-height: 1.2;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
   }
+
   .profile-tabs button,
   .profile-tabs button.active,
   .profile-tabs button[aria-selected="true"] {
