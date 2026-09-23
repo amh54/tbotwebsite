@@ -700,24 +700,38 @@
   .profile-share-button {
     width: 100%;
   }
-
-  .profile-tabs {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: row;
+ .profile-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 4px;
     width: 100%;
+    margin-top: 10px;
     padding: 4px;
+    box-sizing: border-box;
   }
 
   .profile-tabs button {
-    flex: 1 1 0;
+    width: 100%;
+    min-width: 0;
     min-height: 44px;
-    padding: 9px 6px;
+    margin: 0;
+    padding: 9px 4px;
+    box-sizing: border-box;
     font-size: 13px;
     line-height: 1.2;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
+  
+  .profile-tabs button,
+  .profile-tabs button.active,
+  .profile-tabs button[aria-selected="true"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
 
   .profile-decks {
     margin-top: 0;
