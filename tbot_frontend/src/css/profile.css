@@ -659,11 +659,16 @@
     padding: 24px 14px 50px;
   }
 
+  .profile-page > section {
+    width: 100%;
+    margin: 0;
+  }
+
   .profile-header {
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     padding: 28px 20px;
-    text-align: center;
+    text-align: left;
   }
 
   .profile-avatar {
@@ -694,6 +699,7 @@
   .profile-header-actions {
     width: 100%;
     flex-direction: column;
+    align-items: stretch;
   }
 
   .profile-edit-button,
@@ -701,19 +707,21 @@
     width: 100%;
   }
 
- .profile-tabs {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: row;
-  gap: 5px;
-  width: 100%;
-}
+  .profile-tabs {
+    margin-top: 10px;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+  }
 
-  .profile-tabs button,
-  .profile-tabs button.active,
-  .profile-tabs button[aria-selected="true"] {
-    -webkit-appearance: none;
-    appearance: none;
+  .profile-tabs button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 9px 10px;
+    text-align: left;
   }
 
   .profile-decks {
@@ -733,6 +741,7 @@
   .profile-decks-header-actions {
     width: 100%;
     flex-direction: column;
+    align-items: stretch;
   }
 
   .profile-decklists-button {
