@@ -237,7 +237,7 @@ function deckToOg(deck) {
   }
 
   return {
-    title: `${deck.name || "Untitled Deck"} — TBOT Deck`,
+    title: `${deck.name || "Untitled Deck"} - Tbot Deck`,
     description:
       truncate(parts.join("\n"), 500) ||
       "View this Plants vs. Zombies Heroes deck on Tbot.",
@@ -529,7 +529,7 @@ function buildDeckbuilderOg(name) {
   }
 
   return {
-    title: `${cleanName} — Tbot Deckbuilder`,
+    title: `${cleanName} - Tbot Deckbuilder`,
     description: `Explore ${cleanName}'s Plants vs. Zombies Heroes decks on Tbot.`,
     image: DEFAULT_IMAGE,
   };
@@ -705,7 +705,7 @@ async function resolveMetadata(pathname, query) {
         const profileName = getProfileName(profile, name);
 
         return {
-          title: `${profileName} — Tbot Deckbuilder`,
+          title: `${profileName} - Tbot Deckbuilder`,
           description: `Explore ${profileName}'s Plants vs. Zombies Heroes decks on Tbot.`,
           image: resolveProfileImage(getProfileObject(profile)),
         };
