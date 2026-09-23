@@ -6,7 +6,7 @@ const DEFAULT_IMAGE =
 
 function Seo({
   title = "Tbot - Plants vs. Zombies Heroes Database, Decks & More",
-  description = "Tbot is a Plants vs. Zombies Heroes community database featuring decks, decklists, cards, heroes, deck builders, guides, and more.",
+  description = "Tbot is a Plants vs. Zombies Heroes community database featuring decks, cards, heroes, deck builders, guides, and more.",
   canonical = "/",
   image = DEFAULT_IMAGE,
   type = "website",

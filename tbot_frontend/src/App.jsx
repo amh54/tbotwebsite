@@ -74,7 +74,7 @@ function HomePage() {
     <div className="home">
          <Seo
       title="Tbot - Plants vs. Zombies Heroes Database, Decks & More"
-      description="Tbot is a Plants vs. Zombies Heroes community database featuring decks, decklists, cards, heroes, deck builders, guides, and more."
+      description="Tbot is a Plants vs. Zombies Heroes community database featuring decks, cards, heroes, deck builders, guides, and more."
       canonical="/"
     />
       <Navbar />
