@@ -534,7 +534,7 @@ function DecklistsPage() {
       <Navbar />
 
       <main className="deck-content">
-        <h1><h1>PVZ Heroes Decks & Decklists</h1></h1>
+        <h1><h1>PVZ Heroes Decks</h1></h1>
 
         <div className="deck-browser">
           <img
