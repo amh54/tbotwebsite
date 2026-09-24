@@ -4,49 +4,49 @@ const SITE_URL = "https://pvzhtbot.com";
 
 const DEFAULT_IMAGE = "https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp";
 
-const DEFAULT_TITLE = "Tbot — Plants vs. Zombies Heroes";
+const DEFAULT_TITLE = "Tbot - Plants vs. Zombies Heroes";
 
 const DEFAULT_DESCRIPTION =
   "A community database for Plants vs. Zombies Heroes cards, heroes, decks, collections, and strategy.";
 
 const PAGE_METADATA = {
   "/": {
-    title: "Tbot — Plants vs. Zombies Heroes",
+    title: "Tbot - Plants vs. Zombies Heroes",
     description:
       "A community database for Plants vs. Zombies Heroes cards, heroes, decks, collections, and strategy.",
   },
   "/decklists": {
-    title: "Decklists — Tbot",
+    title: "Decklists - Tbot",
     description:
       "Browse the Tbot Plants vs. Zombies Heroes community deck database.",
   },
   "/cardinfo": {
-    title: "Card Information — Tbot",
+    title: "Card Information - Tbot",
     description:
       "Search and explore Plants vs. Zombies Heroes cards, abilities, stats, traits, sets, and rarities.",
   },
   "/heroinfo": {
-    title: "Hero Information — Tbot",
+    title: "Hero Information - Tbot",
     description:
       "Explore Plants vs. Zombies Heroes heroes, classes, abilities, traits, stats, and cards.",
   },
   "/keeporscrap": {
-    title: "Keep or Scrap — Tbot",
+    title: "Keep or Scrap - Tbot",
     description:
       "Find recommendations for which Plants vs. Zombies Heroes cards to keep or scrap.",
   },
   "/legacydecks": {
-    title: "Legacy Decks — Tbot",
+    title: "Legacy Decks - Tbot",
     description:
       "Browse the older Tbot Plants vs. Zombies Heroes deck database.",
   },
   "/deckbuilders": {
-    title: "Deckbuilders — Tbot",
+    title: "Deckbuilders - Tbot",
     description:
       "Explore Tbot deckbuilders and the decks they have submitted to the community.",
   },
   "/users": {
-    title: "Users — Tbot",
+    title: "Users - Tbot",
     description:
       "Browse Tbot community profiles and discover Plants vs. Zombies Heroes deckbuilders.",
   },
@@ -56,16 +56,16 @@ const PAGE_METADATA = {
       "Learn how to use Tbot to browse cards, heroes, decks, collections, profiles, and other features.",
   },
   "/updates": {
-    title: "Site Updates — Tbot",
+    title: "Site Updates - Tbot",
     description:
       "View the latest updates, improvements, and changes to the Tbot website.",
   },
   "/termsofservice": {
-    title: "Terms of Service — Tbot",
+    title: "Terms of Service - Tbot",
     description: "Read the Tbot Terms of Service.",
   },
   "/privacypolicy": {
-    title: "Privacy Policy — Tbot",
+    title: "Privacy Policy - Tbot",
     description: "Read the Tbot Privacy Policy.",
   },
 };
