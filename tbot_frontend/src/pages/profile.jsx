@@ -685,7 +685,11 @@ function Profile() {
 
         <div className="profile-tab-content">
           {activeTab === "cards" && (
-            <ProfileCardBrowser cards={userCards} allCards={allCards} />
+            <ProfileCardBrowser
+              cards={userCards}
+              allCards={allCards}
+              profileName={profileName}
+            />
           )}
 
           {activeTab === "decks" && (
@@ -693,6 +697,7 @@ function Profile() {
               decks={decks}
               allCards={allCards}
               userCards={userCards}
+              profileName={profile.display_name}
               viewerCards={viewerCards}
               profileSlug={profile_slug}
               profileIsPublic={Boolean(profile.is_public)}

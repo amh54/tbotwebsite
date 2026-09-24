@@ -281,6 +281,7 @@ function CardBrowser({
   cards: providedCards = [],
   userCollection = false,
   allCards = [],
+   profileName
 }) {
   const [cards, setCards] = useState(() =>
     getInitialCards(providedCards, userCollection),
@@ -705,7 +706,7 @@ function CardBrowser({
   return (
     <div className="card-information-page">
       <h1>
-  {userCollection ? "PVZ Heroes Card Collection" : "PVZ Heroes Card Database"}
+  {userCollection ? `${profileName}'s Card Collection` : "PVZ Heroes Card Database"}
 </h1>
 
       <Filters

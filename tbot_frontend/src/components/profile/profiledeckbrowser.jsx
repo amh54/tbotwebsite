@@ -22,6 +22,7 @@ function ProfileDeckBrowser({
   allCards = [],
   viewerCards = [],
   profileSlug,
+  profileName,
   profileIsPublic,
   sharedDeckKey = "",
   isAuthenticated = false,
@@ -132,7 +133,7 @@ function ProfileDeckBrowser({
     <section className="profile-decks">
       <div className="profile-decks-header">
         <div>
-          <h2>PVZ Heroes Decklists</h2>
+          <h2>{profileName}'s Personal Decks</h2>
 
           <p>
             {decks.length === 0
