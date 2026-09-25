@@ -2,7 +2,7 @@ const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
 
 const SITE_URL = "https://pvzhtbot.com";
 
-const DEFAULT_IMAGE = "https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp";
+const DEFAULT_IMAGE = "https://cdn.pvzhtbot.com/art/darth_vader_swabbie.webp";
 
 const DEFAULT_TITLE = "Tbot - Plants vs. Zombies Heroes";
 

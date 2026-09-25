@@ -20,7 +20,7 @@ function NavbarMobile({
           onClick={closeMenus}
         >
           <img
-            src="https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp"
+            src="https://cdn.pvzhtbot.com/art/darth_vader_swabbie.webp"
             alt="Tbot"
             className="navbar-logo-image"
           />

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const SITE_URL = "https://pvzhtbot.com";
 const DEFAULT_IMAGE =
-  "https://i.ibb.co/3YrvrJg1/darth-vader-swabbie.webp";
+  "https://cdn.pvzhtbot.com/art/darth_vader_swabbie.webp";
 
 function Seo({
   title = "Tbot - Plants vs. Zombies Heroes Database, Decks & More",

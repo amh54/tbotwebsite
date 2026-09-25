@@ -1,37 +1,36 @@
 export const STAT_ICON_LINKS = {
-  cost: "https://i.ibb.co/Q30j2CgC/brainz.webp",
-  strength: "https://i.ibb.co/GQt785K6/strength.webp",
-  health: "https://i.ibb.co/bMj86Wvg/health.webp",
-  sun: "https://i.ibb.co/3mwp3d6s/sun.webp",
-  healthstrength: "https://i.ibb.co/9344x8fP/healthstrength.webp",
+  cost: "https://cdn.pvzhtbot.com/icons/brainz.webp",
+  strength: "https://cdn.pvzhtbot.com/icons/strength.webp",
+  health: "https://cdn.pvzhtbot.com/icons/health.webp",
+  sun: "https://cdn.pvzhtbot.com/icons/sun.webp",
+  healthstrength: "https://cdn.pvzhtbot.com/icons/healthstrength.webp",
 };
 
 export const TRAIT_ICON_LINKS = {
-  antihero: "https://i.ibb.co/zHmWTFLQ/anti-hero.webp",
-  strikethrough: "https://i.ibb.co/99KG7vjj/strikethrough.webp",
-  deadly: "https://i.ibb.co/xt6pkMT1/deadly.webp",
-  special: "https://i.ibb.co/Sw0yS0Mg/special.webp",
-  freeze: "https://i.ibb.co/hFPRcrp6/freeze.webp",
-  bullseye: "https://i.ibb.co/tTp9zzdh/Bullseye.webp",
-  frenzy: "https://i.ibb.co/0RC4sW0b/frenzy.webp",
-  armored: "https://i.ibb.co/SXTYdVry/armored.webp",
-  overshoot: "https://i.ibb.co/prbYt2DX/overshoot.webp",
-  untrickable: "https://i.ibb.co/235QDZsg/untrickable.webp",
-  doublestrike: "https://i.ibb.co/9HcptVCN/doublestrike.webp",
-  splashdamage: "",
+  antihero: "https://cdn.pvzhtbot.com/icons/anti-hero.webp",
+  strikethrough: "https://cdn.pvzhtbot.com/icons/strikethrough.webp",
+  deadly: "https://cdn.pvzhtbot.com/icons/deadly.webp",
+  special: "https://cdn.pvzhtbot.com/icons/special.webp",
+  freeze: "https://cdn.pvzhtbot.com/icons/freeze.webp",
+  bullseye: "https://cdn.pvzhtbot.com/icons/bullseye.webp",
+  frenzy: "https://cdn.pvzhtbot.com/icons/frenzy.webp",
+  armored: "https://cdn.pvzhtbot.com/icons/armored.webp",
+  overshoot: "https://cdn.pvzhtbot.com/icons/overshoot.webp",
+  untrickable: "https://cdn.pvzhtbot.com/icons/untrickable.webp",
+  doublestrike: "https://cdn.pvzhtbot.com/icons/doublestrike.webp"
 };
 
 export const CLASS_ICON_LINKS = {
-  guardian: "https://i.ibb.co/q339dYKK/guardian.webp",
-  kabloom: "https://i.ibb.co/4gWkPT7f/kabloom.webp",
-  megagrow: "https://i.ibb.co/svc6sx30/megagrow.webp",
-  smarty: "https://i.ibb.co/V0bL3RYk/smarty.webp",
-  solar: "https://i.ibb.co/YFMMD4DZ/solar.webp",
-  beastly: "https://i.ibb.co/xS6b10P5/beastly.webp",
-  brainy: "https://i.ibb.co/d40zFh8r/Brainy.webp",
-  crazy: "https://i.ibb.co/HTvzSsXX/crazy.webp",
-  hearty: "https://i.ibb.co/ynKbzV8v/hearty.webp",
-  sneaky: "https://i.ibb.co/nqFdR6HJ/Pv-ZH-Sneaky-Icon.png",
+  guardian: "https://cdn.pvzhtbot.com/icons/guardian.webp",
+  kabloom: "https://cdn.pvzhtbot.com/icons/kabloom.webp",
+  megagrow: "https://cdn.pvzhtbot.com/icons/megagrow.webp",
+  smarty: "https://cdn.pvzhtbot.com/icons/smarty.webp",
+  solar: "https://cdn.pvzhtbot.com/icons/solar.webp",
+  beastly: "https://cdn.pvzhtbot.com/icons/beastly.webp",
+  brainy: "https://cdn.pvzhtbot.com/icons/brainy.webp",
+  crazy: "https://cdn.pvzhtbot.com/icons/crazy.webp",
+  hearty: "https://cdn.pvzhtbot.com/icons/hearty.webp",
+  sneaky: "https://cdn.pvzhtbot.com/icons/sneaky.webp"
 };
 
 export const ABILITY_KEYWORDS = [

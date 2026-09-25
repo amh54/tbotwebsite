@@ -482,7 +482,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center /
+  background: url("https://cdn.pvzhtbot.com/art/pvzhbackground.webp") center /
     cover no-repeat;
   filter: blur(12px);
   opacity: 0.15;
@@ -501,7 +501,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: url("https://i.ibb.co/Zz0v2Y3t/pvzhbackground.webp") center /
+  background: url("https://cdn.pvzhtbot.com/art/pvzhbackground.webp") center /
     cover no-repeat;
   filter: blur(12px);
   opacity: 0.15;

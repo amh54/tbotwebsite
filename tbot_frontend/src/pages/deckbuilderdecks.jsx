@@ -587,7 +587,7 @@ function DeckbuilderDecks() {
               onClick={() => handleSideChange("Plants")}
             >
               <img
-                src="https://i.ibb.co/fYHsRqP0/plants.png"
+                src="https://cdn.pvzhtbot.com/icons/plants.png"
                 alt="Plants"
                 className="tab-icon"
               />
@@ -600,7 +600,7 @@ function DeckbuilderDecks() {
               onClick={() => handleSideChange("Zombies")}
             >
               <img
-                src="https://i.ibb.co/pvT38Y1n/zombies.png"
+                src="https://cdn.pvzhtbot.com/icons/zombies.png"
                 alt="Zombies"
                 className="tab-icon"
               />

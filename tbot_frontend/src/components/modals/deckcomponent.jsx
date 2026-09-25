@@ -703,7 +703,7 @@ const handleShare = async () => {
           <p>
             <span>Cost:</span> {formatCost(deck.cost)}
             <img
-              src="https://i.ibb.co/jZkdqf6y/spark.webp"
+              src="https://cdn.pvzhtbot.com/icons/spark.webp"
               alt="Spark icon"
               className="spark-icon"
             />
@@ -986,7 +986,7 @@ const handleShare = async () => {
                             {formatCost(deck.cost)}
 
                             <img
-                              src="https://i.ibb.co/jZkdqf6y/spark.webp"
+                              src="https://cdn.pvzhtbot.com/icons/spark.webp"
                               alt="Spark icon"
                               className="spark-icon"
                             />
