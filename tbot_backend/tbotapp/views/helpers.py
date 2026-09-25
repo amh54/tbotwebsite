@@ -513,23 +513,20 @@ def save_deck_image(
     deck_name="",
     legacy=False,
     side="",
+    hero="",
 ):
     if not uploaded_file:
         return None
 
     if not getattr(uploaded_file, "size", 0):
-        raise ValueError(
-            "Image is empty."
-        )
+        raise ValueError("Image is empty.")
 
     if uploaded_file.size > MAX_DECK_IMAGE_SIZE:
         raise ValueError(
             "Image is too large. Maximum size is 10 MB."
         )
 
-    extension = _get_image_extension(
-        uploaded_file
-    )
+    extension = _get_image_extension(uploaded_file)
 
     clean_name = str(
         deck_name
@@ -537,20 +534,19 @@ def save_deck_image(
         or "deck"
     ).strip()
 
-    clean_name = os.path.splitext(
-        clean_name
-    )[0]
+    clean_name = os.path.splitext(clean_name)[0]
+    clean_name = _slugify(clean_name)
 
-    clean_name = _slugify(
-        clean_name
-    )
+    clean_hero = _slugify(hero)
+
+    if not clean_hero:
+        raise ValueError(
+            "Hero is required for deck images."
+        )
 
     try:
         numeric_deck_id = int(deckid)
-    except (
-        TypeError,
-        ValueError,
-    ):
+    except (TypeError, ValueError):
         numeric_deck_id = str(deckid).strip()
 
     filename = (
@@ -558,9 +554,7 @@ def save_deck_image(
         f"{extension}"
     )
 
-    normalized_side = _normalize_r2_side(
-        side
-    )
+    normalized_side = _normalize_r2_side(side)
 
     if not normalized_side:
         raise ValueError(
@@ -571,12 +565,14 @@ def save_deck_image(
         key = (
             f"legacy_decks/"
             f"{normalized_side}/"
+            f"{clean_hero}/"
             f"{filename}"
         )
     else:
         key = (
             f"decks/"
             f"{normalized_side}/"
+            f"{clean_hero}/"
             f"{filename}"
         )
 
@@ -584,9 +580,7 @@ def save_deck_image(
     content = uploaded_file.read()
 
     if not content:
-        raise ValueError(
-            "Image is empty."
-        )
+        raise ValueError("Image is empty.")
 
     client = _get_r2_client()
 
@@ -595,7 +589,7 @@ def save_deck_image(
         Key=key,
         Body=content,
         ContentType=IMAGE_CONTENT_TYPES[extension],
-        CacheControl="public, max-age=31536000",
+        CacheControl="public",
     )
 
     client.head_object(

@@ -648,8 +648,8 @@ def create_admin_deck(request):
     deckid=deckid,
     deck_name=data.get("name") or deckid,
     side=data.get("side"),
+    hero=data.get("hero"),
 )
-
         data["image"] = image_url
 
         logger.info(
@@ -927,6 +927,7 @@ def admin_decklist_update(
     deckid=deckid,
     deck_name=data.get("name") or deckid,
     side=data.get("side"),
+    hero=data.get("hero"),
 )
 
             data["image"] = image_url
