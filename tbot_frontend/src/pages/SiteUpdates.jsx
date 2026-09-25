@@ -13,15 +13,15 @@ import "../css/siteupdates.css";
 import { API_BASE_URL } from "../utils/api.js";
 
 const CATEGORY_LABELS = {
-  new: "New",
+  new_feature: "New Feature",
   improvement: "Improvement",
-  fix: "Bug Fix",
+  bug_fix: "Bug Fix",
   data: "Data",
   announcement: "Announcement",
+  ui_design: "UI / Design",
   new_deck: "New Deck",
   deck_update: "Deck Update",
   deleted_deck: "Deleted Deck",
-  ui_design: "UI / Design",
   other: "Other",
 };
 

@@ -3,7 +3,7 @@ from django.db import models
 
 class SiteUpdate(models.Model):
     CATEGORY_CHOICES = [
-        ("new", "New"),
+        ("new_feature", "New Feature"),
         ("improvement", "Improvement"),
         ("bug_fix", "Bug Fix"),
         ("data", "Data"),
