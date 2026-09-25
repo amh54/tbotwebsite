@@ -770,26 +770,17 @@ function buildPublicUrl(pathname, searchParams) {
   return `${SITE_URL}${pathname}${search ? `?${search}` : ""}`;
 }
 
-function buildPublicRedirect(pathname, searchParams) {
-  const params = getPublicSearchParams(searchParams, pathname);
-  const search = params.toString();
-
-  return `${pathname}${search ? `?${search}` : ""}`;
-}
-
 function buildHtml({
   title,
   description,
   image,
   url,
   noindex = false,
-  redirectPath,
 }) {
   const safeTitle = escapeHtml(title);
   const safeDescription = escapeHtml(description);
   const safeImage = escapeHtml(image);
   const safeUrl = escapeHtml(url);
-  const safeRedirectPath = escapeHtml(redirectPath);
 
   const robots = noindex
     ? '<meta name="robots" content="noindex, nofollow" />'
@@ -850,13 +841,10 @@ ${imageTags}
     name="twitter:description"
     content="${safeDescription}"
   />
-  <meta
-    http-equiv="refresh"
-    content="0; url=${safeRedirectPath}"
-  />
 </head>
 <body>
-  Redirecting…
+  <h1>${safeTitle}</h1>
+  <p>${safeDescription}</p>
 </body>
 </html>`;
 }
@@ -918,19 +906,14 @@ export default async function handler(req, res) {
 
   const canonicalUrl = buildPublicUrl(originalPath, originalUrl.searchParams);
 
-  const redirectPath = buildPublicRedirect(
-    originalPath,
-    originalUrl.searchParams,
-  );
 
   const html = buildHtml({
-    title: og.title || DEFAULT_TITLE,
-    description: og.description || DEFAULT_DESCRIPTION,
-    image: og.image || DEFAULT_IMAGE,
-    url: canonicalUrl,
-    noindex: isPrivateRoute(originalPath),
-    redirectPath,
-  });
+  title: og.title || DEFAULT_TITLE,
+  description: og.description || DEFAULT_DESCRIPTION,
+  image: og.image || DEFAULT_IMAGE,
+  url: canonicalUrl,
+  noindex: isPrivateRoute(originalPath),
+});
 
   res.statusCode = 200;
 
