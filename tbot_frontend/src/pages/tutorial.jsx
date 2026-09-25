@@ -19,7 +19,6 @@ const TUTORIAL_STEPS = [
       "This tutorial will walk you through the main features one step at a time. You can skip around using the dots below, or simply press Next to follow the recommended path.",
     icon: "👋",
   },
-
   {
     id: "browse",
     eyebrow: "Before you begin",
@@ -30,7 +29,6 @@ const TUTORIAL_STEPS = [
       "Decklists, card information, hero information, Keep or Scrap, Legacy Decks, and Deckbuilders can all be explored without logging in. An account is only needed when you want to use personal features.",
     icon: "🔎",
   },
-
   {
     id: "login",
     eyebrow: "Step 1",
@@ -41,7 +39,6 @@ const TUTORIAL_STEPS = [
       "Discord login unlocks your dashboard, personal decks, card collection, profile settings, deck sharing, deck suggestions, and other account features.",
     icon: "💬",
   },
-
   {
     id: "dashboard",
     eyebrow: "Step 2",
@@ -54,7 +51,6 @@ const TUTORIAL_STEPS = [
     link: "/dashboard",
     linkText: "Open Dashboard →",
   },
-
   {
     id: "profile",
     eyebrow: "Step 3",
@@ -66,7 +62,6 @@ const TUTORIAL_STEPS = [
     link: "/dashboard",
     linkText: "Manage Your Profile →",
   },
-
   {
     id: "privacy",
     eyebrow: "Step 4",
@@ -79,7 +74,6 @@ const TUTORIAL_STEPS = [
     link: "/dashboard",
     linkText: "Manage Your Profile →",
   },
-
   {
     id: "personal-decks",
     eyebrow: "Step 5",
@@ -92,7 +86,6 @@ const TUTORIAL_STEPS = [
     link: "/dashboard/decks",
     linkText: "Manage Your Decks →",
   },
-
   {
     id: "suggest",
     eyebrow: "Step 6",
@@ -105,7 +98,6 @@ const TUTORIAL_STEPS = [
     link: "/users",
     linkText: "Find Community Users →",
   },
-
   {
     id: "approval",
     eyebrow: "Step 7",
@@ -116,7 +108,6 @@ const TUTORIAL_STEPS = [
       "Depending on the situation, the deck creator may need to approve the suggestion through Discord. This gives creators control over suggestions involving their decks.",
     icon: "✅",
   },
-
   {
     id: "collection",
     eyebrow: "Step 8",
@@ -128,7 +119,6 @@ const TUTORIAL_STEPS = [
     link: "/dashboard/card-manager",
     linkText: "Manage Your Collection →",
   },
-
   {
     id: "collection-filter",
     eyebrow: "Step 9",
@@ -141,7 +131,6 @@ const TUTORIAL_STEPS = [
     link: "/decklists",
     linkText: "Try the Collection Filter →",
   },
-
   {
     id: "explore",
     eyebrow: "Step 10",
@@ -154,7 +143,6 @@ const TUTORIAL_STEPS = [
     link: "/decklists",
     linkText: "Start Exploring →",
   },
-
   {
     id: "community",
     eyebrow: "Step 11",
@@ -164,7 +152,6 @@ const TUTORIAL_STEPS = [
       "The community is where players can share decks, discuss strategies, report problems, suggest improvements, and interact with the Tbot Discord bot.",
     icon: "🌐",
   },
-
   {
     id: "finish",
     eyebrow: "You're ready",
@@ -179,6 +166,7 @@ const TUTORIAL_STEPS = [
 function Tutorial() {
   const [currentStep, setCurrentStep] = useState(0);
   const [completed, setCompleted] = useState(false);
+
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
 
@@ -241,7 +229,6 @@ function Tutorial() {
     touchStartX.current = null;
     touchStartY.current = null;
 
-    // Ignore short gestures and normal vertical scrolling.
     if (Math.abs(deltaX) < 60 || Math.abs(deltaX) <= Math.abs(deltaY)) {
       return;
     }
@@ -262,7 +249,6 @@ function Tutorial() {
           <div className="tutorial-header">
             <div>
               <p className="tutorial-header-eyebrow">Tbot Help</p>
-
               <h1>How Tbot Works</h1>
             </div>
 
@@ -296,31 +282,58 @@ function Tutorial() {
               </div>
 
               <section
-                className="tutorial-card"
+                className="tutorial-navigation"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
               >
-                <div className="tutorial-icon" aria-hidden="true">
-                  {step.icon}
-                </div>
+                <button
+                  type="button"
+                  className="tutorial-button tutorial-button-secondary tutorial-button-back"
+                  onClick={goBack}
+                  disabled={isFirstStep}
+                  aria-label="Previous tutorial step"
+                >
+                  ← Back
+                </button>
 
-                <div className="tutorial-content">
-                  <p className="tutorial-eyebrow">{step.eyebrow}</p>
+                <div className="tutorial-card">
+                  <div className="tutorial-content">
+                    <div className="tutorial-icon" aria-hidden="true">
+                      {step.icon}
+                    </div>
 
-                  <h2>{step.title}</h2>
+                    <p className="tutorial-eyebrow">{step.eyebrow}</p>
 
-                  <p className="tutorial-description">{step.description}</p>
+                    <h2>{step.title}</h2>
 
-                  <div className="tutorial-detail">
-                    <p>{step.detail}</p>
+                    <p className="tutorial-description">
+                      {step.description}
+                    </p>
 
-                    {step.link && (
-                      <Link className="tutorial-page-link" to={step.link}>
-                        {step.linkText}
-                      </Link>
-                    )}
+                    <div className="tutorial-detail">
+                      <p>{step.detail}</p>
+
+                      {step.link && (
+                        <Link className="tutorial-page-link" to={step.link}>
+                          {step.linkText}
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  className="tutorial-button tutorial-button-primary tutorial-button-next"
+                  onClick={goNext}
+                  aria-label={
+                    isLastStep
+                      ? "Finish tutorial"
+                      : "Next tutorial step"
+                  }
+                >
+                  {isLastStep ? "Finish →" : "Next →"}
+                </button>
               </section>
 
               <div className="tutorial-step-dots">
@@ -330,11 +343,15 @@ function Tutorial() {
                     type="button"
                     className={`tutorial-dot ${
                       index === currentStep ? "tutorial-dot-active" : ""
-                    } ${index < currentStep ? "tutorial-dot-complete" : ""}`}
+                    } ${
+                      index < currentStep ? "tutorial-dot-complete" : ""
+                    }`}
                     aria-label={`Go to step ${
                       index + 1
                     }: ${tutorialStep.title}`}
-                    aria-current={index === currentStep ? "step" : undefined}
+                    aria-current={
+                      index === currentStep ? "step" : undefined
+                    }
                     onClick={() => {
                       setCompleted(false);
                       setCurrentStep(index);
@@ -342,29 +359,13 @@ function Tutorial() {
                   />
                 ))}
               </div>
-
-              <div className="tutorial-navigation">
-                <button
-                  type="button"
-                  className="tutorial-button tutorial-button-secondary"
-                  onClick={goBack}
-                  disabled={isFirstStep}
-                >
-                  ← Back
-                </button>
-
-                <button
-                  type="button"
-                  className="tutorial-button tutorial-button-primary"
-                  onClick={goNext}
-                >
-                  {isLastStep ? "Finish Tutorial" : "Next →"}
-                </button>
-              </div>
             </>
           ) : (
             <section className="tutorial-complete">
-              <div className="tutorial-complete-icon" aria-hidden="true">
+              <div
+                className="tutorial-complete-icon"
+                aria-hidden="true"
+              >
                 ✓
               </div>
 
@@ -406,8 +407,8 @@ function Tutorial() {
 
           <div className="tutorial-help">
             <p>
-              You can revisit this tutorial whenever you need help understanding
-              how a Tbot feature works.
+              You can revisit this tutorial whenever you need help
+              understanding how a Tbot feature works.
             </p>
           </div>
         </div>

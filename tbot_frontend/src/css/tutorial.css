@@ -1,8 +1,3 @@
-
-/* ============================================================
-   TBOT INTERACTIVE TUTORIAL
-============================================================ */
-
 .tutorial-page {
   min-height: 100vh;
   background: #101416;
@@ -18,14 +13,11 @@
 
 .tutorial-shell {
   width: 100%;
-  max-width: 900px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
-
-/* ============================================================
-   HEADER
-============================================================ */
+/* Header */
 
 .tutorial-header {
   display: flex;
@@ -66,10 +58,7 @@
   transform: translateX(-2px);
 }
 
-
-/* ============================================================
-   PROGRESS
-============================================================ */
+/* Progress */
 
 .tutorial-progress {
   margin-bottom: 22px;
@@ -100,20 +89,23 @@
   transition: width 0.25s ease;
 }
 
+/* Navigation + Main Card */
 
-/* ============================================================
-   MAIN CARD
-============================================================ */
+.tutorial-navigation {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr) 100px;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
 
 .tutorial-card {
   min-height: 440px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 55px 60px;
+  padding: 45px 35px;
   box-sizing: border-box;
-
   background:
     radial-gradient(
       circle at top center,
@@ -121,35 +113,29 @@
       transparent 45%
     ),
     #151a1d;
-
   border: 1px solid #293134;
   border-radius: 14px;
-
   text-align: center;
-
   box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
-}
-
-.tutorial-icon {
-  width: 76px;
-  height: 76px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  margin-bottom: 25px;
-
-  background: #20282a;
-  border: 1px solid #344044;
-  border-radius: 18px;
-
-  font-size: 2.4rem;
 }
 
 .tutorial-content {
   width: 100%;
   max-width: 680px;
+  margin: 0 auto;
+}
+
+.tutorial-icon {
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 25px;
+  background: #20282a;
+  border: 1px solid #344044;
+  border-radius: 18px;
+  font-size: 2.4rem;
 }
 
 .tutorial-eyebrow {
@@ -179,11 +165,9 @@
   max-width: 650px;
   margin: 25px auto 0;
   padding: 17px 20px;
-
   background: rgba(255, 255, 255, 0.035);
   border-left: 3px solid #8fe38b;
   border-radius: 0 8px 8px 0;
-
   text-align: left;
 }
 
@@ -194,34 +178,25 @@
   line-height: 1.65;
 }
 
-
-/* ============================================================
-   PAGE LINKS INSIDE TUTORIAL CARDS
-============================================================ */
+/* Page Links */
 
 .tutorial-page-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   min-height: 42px;
   margin-top: 16px;
   padding: 0 18px;
-
   box-sizing: border-box;
-
   color: #101416;
   background: #8fe38b;
   border: 1px solid #8fe38b;
   border-radius: 8px;
-
   font-size: 0.92rem;
   font-weight: 800;
   line-height: 1;
   text-decoration: none;
-
   cursor: pointer;
-
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
@@ -241,81 +216,20 @@
   transform: translateY(1px);
 }
 
-
-/* ============================================================
-   STEP DOTS
-============================================================ */
-
-.tutorial-step-dots {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin: 22px 0;
-}
-
-.tutorial-dot {
-  width: 8px;
-  height: 8px;
-  padding: 0;
-
-  background: #394245;
-  border: none;
-  border-radius: 50%;
-
-  cursor: pointer;
-
-  transition:
-    width 0.15s ease,
-    background-color 0.15s ease,
-    transform 0.15s ease;
-}
-
-.tutorial-dot:hover {
-  background: #687477;
-  transform: scale(1.15);
-}
-
-.tutorial-dot-active {
-  width: 24px;
-  background: #8fe38b;
-  border-radius: 999px;
-}
-
-.tutorial-dot-complete {
-  background: #608f5e;
-}
-
-
-/* ============================================================
-   NAVIGATION
-============================================================ */
-
-.tutorial-navigation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-}
+/* Side Navigation Buttons */
 
 .tutorial-button {
   min-height: 46px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
-  padding: 0 22px;
+  padding: 0 14px;
   box-sizing: border-box;
-
   border-radius: 8px;
-
   font: inherit;
   font-weight: 800;
-
   text-decoration: none;
   cursor: pointer;
-
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
@@ -356,6 +270,13 @@
   cursor: not-allowed;
 }
 
+.tutorial-button-back,
+.tutorial-button-next {
+  width: 100px;
+  justify-self: center;
+  align-self: center;
+}
+
 .tutorial-button-ghost {
   color: #8fe38b;
   background: transparent;
@@ -368,22 +289,55 @@
   border-color: rgba(143, 227, 139, 0.25);
 }
 
+/* Step Dots */
 
-/* ============================================================
-   COMPLETE STATE
-============================================================ */
+.tutorial-step-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 22px 0;
+}
+
+.tutorial-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  background: #394245;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    width 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tutorial-dot:hover {
+  background: #687477;
+  transform: scale(1.15);
+}
+
+.tutorial-dot-active {
+  width: 24px;
+  background: #8fe38b;
+  border-radius: 999px;
+}
+
+.tutorial-dot-complete {
+  background: #608f5e;
+}
+
+/* Complete State */
 
 .tutorial-complete {
   min-height: 440px;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   padding: 55px 40px;
   box-sizing: border-box;
-
   background:
     radial-gradient(
       circle at top center,
@@ -391,28 +345,21 @@
       transparent 48%
     ),
     #151a1d;
-
   border: 1px solid #293134;
   border-radius: 14px;
-
   text-align: center;
 }
 
 .tutorial-complete-icon {
   width: 82px;
   height: 82px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   margin-bottom: 25px;
-
   color: #101416;
   background: #8fe38b;
-
   border-radius: 50%;
-
   font-size: 2.5rem;
   font-weight: 900;
 }
@@ -439,10 +386,7 @@
   margin-top: 30px;
 }
 
-
-/* ============================================================
-   FOOTER HELP
-============================================================ */
+/* Footer Help */
 
 .tutorial-help {
   margin-top: 22px;
@@ -456,10 +400,7 @@
   line-height: 1.5;
 }
 
-
-/* ============================================================
-   MOBILE
-============================================================ */
+/* Mobile */
 
 @media (max-width: 700px) {
   .tutorial-main {
@@ -479,10 +420,23 @@
     font-size: 0.9rem;
   }
 
-  .tutorial-card {
-    min-height: 470px;
+  .tutorial-navigation {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
     touch-action: pan-y;
-    padding: 40px 22px;
+  }
+
+  .tutorial-card {
+    order: 1;
+    min-height: 470px;
+    width: 100%;
+    padding: 40px 22px 28px;
+  }
+
+  .tutorial-content {
+    order: 1;
   }
 
   .tutorial-icon {
@@ -510,13 +464,19 @@
     min-height: 44px;
   }
 
-  .tutorial-navigation {
-    gap: 10px;
+  .tutorial-button-back,
+  .tutorial-button-next {
+    width: 100%;
   }
 
-  .tutorial-button {
-    flex: 1;
-    padding: 0 15px;
+  .tutorial-button-back {
+    order: 2;
+    margin-top: 12px;
+  }
+
+  .tutorial-button-next {
+    order: 3;
+    margin-top: 10px;
   }
 
   .tutorial-complete {
@@ -534,10 +494,7 @@
   }
 }
 
-
-/* ============================================================
-   SMALL MOBILE
-============================================================ */
+/* Small Mobile */
 
 @media (max-width: 420px) {
   .tutorial-header {
@@ -551,7 +508,7 @@
 
   .tutorial-card {
     min-height: 500px;
-    padding: 35px 17px;
+    padding: 35px 17px 25px;
   }
 
   .tutorial-content h2 {

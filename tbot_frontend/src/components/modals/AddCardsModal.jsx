@@ -98,19 +98,6 @@ const selectStyles = {
   }),
 };
 
-const getCookie = (name) => {
-  const cookies = document.cookie ? document.cookie.split(";") : [];
-
-  for (const cookie of cookies) {
-    const trimmed = cookie.trim();
-
-    if (trimmed.startsWith(`${name}=`)) {
-      return decodeURIComponent(trimmed.substring(name.length + 1));
-    }
-  }
-
-  return null;
-};
 
 
 const parseResponseData = async (response) => {
@@ -203,14 +190,14 @@ const getSelectedQuantity = (value) => {
 const getCardQuantity = (card, selectedQuantities) => {
   const key = getCardKey(card);
 
-  return getSelectedQuantity(selectedQuantities[key] ?? 1);
+  return getSelectedQuantity(
+    selectedQuantities[key] ?? card.owned_quantity ?? 1,
+  );
 };
 
 const getCardClassName = (card, isSelected) => {
   const selectedClass = isSelected ? "selected" : "";
-  const ownedClass = card.already_owned ? "already-owned" : "";
-
-  return `available-card-row ${selectedClass} ${ownedClass}`;
+  return `available-card-row ${selectedClass}`;
 };
 
 const getCardThumbnail = (card) => {
@@ -289,9 +276,7 @@ function AvailableCardRow({
     }
   };
 
-  const cardActions = card.already_owned ? (
-    <span className="already-owned-label">Already Owned</span>
-  ) : (
+  const cardActions = (
     <CardQuantityControls
       card={card}
       isSelected={isSelected}
@@ -307,7 +292,6 @@ function AvailableCardRow({
       type="button"
       className={className}
       key={key}
-      disabled={card.already_owned}
       onClick={(event) => {
         if (event.target.closest(".card-ratio-controls")) {
           return;
@@ -323,7 +307,7 @@ function AvailableCardRow({
           checked={isSelected}
           onChange={() => onToggle(card)}
           onClick={(event) => event.stopPropagation()}
-          disabled={card.already_owned || addingCards}
+          disabled={addingCards}
         />
 
         {getCardThumbnail(card)}
@@ -585,11 +569,13 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
   const getQuantityForCard = (card) => {
     const key = getCardSelectionKey(card);
 
-    return getSelectedQuantity(selectedQuantities[key] ?? 1);
+    return getSelectedQuantity(
+      selectedQuantities[key] ?? card.owned_quantity ?? 1,
+    );
   };
 
   const toggleCardSelection = (card) => {
-    if (card.already_owned || addingCards) {
+    if (addingCards) {
       return;
     }
 
@@ -616,7 +602,7 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
 
       return {
         ...current,
-        [key]: 1,
+        [key]: getSelectedQuantity(card.owned_quantity ?? 1),
       };
     });
   };
@@ -659,9 +645,7 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
       };
 
       availableCards.forEach((card) => {
-        if (!card.already_owned) {
-          next[getCardSelectionKey(card)] = card;
-        }
+        next[getCardSelectionKey(card)] = card;
       });
 
       return next;
@@ -673,12 +657,10 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
       };
 
       availableCards.forEach((card) => {
-        if (!card.already_owned) {
-          const key = getCardSelectionKey(card);
+        const key = getCardSelectionKey(card);
 
-          if (next[key] === undefined) {
-            next[key] = 1;
-          }
+        if (next[key] === undefined) {
+          next[key] = getSelectedQuantity(card.owned_quantity ?? 1);
         }
       });
 
@@ -697,9 +679,7 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
       };
 
       availableCards.forEach((card) => {
-        if (!card.already_owned) {
-          next[getCardSelectionKey(card)] = card;
-        }
+        next[getCardSelectionKey(card)] = card;
       });
 
       return next;
@@ -711,9 +691,7 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
       };
 
       availableCards.forEach((card) => {
-        if (!card.already_owned) {
-          next[getCardSelectionKey(card)] = MAX_QUANTITY;
-        }
+        next[getCardSelectionKey(card)] = MAX_QUANTITY;
       });
 
       return next;
@@ -766,15 +744,7 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
 
       closeModal();
     } catch (requestError) {
-      if (requestError.data?.already_owned?.length) {
-        const names = requestError.data.already_owned
-          .map((card) => card.card_name)
-          .join(", ");
-
-        setError(`Already in your collection: ${names}`);
-      } else {
-        setError(requestError.message || "Unable to add cards.");
-      }
+      setError(requestError.message || "Unable to add cards.");
     } finally {
       setAddingCards(false);
     }
@@ -794,13 +764,9 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
       ? `${availableCards.length} card`
       : `${availableCards.length} cards`;
 
-  const allCardsOwned =
-    availableCards.length > 0 &&
-    availableCards.every((card) => card.already_owned);
+  const selectAvailableDisabled = loadingCards || addingCards || availableCards.length === 0;
 
-  const selectAvailableDisabled = loadingCards || addingCards || allCardsOwned;
-
-  const setAllFourDisabled = loadingCards || addingCards || allCardsOwned;
+  const setAllFourDisabled = loadingCards || addingCards || availableCards.length === 0;
 
   const clearDisabled = addingCards || selectedCount === 0;
 
@@ -819,8 +785,8 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
           <div>
             <h2 id="add-cards-title">Add Cards</h2>
             <p>
-              Select one or more sides and classes, then choose the cards you
-              want to add.
+              Select one or more sides and classes, then choose the cards
+              you want to add or change. If you scrap a card you must find that card in your card manager display to manually change it
             </p>
           </div>
 
