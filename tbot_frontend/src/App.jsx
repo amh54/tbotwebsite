@@ -137,7 +137,7 @@ function HomePage() {
 
             <p>
               Log in with Discord and enter your collection in the Card Manager,
-              then use the can build and Close to building filters on any page
+              then use the Can build and Close to building filters on any page
               that showcases decklists see the decks you can build now and the
               ones you're only a few cards away from.
             </p>
