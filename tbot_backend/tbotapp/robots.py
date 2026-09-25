@@ -6,6 +6,6 @@ def robots_txt(request):
         "User-agent: *\n"
         "Allow: /\n"
         "\n"
-        "Sitemap: https://pvzhtbot.com/sitemap.xml\n",
+        "Sitemap: https://api.pvzhtbot.com/sitemap.xml\n",
         content_type="text/plain",
     )
