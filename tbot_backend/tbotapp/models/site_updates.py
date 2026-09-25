@@ -5,9 +5,14 @@ class SiteUpdate(models.Model):
     CATEGORY_CHOICES = [
         ("new", "New"),
         ("improvement", "Improvement"),
-        ("fix", "Fix"),
+        ("bug_fix", "Bug Fix"),
         ("data", "Data"),
         ("announcement", "Announcement"),
+        ("ui_design", "UI / Design"),
+        ("new_deck", "New Deck"),
+        ("deck_update", "Deck Update"),
+        ("deleted_deck", "Deleted Deck"),
+        ("other", "Other"),
     ]
 
     id = models.BigAutoField(primary_key=True)
