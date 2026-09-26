@@ -1,10 +1,5 @@
-
 import logging
-import os
-import re
-import requests
-import boto3
-from django.http import HttpResponse
+
 from django.db import DatabaseError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -21,186 +16,16 @@ from ..models import (
     LegacyDecklist,
 )
 from ..serializers import UserDeckSerializer
-
 from .helpers import (
     get_discord_user,
     include_error_detail,
+    save_deck_image,
 )
 
 logger = logging.getLogger(__name__)
-
-
-R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID", "")
-R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "")
-R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "")
-R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "")
-R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "").rstrip("/")
-
-R2_ENDPOINT = f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-
-MAX_IMAGE_SIZE = 10 * 1024 * 1024
-
-CONTENT_TYPES = {
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".png": "image/png",
-    ".webp": "image/webp",
-    ".gif": "image/gif",
-}
-
-
-def get_r2_client():
-    required = {
-        "R2_ACCOUNT_ID": R2_ACCOUNT_ID,
-        "R2_ACCESS_KEY_ID": R2_ACCESS_KEY_ID,
-        "R2_SECRET_ACCESS_KEY": R2_SECRET_ACCESS_KEY,
-        "R2_BUCKET_NAME": R2_BUCKET_NAME,
-        "R2_PUBLIC_URL": R2_PUBLIC_URL,
-    }
-
-    missing = [
-        name
-        for name, value in required.items()
-        if not value
-    ]
-
-    if missing:
-        raise RuntimeError(
-            "Missing required environment variables: "
-            + ", ".join(missing)
-        )
-
-    return boto3.client(
-        "s3",
-        endpoint_url=R2_ENDPOINT,
-        aws_access_key_id=R2_ACCESS_KEY_ID,
-        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
-        region_name="auto",
-    )
-
-
-def slugify(value):
-    value = str(value or "").strip().lower()
-    value = re.sub(r"[^a-z0-9]+", "-", value)
-    value = value.strip("-")
-    return value or "untitled"
-
-
-def normalize_side(value):
-    value = str(value or "").strip().lower()
-
-    if value in {"plant", "plants"}:
-        return "plants"
-
-    if value in {"zombie", "zombies"}:
-        return "zombies"
-
-    return slugify(value)
-
-
-def normalize_hero(value):
-    return slugify(value)
-
-
-def get_extension(image_file):
-    filename = str(
-        getattr(image_file, "name", "")
-        or ""
-    )
-
-    extension = os.path.splitext(filename)[1].lower()
-
-    if extension in CONTENT_TYPES:
-        return extension
-
-    content_type = str(
-        getattr(image_file, "content_type", "")
-        or ""
-    ).lower()
-
-    for extension, known_type in CONTENT_TYPES.items():
-        if content_type == known_type:
-            return extension
-
-    return ".webp"
-
-
-def get_content_type(extension):
-    return CONTENT_TYPES.get(
-        extension.lower(),
-        "image/webp",
-    )
-
-
-def upload_deck_image(
-    image_file,
-    side,
-    hero,
-    deck_name,
-    deck_id,
-):
-    if not image_file:
-        return None
-
-    image_file.seek(0)
-
-    image_data = image_file.read()
-
-    if not image_data:
-        raise RuntimeError(
-            "Uploaded image is empty."
-        )
-
-    if len(image_data) > MAX_IMAGE_SIZE:
-        raise RuntimeError(
-            "Uploaded image exceeds the 10 MB limit."
-        )
-
-    extension = get_extension(image_file)
-    content_type = get_content_type(extension)
-
-    side_slug = normalize_side(side)
-    hero_slug = normalize_hero(hero)
-    deck_slug = slugify(deck_name)
-
-    filename = (
-        f"{deck_slug}-{deck_id}"
-        f"{extension}"
-    )
-
-    key = (
-        f"user_decks/"
-        f"{side_slug}/"
-        f"{hero_slug}/"
-        f"{filename}"
-    )
-
-    s3 = get_r2_client()
-
-    s3.put_object(
-        Bucket=R2_BUCKET_NAME,
-        Key=key,
-        Body=image_data,
-        ContentType=content_type,
-        CacheControl="public, max-age=3600",
-    )
-
-    head = s3.head_object(
-        Bucket=R2_BUCKET_NAME,
-        Key=key,
-    )
-
-    uploaded_size = int(
-        head.get("ContentLength", 0)
-    )
-
-    if uploaded_size != len(image_data):
-        raise RuntimeError(
-            "R2 image verification failed."
-        )
-
-    return f"{R2_PUBLIC_URL}/{key}"
-
+logger.warning(
+    "[User Decks Module] user_decks.py LOADED"
+)
 
 def get_current_profile(request):
     discord_user = get_discord_user(request)
@@ -326,6 +151,7 @@ def public_profile_decks_count(
         status=status.HTTP_200_OK,
     )
 
+
 @api_view(["POST"])
 @parser_classes([
     JSONParser,
@@ -411,6 +237,7 @@ def user_deck_create(request):
             creator=creator,
             **deck_data,
         )
+
     except DatabaseError as exc:
         logger.exception(
             "User deck creation failed"
@@ -434,13 +261,14 @@ def user_deck_create(request):
 
     if image_file:
         try:
-            image_url = upload_deck_image(
-                image_file,
-                deck.side,
-                deck.hero,
-                deck.name,
-                deck.id,
-            )
+            image_url = save_deck_image(
+    image_file,
+    deck.id,
+    deck_name=deck.name,
+    side=deck.side,
+    hero=deck.hero,
+    user_deck=True,
+)
 
             if not image_url:
                 deck.delete()
@@ -456,7 +284,10 @@ def user_deck_create(request):
                 )
 
             deck.image = image_url
-            deck.save(update_fields=["image"])
+
+            deck.save(
+                update_fields=["image"]
+            )
 
         except Exception as exc:
             logger.exception(
@@ -505,7 +336,6 @@ def user_deck_create(request):
 ])
 def user_deck_update(request, deck_id):
     profile, error = get_current_profile(request)
-
     if error:
         return error
 
@@ -552,12 +382,13 @@ def user_deck_update(request, deck_id):
             )
 
             try:
-                image_url = upload_deck_image(
+                image_url = save_deck_image(
                     image_file,
-                    side,
-                    hero,
-                    deck_name,
                     deck.id,
+                    deck_name=deck_name,
+                    side=side,
+                    hero=hero,
+                    user_deck=True,
                 )
 
                 if not image_url:
@@ -618,7 +449,6 @@ def user_deck_update(request, deck_id):
         updated_deck = serializer.save(
             updated_date=timezone.now()
         )
-
         return Response(
             {
                 "success": True,
@@ -750,10 +580,13 @@ def shared_user_deck(
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        normalized_source_type = str(source_type or "").strip().lower()
+        normalized_source_type = str(
+            source_type or ""
+        ).strip().lower()
 
         try:
             source_id = int(deck_id)
+
         except (TypeError, ValueError):
             return Response(
                 {
@@ -764,10 +597,11 @@ def shared_user_deck(
 
         if normalized_source_type == "user":
             source_deck = (
-            UserDeck.objects
-            .filter(id=source_id)
-            .first()
+                UserDeck.objects
+                .filter(id=source_id)
+                .first()
             )
+
             resolved_source_type = "user_deck"
 
         elif normalized_source_type == "deck":
@@ -776,6 +610,7 @@ def shared_user_deck(
                 .filter(deckid=source_id)
                 .first()
             )
+
             resolved_source_type = "decklist"
 
         elif normalized_source_type == "legacy":
@@ -784,6 +619,7 @@ def shared_user_deck(
                 .filter(deckid=source_id)
                 .first()
             )
+
             resolved_source_type = "legacy"
 
         else:
@@ -876,10 +712,15 @@ def shared_user_deck(
         )
 
     except DatabaseError as exc:
-        logger.exception("Unable to load shared deck")
+        logger.exception(
+            "Unable to load shared deck"
+        )
 
         payload = {
-            "error": "Database query failed while loading shared deck.",
+            "error": (
+                "Database query failed while "
+                "loading shared deck."
+            ),
             "error_type": exc.__class__.__name__,
         }
 

@@ -514,19 +514,52 @@ def save_deck_image(
     legacy=False,
     side="",
     hero="",
+    user_deck=False,
 ):
     if not uploaded_file:
+        logger.warning(
+            "[R2] No uploaded file provided for deck %s.",
+            deckid,
+        )
         return None
 
+    logger.info(
+        "[R2] Starting image upload: deck=%s name=%s size=%s content_type=%s user_deck=%s legacy=%s side=%s hero=%s",
+        deckid,
+        getattr(uploaded_file, "name", None),
+        getattr(uploaded_file, "size", None),
+        getattr(uploaded_file, "content_type", None),
+        user_deck,
+        legacy,
+        side,
+        hero,
+    )
+
     if not getattr(uploaded_file, "size", 0):
+        logger.error(
+            "[R2] Image is empty before upload: deck=%s",
+            deckid,
+        )
         raise ValueError("Image is empty.")
 
     if uploaded_file.size > MAX_DECK_IMAGE_SIZE:
+        logger.error(
+            "[R2] Image too large: deck=%s size=%s max=%s",
+            deckid,
+            uploaded_file.size,
+            MAX_DECK_IMAGE_SIZE,
+        )
         raise ValueError(
             "Image is too large. Maximum size is 10 MB."
         )
 
     extension = _get_image_extension(uploaded_file)
+
+    logger.info(
+        "[R2] Detected image extension: deck=%s extension=%s",
+        deckid,
+        extension,
+    )
 
     clean_name = str(
         deck_name
@@ -540,28 +573,38 @@ def save_deck_image(
     clean_hero = _slugify(hero)
 
     if not clean_hero:
-        raise ValueError(
-            "Hero is required for deck images."
+        logger.error(
+            "[R2] Missing hero: deck=%s hero=%s",
+            deckid,
+            hero,
         )
+        raise ValueError("Hero is required for deck images.")
 
     try:
         numeric_deck_id = int(deckid)
     except (TypeError, ValueError):
         numeric_deck_id = str(deckid).strip()
 
-    filename = (
-        f"{clean_name}-{numeric_deck_id}"
-        f"{extension}"
-    )
-
     normalized_side = _normalize_r2_side(side)
 
     if not normalized_side:
-        raise ValueError(
-            "Side must be Plants or Zombies."
+        logger.error(
+            "[R2] Invalid side: deck=%s side=%s",
+            deckid,
+            side,
         )
+        raise ValueError("Side must be Plants or Zombies.")
 
-    if legacy:
+    filename = f"{clean_name}-{numeric_deck_id}{extension}"
+
+    if user_deck:
+        key = (
+            f"user_decks/"
+            f"{normalized_side}/"
+            f"{clean_hero}/"
+            f"{filename}"
+        )
+    elif legacy:
         key = (
             f"legacy_decks/"
             f"{normalized_side}/"
@@ -580,25 +623,71 @@ def save_deck_image(
     content = uploaded_file.read()
 
     if not content:
+        logger.error(
+            "[R2] Image became empty after reading: deck=%s key=%s",
+            deckid,
+            key,
+        )
         raise ValueError("Image is empty.")
+
+    logger.info(
+        "[R2] Uploading object: deck=%s bucket=%s key=%s size=%s content_type=%s",
+        deckid,
+        R2_BUCKET_NAME,
+        key,
+        len(content),
+        IMAGE_CONTENT_TYPES[extension],
+    )
 
     client = _get_r2_client()
 
-    client.put_object(
-        Bucket=R2_BUCKET_NAME,
-        Key=key,
-        Body=content,
-        ContentType=IMAGE_CONTENT_TYPES[extension],
-        CacheControl="public",
+    try:
+        client.put_object(
+            Bucket=R2_BUCKET_NAME,
+            Key=key,
+            Body=content,
+            ContentType=IMAGE_CONTENT_TYPES[extension],
+            CacheControl="no-cache",
+        )
+
+        logger.info(
+            "[R2] Upload completed: deck=%s key=%s",
+            deckid,
+            key,
+        )
+
+        head = client.head_object(
+            Bucket=R2_BUCKET_NAME,
+            Key=key,
+        )
+
+        logger.info(
+            "[R2] Object verified: deck=%s key=%s size=%s etag=%s cache_control=%s content_type=%s",
+            deckid,
+            key,
+            head.get("ContentLength"),
+            head.get("ETag"),
+            head.get("CacheControl"),
+            head.get("ContentType"),
+        )
+
+    except Exception:
+        logger.exception(
+            "[R2] Upload or verification failed: deck=%s key=%s",
+            deckid,
+            key,
+        )
+        raise
+
+    image_url = f"{R2_PUBLIC_URL}/{key}"
+
+    logger.info(
+        "[R2] Final image URL: deck=%s url=%s",
+        deckid,
+        image_url,
     )
 
-    client.head_object(
-        Bucket=R2_BUCKET_NAME,
-        Key=key,
-    )
-
-    return f"{R2_PUBLIC_URL}/{key}"
-
+    return image_url
 
 def owner_required(view_func):
     @wraps(view_func)

@@ -1,14 +1,20 @@
 from django.db import DatabaseError
 
 from rest_framework.decorators import api_view, parser_classes
+
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
+
 from rest_framework.response import Response
+
 from rest_framework import status
 
 from ..models import UserDeck
+
 from ..serializers import UserDeckSerializer
+
 from .permissions import is_discord_owner
-from .user_decks import upload_deck_image
+
+from .helpers import save_deck_image
 
 
 @api_view(["GET"])
@@ -152,20 +158,12 @@ def admin_user_deck_update(request, deck_id):
 
         update_data = request.data.copy()
 
-        # These dates should not come from the admin
-        # browser. The server controls the update timestamp.
         update_data.pop("suggested_date", None)
         update_data.pop("updated_date", None)
 
-        # image_file is an uploaded file and is not a
-        # UserDeckSerializer field.
         image_file = request.FILES.get("image_file")
 
         update_data.pop("image_file", None)
-
-        # --------------------------------------------------
-        # Upload a new image to Cloudflare R2
-        # --------------------------------------------------
 
         if image_file:
             side = update_data.get(
@@ -184,12 +182,12 @@ def admin_user_deck_update(request, deck_id):
             )
 
             try:
-                image_url = upload_deck_image(
+                image_url = save_deck_image(
                     image_file,
-                    side,
-                    hero,
-                    deck_name,
                     deck.id,
+                    deck_name=deck_name,
+                    side=side,
+                    hero=hero,
                 )
 
                 if not image_url:
@@ -203,8 +201,6 @@ def admin_user_deck_update(request, deck_id):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     )
 
-                # Give the serializer the resulting
-                # public R2 URL.
                 update_data["image"] = image_url
 
                 print(
@@ -231,10 +227,6 @@ def admin_user_deck_update(request, deck_id):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
-        # --------------------------------------------------
-        # Update deck
-        # --------------------------------------------------
-
         serializer = UserDeckSerializer(
             deck,
             data=update_data,
@@ -258,8 +250,8 @@ def admin_user_deck_update(request, deck_id):
 
         updated_deck = serializer.save()
 
-        # Keep updated_date controlled by the server.
         updated_deck.updated_date = updated_deck.modified_at
+
         updated_deck.save(
             update_fields=[
                 "updated_date",
