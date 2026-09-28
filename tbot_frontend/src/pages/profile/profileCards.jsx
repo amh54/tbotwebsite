@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-import Navbar from "../components/navbar.jsx";
-import Footer from "../components/footer.jsx";
-import ProfileCardBrowser from "../components/profilecardbrowser.jsx";
+import Navbar from "../../components/navbar.jsx";
+import Footer from "../../components/footer.jsx";
+import ProfileCardBrowser from "../../components/profile/profilecardbrowser.jsx";
 
-import "../css/cardinfo.css";
-import "../css/navbar.css";
-import "../css/loading.css";
+import "../../css/cardInfo.css";
+import "../../css/navbar.css";
+import "../../css/loading.css";
 
-import { API_BASE_URL } from "../utils/api.js";
+import { API_BASE_URL } from "../../utils/api.js";
 
 export default function ProfileCards() {
   const [userCards, setUserCards] = useState([]);

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL, ensureCsrfToken } from "../../utils/api";
 import { getBrowser, getOperatingSystem } from "../../utils/browserInfo";
 
-import "../../css/bugReportModal.css";
+import "../../css/modals/bugReportModal.css";
 
 const BUG_CATEGORIES = [
   { value: "ui", label: "UI" },

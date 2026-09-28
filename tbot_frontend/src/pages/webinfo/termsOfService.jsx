@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import Navbar from "../components/navbar";
-import Footer from "../components/footer";
-import "../css/termsofservice.css";
+import Navbar from "../../components/navbar";
+import Footer from "../../components/footer";
+import "../../css/webinfo/termsOfService.css";
 import { useEffect } from "react";
 
 const SECTIONS = [

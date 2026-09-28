@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
 
-import "../css/admin.css";
-import { API_BASE_URL} from "../utils/api.js";
+import "../../css/admin/admin.css";
+import { API_BASE_URL} from "../../utils/api.js";
 
 function Admin() {
   const navigate = useNavigate();

@@ -15,7 +15,7 @@ import {
   filterDecks,
 } from "../../utils/deckFilters";
 
-import "../../css/userdecklists.css";
+import "../../css/userDecklists.css";
 
 function ProfileDeckBrowser({
   decks = [],

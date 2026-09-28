@@ -2,16 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useParams } from "react-router-dom";
 
-import DeckCard from "../components/modals/deckcomponent.jsx";
+import DeckCard from "../../components/modals/deckcomponent.jsx";
 
-import FilterDropdown from "../components/filterdropdown";
+import FilterDropdown from "../../components/filterdropdown";
 
-import Navbar from "../components/navbar";
+import Navbar from "../../components/navbar";
 
-import Footer from "../components/footer";
+import Footer from "../../components/footer";
 
-import useTemporaryMessage from "../utils/useTemporaryMessage";
-import Seo from "../components/seo.jsx";
+import useTemporaryMessage from "../../utils/useTemporaryMessage";
+import Seo from "../../components/seo.jsx";
 import {
   normalizeText,
   normalizeSide,
@@ -20,17 +20,17 @@ import {
   getDeckKey,
   getFilterOptions,
   filterDecks,
-} from "../utils/deckFilters";
+} from "../../utils/deckFilters";
 
-import "../css/decklists.css";
+import "../../css/decklists.css";
 
-import "../css/navbar.css";
+import "../../css/navbar.css";
 
-import "../css/loading.css";
+import "../../css/loading.css";
 
-import "../css/userdecklists.css";
+import "../../css/userDecklists.css";
 
-import { API_BASE_URL } from "../utils/api.js";
+import { API_BASE_URL } from "../../utils/api.js";
 
 function DeckbuilderDecks() {
   const { deckbuilder_name } = useParams();

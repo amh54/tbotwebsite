@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import "../css/filterdropdown.css";
+import "../css/filterDropdown.css";
 
 function FilterDropdown({
   label,

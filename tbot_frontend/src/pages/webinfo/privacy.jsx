@@ -1,7 +1,7 @@
-import "../css/privacy.css";
-import Navbar from "../components/navbar.jsx";
+import "../../css/webinfo/privacy.css";
+import Navbar from "../../components/navbar.jsx";
 import { useEffect } from "react";
-import Footer from "../components/footer.jsx";
+import Footer from "../../components/footer.jsx";
 
 const Privacy = () => {
   useEffect(() => {

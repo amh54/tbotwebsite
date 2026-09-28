@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-import Navbar from "../components/navbar";
-import Footer from "../components/footer";
+import Navbar from "../../components/navbar.jsx";
+import Footer from "../../components/footer.jsx";
 
-import "../css/users.css";
-import "../css/navbar.css";
-import "../css/loading.css";
-import { API_BASE_URL } from "../utils/api";
-import Seo from "../components/seo.jsx";
+import "../../css/users.css";
+import "../../css/navbar.css";
+import "../../css/loading.css";
+import { API_BASE_URL } from "../../utils/api.js";
+import Seo from "../../components/seo.jsx";
 const DECKBUILDERS_CACHE_KEY = "tbot_deckbuilders_cache";
 const DECKBUILDERS_COUNT_CACHE_KEY = "tbot_deckbuilders_count_cache";
 

@@ -13,7 +13,7 @@ import {
   filterDecks,
 } from "../../utils/deckFilters";
 
-import "../../css/userdecklists.css";
+import "../../css/userDecklists.css";
 
 function normalizeSavedSourceType(value) {
   const normalized = String(value ?? "")

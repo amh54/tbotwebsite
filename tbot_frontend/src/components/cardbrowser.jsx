@@ -32,7 +32,7 @@ import {
 import { renderFilterLabel } from "../utils/cardInfo/renderUtils.jsx";
 import { normalizeText } from "../utils/cardInfo/textUtils.js";
 
-import "../css/cardinfo.css";
+import "../css/cardInfo.css";
 import "../css/loading.css";
 
 const hasValue = (value) => {

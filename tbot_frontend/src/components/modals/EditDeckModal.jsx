@@ -39,8 +39,8 @@ import AdminModalField from "../../components/admin/AdminModalField";
 import AdminModalTextArea from "../../components/admin/AdminModalTextArea";
 import CardRatioEditor from "../../components/admin/CardRatioEditor";
 
-import "../../css/adminmodal.css";
-import "../../css/deckmodal.css";
+import "../../css/modals/adminmodal.css";
+import "../../css/modals/deckModal.css";
 
 const EditDeckModal = forwardRef(function EditDeckModal(
   {

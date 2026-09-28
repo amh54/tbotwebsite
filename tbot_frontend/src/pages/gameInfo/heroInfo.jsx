@@ -1,27 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 
-import CardModal from "../components/modals/cardmodal.jsx";
-import Navbar from "../components/navbar.jsx";
-import Footer from "../components/footer.jsx";
-import HeroCard from "../components/heroInfo/heroCard.jsx";
-import HeroLoading from "../components/heroInfo/heroLoading.jsx";
-import { API_BASE_URL} from "../utils/api.js";
-import { CARD_CACHE_KEY } from "../utils/cardInfo/cardCache.js";
-import { getRarityName } from "../utils/cardInfo/dataUtils.js";
-import { normalizeText } from "../utils/cardInfo/textUtils.js";
-import { HERO_CACHE_KEY } from "../utils/heroInfo/heroConfig.js";
-import Seo from "../components/seo.jsx";
+import CardModal from "../../components/modals/cardmodal.jsx";
+import Navbar from "../../components/navbar.jsx";
+import Footer from "../../components/footer.jsx";
+import HeroCard from "../../components/heroInfo/heroCard.jsx";
+import HeroLoading from "../../components/heroInfo/heroLoading.jsx";
+import { API_BASE_URL} from "../../utils/api.js";
+import { CARD_CACHE_KEY } from "../../utils/cardInfo/cardCache.js";
+import { getRarityName } from "../../utils/cardInfo/dataUtils.js";
+import { normalizeText } from "../../utils/cardInfo/textUtils.js";
+import { HERO_CACHE_KEY } from "../../utils/heroInfo/heroConfig.js";
+import Seo from "../../components/seo.jsx";
 import {
   getCachedData,
   findHeroByQuery,
   getSideHeroes,
-} from "../utils/heroInfo/heroUtils.js";
+} from "../../utils/heroInfo/heroUtils.js";
 
-import { getSuperpowerCards } from "../utils/heroInfo/superpowerUtils.js";
+import { getSuperpowerCards } from "../../utils/heroInfo/superpowerUtils.js";
 
-import "../css/cardinfo.css";
-import "../css/navbar.css";
-import "../css/loading.css";
+import "../../css/cardInfo.css";
+import "../../css/navbar.css";
+import "../../css/loading.css";
 
 function HeroInfo() {
   const initialHeroCache = getCachedData(HERO_CACHE_KEY);

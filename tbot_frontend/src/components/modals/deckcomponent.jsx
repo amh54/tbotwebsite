@@ -25,7 +25,7 @@ import EditDeckModal from "./EditDeckModal";
 import DeckCardActions from "../decks/DeckCardActions.jsx";
 import DeckSuggestMessage from "../decks/DeckSuggestMessage.jsx";
 
-import "../../css/deckmodal.css";
+import "../../css/modals/deckModal.css";
 
 import { removeSavedDeck, saveDeck } from "../../utils/savedDecks";
 

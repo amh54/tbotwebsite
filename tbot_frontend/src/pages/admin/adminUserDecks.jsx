@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 
-import DeckCard from "../components/modals/deckcomponent.jsx";
+import DeckCard from "../../components/modals/deckcomponent.jsx";
 
-import FilterDropdown from "../components/filterdropdown";
+import FilterDropdown from "../../components/filterdropdown";
 
-import Footer from "../components/footer";
+import Footer from "../../components/footer";
 
 import {
   getHeroOptions,
@@ -12,17 +12,17 @@ import {
   getArchetypeOptions,
   filterDecks,
   sortDecks,
-} from "../utils/deckFilters";
+} from "../../utils/deckFilters";
 
-import "../css/decklists.css";
+import "../../css/decklists.css";
 
-import "../css/loading.css";
+import "../../css/loading.css";
 
 import {
   API_BASE_URL,
   ensureCsrfToken,
   getApiErrorMessage,
-} from "../utils/api.js";
+} from "../../utils/api.js";
 
 const ADMIN_USER_DECKS_ENDPOINT = `${API_BASE_URL}/tbotapp/admin/user-decks/`;
 

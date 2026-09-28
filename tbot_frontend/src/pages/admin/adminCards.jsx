@@ -1,13 +1,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import CardModal from "../components/modals/cardmodal.jsx";
-import Navbar from "../components/navbar";
-import Footer from "../components/footer";
-import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
-import "../css/admincards.css";
-import "../css/cardmodal.css";
-import "../css/loading.css";
+import CardModal from "../../components/modals/cardmodal.jsx";
+import Navbar from "../../components/navbar.jsx";
+import Footer from "../../components/footer.jsx";
+import { API_BASE_URL, ensureCsrfToken } from "../../utils/api.js";
+import "../../css/admin/adminCards.css";
+import "../../css/modals/cardModal.css";
+import "../../css/loading.css";
 
 const EMPTY_FORM = {
   cardid: "",

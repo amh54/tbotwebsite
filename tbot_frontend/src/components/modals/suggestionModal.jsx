@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { API_BASE_URL, ensureCsrfToken } from "../../utils/api";
 
-import "../../css/bugReportModal.css";
-import "../../css/suggestionModal.css";
+import "../../css/modals/bugReportModal.css";
+import "../../css/modals/suggestionModal.css";
 
 const SUGGESTION_CATEGORIES = [
   {

@@ -2,15 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 
 import ReactMarkdown from "react-markdown";
 
-import Navbar from "../components/navbar";
+import Navbar from "../../components/navbar.jsx";
 
-import Footer from "../components/footer";
+import Footer from "../../components/footer.jsx";
 
-import Seo from "../components/seo";
+import Seo from "../../components/seo.jsx";
 
-import "../css/siteupdates.css";
+import "../../css/webinfo/siteUpdates.css";
 
-import { API_BASE_URL } from "../utils/api.js";
+import { API_BASE_URL } from "../../utils/api.js";
 
 const CATEGORY_LABELS = {
   new_feature: "New Feature",

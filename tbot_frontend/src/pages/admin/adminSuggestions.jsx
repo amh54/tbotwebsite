@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
-import Footer from "../components/footer.jsx";
+import Footer from "../../components/footer.jsx";
 
-import "../css/adminbugreports.css";
-import "../css/loading.css";
+import "../../css/admin/adminBugReports.css";
+import "../../css/loading.css";
 
-import { ensureCsrfToken } from "../utils/api.js";
+import { ensureCsrfToken } from "../../utils/api.js";
 
 import {
   getSuggestionId,
@@ -15,22 +15,22 @@ import {
   getSuggestionStatus,
   normalizeStatus,
   normalizeText,
-} from "../utils/adminSuggestions.js";
+} from "../../utils/adminSuggestions.js";
 
 import {
   deleteSuggestion,
   fetchSuggestions,
   saveSuggestionDetails,
   updateSuggestionStatus,
-} from "../utils/adminSuggestionsApi.js";
+} from "../../utils/adminSuggestionsApi.js";
 
-import SuggestionDetailsModal from "../components/admin/SuggestionDetailsModal.jsx";
-import SuggestionEmptyState from "../components/admin/SuggestionEmptyState";
-import SuggestionError from "../components/admin/SuggestionError";
-import SuggestionList from "../components/admin/SuggestionList";
-import SuggestionLoading from "../components/admin/SuggestionLoading";
-import SuggestionStats from "../components/admin/SuggestionStats";
-import SuggestionToolbar from "../components/admin/SuggestionToolbar";
+import SuggestionDetailsModal from "../../components/admin/SuggestionDetailsModal.jsx";
+import SuggestionEmptyState from "../../components/admin/SuggestionEmptyState.jsx";
+import SuggestionError from "../../components/admin/SuggestionError.jsx";
+import SuggestionList from "../../components/admin/SuggestionList.jsx";
+import SuggestionLoading from "../../components/admin/SuggestionLoading.jsx";
+import SuggestionStats from "../../components/admin/SuggestionStats.jsx";
+import SuggestionToolbar from "../../components/admin/SuggestionToolbar.jsx";
 
 function AdminSuggestions() {
   const [suggestions, setSuggestions] = useState([]);

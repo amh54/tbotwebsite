@@ -4,11 +4,11 @@ import { useParams } from "react-router-dom";
 
 import DeckCard from "../components/modals/deckcomponent.jsx";
 
-import FilterDropdown from "../components/filterdropdown";
+import FilterDropdown from "../components/filterdropdown.jsx";
 
-import Navbar from "../components/navbar";
+import Navbar from "../components/navbar.jsx";
 
-import Footer from "../components/footer";
+import Footer from "../components/footer.jsx";
 
 import "../css/decklists.css";
 
@@ -16,7 +16,7 @@ import "../css/navbar.css";
 
 import "../css/loading.css";
 
-import "../css/userdecklists.css";
+import "../css/userDecklists.css";
 import { API_BASE_URL } from "../utils/api.js";
 
 const ARCHETYPE_META = {

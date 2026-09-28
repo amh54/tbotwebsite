@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Link } from "react-router-dom";
 
-import DeckCard from "../components/modals/deckcomponent.jsx";
+import DeckCard from "../../components/modals/deckcomponent.jsx";
 
-import FilterDropdown from "../components/filterdropdown";
+import FilterDropdown from "../../components/filterdropdown.jsx";
 
-import Footer from "../components/footer";
+import Footer from "../../components/footer.jsx";
 
 import {
   getHeroOptions,
@@ -14,19 +14,19 @@ import {
   getArchetypeOptions,
   filterDecks,
   sortDecks,
-} from "../utils/deckFilters";
+} from "../../utils/deckFilters.js";
 
-import "../css/adminDecklists.css";
+import "../../css/admin/adminDecklists.css";
 
-import "../css/decklists.css";
+import "../../css/decklists.css";
 
-import "../css/loading.css";
+import "../../css/loading.css";
 
 import {
   API_BASE_URL,
   ensureCsrfToken,
   getApiErrorMessage,
-} from "../utils/api.js";
+} from "../../utils/api.js";
 
 function AdminLegacyDecks() {
   const [decks, setDecks] = useState([]);

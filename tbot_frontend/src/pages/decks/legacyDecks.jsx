@@ -1,31 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
 
-import DeckCard from "../components/modals/deckcomponent.jsx";
+import DeckCard from "../../components/modals/deckcomponent.jsx";
 
-import FilterDropdown from "../components/filterdropdown";
+import FilterDropdown from "../../components/filterdropdown.jsx";
 
-import Navbar from "../components/navbar";
+import Navbar from "../../components/navbar.jsx";
 
-import Footer from "../components/footer";
+import Footer from "../../components/footer.jsx";
 
-import Seo from "../components/seo.jsx";
+import Seo from "../../components/seo.jsx";
 
-import useTemporaryMessage from "../utils/useTemporaryMessage";
+import useTemporaryMessage from "../../utils/useTemporaryMessage.js";
 
 import {
   sortDecks,
   buildCollectionMap,
   getFilterOptions,
   filterDecks,
-} from "../utils/deckFilters";
+} from "../../utils/deckFilters.js";
 
-import "../css/decklists.css";
+import "../../css/decklists.css";
 
-import "../css/navbar.css";
+import "../../css/navbar.css";
 
-import "../css/loading.css";
+import "../../css/loading.css";
 
-import { API_BASE_URL } from "../utils/api.js";
+import { API_BASE_URL } from "../../utils/api.js";
 
 const STORAGE_KEYS = {
   decks: "tbot_legacy_decks",

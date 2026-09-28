@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 
-import "../css/keeporscrap.css";
+import "../css/keepOrScrap.css";
 import "../css/loading.css";
 
 import ReactMarkdown from "react-markdown";
 import Seo from "../components/seo.jsx";
-import Navbar from "../components/navbar";
-import Footer from "../components/footer";
+import Navbar from "../components/navbar.jsx";
+import Footer from "../components/footer.jsx";
 import { API_BASE_URL } from "../utils/api.js";
 
 let keepOrScrapCache = {

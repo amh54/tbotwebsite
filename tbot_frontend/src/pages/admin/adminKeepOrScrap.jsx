@@ -1,9 +1,9 @@
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import "../css/admin-keeporscrap.css";
-import "../css/loading.css";
+import "../../css/admin/adminKeepOrScrap.css";
+import "../../css/loading.css";
 import ReactMarkdown from "react-markdown";
-import { API_BASE_URL, ensureCsrfToken } from "../utils/api";
+import { API_BASE_URL, ensureCsrfToken } from "../../utils/api";
 
 const SIDES = [
   {

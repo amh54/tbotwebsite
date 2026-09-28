@@ -2,39 +2,39 @@ import { useEffect, useState } from "react";
 
 import { useParams, useSearchParams } from "react-router-dom";
 
-import Navbar from "../components/navbar.jsx";
+import Navbar from "../../components/navbar.jsx";
 
-import Footer from "../components/footer.jsx";
+import Footer from "../../components/footer.jsx";
 
-import Seo from "../components/seo.jsx";
+import Seo from "../../components/seo.jsx";
 
-import ProfileHeader from "../components/profile/profileheader.jsx";
+import ProfileHeader from "../../components/profile/profileheader.jsx";
 
-import ProfileTabs from "../components/profile/profiletabs.jsx";
+import ProfileTabs from "../../components/profile/profiletabs.jsx";
 
-import ProfileCardBrowser from "../components/profile/profilecardbrowser.jsx";
+import ProfileCardBrowser from "../../components/profile/profilecardbrowser.jsx";
 
-import ProfileDeckBrowser from "../components/profile/profiledeckbrowser.jsx";
+import ProfileDeckBrowser from "../../components/profile/profiledeckbrowser.jsx";
 
-import ProfileSavedDecks from "../components/profile/profileSavedDecks.jsx";
+import ProfileSavedDecks from "../../components/profile/profileSavedDecks.jsx";
 
-import ProfileShareMessage from "../components/profile/profilesharemessage.jsx";
+import ProfileShareMessage from "../../components/profile/profilesharemessage.jsx";
 
-import ProfileEditModal from "../components/profile/profileeditmodal.jsx";
+import ProfileEditModal from "../../components/profile/profileeditmodal.jsx";
 
-import "../css/profile.css";
+import "../../css/profile/profile.css";
 
-import "../css/decklists.css";
+import "../../css/decklists.css";
 
-import "../css/navbar.css";
+import "../../css/navbar.css";
 
-import "../css/loading.css";
+import "../../css/loading.css";
 
-import "../css/profilecards.css";
+import "../../css/profile/profileCards.css";
 
-import "../css/userdecklists.css";
+import "../../css/userDecklists.css";
 
-import { API_BASE_URL } from "../utils/api.js";
+import { API_BASE_URL } from "../../utils/api.js";
 
 const PROFILE_CACHE_DURATION = 30 * 60 * 1000;
 

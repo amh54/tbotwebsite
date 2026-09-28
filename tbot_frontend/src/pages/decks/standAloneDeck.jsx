@@ -2,21 +2,21 @@ import { useEffect, useState } from "react";
 
 import { useParams } from "react-router-dom";
 
-import DeckCard from "../components/modals/deckcomponent.jsx";
+import DeckCard from "../../components/modals/deckcomponent.jsx";
 
-import Navbar from "../components/navbar";
+import Navbar from "../../components/navbar.jsx";
 
-import Footer from "../components/footer";
+import Footer from "../../components/footer.jsx";
 
-import "../css/decklists.css";
+import "../../css/decklists.css";
 
-import "../css/navbar.css";
+import "../../css/navbar.css";
 
-import "../css/loading.css";
+import "../../css/loading.css";
 
-import "../css/userdecklists.css";
+import "../../css/userDecklists.css";
 
-import { API_BASE_URL } from "../utils/api.js";
+import { API_BASE_URL } from "../../utils/api.js";
 
 const normalizeText = (value) => String(value ?? "").trim();
 

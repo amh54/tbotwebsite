@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { Link } from "react-router-dom";
 
-import Navbar from "../components/navbar.jsx";
+import Navbar from "../../components/navbar.jsx";
 
-import Footer from "../components/footer.jsx";
+import Footer from "../../components/footer.jsx";
 
-import "../css/tutorial.css";
+import "../../css/webinfo/tutorial.css";
 
 const TUTORIAL_STEPS = [
   {

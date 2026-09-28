@@ -1,12 +1,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import Navbar from "../components/navbar";
-import Footer from "../components/footer";
+import Navbar from "../../components/navbar.jsx";
+import Footer from "../../components/footer.jsx";
 
-import "../css/mybugreports.css";
-import "../css/loading.css";
-import { API_BASE_URL} from "../utils/api.js";
+import "../../css/profile/myBugReports.css";
+import "../../css/loading.css";
+import { API_BASE_URL} from "../../utils/api.js";
 
 const STATUS_LABELS = {
   open: "Open",

@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import AddCardsModal from "../components/modals/AddCardsModal.jsx";
-import Footer from "../components/footer";
-import CardManagerHeader from "../components/cardmanager/CardManagerHeader.jsx";
-import CardManagerSummary from "../components/cardmanager/CardManagerSummary.jsx";
-import CardManagerFilters from "../components/cardmanager/CardManagerFilters.jsx";
-import CollectionCard from "../components/cardmanager/CollectionCard.jsx";
+import AddCardsModal from "../../components/modals/AddCardsModal.jsx";
+import Footer from "../../components/footer.jsx";
+import CardManagerHeader from "../../components/cardmanager/CardManagerHeader.jsx";
+import CardManagerSummary from "../../components/cardmanager/CardManagerSummary.jsx";
+import CardManagerFilters from "../../components/cardmanager/CardManagerFilters.jsx";
+import CollectionCard from "../../components/cardmanager/CollectionCard.jsx";
 
-import "../css/cardinfo.css";
-import "../css/cardmanager.css";
-import "../css/loading.css";
+import "../../css/cardInfo.css";
+import "../../css/profile/cardManager.css";
+import "../../css/loading.css";
 
-import { API_BASE_URL, ensureCsrfToken } from "../utils/api.js";
+import { API_BASE_URL, ensureCsrfToken } from "../../utils/api.js";
 
 import {
   MAX_QUANTITY,
@@ -24,7 +24,7 @@ import {
   getSetName,
   getSideRank,
   normalizeText,
-} from "../utils/cardManagerUtils.js";
+} from "../../utils/cardManagerUtils.js";
 
 const requestJson = async (url, options = {}) => {
   const method = (options.method || "GET").toUpperCase();

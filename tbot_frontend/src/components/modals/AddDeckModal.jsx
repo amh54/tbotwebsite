@@ -4,7 +4,7 @@ import Select from "react-select";
 
 import { calculateDeckCost } from "../../utils/deckCost";
 
-import "../../css/deckmodal.css";
+import "../../css/modals/deckModal.css";
 
 import CardRatioEditor from "../../components/admin/CardRatioEditor";
 import DatePicker from "../../components/admin/DatePicker";

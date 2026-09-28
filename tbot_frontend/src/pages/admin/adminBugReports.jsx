@@ -4,22 +4,22 @@ import {
   useState,
 } from "react";
 
-import Footer from "../components/footer";
+import Footer from "../../components/footer.jsx";
 
-import AdminBugReportCard from "../components/admin/AdminBugReportCard";
-import AdminBugReportDetails from "../components/admin/AdminBugReportDetails";
-import AdminBugReportImageModal from "../components/admin/AdminBugReportImageModal";
-import AdminBugReportStats from "../components/admin/AdminBugReportStats";
-import AdminBugReportsToolbar from "../components/admin/AdminBugReportsToolbar";
+import AdminBugReportCard from "../../components/admin/AdminBugReportCard.jsx";
+import AdminBugReportDetails from "../../components/admin/AdminBugReportDetails.jsx";
+import AdminBugReportImageModal from "../../components/admin/AdminBugReportImageModal.jsx";
+import AdminBugReportStats from "../../components/admin/AdminBugReportStats.jsx";
+import AdminBugReportsToolbar from "../../components/admin/AdminBugReportsToolbar.jsx";
 
-import "../css/adminbugreports.css";
-import "../css/loading.css";
+import "../../css/admin/adminbugreports.css";
+import "../../css/loading.css";
 
 import {
   API_BASE_URL,
   ensureCsrfToken,
   getApiErrorMessage,
-} from "../utils/api.js";
+} from "../../utils/api.js";
 
 import {
   getCreatedDate,
@@ -31,7 +31,7 @@ import {
   getReporterName,
   normalizeStatus,
   normalizeText,
-} from "../utils/bugReports.js";
+} from "../../utils/bugReports.js";
 
 function AdminBugReports() {
   const [reports, setReports] = useState([]);
