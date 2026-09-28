@@ -301,8 +301,8 @@ function HomePage() {
               <strong>profile</strong> section to manage how your account visibility.
               Public account decks can be browsed through your public
               profile, while private account decks can only be accessed by someone
-              who has the deck's direct share link. In order to share a deck simply click on your decks below and click the Share decks button. 
-              Send your decks to other players, post them in Discord, or share them anywhere you want.
+              who has the deck's direct share link. In order to share a deck simply click on your decks below and click the Share deck button. 
+              Send your decks to other players or post them in Discord for deck help.
             </p>
             {profileSlug && (
               <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
