@@ -1,4 +1,4 @@
-import RequiredLabel from "./RequiredLabel";
+import RequiredLabel from "./requiredLabel";
 
 const MAX_CARD_RATIO = 4;
 const TARGET_CARD_RATIO_TOTAL = 40;

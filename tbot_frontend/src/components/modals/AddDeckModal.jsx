@@ -6,11 +6,11 @@ import { calculateDeckCost } from "../../utils/deckCost";
 
 import "../../css/modals/deckModal.css";
 
-import CardRatioEditor from "../../components/admin/CardRatioEditor";
-import DatePicker from "../../components/admin/DatePicker";
-import RequiredLabel from "../../components/admin/RequiredLabel";
-import TextArea from "../../components/admin/TextArea";
-import TextField from "../../components/admin/TextField";
+import CardRatioEditor from "../admin/cardRatioEditor";
+import DatePicker from "../admin/datePicker";
+import RequiredLabel from "../admin/requiredLabel";
+import TextArea from "../admin/textArea";
+import TextField from "../admin/textField";
 
 import {
   ARCHETYPE_OPTIONS,

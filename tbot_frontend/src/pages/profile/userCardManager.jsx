@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import AddCardsModal from "../../components/modals/AddCardsModal.jsx";
+import AddCardsModal from "../../components/modals/addCardsModal.jsx";
 import Footer from "../../components/footer.jsx";
 import CardManagerHeader from "../../components/cardmanager/CardManagerHeader.jsx";
 import CardManagerSummary from "../../components/cardmanager/CardManagerSummary.jsx";

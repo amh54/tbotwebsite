@@ -1,4 +1,4 @@
-import RequiredLabel from "./RequiredLabel";
+import RequiredLabel from "./requiredLabel";
 
 const validationErrorStyle = {
   color: "#ff4d4d",

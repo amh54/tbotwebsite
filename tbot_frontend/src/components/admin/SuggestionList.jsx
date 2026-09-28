@@ -1,4 +1,4 @@
-import SuggestionCard from "./SuggestionCard";
+import SuggestionCard from "./suggestionCard";
 
 function SuggestionList({
   suggestions,

@@ -6,13 +6,13 @@ import {
 
 import Footer from "../../components/footer.jsx";
 
-import AdminBugReportCard from "../../components/admin/AdminBugReportCard.jsx";
-import AdminBugReportDetails from "../../components/admin/AdminBugReportDetails.jsx";
-import AdminBugReportImageModal from "../../components/admin/AdminBugReportImageModal.jsx";
-import AdminBugReportStats from "../../components/admin/AdminBugReportStats.jsx";
-import AdminBugReportsToolbar from "../../components/admin/AdminBugReportsToolbar.jsx";
+import AdminBugReportCard from "../../components/admin/adminBugReportCard.jsx";
+import AdminBugReportDetails from "../../components/admin/adminBugReportDetails.jsx";
+import AdminBugReportImageModal from "../../components/admin/adminBugReportImageModal.jsx";
+import AdminBugReportStats from "../../components/admin/adminBugReportStats.jsx";
+import AdminBugReportsToolbar from "../../components/admin/adminBugReportsToolbar.jsx";
 
-import "../../css/admin/adminbugreports.css";
+import "../../css/admin/adminBugReports.css";
 import "../../css/loading.css";
 
 import {
