@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from django.contrib.sitemaps import Sitemap
 
 from .models.decklists import WebDeckbuilder
@@ -36,7 +38,7 @@ class DeckbuilderSitemap(Sitemap):
         return WebDeckbuilder.objects.all()
 
     def location(self, obj):
-        return f"/deckbuilders/{obj.deckbuilder_name}/decks"
+        return f"/deckbuilders/{quote(obj.deckbuilder_name, safe='')}/decks"
 
 
 class ProfileSitemap(Sitemap):
@@ -47,4 +49,4 @@ class ProfileSitemap(Sitemap):
         return UserProfile.objects.filter(is_public=True)
 
     def location(self, obj):
-        return f"/profile/{obj.profile_slug}"
+        return f"/profile/{quote(obj.profile_slug, safe='')}"
