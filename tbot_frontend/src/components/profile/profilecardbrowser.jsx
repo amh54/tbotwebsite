@@ -1,4 +1,4 @@
-import CardBrowser from "../cardbrowser.jsx";
+import CardBrowser from "../cardBrowser.jsx";
 
 export default function ProfileCardBrowser({
   cards = [],

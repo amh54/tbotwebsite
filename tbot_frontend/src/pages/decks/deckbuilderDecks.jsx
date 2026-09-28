@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 
 import DeckCard from "../../components/modals/deckcomponent.jsx";
 
-import FilterDropdown from "../../components/filterdropdown";
+import FilterDropdown from "../../components/filterDropdown.jsx";
 
 import Navbar from "../../components/navbar";
 

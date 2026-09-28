@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import DeckCard from "../../components/modals/deckcomponent.jsx";
 
-import FilterDropdown from "../../components/filterdropdown";
+import FilterDropdown from "../../components/filterDropdown.jsx";
 
 import Footer from "../../components/footer";
 

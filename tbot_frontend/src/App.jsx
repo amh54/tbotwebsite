@@ -12,7 +12,7 @@ import AdminKeepOrScrap from "./pages/admin/adminKeepOrScrap.jsx";
 import Tutorial from "./pages/webinfo/tutorial.jsx";
 import StandaloneDeckPage from "./pages/decks/standAloneDeck.jsx";
 import AdminUserDecks from "./pages/admin/adminUserDecks.jsx";
-import ScrollToTop from "./components/scrolltotop.jsx";
+import ScrollToTop from "./components/scrollToTop.jsx";
 import Admin from "./pages/admin/admin.jsx";
 import DecklistsPage from "./pages/decks/decklists.jsx";
 import CardInfo from "./pages/gameInfo/cardInfo.jsx";

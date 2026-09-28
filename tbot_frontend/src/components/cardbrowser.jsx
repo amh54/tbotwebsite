@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import CardModal from "../components/modals/cardmodal.jsx";
-import Filters from "../components/cardInfo/filters.jsx";
-import Loading from "../components/cardInfo/loading.jsx";
-import GridItem from "../components/cardInfo/gridItem.jsx";
+import CardModal from "./modals/cardmodal.jsx";
+import Filters from "./cardInfo/filters.jsx";
+import Loading from "./cardInfo/loading.jsx";
+import GridItem from "./cardInfo/gridItem.jsx";
 import { API_BASE_URL } from "../utils/api.js";
 import {
   CARD_CACHE_KEY,

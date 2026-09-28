@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import DeckCard from "../../components/modals/deckcomponent.jsx";
 
-import FilterDropdown from "../../components/filterdropdown.jsx";
+import FilterDropdown from "../../components/filterDropdown.jsx";
 
 import Footer from "../../components/footer.jsx";
 

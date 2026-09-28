@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 
 import DeckCard from "../modals/deckcomponent.jsx";
 
-import FilterDropdown from "../filterdropdown";
+import FilterDropdown from "../filterDropdown.jsx";
 
 import useTemporaryMessage from "../../utils/useTemporaryMessage";
 
