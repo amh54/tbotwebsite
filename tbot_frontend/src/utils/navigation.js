@@ -20,6 +20,8 @@ const NAVIGATION = [
     links: [
       { label: "Users", path: "/users" },
       { label: "Discord Server", path: "https://discord.gg/gU53MGSgWA" },
+      {label: "Youtube", path: "https://www.youtube.com/@PVZHTbot"},
+      {label: "Twitch", path: "https://www.twitch.tv/pvzhtbot"}
     ],
   },
   {

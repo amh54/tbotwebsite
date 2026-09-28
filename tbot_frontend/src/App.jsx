@@ -72,11 +72,11 @@ function HomePage() {
 
   return (
     <div className="home">
-         <Seo
-      title="Tbot - Plants vs. Zombies Heroes Database, Decks & More"
-      description="Tbot is a Plants vs. Zombies Heroes community database featuring decks, cards, heroes, deck builders, guides, and more."
-      canonical="/"
-    />
+      <Seo
+        title="Tbot - Plants vs. Zombies Heroes Database, Decks & More"
+        description="Tbot is a Plants vs. Zombies Heroes community database featuring decks, cards, heroes, deck builders, guides, and more."
+        canonical="/"
+      />
       <Navbar />
 
       <section className="hero">
@@ -204,6 +204,16 @@ function HomePage() {
 
             <Link to="/deckbuilders">Explore Deckbuilders →</Link>
           </div>
+          <div className="feature-command">
+            <h3>Site Updates</h3>
+
+            <p>
+              Stay up to date with new deck additions, updates and removals, new
+              features, improvements, and other changes to the Tbot site.
+            </p>
+
+            <Link to="/updates">Explore Tbot Updates →</Link>
+          </div>
         </div>
       </section>
 
@@ -270,26 +280,6 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="discord">
-        <h2>Join the Tbot Discord</h2>
-
-        <p>
-          Tbot is also connected to a Discord community for Plants vs. Zombies
-          Heroes players. Share decks, discuss cards, ask questions, report
-          issues, and use the Tbot bot directly from Discord.
-        </p>
-
-        <p>
-          <a
-            href="https://discord.gg/E5XzKf2PjN"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Join the Tbot Discord
-          </a>
-        </p>
-      </section>
-
       <section className="quick-answers">
         <h2>Quick answers</h2>
 
@@ -323,7 +313,6 @@ function HomePage() {
               Yes. Deck submissions, ideas, corrections, bug reports, deck
               suggestions, and feedback are welcome through the Tbot community.
               <br />
-              <br />
               <a
                 href="https://discord.gg/E5XzKf2PjN"
                 target="_blank"
@@ -340,15 +329,28 @@ function HomePage() {
             <p>
               If you find the website or Discord bot useful, you can help
               support continued development and maintenance through Buy Me a
-              Coffee.
+              Coffee. You could also subscribe to the Youtube channel below or follow the twitch below.
             </p>
-
             <a
               href="https://buymeacoffee.com/pvzhtbot"
               target="_blank"
               rel="noopener noreferrer"
             >
               Support Tbot
+            </a> 
+            <a
+              href="https://www.youtube.com/@PVZHTbot"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Youtube
+            </a>
+            <a
+              href="https://www.twitch.tv/pvzhtbot"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Twitch
             </a>
           </div>
         </div>
