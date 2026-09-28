@@ -19,8 +19,8 @@ import {
 import { useDiscordLoginStatus } from "../../hooks/useDiscordLoginStatus";
 import { useDeckSuggestion } from "../../hooks/useDeckSuggestion";
 
-import AddDeckModal from "./AddDeckModal";
-import EditDeckModal from "./EditDeckModal";
+import AddDeckModal from "./addDeckModal";
+import EditDeckModal from "./editDeckModal";
 
 import DeckCardActions from "../decks/DeckCardActions.jsx";
 import DeckSuggestMessage from "../decks/DeckSuggestMessage.jsx";
