@@ -273,9 +273,9 @@ function HeroInfo() {
 
   return (
     <>
-   <Seo
-  title="PVZ Heroes Hero Database - Plants vs. Zombies Heroes | Tbot"
-  description="Browse the Plants vs. Zombies Heroes hero database on Tbot. Explore Plant and Zombie heroes, their superpowers, abilities, rarities, and card information."
+  <Seo
+  title="PVZH Heroes - PVZ Heroes Hero Database | Tbot"
+  description="Browse the Plants vs. Zombies Heroes hero database on Tbot. Explore PVZH Plant and Zombie heroes, their superpowers, abilities, rarities, and card information."
   canonical="/heroinfo"
 />
       <Navbar />

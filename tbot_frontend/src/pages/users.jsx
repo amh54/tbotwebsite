@@ -307,10 +307,10 @@ function Users() {
   return (
     <div className="users-page">
       <Seo
-        title="PVZ Heroes Players & Community Profiles | Tbot"
-        description="Browse public Plants vs. Zombies Heroes player profiles on Tbot. Discover community members, their profiles, bios, and shared PVZ Heroes decklists."
-        canonical="/users"
-      />
+  title="PVZH Players & Community Profiles - PVZ Heroes | Tbot"
+  description="Browse public Plants vs. Zombies Heroes player profiles on Tbot. Discover the PVZH community, player profiles, bios, and shared PVZ Heroes decklists."
+  canonical="/users"
+/>
 
       <Navbar />
 

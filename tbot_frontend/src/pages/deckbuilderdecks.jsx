@@ -526,10 +526,10 @@ function DeckbuilderDecks() {
   return (
     <div className="deck-page">
       <Seo
-      title={`${displayName} Decklists - PVZ Heroes Decks | Tbot`}
-      description={`Browse ${displayName}'s Plants vs. Zombies Heroes decklists on Tbot.  Explore their PVZ Heroes decks and deckbuilding history.`}
-      canonical={`/deckbuilders/${encodeURIComponent(decodedDeckbuilderName)}/decks`}
-    />
+  title={`${displayName} Decklists - PVZH Decks | PVZ Heroes | Tbot`}
+  description={`Browse ${displayName}'s Plants vs. Zombies Heroes decklists on Tbot. Explore their PVZH and PVZ Heroes decks and deckbuilding history.`}
+  canonical={`/deckbuilders/${encodeURIComponent(decodedDeckbuilderName)}/decks`}
+/>
       <Navbar />
 
       <main className="deck-content">

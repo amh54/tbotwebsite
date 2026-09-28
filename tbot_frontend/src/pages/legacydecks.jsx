@@ -455,10 +455,10 @@ function LegacyDecksPage() {
   return (
     <div className="deck-page">
       <Seo
-        title="PVZ Heroes Legacy Decks | Tbot"
-        description="Browse legacy Plants vs. Zombies Heroes decks on Tbot. Explore classic PVZ Heroes decklists by hero, category, archetype, creator, and collection."
-        canonical="/legacy"
-      />
+  title="PVZH Legacy Decks - PVZ Heroes | Tbot"
+  description="Browse legacy Plants vs. Zombies Heroes decks on Tbot. Explore classic PVZH and PVZ Heroes decklists by hero, category, archetype, creator, and collection."
+  canonical="/legacy"
+/>
 
       <Navbar />
 

@@ -303,11 +303,11 @@ function Deckbuilders() {
 
   return (
     <div className="users-page">
-      <Seo
-        title="PVZ Heroes Deck Builders - Plants vs. Zombies Heroes | Tbot"
-        description="Browse PVZ Heroes deck builders on Tbot. Explore community deckbuilders and discover their Plants vs. Zombies Heroes decks."
-        canonical="/deckbuilders"
-      />
+  <Seo
+    title="PVZH Deck Builders - PVZ Heroes Deck Builders | Tbot"
+    description="Browse PVZH deck builders on Tbot. Explore community deckbuilders and discover their Plants vs. Zombies Heroes decks."
+    canonical="/deckbuilders"
+  />
       <Navbar />
 
       <main className="users-content">

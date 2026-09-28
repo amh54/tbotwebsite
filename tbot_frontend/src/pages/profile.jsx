@@ -660,11 +660,11 @@ function Profile() {
   return (
     <div className="profile-page-wrapper">
       <Seo
-        title={`${profileName} - PVZ Heroes Player Profile | Tbot`}
-        description={`View ${profileName}'s Plants vs. Zombies Heroes player profile on Tbot. Explore their profile, card collection, and PVZ Heroes decklists.`}
-        canonical={`/profile/${encodeURIComponent(canonicalSlug)}`}
-        noindex={!profile.is_public}
-      />
+  title={`${profileName} - PVZH Player Profile | PVZ Heroes | Tbot`}
+  description={`View ${profileName}'s Plants vs. Zombies Heroes player profile on Tbot. Explore their PVZH and PVZ Heroes decklists, card collection, and profile.`}
+  canonical={`/profile/${encodeURIComponent(canonicalSlug)}`}
+  noindex={!profile.is_public}
+/>
 
       <Navbar />
 

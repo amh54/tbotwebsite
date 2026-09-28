@@ -9,9 +9,9 @@ import "../css/loading.css";
 export default function CardInfo() {
   return (
     <>
-    <Seo
-  title="PVZ Heroes Cards - Plants vs. Zombies Heroes Card Database | Tbot"
-  description="Browse the complete Plants vs. Zombies Heroes card database on Tbot. Search and filter PVZ Heroes cards by class, type, cost, attack, health, tribe, rarity, set, and abilities."
+   <Seo
+  title="PVZH Cards - PVZ Heroes Card Database | Tbot"
+  description="Browse the complete PVZH card database on Tbot. Search and filter Plants vs. Zombies Heroes cards by class, type, cost, attack, health, tribe, rarity, set, and abilities."
   canonical="/cardinfo"
 />
       <Navbar />

@@ -526,11 +526,11 @@ function DecklistsPage() {
 
   return (
     <div className="deck-page">
-        <Seo
-      title="PVZ Heroes Decks - Plants vs. Zombies Heroes Decklists | Tbot"
-      description="Browse the best Plants vs. Zombies Heroes decks on Tbot. Find competitive, budget, ladder, meme, aggro, combo, control, midrange, and tempo PVZ Heroes decks."
-      canonical="/decklists"
-    />
+       <Seo
+  title="PVZH Decks - PVZ Heroes Decklists | Tbot"
+  description="Browse Plants vs. Zombies Heroes decks on Tbot. Find competitive, budget, ladder, meme, aggro, combo, control, midrange, and tempo PVZH decks."
+  canonical="/decklists"
+/>
       <Navbar />
 
       <main className="deck-content">

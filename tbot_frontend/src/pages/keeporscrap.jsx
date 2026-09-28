@@ -458,10 +458,10 @@ function KeepOrScrap() {
   return (
     <div className="keep-or-scrap-page">
        <Seo
-      title="PVZ Heroes Keep or Scrap - Card Guide | Tbot"
-      description="Use Tbot's Plants vs. Zombies Heroes Keep or Scrap guide to learn which PVZ Heroes cards to keep, scrap, or craft based on their usefulness and value."
-      canonical="/keeporscrap"
-    />
+  title="PVZH Keep or Scrap - PVZ Heroes Card Guide | Tbot"
+  description="Use Tbot's Plants vs. Zombies Heroes Keep or Scrap guide to learn which PVZH cards to keep, scrap, or craft based on their usefulness and value."
+  canonical="/keeporscrap"
+/>
       <Navbar />
 
       <main className="kos-content">
