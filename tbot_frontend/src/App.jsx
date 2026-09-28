@@ -31,7 +31,7 @@ import AdminLegacyDecks from "./pages/admin/adminLegacyDecks.jsx";
 import Users from "./pages/users.jsx";
 import UserDeckManager from "./pages/profile/userDeckManager.jsx";
 import UserDashboard from "./pages/profile/userDashboard.jsx";
-import UserCardManager from "./pages/profile/userCardManager.jsx";
+import UserCardManager from "./pages/profile/UserCardManager.jsx";
 import AdminCards from "./pages/admin/adminCards.jsx";
 import AdminBugReports from "./pages/admin/adminBugReports.jsx";
 import MyBugReports from "./pages/profile/myBugReports.jsx";
