@@ -22,8 +22,8 @@ import { useDeckSuggestion } from "../../hooks/useDeckSuggestion";
 import AddDeckModal from "./addDeckModal";
 import EditDeckModal from "./editDeckModal";
 
-import DeckCardActions from "../decks/DeckCardActions.jsx";
-import DeckSuggestMessage from "../decks/DeckSuggestMessage.jsx";
+import DeckCardActions from "../decks/deckCardActions.jsx";
+import DeckSuggestMessage from "../decks/deckSuggestMessage.jsx";
 
 import "../../css/modals/deckModal.css";
 
