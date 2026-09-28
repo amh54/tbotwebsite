@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import "./css/App.css";
+import "./css/app.css";
 import "./css/navbar.css";
 import Seo from "./components/seo.jsx";
 import { Analytics } from "@vercel/analytics/react";
