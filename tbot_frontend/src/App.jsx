@@ -104,10 +104,26 @@ function HomePage() {
 
             <p>
               Browse community decklists and find decks by hero, class,
-              archetype, category, name, and other information.
+              archetype, category, name, and other information. New Decks are
+              being actively tested through the Youtube and Twitch channels
+              below
             </p>
 
             <Link to="/decklists">Explore Decklists →</Link>
+            <a
+              href="https://www.youtube.com/@PVZHTbot"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Youtube
+            </a>
+            <a
+              href="https://www.twitch.tv/pvzhtbot"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Twitch
+            </a>
           </div>
 
           <div className="feature-command">
@@ -277,6 +293,23 @@ function HomePage() {
               <Link to="/decklists">Community Decklists →</Link>
             </p>
           </div>
+          <div className="quick-answer-card">
+            <h3>Share Your Decks</h3>
+            <p>
+              You can upload new decks from your user dashboard. 
+              To share decks open your profile, then go to your{" "}
+              <strong>profile</strong> section to manage how your account visibility.
+              Public account decks can be browsed through your public
+              profile, while private account decks can only be accessed by someone
+              who has the deck's direct share link. In order to share a deck simply click on your decks below and click the Share decks button. 
+              Send your decks to other players, post them in Discord, or share them anywhere you want.
+            </p>
+            {profileSlug && (
+              <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
+                View Your Decks →
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 
@@ -329,7 +362,8 @@ function HomePage() {
             <p>
               If you find the website or Discord bot useful, you can help
               support continued development and maintenance through Buy Me a
-              Coffee. You could also subscribe to the Youtube channel below or follow the twitch below.
+              Coffee. You could also subscribe to the Youtube channel below or
+              follow the twitch below.
             </p>
             <a
               href="https://buymeacoffee.com/pvzhtbot"
@@ -337,7 +371,7 @@ function HomePage() {
               rel="noopener noreferrer"
             >
               Support Tbot
-            </a> 
+            </a>
             <a
               href="https://www.youtube.com/@PVZHTbot"
               target="_blank"

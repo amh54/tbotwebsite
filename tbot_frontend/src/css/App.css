@@ -167,6 +167,11 @@ body {
     gap 0.2s ease;
 }
 
+.feature-command a + a,
+.quick-answer-card a + a {
+  margin-left: 8px;
+}
+
 .feature-command a:hover,
 .quick-answer-card a:hover {
   border-color: #8fe38b;
