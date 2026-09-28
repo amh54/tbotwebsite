@@ -8,19 +8,19 @@ import Footer from "../../components/footer.jsx";
 
 import Seo from "../../components/seo.jsx";
 
-import ProfileHeader from "../../components/profile/profileheader.jsx";
+import ProfileHeader from "../../components/profile/profileHeader.jsx";
 
-import ProfileTabs from "../../components/profile/profiletabs.jsx";
+import ProfileTabs from "../../components/profile/profileTabs.jsx";
 
-import ProfileCardBrowser from "../../components/profile/profilecardbrowser.jsx";
+import ProfileCardBrowser from "../../components/profile/profileCardBrowser.jsx";
 
-import ProfileDeckBrowser from "../../components/profile/profiledeckbrowser.jsx";
+import ProfileDeckBrowser from "../../components/profile/profileDeckBrowser.jsx";
 
 import ProfileSavedDecks from "../../components/profile/profileSavedDecks.jsx";
 
-import ProfileShareMessage from "../../components/profile/profilesharemessage.jsx";
+import ProfileShareMessage from "../../components/profile/profileShareMessage.jsx";
 
-import ProfileEditModal from "../../components/profile/profileeditmodal.jsx";
+import ProfileEditModal from "../../components/profile/profileEditModal.jsx";
 
 import "../../css/profile/profile.css";
 
