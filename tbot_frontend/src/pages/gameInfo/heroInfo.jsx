@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import CardModal from "../../components/modals/cardmodal.jsx";
+import CardModal from "../../components/modals/cardModal.jsx";
 import Navbar from "../../components/navbar.jsx";
 import Footer from "../../components/footer.jsx";
 import HeroCard from "../../components/heroInfo/heroCard.jsx";

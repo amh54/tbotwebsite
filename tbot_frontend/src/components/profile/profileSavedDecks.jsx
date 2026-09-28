@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import DeckCard from "../modals/deckComponent.jsx.jsx";
+import DeckCard from "../modals/deckComponent.jsx";
 
 import FilterDropdown from "../filterDropdown.jsx";
 

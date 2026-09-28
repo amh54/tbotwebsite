@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useParams } from "react-router-dom";
 
-import DeckCard from "../components/modals/deckComponent.jsx.jsx";
+import DeckCard from "../components/modals/deckComponent.jsx";
 
 import FilterDropdown from "../components/filterDropdown.jsx";
 

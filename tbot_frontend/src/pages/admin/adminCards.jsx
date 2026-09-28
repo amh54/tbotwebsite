@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import CardModal from "../../components/modals/cardmodal.jsx";
+import CardModal from "../../components/modals/cardModal.jsx";
 import Navbar from "../../components/navbar.jsx";
 import Footer from "../../components/footer.jsx";
 import { API_BASE_URL, ensureCsrfToken } from "../../utils/api.js";

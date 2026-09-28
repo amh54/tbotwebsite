@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import CardModal from "./modals/cardmodal.jsx";
+import CardModal from "./modals/cardModal.jsx";
 import Filters from "./cardInfo/filters.jsx";
 import Loading from "./cardInfo/loading.jsx";
 import GridItem from "./cardInfo/gridItem.jsx";
