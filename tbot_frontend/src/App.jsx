@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import "./css/app.css";
+import "./css/App.css";
 import "./css/navbar.css";
 import Seo from "./components/seo.jsx";
 import { Analytics } from "@vercel/analytics/react";
@@ -31,7 +31,7 @@ import AdminLegacyDecks from "./pages/admin/adminLegacyDecks.jsx";
 import Users from "./pages/users.jsx";
 import UserDeckManager from "./pages/profile/userDeckManager.jsx";
 import UserDashboard from "./pages/profile/userDashboard.jsx";
-import UserCardManager from "./pages/profile/UserCardManager.jsx";
+import UserCardManager from "./pages/profile/userCardManager.jsx";
 import AdminCards from "./pages/admin/adminCards.jsx";
 import AdminBugReports from "./pages/admin/adminBugReports.jsx";
 import MyBugReports from "./pages/profile/myBugReports.jsx";
