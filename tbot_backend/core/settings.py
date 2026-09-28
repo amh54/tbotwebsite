@@ -446,6 +446,7 @@ DATABASES = {
 DATABASES["default"]["OPTIONS"] = {
     "sslmode": "require",
     "connect_timeout": 10,
+    "application_name": "tbot_django",
 }
 
 
