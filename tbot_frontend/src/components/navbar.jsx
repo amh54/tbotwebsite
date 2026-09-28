@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 
 import "../css/navbar.css";
 import SuggestionModal from "../components/modals/suggestionModal.jsx";
-import NavbarDesktop from "./NavbarDesktop";
-import NavbarMobile from "./NavbarMobile";
-import NavbarAccount, { MobileAccount } from "./NavbarAccount";
+import NavbarDesktop from "./navbarDesktop.jsx";
+import NavbarMobile from "./navbarMobile.jsx";
+import NavbarAccount, { MobileAccount } from "./navbarAccount.jsx";
 import BugReportModal from "../components/modals/BugReportModal.jsx";
 
 import { API_BASE_URL, ensureCsrfToken } from "../utils/api";
