@@ -1,0 +1,111 @@
+.status-dropdown {
+  position: relative;
+  display: inline-block;
+  min-width: 170px;
+}
+
+.status-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.status-dropdown-trigger:hover:not(:disabled),
+.status-dropdown-trigger[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.status-dropdown-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status-dropdown-label {
+  flex: 1;
+}
+
+.status-dropdown-caret {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.status-dropdown-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 20;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background: #141a26;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+
+.status-dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.status-dropdown-option:hover,
+.status-dropdown-option:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
+.status-dropdown-option.active {
+  background: rgba(255, 255, 255, 0.16);
+  font-weight: 600;
+}
+
+.status-dropdown-dot {
+  flex-shrink: 0;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+}
+
+.status-dropdown-dot-pending {
+  background: #f5a524;
+}
+
+.status-dropdown-dot-reviewing {
+  background: #3b9cff;
+}
+
+.status-dropdown-dot-planned {
+  background: #a06bff;
+}
+
+.status-dropdown-dot-completed {
+  background: #2ecc71;
+}
+
+.status-dropdown-dot-declined {
+  background: #ef4444;
+}

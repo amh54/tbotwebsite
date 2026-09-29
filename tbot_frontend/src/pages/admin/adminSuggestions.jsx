@@ -4,7 +4,7 @@ import Footer from "../../components/footer.jsx";
 
 import "../../css/admin/adminBugReports.css";
 import "../../css/loading.css";
-
+import "../../css/decklists.css";
 import { ensureCsrfToken } from "../../utils/api.js";
 
 import {
@@ -19,9 +19,12 @@ import {
 
 import {
   deleteSuggestion,
+  deleteUserDeckSuggestion,
   fetchSuggestions,
+  fetchUserDeckSuggestions,
   saveSuggestionDetails,
   updateSuggestionStatus,
+  updateUserDeckSuggestionStatus,
 } from "../../utils/adminSuggestionsApi.js";
 
 import SuggestionDetailsModal from "../../components/admin/suggestionDetailsModal.jsx";
@@ -31,19 +34,24 @@ import SuggestionList from "../../components/admin/suggestionList.jsx";
 import SuggestionLoading from "../../components/admin/suggestionLoading.jsx";
 import SuggestionStats from "../../components/admin/suggestionStats.jsx";
 import SuggestionToolbar from "../../components/admin/suggestionToolbar.jsx";
+import UserDeckSuggestionCard from "../../components/decks/userDeckSuggestionCard.jsx";
 
 function AdminSuggestions() {
   const [suggestions, setSuggestions] = useState([]);
+  const [deckSuggestions, setDeckSuggestions] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deckError, setDeckError] = useState("");
 
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [updatingDeckId, setUpdatingDeckId] = useState(null);
+  const [deletingDeckId, setDeletingDeckId] = useState(null);
 
   const [actionError, setActionError] = useState("");
 
@@ -65,12 +73,28 @@ function AdminSuggestions() {
     });
   }, []);
 
+  const loadDeckSuggestions = async () => {
+    try {
+      setDeckError("");
+
+      const results = await fetchUserDeckSuggestions();
+
+      setDeckSuggestions(results);
+    } catch (err) {
+      console.error("Unable to load deck suggestions:", err);
+      setDeckError(err.message || "Unable to load deck suggestions right now.");
+    }
+  };
+
   const loadSuggestions = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const results = await fetchSuggestions();
+      const [results] = await Promise.all([
+        fetchSuggestions(),
+        loadDeckSuggestions(),
+      ]);
 
       setSuggestions(results);
     } catch (err) {
@@ -120,6 +144,36 @@ function AdminSuggestions() {
       return matchesSearch && matchesStatus && matchesCategory;
     });
   }, [suggestions, search, statusFilter, categoryFilter]);
+
+  const filteredDeckSuggestions = useMemo(() => {
+    const query = normalizeText(search);
+
+    return deckSuggestions.filter((deckSuggestion) => {
+      const status = normalizeStatus(deckSuggestion?.status);
+
+      const searchText = [
+        deckSuggestion?.deck_name,
+        deckSuggestion?.hero,
+        deckSuggestion?.category,
+        deckSuggestion?.archetype,
+        deckSuggestion?.creator,
+        deckSuggestion?.description,
+        deckSuggestion?.consent_status,
+        deckSuggestion?.suggested_by_username,
+        deckSuggestion?.suggested_by_display_name,
+        deckSuggestion?.suggested_by_discord_id,
+      ]
+        .filter(Boolean)
+        .map(normalizeText)
+        .join(" ");
+
+      const matchesSearch = !query || searchText.includes(query);
+
+      const matchesStatus = statusFilter === "all" || status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [deckSuggestions, search, statusFilter]);
 
   const counts = useMemo(() => {
     const result = {
@@ -196,6 +250,48 @@ function AdminSuggestions() {
       );
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleDeckStatusChange = async (deckSuggestion, newStatus) => {
+    const suggestionId = deckSuggestion?.id;
+
+    if (suggestionId === undefined || suggestionId === null) {
+      setActionError("This deck suggestion does not have a valid ID.");
+      return;
+    }
+
+    const normalizedStatus = normalizeStatus(newStatus);
+
+    try {
+      setUpdatingDeckId(suggestionId);
+      setActionError("");
+
+      const updatedSuggestion = await updateUserDeckSuggestionStatus(
+        suggestionId,
+        normalizedStatus,
+      );
+
+      setDeckSuggestions((currentSuggestions) =>
+        currentSuggestions.map((currentSuggestion) =>
+          String(currentSuggestion.id) === String(suggestionId)
+            ? updatedSuggestion || {
+                ...currentSuggestion,
+                status: normalizedStatus,
+              }
+            : currentSuggestion,
+        ),
+      );
+    } catch (error) {
+      console.error("Unable to update deck suggestion:", error);
+
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to update deck suggestion.",
+      );
+    } finally {
+      setUpdatingDeckId(null);
     }
   };
 
@@ -297,6 +393,43 @@ function AdminSuggestions() {
     }
   };
 
+  const handleDeckDelete = async (deckSuggestion) => {
+    const suggestionId = deckSuggestion?.id;
+
+    if (suggestionId === undefined || suggestionId === null) {
+      setActionError("This deck suggestion does not have a valid ID.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete "${deckSuggestion?.deck_name || "this deck suggestion"}"?\n\nThis cannot be undone.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingDeckId(suggestionId);
+      setActionError("");
+
+      await deleteUserDeckSuggestion(suggestionId);
+
+      setDeckSuggestions((currentSuggestions) =>
+        currentSuggestions.filter(
+          (currentSuggestion) =>
+            String(currentSuggestion.id) !== String(suggestionId),
+        ),
+      );
+    } catch (err) {
+      console.error("Unable to delete deck suggestion:", err);
+
+      setActionError(err.message || "Unable to delete deck suggestion.");
+    } finally {
+      setDeletingDeckId(null);
+    }
+  };
+
   const openDetails = (suggestion) => {
     setSelectedSuggestion(suggestion);
     setAdminResponse(suggestion?.admin_response || "");
@@ -309,6 +442,11 @@ function AdminSuggestions() {
     setAdminResponse("");
     setAdminNotes("");
   };
+
+  const showSiteSuggestions = categoryFilter !== "deck";
+
+  const showDeckSuggestions =
+    categoryFilter === "all" || categoryFilter === "deck";
 
   if (loading) {
     return <SuggestionLoading />;
@@ -379,33 +517,80 @@ function AdminSuggestions() {
               setStatusFilter={setStatusFilter}
             />
 
-            <div className="admin-bugreports-results">
-              <span>
-                Showing <strong>{filteredSuggestions.length}</strong> of{" "}
-                <strong>{suggestions.length}</strong> suggestions
-              </span>
-            </div>
+            {showSiteSuggestions && (
+              <>
+                <div className="admin-bugreports-results">
+                  <span>
+                    Showing <strong>{filteredSuggestions.length}</strong> of{" "}
+                    <strong>{suggestions.length}</strong> suggestions
+                  </span>
+                </div>
 
-            {filteredSuggestions.length === 0 ? (
-              <SuggestionEmptyState
-                search={search}
-                statusFilter={statusFilter}
-                categoryFilter={categoryFilter}
-                clearFilters={() => {
-                  setSearch("");
-                  setStatusFilter("all");
-                  setCategoryFilter("all");
-                }}
-              />
-            ) : (
-              <SuggestionList
-                suggestions={filteredSuggestions}
-                updatingId={updatingId}
-                deletingId={deletingId}
-                onStatusChange={handleStatusChange}
-                onDelete={handleDelete}
-                onViewDetails={openDetails}
-              />
+                {filteredSuggestions.length === 0 ? (
+                  <SuggestionEmptyState
+                    search={search}
+                    statusFilter={statusFilter}
+                    categoryFilter={categoryFilter}
+                    clearFilters={() => {
+                      setSearch("");
+                      setStatusFilter("all");
+                      setCategoryFilter("all");
+                    }}
+                  />
+                ) : (
+                  <SuggestionList
+                    suggestions={filteredSuggestions}
+                    updatingId={updatingId}
+                    deletingId={deletingId}
+                    onStatusChange={handleStatusChange}
+                    onDelete={handleDelete}
+                    onViewDetails={openDetails}
+                  />
+                )}
+              </>
+            )}
+
+            {showDeckSuggestions && (
+              <>
+                <h2>Deck Suggestions</h2>
+
+                {deckError && (
+                  <SuggestionError
+                    title="Unable to load deck suggestions"
+                    message={deckError}
+                  />
+                )}
+
+                {!deckError && (
+                  <>
+                    <div className="admin-bugreports-results">
+                      <span>
+                        Showing <strong>{filteredDeckSuggestions.length}</strong>{" "}
+                        of <strong>{deckSuggestions.length}</strong> deck
+                        suggestions
+                      </span>
+                    </div>
+
+                    {filteredDeckSuggestions.length === 0 ? (
+                      <p>No deck suggestions match the current filters.</p>
+                    ) : (
+                      <div className="deck-grid">
+                        {filteredDeckSuggestions.map((deckSuggestion) => (
+                          <UserDeckSuggestionCard
+                            key={deckSuggestion.id}
+                            suggestion={deckSuggestion}
+                            admin
+                            updatingId={updatingDeckId}
+                            deletingId={deletingDeckId}
+                            onStatusChange={handleDeckStatusChange}
+                            onDelete={handleDeckDelete}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
             )}
           </>
         )}

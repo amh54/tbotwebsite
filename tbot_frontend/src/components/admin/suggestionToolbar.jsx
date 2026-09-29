@@ -40,6 +40,7 @@ function SuggestionToolbar({
         <option value="ui">UI / Design</option>
         <option value="performance">Performance</option>
         <option value="other">Other</option>
+        <option value="deck">Decks</option>
       </select>
 
       <select

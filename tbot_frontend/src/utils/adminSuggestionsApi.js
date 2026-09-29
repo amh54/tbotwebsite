@@ -3,6 +3,9 @@ import { API_BASE_URL, ensureCsrfToken, getApiErrorMessage } from "./api.js";
 const getSuggestionUrl = (suggestionId) =>
   `${API_BASE_URL}/tbotapp/admin/suggestions/${suggestionId}/`;
 
+const getUserDeckSuggestionUrl = (suggestionId) =>
+  `${API_BASE_URL}/tbotapp/admin/user-deck-suggestions/${suggestionId}/`;
+
 export const fetchSuggestions = async () => {
   const response = await fetch(`${API_BASE_URL}/tbotapp/admin/suggestions/`, {
     method: "GET",
@@ -42,7 +45,57 @@ export const fetchSuggestions = async () => {
         : [];
 };
 
-const makeRequest = async (suggestionId, method, body, errorFallback) => {
+export const fetchUserDeckSuggestions = async () => {
+  const response = await fetch(
+    `${API_BASE_URL}/tbotapp/admin/user-deck-suggestions/`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const message = await getApiErrorMessage(
+      response,
+      `Request failed with status ${response.status}`,
+    );
+
+    if (response.status === 401) {
+      throw new Error(
+        "You must be logged in with Discord to access the admin page.",
+      );
+    }
+
+    if (response.status === 403) {
+      throw new Error(
+        "Owner permissions are required to access deck suggestions.",
+      );
+    }
+
+    throw new Error(message);
+  }
+
+  const data = await response.json();
+
+  return Array.isArray(data)
+    ? data
+    : Array.isArray(data?.results)
+      ? data.results
+      : Array.isArray(data?.suggestions)
+        ? data.suggestions
+        : [];
+};
+
+const makeRequest = async (
+  suggestionId,
+  method,
+  body,
+  errorFallback,
+  getUrl = getSuggestionUrl,
+) => {
   /*
    * Get the current CSRF token before every mutating request.
    */
@@ -58,7 +111,7 @@ const makeRequest = async (suggestionId, method, body, errorFallback) => {
       headers["Content-Type"] = "application/json";
     }
 
-    return fetch(getSuggestionUrl(suggestionId), {
+    return fetch(getUrl(suggestionId), {
       method,
       credentials: "include",
       headers,
@@ -130,5 +183,27 @@ export const deleteSuggestion = async (suggestionId) => {
     "DELETE",
     undefined,
     "Unable to delete suggestion",
+  );
+};
+
+export const updateUserDeckSuggestionStatus = async (suggestionId, status) => {
+  return makeRequest(
+    suggestionId,
+    "PATCH",
+    {
+      status,
+    },
+    "Unable to update deck suggestion",
+    getUserDeckSuggestionUrl,
+  );
+};
+
+export const deleteUserDeckSuggestion = async (suggestionId) => {
+  return makeRequest(
+    suggestionId,
+    "DELETE",
+    undefined,
+    "Unable to delete deck suggestion",
+    getUserDeckSuggestionUrl,
   );
 };

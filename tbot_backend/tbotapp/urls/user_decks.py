@@ -1,6 +1,11 @@
 from django.urls import path
 
 from ..views.download_deck import download_user_deck_image
+from ..views.user_deck_suggestion_manage import (
+    admin_user_deck_suggestion_detail,
+    admin_user_deck_suggestions,
+    my_user_deck_suggestions,
+)
 from ..views.user_deck_suggestions import (
     user_deck_suggestion_create,
     user_deck_suggestion_status,
@@ -54,6 +59,21 @@ urlpatterns = [
         "user-deck-suggestions/<int:suggestion_id>/status/",
         user_deck_suggestion_status,
         name="user_deck_suggestion_status",
+    ),
+    path(
+        "user-deck-suggestions/",
+        my_user_deck_suggestions,
+        name="my_user_deck_suggestions",
+    ),
+    path(
+        "admin/user-deck-suggestions/",
+        admin_user_deck_suggestions,
+        name="admin_user_deck_suggestions",
+    ),
+    path(
+        "admin/user-deck-suggestions/<int:suggestion_id>/",
+        admin_user_deck_suggestion_detail,
+        name="admin_user_deck_suggestion_detail",
     ),
     path(
         "user-decks/<int:deck_id>/download/",

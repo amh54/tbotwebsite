@@ -31,7 +31,7 @@ class UserDeck(models.Model):
 
 class UserDeckSuggestion(models.Model):
     id = models.BigAutoField(primary_key=True)
-
+    published_deckid = models.IntegerField(null=True, blank=True)
     deck_id = models.BigIntegerField()
     deck_name = models.CharField(max_length=255)
     hero = models.CharField(max_length=100)
@@ -74,7 +74,7 @@ class UserDeckSuggestion(models.Model):
 
     created_at = models.DateTimeField(db_default=Now())
     updated_at = models.DateTimeField(db_default=Now())
-
+    discord_thread_url = models.TextField(blank=True, default="")
     discord_message_id = models.BigIntegerField(null=True)
     discord_update_pending = models.BooleanField(default=False)
     discord_thread_id = models.BigIntegerField(null=True)

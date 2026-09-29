@@ -4,9 +4,25 @@ import Navbar from "../../components/navbar.jsx";
 
 import Footer from "../../components/footer.jsx";
 
+import "../../css/decklists.css";
+
+import UserDeckSuggestionCard from "../../components/decks/userDeckSuggestionCard.jsx";
+
+import FilterDropdown from "../../components/filterDropdown.jsx";
+
+import useTemporaryMessage from "../../utils/useTemporaryMessage.js";
+
+import {
+  buildCollectionMap,
+  getFilterOptions,
+  sortDecks,
+  filterDecks,
+} from "../../utils/deckFilters.js";
+
 import "../../css/profile/myBugReports.css";
 
 import "../../css/loading.css";
+
 import { API_BASE_URL } from "../../utils/api.js";
 
 const STATUS_LABELS = {
@@ -70,26 +86,91 @@ function formatDate(value) {
 
 function MySuggestions() {
   const [suggestions, setSuggestions] = useState([]);
+  const [deckSuggestions, setDeckSuggestions] = useState([]);
+  const [allCards, setAllCards] = useState([]);
+  const [discordUser, setDiscordUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [userCollection, setUserCollection] = useState([]);
+  const [collectionLoading, setCollectionLoading] = useState(false);
+  const [collectionLoaded, setCollectionLoaded] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
   const [filter, setFilter] = useState("all");
 
+  const [search, setSearch] = useState("");
+  const [side, setSide] = useState("All");
+  const [hero, setHero] = useState([]);
+  const [category, setCategory] = useState([]);
+  const [archetype, setArchetype] = useState([]);
+  const [collection, setCollection] = useState(null);
+
+  const {
+    visible: collectionLoginMessage,
+    show: showCollectionLoginMessage,
+    hide: hideCollectionLoginMessage,
+  } = useTemporaryMessage(4000);
+
   useEffect(() => {
     let cancelled = false;
+
+    const loadDeckSuggestions = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/user-deck-suggestions/`,
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
+
+        let data = {};
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            data.detail ||
+              data.error ||
+              "Unable to load your deck suggestions.",
+          );
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        if (Array.isArray(data)) {
+          setDeckSuggestions(data);
+        } else if (Array.isArray(data.results)) {
+          setDeckSuggestions(data.results);
+        } else if (Array.isArray(data.suggestions)) {
+          setDeckSuggestions(data.suggestions);
+        } else {
+          setDeckSuggestions([]);
+        }
+      } catch (requestError) {
+        console.error("Unable to load deck suggestions:", requestError);
+      }
+    };
 
     const loadSuggestions = async () => {
       setLoading(true);
       setError("");
 
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/suggestions/my/`,
-          {
+        const [response] = await Promise.all([
+          fetch(`${API_BASE_URL}/tbotapp/suggestions/my/`, {
             method: "GET",
             credentials: "include",
-          },
-        );
+          }),
+          loadDeckSuggestions(),
+        ]);
 
         let data = {};
 
@@ -138,7 +219,156 @@ function MySuggestions() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCards = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`);
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (cancelled) {
+          return;
+        }
+
+        if (Array.isArray(data)) {
+          setAllCards(data);
+        } else if (Array.isArray(data.results)) {
+          setAllCards(data.results);
+        }
+      } catch (requestError) {
+        console.error("Unable to load card data:", requestError);
+      }
+    };
+
+    loadCards();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAuth = async () => {
+      setAuthLoading(true);
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/auth/discord/me/`,
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
+
+        if (!response.ok) {
+          if (!cancelled) {
+            setDiscordUser(null);
+          }
+
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!cancelled) {
+          setDiscordUser(data);
+        }
+      } catch (requestError) {
+        console.error("Unable to load Discord authentication:", requestError);
+
+        if (!cancelled) {
+          setDiscordUser(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setAuthLoading(false);
+        }
+      }
+    };
+
+    loadAuth();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCollection = async () => {
+      if (authLoading || !discordUser) {
+        setUserCollection([]);
+        setCollectionLoaded(false);
+        return;
+      }
+
+      setCollectionLoading(true);
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/user-cards/`,
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Unable to load your collection.");
+        }
+
+        const data = await response.json();
+
+        if (cancelled) {
+          return;
+        }
+
+        if (Array.isArray(data)) {
+          setUserCollection(data);
+        } else if (Array.isArray(data.results)) {
+          setUserCollection(data.results);
+        } else if (Array.isArray(data.cards)) {
+          setUserCollection(data.cards);
+        } else {
+          setUserCollection([]);
+        }
+
+        setCollectionLoaded(true);
+      } catch (requestError) {
+        console.error("Unable to load user collection:", requestError);
+
+        if (!cancelled) {
+          setUserCollection([]);
+          setCollectionLoaded(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setCollectionLoading(false);
+        }
+      }
+    };
+
+    loadCollection();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, discordUser]);
+
   const filteredSuggestions = useMemo(() => {
+    if (filter === "decks") {
+      return [];
+    }
+
     if (filter === "all") {
       return suggestions;
     }
@@ -146,30 +376,144 @@ function MySuggestions() {
     return suggestions.filter((suggestion) => suggestion.status === filter);
   }, [suggestions, filter]);
 
+  const sortedDeckSuggestions = useMemo(
+    () => sortDecks(deckSuggestions),
+    [deckSuggestions],
+  );
+
+  const collectionMap = useMemo(
+    () => buildCollectionMap(userCollection),
+    [userCollection],
+  );
+
+  const {
+    heroOptions,
+    categoryOptions,
+    archetypeOptions,
+    collectionOptions,
+  } = useMemo(
+    () =>
+      getFilterOptions({
+        decks: sortedDeckSuggestions,
+        allCards,
+        search,
+        side,
+        hero,
+        category,
+        archetype,
+        collection,
+        collectionMap,
+        collectionLoading,
+        collectionLoaded,
+        discordUser,
+        authLoading,
+      }),
+    [
+      sortedDeckSuggestions,
+      allCards,
+      search,
+      side,
+      hero,
+      category,
+      archetype,
+      collection,
+      collectionMap,
+      collectionLoading,
+      collectionLoaded,
+      discordUser,
+      authLoading,
+    ],
+  );
+
+  const filteredDeckSuggestions = useMemo(
+    () =>
+      filterDecks({
+        decks: sortedDeckSuggestions,
+        search,
+        side,
+        hero,
+        category,
+        archetype,
+        collection,
+        collectionMap,
+        collectionLoading,
+        collectionLoaded,
+        discordUser,
+      }),
+    [
+      sortedDeckSuggestions,
+      search,
+      side,
+      hero,
+      category,
+      archetype,
+      collection,
+      collectionMap,
+      collectionLoading,
+      collectionLoaded,
+      discordUser,
+    ],
+  );
+
   const counts = useMemo(() => {
+    const combined = [...suggestions, ...deckSuggestions];
+
     return {
-      all: suggestions.length,
-      pending: suggestions.filter(
+      all: combined.length,
+      decks: deckSuggestions.length,
+      pending: combined.filter(
         (suggestion) => suggestion.status === "pending",
       ).length,
-      reviewing: suggestions.filter(
+      reviewing: combined.filter(
         (suggestion) => suggestion.status === "reviewing",
       ).length,
-      planned: suggestions.filter(
+      planned: combined.filter(
         (suggestion) => suggestion.status === "planned",
       ).length,
-      completed: suggestions.filter(
+      completed: combined.filter(
         (suggestion) => suggestion.status === "completed",
       ).length,
-      declined: suggestions.filter(
+      declined: combined.filter(
         (suggestion) => suggestion.status === "declined",
       ).length,
     };
-  }, [suggestions]);
+  }, [suggestions, deckSuggestions]);
+
+  const clearDeckFilters = () => {
+    setSearch("");
+    setSide("All");
+    setHero([]);
+    setCategory([]);
+    setArchetype([]);
+    setCollection(null);
+    hideCollectionLoginMessage();
+  };
+
+  const handleSideChange = (newSide) => {
+    setSide(newSide);
+    setSearch("");
+    setHero([]);
+    setCategory([]);
+    setArchetype([]);
+    setCollection(null);
+    hideCollectionLoginMessage();
+  };
+
+  const handleCollectionChange = (value) => {
+    if (!discordUser) {
+      showCollectionLoginMessage();
+      return;
+    }
+
+    setCollection(value);
+    hideCollectionLoginMessage();
+  };
 
   const closeDetails = () => {
     setSelectedSuggestion(null);
   };
+
+  const showingDecks = filter === "decks";
 
   return (
     <>
@@ -192,11 +536,13 @@ function MySuggestions() {
             <div className="my-bug-reports-total">
               <strong>{counts.all}</strong>
 
-              <span>{counts.all === 1 ? "Suggestion" : "Suggestions"}</span>
+              <span>
+                {counts.all === 1 ? "Suggestion" : "Suggestions"}
+              </span>
             </div>
           </section>
 
-          {!loading && !error && suggestions.length > 0 && (
+          {!loading && !error && counts.all > 0 && (
             <section className="my-bug-reports-filters">
               <button
                 type="button"
@@ -251,6 +597,15 @@ function MySuggestions() {
                 Declined
                 <span>{counts.declined}</span>
               </button>
+
+              <button
+                type="button"
+                className={filter === "decks" ? "active" : ""}
+                onClick={() => setFilter("decks")}
+              >
+                Decks
+                <span>{counts.decks}</span>
+              </button>
             </section>
           )}
 
@@ -270,13 +625,16 @@ function MySuggestions() {
 
               <p>{error}</p>
 
-              <button type="button" onClick={() => window.location.reload()}>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+              >
                 Try Again
               </button>
             </section>
           )}
 
-          {!loading && !error && suggestions.length === 0 && (
+          {!loading && !error && counts.all === 0 && (
             <section className="my-bug-reports-state">
               <div className="my-bug-reports-state-icon">✓</div>
 
@@ -293,7 +651,8 @@ function MySuggestions() {
 
           {!loading &&
             !error &&
-            suggestions.length > 0 &&
+            counts.all > 0 &&
+            !showingDecks &&
             filteredSuggestions.length === 0 && (
               <section className="my-bug-reports-state">
                 <div className="my-bug-reports-state-icon">—</div>
@@ -304,73 +663,223 @@ function MySuggestions() {
               </section>
             )}
 
-          {!loading && !error && filteredSuggestions.length > 0 && (
-            <section className="my-bug-reports-list">
-              {filteredSuggestions.map((suggestion) => (
-                <article key={suggestion.id} className="my-bug-report-card">
-                  <div className="my-bug-report-card-top">
-                    <div className="my-bug-report-card-title">
-                      <h2>{suggestion.title}</h2>
-                    </div>
+          {!loading &&
+            !error &&
+            !showingDecks &&
+            filteredSuggestions.length > 0 && (
+              <section className="my-bug-reports-list">
+                {filteredSuggestions.map((suggestion) => (
+                  <article
+                    key={suggestion.id}
+                    className="my-bug-report-card"
+                  >
+                    <div className="my-bug-report-card-top">
+                      <div className="my-bug-report-card-title">
+                        <h2>{suggestion.title}</h2>
+                      </div>
 
-                    <span
-                      className={`my-bug-report-status status-${suggestion.status}`}
-                    >
-                      {getStatusLabel(suggestion.status)}
-                    </span>
-                  </div>
-
-                  <div className="my-bug-report-meta">
-                    <span>
-                      <strong>Category:</strong>{" "}
-                      {getCategoryLabel(suggestion.category)}
-                    </span>
-
-                    <span>
-                      <strong>Submitted:</strong>{" "}
-                      {formatDate(suggestion.created_at)}
-                    </span>
-
-                    {suggestion.admin_response && (
-                      <span>
-                        <strong>Response:</strong> Available
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="my-bug-report-description">
-                    {suggestion.description}
-                  </p>
-
-                  <div className="my-bug-report-card-bottom">
-                    <div className="my-bug-report-status-message">
-                      <strong>{getStatusLabel(suggestion.status)}</strong>
-
-                      <span>{getStatusDescription(suggestion.status)}</span>
-                    </div>
-
-                    <div className="my-bug-report-actions">
-                      {suggestion.discord_thread_url && (
-                        <a
-                          href={suggestion.discord_thread_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="my-bug-report-button"
-                        >
-                          View Suggestion Thread
-                        </a>
-                      )}
-                      <button
-                        type="button"
-                        className="my-bug-report-button"
-                        onClick={() => setSelectedSuggestion(suggestion)}
+                      <span
+                        className={`my-bug-report-status status-${suggestion.status}`}
                       >
-                        View Details
-                      </button>
+                        {getStatusLabel(suggestion.status)}
+                      </span>
                     </div>
-                  </div>
-                </article>
-              ))}
+
+                    <div className="my-bug-report-meta">
+                      <span>
+                        <strong>Category:</strong>{" "}
+                        {getCategoryLabel(suggestion.category)}
+                      </span>
+
+                      <span>
+                        <strong>Submitted:</strong>{" "}
+                        {formatDate(suggestion.created_at)}
+                      </span>
+
+                      {suggestion.admin_response && (
+                        <span>
+                          <strong>Response:</strong> Available
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="my-bug-report-description">
+                      {suggestion.description}
+                    </p>
+
+                    <div className="my-bug-report-card-bottom">
+                      <div className="my-bug-report-status-message">
+                        <strong>
+                          {getStatusLabel(suggestion.status)}
+                        </strong>
+
+                        <span>
+                          {getStatusDescription(suggestion.status)}
+                        </span>
+                      </div>
+
+                      <div className="my-bug-report-actions">
+                        {suggestion.discord_thread_url && (
+                          <a
+                            href={suggestion.discord_thread_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="my-bug-report-button"
+                          >
+                            View Suggestion Thread
+                          </a>
+                        )}
+
+                        <button
+                          type="button"
+                          className="my-bug-report-button"
+                          onClick={() => setSelectedSuggestion(suggestion)}
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </section>
+            )}
+
+          {!loading && !error && showingDecks && (
+            <section>
+              <h2>Deck Suggestions</h2>
+
+              <div className="tabs">
+                <button
+                  type="button"
+                  className={side === "All" ? "active" : ""}
+                  onClick={() => handleSideChange("All")}
+                >
+                  All
+                </button>
+
+                <button
+                  type="button"
+                  className={side === "Plants" ? "active" : ""}
+                  onClick={() => handleSideChange("Plants")}
+                >
+                  <img
+                    src="https://cdn.pvzhtbot.com/icons/plants.png"
+                    alt="Plants"
+                    className="tab-icon"
+                  />
+                  Plants
+                </button>
+
+                <button
+                  type="button"
+                  className={side === "Zombies" ? "active" : ""}
+                  onClick={() => handleSideChange("Zombies")}
+                >
+                  <img
+                    src="https://cdn.pvzhtbot.com/icons/zombies.png"
+                    alt="Zombies"
+                    className="tab-icon"
+                  />
+                  Zombies
+                </button>
+              </div>
+
+              <div className="search-container">
+                <input
+                  className="search"
+                  placeholder="Search decks, creators, heroes, cards..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </div>
+
+              <div className="filters">
+                <div className="select-wrapper">
+                  <FilterDropdown
+                    label="Hero"
+                    options={heroOptions}
+                    value={hero}
+                    onChange={setHero}
+                    multi
+                  />
+                </div>
+
+                <div className="select-wrapper">
+                  <FilterDropdown
+                    label="Category"
+                    options={categoryOptions}
+                    value={category}
+                    onChange={setCategory}
+                    multi
+                  />
+                </div>
+
+                <div className="select-wrapper archetype-select-wrapper">
+                  <FilterDropdown
+                    label="Archetype"
+                    options={archetypeOptions}
+                    value={archetype}
+                    onChange={setArchetype}
+                    multi
+                  />
+                </div>
+
+                <div className="select-wrapper">
+                  <FilterDropdown
+                    label="Collection"
+                    options={collectionOptions}
+                    value={collection}
+                    onChange={handleCollectionChange}
+                    requiresAuth
+                    isAuthenticated={!authLoading && Boolean(discordUser)}
+                    onAuthRequired={showCollectionLoginMessage}
+                    multi
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  className="clear-filter-btn"
+                  onClick={clearDeckFilters}
+                >
+                  Clear
+                </button>
+              </div>
+
+              {collectionLoginMessage && (
+                <div className="collection-login-message">
+                  <strong>Discord login required</strong>
+                  <span>
+                    Log in with Discord to use the Collection filter.
+                  </span>
+                </div>
+              )}
+
+              {filteredDeckSuggestions.length > 0 ? (
+                
+                <div className="deck-grid">
+                                <p className="results-count">
+                Showing {filteredDeckSuggestions.length} of{" "}
+                {deckSuggestions.length} deck suggestions
+              </p> <br/>
+                  {filteredDeckSuggestions.map((deckSuggestion) => (
+                    <UserDeckSuggestionCard
+                      key={deckSuggestion.id}
+                      suggestion={deckSuggestion}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <section className="my-bug-reports-state">
+                  <div className="my-bug-reports-state-icon">—</div>
+
+                  <h2>No deck suggestions found</h2>
+
+                  <p>
+                    No deck suggestions match your current filters.
+                  </p>
+                </section>
+              )}
             </section>
           )}
         </div>
@@ -417,32 +926,42 @@ function MySuggestions() {
                 {getStatusLabel(selectedSuggestion.status)}
               </span>
 
-              <p>{getStatusDescription(selectedSuggestion.status)}</p>
+              <p>
+                {getStatusDescription(selectedSuggestion.status)}
+              </p>
             </div>
 
             <div className="my-bug-report-detail-grid">
               <div>
                 <span>Category</span>
 
-                <strong>{getCategoryLabel(selectedSuggestion.category)}</strong>
+                <strong>
+                  {getCategoryLabel(selectedSuggestion.category)}
+                </strong>
               </div>
 
               <div>
                 <span>Status</span>
 
-                <strong>{getStatusLabel(selectedSuggestion.status)}</strong>
+                <strong>
+                  {getStatusLabel(selectedSuggestion.status)}
+                </strong>
               </div>
 
               <div>
                 <span>Submitted</span>
 
-                <strong>{formatDate(selectedSuggestion.created_at)}</strong>
+                <strong>
+                  {formatDate(selectedSuggestion.created_at)}
+                </strong>
               </div>
 
               <div>
                 <span>Last Updated</span>
 
-                <strong>{formatDate(selectedSuggestion.updated_at)}</strong>
+                <strong>
+                  {formatDate(selectedSuggestion.updated_at)}
+                </strong>
               </div>
             </div>
 
