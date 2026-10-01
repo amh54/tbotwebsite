@@ -75,6 +75,15 @@ class AdminDeckSerializer(serializers.ModelSerializer):
         allow_blank=True,
         allow_null=True,
     )
+    aliases = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    updated_date = serializers.CharField(
+    required=False,
+    allow_null=True,
+)
     class Meta:
         model = Decklist
         fields = [
