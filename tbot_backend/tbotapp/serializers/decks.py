@@ -82,6 +82,7 @@ class AdminDeckSerializer(serializers.ModelSerializer):
     )
     updated_date = serializers.CharField(
     required=False,
+    allow_blank=True,
     allow_null=True,
 )
     class Meta:
