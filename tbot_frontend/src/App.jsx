@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 import "./css/app.css";
 import "./css/navbar.css";
+import SuggestionsRoute from "./components/suggestionsRoute.jsx";
+import BugReportRoute from "./components/bugReportRoute.jsx";
 import Seo from "./components/seo.jsx";
 import { Analytics } from "@vercel/analytics/react";
 import { Link, Route, Routes } from "react-router-dom";
@@ -31,11 +33,11 @@ import AdminLegacyDecks from "./pages/admin/adminLegacyDecks.jsx";
 import Users from "./pages/users.jsx";
 import UserDeckManager from "./pages/profile/userDeckManager.jsx";
 import UserDashboard from "./pages/profile/userDashboard.jsx";
+import AdminUpdates from "./pages/admin/adminUpdates.jsx";
 import UserCardManager from "./pages/profile/userCardManager.jsx";
-import AdminCards from "./pages/admin/adminCards.jsx";
 import AdminBugReports from "./pages/admin/adminBugReports.jsx";
 import MyBugReports from "./pages/profile/myBugReports.jsx";
-
+import PublicDecks from "./pages/decks/publicDecks.jsx";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -296,13 +298,14 @@ function HomePage() {
           <div className="quick-answer-card">
             <h3>Share Your Decks</h3>
             <p>
-              You can upload new decks from your user dashboard. 
-              To share decks open your profile, then go to your{" "}
-              <strong>profile</strong> section to manage how your account visibility.
-              Public account decks can be browsed through your public
-              profile, while private account decks can only be accessed by someone
-              who has the deck's direct share link. In order to share a deck simply click on your decks below and click the Share deck button. 
-              Send your decks to other players or post them in Discord for deck help.
+              You can upload new decks from your user dashboard. To share decks
+              open your profile, then go to your <strong>profile</strong>{" "}
+              section to manage how your account visibility. Public account
+              decks can be browsed through your public profile, while private
+              account decks can only be accessed by someone who has the deck's
+              direct share link. In order to share a deck simply click on your
+              decks below and click the Share deck button. Send your decks to
+              other players or post them in Discord for deck help.
             </p>
             {profileSlug && (
               <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
@@ -402,9 +405,10 @@ function App() {
 
       <Routes>
         <Route path="/" element={<HomePage />} />
-
+        <Route path="/suggestions" element={<SuggestionsRoute />} />
+        <Route path="/bugreport" element={<BugReportRoute />} />
         <Route path="/decklists" element={<DecklistsPage />} />
-
+        <Route path="/publicdecks" element={<PublicDecks />} />
         <Route path="/legacydecks" element={<LegacyDecksPage />} />
 
         <Route path="/cardinfo" element={<CardInfo />} />
@@ -422,8 +426,6 @@ function App() {
         <Route path="/tutorial" element={<Tutorial />} />
 
         <Route path="/deckbuilders" element={<Deckbuilders />} />
-
-        <Route path="/admin/cards" element={<AdminCards />} />
         <Route path="/my-suggestions" element={<MySuggestions />} />
         <Route
           path="/deckbuilders/:deckbuilder_name/decks"
@@ -446,7 +448,7 @@ function App() {
         <Route path="/dashboard/decks/add" element={<UserDeckManager />} />
 
         <Route path="/admin/keeporscrap" element={<AdminKeepOrScrap />} />
-
+        <Route path="/admin/updates" element={<AdminUpdates />} />
         <Route
           path="/dashboard/decks/:deckId/edit"
           element={<UserDeckManager />}

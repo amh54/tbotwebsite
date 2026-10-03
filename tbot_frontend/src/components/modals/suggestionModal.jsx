@@ -81,7 +81,7 @@ const SUGGESTION_PAGES = [
   },
 ];
 
-function SuggestionModal({ open, user, profile, onClose }) {
+function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("improvement");
@@ -107,23 +107,39 @@ function SuggestionModal({ open, user, profile, onClose }) {
 
   const selectedPage =
     SUGGESTION_PAGES.find((item) => item.value === page) || null;
+
   const requiresPage =
     category === "improvement" ||
     category === "ui" ||
     category === "performance";
+
   useEffect(() => {
     if (!open) {
       return;
     }
 
+    let initialPath = "";
+
+    if (initialPageUrl) {
+      try {
+        initialPath = new URL(initialPageUrl).pathname;
+      } catch {
+        initialPath = "";
+      }
+    }
+
+    const matchingPage = SUGGESTION_PAGES.find(
+      (item) => item.value === initialPath,
+    );
+
     setTitle("");
     setDescription("");
     setCategory("improvement");
-    setPage("");
+    setPage(matchingPage?.value || "");
     setPageDropdownOpen(false);
     setSubmitting(false);
     setMessage("");
-  }, [open]);
+  }, [open, initialPageUrl]);
 
   useEffect(() => {
     if (!pageDropdownOpen) {
@@ -223,7 +239,7 @@ function SuggestionModal({ open, user, profile, onClose }) {
     try {
       const csrfToken = await ensureCsrfToken();
 
-      const pageUrl =
+      const selectedPageUrl =
         requiresPage && page ? `${window.location.origin}${page}` : "";
 
       const response = await fetch(
@@ -239,7 +255,7 @@ function SuggestionModal({ open, user, profile, onClose }) {
             title: trimmedTitle,
             description: trimmedDescription,
             category,
-            page_url: pageUrl,
+            page_url: selectedPageUrl,
           }),
         },
       );
@@ -270,9 +286,10 @@ function SuggestionModal({ open, user, profile, onClose }) {
           validationError ||
             data.detail ||
             data.error ||
-            `Unable to submit bug report. HTTP ${response.status}`,
+            `Unable to submit suggestion. HTTP ${response.status}`,
         );
       }
+
       setMessage("Suggestion submitted successfully!");
 
       setTitle("");

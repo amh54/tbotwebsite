@@ -95,6 +95,35 @@ const getDiscordAvatarUrl = (profile) => {
 };
 
 function Users() {
+  const [profileSlug, setProfileSlug] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/profile/me/`, {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!cancelled && data?.profile_exists && data?.profile?.profile_slug) {
+          setProfileSlug(data.profile.profile_slug);
+        }
+      } catch {}
+    };
+
+    loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const initialProfiles = readSessionCache(STORAGE_KEYS.profiles, []);
   const initialUserCount = readSessionCache(STORAGE_KEYS.userCount, null);
 
@@ -337,6 +366,12 @@ function Users() {
 
         <div className="users-results-bar">
           <p>
+            All Profiles shown below come from only public accounts. If you want
+            your profile to show up here, please edit your profile from private
+            to public under{" "}
+            <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
+              Your Profile
+            </Link> <br/>
             Showing <strong>{filteredProfiles.length}</strong> of{" "}
             <strong>
               {totalUsers !== null ? totalUsers : profiles.length}

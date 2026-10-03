@@ -1,15 +1,16 @@
 from django.urls import path
 
-from ..views.admin_cards import (
-    admin_card_detail,
-    admin_card_image_upload,
-    admin_cards,
-)
 from ..views.admin_decks import (
     admin_decklist_create,
     admin_decklist_delete,
     admin_decklist_update,
     admin_decklists,
+)
+from ..views.admin_site_updates import (
+    admin_site_update_create,
+    admin_site_update_delete,
+    admin_site_update_update,
+    admin_site_updates,
 )
 from ..views.admin_keep_or_scrap import (
     admin_keep_or_scrap,
@@ -94,19 +95,24 @@ urlpatterns = [
         name="admin_user_deck_delete",
     ),
     path(
-        "admin/cards/",
-        admin_cards,
-        name="admin-cards",
+    "admin/updates/",
+    admin_site_updates,
+    name="admin_site_updates",
     ),
     path(
-        "admin/cards/<int:cardid>/",
-        admin_card_detail,
-        name="admin-card-detail",
+    "admin/updates/create/",
+    admin_site_update_create,
+    name="admin_site_update_create",
     ),
     path(
-        "admin/cards/image-upload/",
-        admin_card_image_upload,
-        name="admin-card-image-upload",
+    "admin/updates/<int:update_id>/",
+    admin_site_update_update,
+    name="admin_site_update_update",
+    ),
+    path(
+    "admin/updates/<int:update_id>/delete/",
+    admin_site_update_delete,
+    name="admin_site_update_delete",
     ),
     path(
         "admin/keeporscrap/",

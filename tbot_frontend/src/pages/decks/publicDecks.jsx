@@ -1,35 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
-
+import { Link } from "react-router-dom";
 import DeckCard from "../../components/modals/deckComponent.jsx";
-
 import FilterDropdown from "../../components/filterDropdown.jsx";
-
 import Navbar from "../../components/navbar.jsx";
-
 import Footer from "../../components/footer.jsx";
-
 import Seo from "../../components/seo.jsx";
 
 import useTemporaryMessage from "../../utils/useTemporaryMessage.js";
 
 import {
-  sortDecks,
+  normalizeSide,
   buildCollectionMap,
   getFilterOptions,
+  sortDecks,
   filterDecks,
+  getDeckKey,
 } from "../../utils/deckFilters.js";
 
 import "../../css/decklists.css";
-
 import "../../css/navbar.css";
-
 import "../../css/loading.css";
 
 import { API_BASE_URL } from "../../utils/api.js";
 
 const STORAGE_KEYS = {
-  decks: "tbot_legacy_decks",
-  deckCount: "tbot_legacy_deck_count",
+  decks: "tbot_public_user_decks",
   cards: "tbot_cards",
 };
 
@@ -64,9 +59,37 @@ function writeSessionCache(key, value) {
   }
 }
 
-function LegacyDecksPage() {
+function PublicDecks() {
+  const [profileSlug, setProfileSlug] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/profile/me/`, {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!cancelled && data?.profile_exists && data?.profile?.profile_slug) {
+          setProfileSlug(data.profile.profile_slug);
+        }
+      } catch {}
+    };
+
+    loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const initialDecks = readSessionCache(STORAGE_KEYS.decks, []);
-  const initialDeckCount = readSessionCache(STORAGE_KEYS.deckCount, null);
   const initialCards = readSessionCache(STORAGE_KEYS.cards, []);
 
   const hasCachedDecks = Array.isArray(initialDecks) && initialDecks.length > 0;
@@ -75,47 +98,49 @@ function LegacyDecksPage() {
     Array.isArray(initialDecks) ? initialDecks : [],
   );
 
-  const [totalDecks, setTotalDecks] = useState(
-    Number.isFinite(Number(initialDeckCount)) ? Number(initialDeckCount) : 0,
-  );
-
-  const [search, setSearch] = useState("");
-  const [side, setSide] = useState("All");
-  const [hero, setHero] = useState([]);
-  const [category, setCategory] = useState([]);
-  const [archetype, setArchetype] = useState([]);
-  const [collectionFilter, setCollectionFilter] = useState([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [collectionCards, setCollectionCards] = useState([]);
+  const {
+    visible: collectionLoginMessage,
+    show: showCollectionLoginMessage,
+    hide: hideCollectionLoginMessage,
+  } = useTemporaryMessage(4000);
 
   const [allCards, setAllCards] = useState(
     Array.isArray(initialCards) ? initialCards : [],
   );
 
+  const [totalDecks, setTotalDecks] = useState(
+    Array.isArray(initialDecks) ? initialDecks.length : 0,
+  );
+
   const [loading, setLoading] = useState(!hasCachedDecks);
   const [error, setError] = useState("");
-
-  const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
-    useTemporaryMessage(4000);
+  const [search, setSearch] = useState("");
+  const [side, setSide] = useState("All");
+  const [hero, setHero] = useState([]);
+  const [category, setCategory] = useState([]);
+  const [archetype, setArchetype] = useState([]);
+  const [collection, setCollection] = useState(null);
+  const [discordUser, setDiscordUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [userCollection, setUserCollection] = useState([]);
+  const [collectionLoading, setCollectionLoading] = useState(false);
+  const [collectionLoaded, setCollectionLoaded] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchLegacyDecks = async () => {
+    const fetchDecks = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/legacy-decklists/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
+        const response = await fetch(`${API_BASE_URL}/tbotapp/public-decks/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
           },
-        );
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
-          let message = `Legacy deck request failed with status ${response.status}`;
+          let message = `Request failed with status ${response.status}`;
 
           try {
             const payload = await response.json();
@@ -134,62 +159,54 @@ function LegacyDecksPage() {
           response.headers.get("content-type") || ""
         ).toLowerCase();
 
+        const text = await response.text();
+
         if (!contentType.includes("application/json")) {
-          throw new Error("The legacy decklist endpoint did not return JSON.");
+          throw new Error(
+            "The public user decks endpoint did not return JSON.",
+          );
         }
 
-        const data = await response.json();
+        const data = JSON.parse(text);
 
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
+        const results = Array.isArray(data?.decks)
+          ? data.decks
+          : Array.isArray(data)
+            ? data
             : [];
 
-        const normalizedResults = results.map((deck) => ({
-          ...deck,
-          cards: deck?.cards ?? "",
-        }));
+        setDecks(results);
 
-        setDecks(normalizedResults);
-        setError("");
-        writeSessionCache(STORAGE_KEYS.decks, normalizedResults);
+        writeSessionCache(STORAGE_KEYS.decks, results);
 
-        if (normalizedResults.length > 0) {
-          setTotalDecks((currentCount) => {
-            if (currentCount > 0) {
-              return currentCount;
-            }
+        const count = Number(data?.count);
 
-            return normalizedResults.length;
-          });
-        }
+        setTotalDecks(Number.isFinite(count) ? count : results.length);
 
         setLoading(false);
+        setError("");
       } catch (err) {
         if (err.name === "AbortError") {
           return;
         }
 
-        console.error("Unable to load legacy decklists:", err);
+        console.error("Unable to load public user decks:", err);
 
         if (hasCachedDecks) {
-          setError("");
           setLoading(false);
+          setError("");
           return;
         }
 
-        setError(
-          `Unable to load legacy decklists right now. ${
-            err.message || ""
-          }`.trim(),
-        );
-
         setLoading(false);
+
+        setError(
+          `Unable to load public decks right now. ${err.message || ""}`.trim(),
+        );
       }
     };
 
-    fetchLegacyDecks();
+    fetchDecks();
 
     return () => {
       controller.abort();
@@ -199,12 +216,13 @@ function LegacyDecksPage() {
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchLegacyCount = async () => {
+    const fetchDiscordUser = async () => {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/tbotapp/legacy-decklist-count/`,
+          `${API_BASE_URL}/tbotapp/auth/discord/me/`,
           {
             method: "GET",
+            credentials: "include",
             headers: {
               Accept: "application/json",
             },
@@ -214,25 +232,31 @@ function LegacyDecksPage() {
 
         if (!response.ok) {
           throw new Error(
-            `Legacy deck count request failed with status ${response.status}`,
+            `Discord authentication request failed with status ${response.status}`,
           );
         }
 
         const data = await response.json();
-        const count = Number(data?.count);
 
-        if (Number.isFinite(count) && count >= 0) {
-          setTotalDecks(count);
-          writeSessionCache(STORAGE_KEYS.deckCount, count);
+        if (data?.authenticated && data?.user) {
+          setDiscordUser(data.user);
+        } else {
+          setDiscordUser(null);
         }
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Unable to refresh legacy deck count:", err);
+          console.error("Unable to check Discord authentication:", err);
+
+          setDiscordUser(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setAuthLoading(false);
         }
       }
     };
 
-    fetchLegacyCount();
+    fetchDiscordUser();
 
     return () => {
       controller.abort();
@@ -260,13 +284,10 @@ function LegacyDecksPage() {
 
         const data = await response.json();
 
-        const cards = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
+        const cards = Array.isArray(data) ? data : [];
 
         setAllCards(cards);
+
         writeSessionCache(STORAGE_KEYS.cards, cards);
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -283,54 +304,67 @@ function LegacyDecksPage() {
   }, []);
 
   useEffect(() => {
+    if (authLoading) {
+      return undefined;
+    }
+
+    if (!discordUser) {
+      setUserCollection([]);
+      setCollectionLoading(false);
+      setCollectionLoaded(false);
+      setCollection(null);
+
+      return undefined;
+    }
+
     const controller = new AbortController();
 
     const fetchUserCollection = async () => {
+      setCollectionLoading(true);
+      setCollectionLoaded(false);
+
       try {
         const response = await fetch(`${API_BASE_URL}/tbotapp/user-cards/`, {
           method: "GET",
+          credentials: "include",
           headers: {
             Accept: "application/json",
           },
-          credentials: "include",
           signal: controller.signal,
         });
 
         if (!response.ok) {
-          setIsAuthenticated(false);
-          setCollectionCards([]);
-          setCollectionFilter([]);
-          return;
+          throw new Error(
+            `User collection request failed with status ${response.status}`,
+          );
         }
 
         const data = await response.json();
 
-        if (data?.authenticated !== true) {
-          setIsAuthenticated(false);
-          setCollectionCards([]);
-          setCollectionFilter([]);
-          return;
+        let collectionData = [];
+
+        if (Array.isArray(data)) {
+          collectionData = data;
+        } else if (Array.isArray(data?.cards)) {
+          collectionData = data.cards;
+        } else if (Array.isArray(data?.results)) {
+          collectionData = data.results;
         }
 
-        setIsAuthenticated(true);
-
-        setCollectionCards(
-          Array.isArray(data?.cards)
-            ? data.cards
-            : Array.isArray(data?.results)
-              ? data.results
-              : [],
-        );
+        setUserCollection(collectionData);
+        setCollectionLoaded(true);
       } catch (err) {
-        if (err.name === "AbortError") {
-          return;
+        if (err.name !== "AbortError") {
+          console.error("Unable to load user collection:", err);
+
+          setUserCollection([]);
+          setCollection(null);
+          setCollectionLoaded(false);
         }
-
-        console.error("Unable to load user collection:", err);
-
-        setIsAuthenticated(false);
-        setCollectionCards([]);
-        setCollectionFilter([]);
+      } finally {
+        if (!controller.signal.aborted) {
+          setCollectionLoading(false);
+        }
       }
     };
 
@@ -339,17 +373,17 @@ function LegacyDecksPage() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [discordUser, authLoading]);
+
+  const sortedDecks = useMemo(() => sortDecks(decks), [decks]);
 
   const collectionMap = useMemo(() => {
-    if (!isAuthenticated) {
+    if (!collectionLoaded || collectionLoading || !discordUser) {
       return new Map();
     }
 
-    return buildCollectionMap(collectionCards);
-  }, [collectionCards, isAuthenticated]);
-
-  const sortedDecks = useMemo(() => sortDecks(decks), [decks]);
+    return buildCollectionMap(userCollection);
+  }, [userCollection, collectionLoaded, collectionLoading, discordUser]);
 
   const { heroOptions, categoryOptions, archetypeOptions, collectionOptions } =
     useMemo(
@@ -362,12 +396,12 @@ function LegacyDecksPage() {
           hero,
           category,
           archetype,
-          collection: collectionFilter,
+          collection,
           collectionMap,
-          collectionLoading: false,
-          collectionLoaded: isAuthenticated,
-          discordUser: isAuthenticated ? {} : null,
-          authLoading: false,
+          collectionLoading,
+          collectionLoaded,
+          discordUser,
+          authLoading,
         }),
       [
         sortedDecks,
@@ -377,9 +411,12 @@ function LegacyDecksPage() {
         hero,
         category,
         archetype,
-        collectionFilter,
+        collection,
         collectionMap,
-        isAuthenticated,
+        collectionLoading,
+        collectionLoaded,
+        discordUser,
+        authLoading,
       ],
     );
 
@@ -392,11 +429,11 @@ function LegacyDecksPage() {
         hero,
         category,
         archetype,
-        collection: collectionFilter,
+        collection,
         collectionMap,
-        collectionLoading: false,
-        collectionLoaded: isAuthenticated,
-        discordUser: isAuthenticated ? {} : null,
+        collectionLoading,
+        collectionLoaded,
+        discordUser,
       }),
     [
       sortedDecks,
@@ -405,9 +442,11 @@ function LegacyDecksPage() {
       hero,
       category,
       archetype,
-      collectionFilter,
+      collection,
       collectionMap,
-      isAuthenticated,
+      collectionLoading,
+      collectionLoaded,
+      discordUser,
     ],
   );
 
@@ -416,7 +455,7 @@ function LegacyDecksPage() {
     setHero([]);
     setCategory([]);
     setArchetype([]);
-    setCollectionFilter([]);
+    setCollection(null);
   };
 
   const handleSideChange = (newSide) => {
@@ -424,25 +463,21 @@ function LegacyDecksPage() {
     clearFilters();
   };
 
-  const handleCollectionChange = (value) => {
-    if (!isAuthenticated) {
-      showCollectionLoginMessage();
-      return;
-    }
-
-    setCollectionFilter(value);
-  };
-
   if (loading) {
     return (
       <div className="loading-page">
         <div className="loading-card">
           <div className="loading-spinner" />
-          <h2>Loading legacy decks</h2>
-          <p>Preparing the legacy deck browser and loading available decks.</p>
+
+          <h2>Loading public decks</h2>
+
+          <p>
+            Preparing the public deck browser and loading available user decks.
+          </p>
 
           <div className="loading-status">
-            <span>Legacy decks available</span>
+            <span>Loading public deck data</span>
+
             <strong>
               {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
             </strong>
@@ -455,15 +490,15 @@ function LegacyDecksPage() {
   return (
     <div className="deck-page">
       <Seo
-  title="PVZH Legacy Decks - PVZ Heroes | Tbot"
-  description="Browse legacy Plants vs. Zombies Heroes decks on Tbot. Explore classic PVZH and PVZ Heroes decklists by hero, category, archetype, creator, and collection."
-  canonical="/legacydecks"
-/>
+        title="Public PVZH Decks - PVZ Heroes User Decks | Tbot"
+        description="Browse public Plants vs. Zombies Heroes user decks on Tbot. Explore community-created PVZH decks, heroes, cards, categories, and archetypes."
+        canonical="/publicdecks"
+      />
 
       <Navbar />
 
       <main className="deck-content">
-        <h1>PVZ Heroes Legacy Decks</h1>
+        <h1>Public PVZ Heroes Decks</h1>
 
         <div className="deck-browser">
           <div className="tabs">
@@ -505,9 +540,9 @@ function LegacyDecksPage() {
           <div className="search-container">
             <input
               className="search"
-              placeholder="Search legacy decks, creators, heroes, cards..."
+              placeholder="Search decks, creators, heroes, cards..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
@@ -546,12 +581,15 @@ function LegacyDecksPage() {
               <FilterDropdown
                 label="Collection"
                 options={collectionOptions}
-                value={collectionFilter}
-                onChange={handleCollectionChange}
-                multi
+                value={collection}
+                onChange={(value) => {
+                  setCollection(value);
+                  hideCollectionLoginMessage();
+                }}
                 requiresAuth
-                isAuthenticated={isAuthenticated}
+                isAuthenticated={!authLoading && Boolean(discordUser)}
                 onAuthRequired={showCollectionLoginMessage}
+                multi
               />
             </div>
 
@@ -567,6 +605,7 @@ function LegacyDecksPage() {
           {collectionLoginMessage && (
             <div className="collection-login-message">
               <strong>Discord login required</strong>
+
               <span>Log in with Discord to use the Collection filter.</span>
             </div>
           )}
@@ -576,27 +615,43 @@ function LegacyDecksPage() {
           <p className="error-message">{error}</p>
         ) : (
           <p className="results-count">
-            Showing {filteredDecks.length} of {totalDecks || decks.length}{" "}
-            legacy decks
+            All decks shown below come from only public accounts. If you want
+            your decks to show up here, please edit your profile from private
+            to public under{" "}
+            <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
+              Your Profile
+            </Link>
+            <br />
+            Showing {filteredDecks.length} of {totalDecks} public decks
           </p>
         )}
 
+        {!authLoading && discordUser && collectionLoading && (
+          <p className="results-count">Loading your collection...</p>
+        )}
+
+        {!authLoading &&
+          discordUser &&
+          !collectionLoading &&
+          !collectionLoaded && (
+            <p className="results-count">
+              Unable to load your collection. Collection filters are temporarily
+              unavailable.
+            </p>
+          )}
+
         {!error && filteredDecks.length === 0 ? (
-          <p className="no-results">No legacy decks found.</p>
+          <p className="no-results">No public user decks found.</p>
         ) : (
           !error && (
             <div className="deck-grid">
-              {filteredDecks.map((deck, index) => (
+              {filteredDecks.map((deck) => (
                 <DeckCard
-                  key={
-                    deck.deckid ??
-                    deck.deckID ??
-                    deck.id ??
-                    `${deck.side}-${deck.hero}-${deck.name}-${index}`
-                  }
+                  key={`${normalizeSide(deck.side)}-${getDeckKey(deck)}`}
                   decklist={deck}
-                  allCards={allCards}
-                  legacy
+                  decklists
+                  isUserDeck
+                  showSuggestDeck
                 />
               ))}
             </div>
@@ -604,9 +659,9 @@ function LegacyDecksPage() {
         )}
       </main>
 
-      <Footer credits />
+      <Footer />
     </div>
   );
 }
 
-export default LegacyDecksPage;
+export default PublicDecks;

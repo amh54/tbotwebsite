@@ -731,3 +731,62 @@ def shared_user_deck(
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+@api_view(["GET"])
+def public_user_decks(request):
+    try:
+        profiles = UserProfile.objects.filter(
+            is_public=True
+        ).only(
+            "id",
+            "profile_slug",
+            "display_name",
+            "avatar",
+        )
+
+        profiles_by_id = {
+            profile.id: profile
+            for profile in profiles
+        }
+
+        decks = UserDeck.objects.filter(
+            profile_id__in=profiles_by_id.keys()
+        ).order_by("-id")
+
+        serialized_decks = UserDeckSerializer(
+            decks,
+            many=True,
+        ).data
+
+        results = []
+
+        for deck, serialized in zip(decks, serialized_decks):
+            profile = profiles_by_id.get(deck.profile_id)
+
+            if not profile:
+                continue
+
+            results.append({
+                **dict(serialized),
+                "profile": {
+                    "profile_slug": profile.profile_slug,
+                    "display_name": profile.display_name,
+                    "avatar": profile.avatar,
+                },
+            })
+
+        return Response({
+            "success": True,
+            "decks": results,
+            "count": len(results),
+        }, status=status.HTTP_200_OK)
+
+    except DatabaseError as exc:
+        logger.exception(
+            "Unable to load public user decks"
+        )
+
+        return Response({
+            "error": "Unable to load public user decks.",
+            "error_type": exc.__class__.__name__,
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

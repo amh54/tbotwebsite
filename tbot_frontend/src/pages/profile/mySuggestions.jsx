@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Navbar from "../../components/navbar.jsx";
 
 import Footer from "../../components/footer.jsx";
-
+import Seo from "../../components/seo.jsx";
 import "../../css/decklists.css";
 
 import UserDeckSuggestionCard from "../../components/decks/userDeckSuggestionCard.jsx";
@@ -517,6 +517,12 @@ function MySuggestions() {
 
   return (
     <>
+    <Seo
+      title="My Suggestions - Tbot"
+      description="View and track the suggestions you have submitted to the Tbot Plants vs. Zombies Heroes website."
+      canonical="/mysuggestions"
+      noindex
+    />
       <Navbar />
 
       <main className="my-bug-reports-page">

@@ -1,0 +1,66 @@
+.admin-updates-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-updates-content {
+  width: min(1400px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 40px 0 60px;
+  flex: 1;
+}
+
+.admin-updates-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.admin-updates-topbar h1 {
+  margin: 0;
+}
+
+.admin-updates-subtitle {
+  margin: 6px 0 0;
+}
+
+.admin-updates-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.admin-updates-actions .admin-back-button,
+.admin-updates-actions .admin-add-button {
+  min-height: 42px;
+}
+
+.admin-updates-loading {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .admin-updates-content {
+    width: min(100% - 24px, 1400px);
+    padding-top: 24px;
+  }
+
+  .admin-updates-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-updates-actions {
+    width: 100%;
+  }
+
+  .admin-updates-actions .admin-back-button,
+  .admin-updates-actions .admin-add-button {
+    flex: 1;
+  }
+}

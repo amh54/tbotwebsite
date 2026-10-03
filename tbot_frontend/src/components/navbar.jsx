@@ -1,27 +1,30 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+
+import { Link, useNavigate } from "react-router-dom";
 
 import "../css/navbar.css";
-import SuggestionModal from "../components/modals/suggestionModal.jsx";
+
 import NavbarDesktop from "./navbarDesktop.jsx";
+
 import NavbarMobile from "./navbarMobile.jsx";
+
 import NavbarAccount, { MobileAccount } from "./navbarAccount.jsx";
-import BugReportModal from "./modals/bugReportModal.jsx";
 
 import { API_BASE_URL, ensureCsrfToken } from "../utils/api";
+
 import NAVIGATION from "../utils/navigation";
 
 function Navbar() {
+  const navigate = useNavigate();
+
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileOpenSection, setMobileOpenSection] = useState(null);
-
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [bugReportOpen, setBugReportOpen] = useState(false);
-  const [suggestionOpen, setSuggestionOpen] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -58,7 +61,10 @@ function Navbar() {
             );
 
             if (!profileResponse.ok) {
-              console.error("Profile request failed:", profileResponse.status);
+              console.error(
+                "Profile request failed:",
+                profileResponse.status,
+              );
 
               if (!cancelled) {
                 setProfile(null);
@@ -109,7 +115,9 @@ function Navbar() {
   };
 
   const toggleMobileSection = (label) => {
-    setMobileOpenSection((current) => (current === label ? null : label));
+    setMobileOpenSection((current) =>
+      current === label ? null : label,
+    );
   };
 
   const closeMenus = () => {
@@ -126,25 +134,25 @@ function Navbar() {
     setMobileOpen(false);
     setMobileOpenSection(null);
   };
-  const openSuggestion = () => {
-    closeMenus();
-    setSuggestionOpen(true);
-  };
 
-  const closeSuggestion = () => {
-    setSuggestionOpen(false);
-  };
   const openBugReport = () => {
     closeMenus();
-    setBugReportOpen(true);
+
+    navigate("/bugreport", {
+      state: {
+        from: window.location.href,
+      },
+    });
   };
 
-  const closeBugReport = () => {
-    if (loggingOut) {
-      return;
-    }
+  const openSuggestion = () => {
+    closeMenus();
 
-    setBugReportOpen(false);
+    navigate("/suggestions", {
+      state: {
+        from: window.location.href,
+      },
+    });
   };
 
   const logoutFromDiscord = async () => {
@@ -178,7 +186,9 @@ function Navbar() {
 
       if (!response.ok) {
         throw new Error(
-          data.error || data.detail || `Logout failed: ${response.status}`,
+          data.error ||
+            data.detail ||
+            `Logout failed: ${response.status}`,
         );
       }
 
@@ -220,6 +230,7 @@ function Navbar() {
               alt="Tbot"
               className="navbar-logo-image"
             />
+
             <span className="navbar-logo-main">TBOT</span>
           </Link>
 
@@ -282,19 +293,6 @@ function Navbar() {
           }
         />
       </header>
-
-      <BugReportModal
-        open={bugReportOpen}
-        user={user}
-        profile={profile}
-        onClose={closeBugReport}
-      />
-      <SuggestionModal
-        open={suggestionOpen}
-        user={user}
-        profile={profile}
-        onClose={closeSuggestion}
-      />
     </>
   );
 }

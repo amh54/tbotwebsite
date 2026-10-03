@@ -287,6 +287,7 @@ function AdminUserDecks() {
         formData.append("inspiration", form?.inspiration ?? "");
         formData.append("optimization", form?.optimization ?? "");
         formData.append("suggested_date", form?.suggested_date ?? "");
+        formData.append("updated_date", form?.updated_date ?? "");
         formData.append("deck_doc", form?.deck_doc ?? "");
 
         formData.append(
@@ -329,6 +330,7 @@ function AdminUserDecks() {
             inspiration: form?.inspiration ?? "",
             optimization: form?.optimization ?? "",
             suggested_date: form?.suggested_date ?? "",
+            updated_date: form?.updated_date ?? "",
             deck_doc: form?.deck_doc ?? "",
             cards: form?.cards ?? "",
           }),

@@ -8,7 +8,10 @@ const NAVIGATION = [
       { label: "Site Updates", path: "/updates" },
       { label: "Terms of Service", path: "/termsofservice" },
       { label: "Privacy Policy", path: "/privacypolicy" },
-      { label: "Report a Bug", action: "reportBug" },
+      {
+        label: "Report a Bug",
+        action: "reportBug",
+      },
       {
         label: "Submit a Suggestion",
         action: "suggestion",
@@ -20,14 +23,15 @@ const NAVIGATION = [
     links: [
       { label: "Users", path: "/users" },
       { label: "Discord Server", path: "https://discord.gg/gU53MGSgWA" },
-      {label: "Youtube", path: "https://www.youtube.com/@PVZHTbot"},
-      {label: "Twitch", path: "https://www.twitch.tv/pvzhtbot"}
+      { label: "Youtube", path: "https://www.youtube.com/@PVZHTbot" },
+      { label: "Twitch", path: "https://www.twitch.tv/pvzhtbot" },
     ],
   },
   {
     label: "Decklists",
     links: [
       { label: "Decklists", path: "/decklists" },
+      { label: "Public Decks", path: "/publicdecks" },
       { label: "Legacy Decks", path: "/legacydecks" },
       { label: "Deckbuilders", path: "/deckbuilders" },
     ],
@@ -41,9 +45,7 @@ const NAVIGATION = [
   },
   {
     label: "Guides",
-    links: [
-      { label: "Keep or Scrap", path: "/keeporscrap" },
-    ],
+    links: [{ label: "Keep or Scrap", path: "/keeporscrap" }],
   },
 ];
 

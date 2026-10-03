@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
-
+import Seo from "../../components/seo.jsx";
 import "../../css/admin/admin.css";
-import { API_BASE_URL} from "../../utils/api.js";
+import { API_BASE_URL } from "../../utils/api.js";
 
 function Admin() {
   const navigate = useNavigate();
@@ -45,14 +45,23 @@ function Admin() {
 
   if (loading) {
     return (
-      <div className="admin-page">
-        <main className="admin-content">
-          <div className="admin-content-header">
-            <h1>Checking permissions...</h1>
-            <p>Verifying owner access.</p>
-          </div>
-        </main>
-      </div>
+      <>
+        <Seo
+          title="Admin Dashboard - Tbot"
+          description="Manage the Tbot Plants vs. Zombies Heroes website."
+          canonical="/admin"
+          noindex
+        />
+
+        <div className="admin-page">
+          <main className="admin-content">
+            <div className="admin-content-header">
+              <h1>Checking permissions...</h1>
+              <p>Verifying owner access.</p>
+            </div>
+          </main>
+        </div>
+      </>
     );
   }
 
@@ -61,57 +70,65 @@ function Admin() {
   }
 
   return (
-    <div className="admin-page">
-      <main className="admin-content">
-        <div className="admin-content-header">
-          <div>
-            <h1>Dashboard</h1>
-            <p>Manage the Tbot website.</p>
+    <>
+      <Seo
+        title="Admin Dashboard - Tbot"
+        description="Manage the Tbot Plants vs. Zombies Heroes website."
+        canonical="/admin"
+        noindex
+      />
+
+      <div className="admin-page">
+        <main className="admin-content">
+          <div className="admin-content-header">
+            <div>
+              <h1>Dashboard</h1>
+              <p>Manage the Tbot website.</p>
+            </div>
+
+            <Link to="/" className="admin-back-button">
+              ← Back to Tbot
+            </Link>
           </div>
 
-          <Link to="/" className="admin-back-button">
-            ← Back to Tbot
-          </Link>
-        </div>
+          <div className="admin-dashboard-grid">
+            <Link to="/admin/decklists" className="admin-dashboard-card">
+              <span className="admin-card-label">Decklists</span>
+              <span className="admin-card-action">Manage →</span>
+            </Link>
 
-        <div className="admin-dashboard-grid">
-          <Link to="/admin/cards" className="admin-dashboard-card">
-            <span className="admin-card-label">Cards</span>
-            <span className="admin-card-action">Manage →</span>
-          </Link>
+            <Link to="/admin/legacy-decks" className="admin-dashboard-card">
+              <span className="admin-card-label">Legacy Decks</span>
+              <span className="admin-card-action">Manage →</span>
+            </Link>
 
-          <Link to="/admin/decklists" className="admin-dashboard-card">
-            <span className="admin-card-label">Decklists</span>
-            <span className="admin-card-action">Manage →</span>
-          </Link>
+            <Link to="/admin/user-decks" className="admin-dashboard-card">
+              <span className="admin-card-label">User Decks</span>
+              <span className="admin-card-action">Manage →</span>
+            </Link>
 
-          <Link to="/admin/legacy-decks" className="admin-dashboard-card">
-            <span className="admin-card-label">Legacy Decks</span>
-            <span className="admin-card-action">Manage →</span>
-          </Link>
+            <Link to="/admin/keeporscrap" className="admin-dashboard-card">
+              <span className="admin-card-label">Keep or Scrap</span>
+              <span className="admin-card-action">Manage →</span>
+            </Link>
 
-          <Link to="/admin/user-decks" className="admin-dashboard-card">
-            <span className="admin-card-label">User Decks</span>
-            <span className="admin-card-action">Manage →</span>
-          </Link>
+            <Link to="/admin/bugs" className="admin-dashboard-card">
+              <span className="admin-card-label">Bug Reports</span>
+              <span className="admin-card-action">Manage →</span>
+            </Link>
 
-          <Link to="/admin/keeporscrap" className="admin-dashboard-card">
-            <span className="admin-card-label">Keep or Scrap</span>
-            <span className="admin-card-action">Manage →</span>
-          </Link>
-
-          <Link to="/admin/bugs" className="admin-dashboard-card">
-            <span className="admin-card-label">Bug Reports</span>
-            <span className="admin-card-action">Manage →</span>
-          </Link>
-
-          <Link to="/admin/suggestions" className="admin-dashboard-card">
-            <span className="admin-card-label">Suggestions</span>
-            <span className="admin-card-action">Manage →</span>
-          </Link>
-        </div>
-      </main>
-    </div>
+            <Link to="/admin/suggestions" className="admin-dashboard-card">
+              <span className="admin-card-label">Suggestions</span>
+              <span className="admin-card-action">Manage →</span>
+            </Link>
+            <Link to="/admin/updates" className="admin-dashboard-card">
+              <span className="admin-card-label">Site Updates</span>
+              <span className="admin-card-action">Manage →</span>
+            </Link>
+          </div>
+        </main>
+      </div>
+    </>
   );
 }
 

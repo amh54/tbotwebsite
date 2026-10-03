@@ -1,0 +1,237 @@
+.site-update-modal {
+  width: min(760px, calc(100vw - 32px));
+  max-width: 760px;
+}
+
+.site-update-modal .modal-content {
+  width: 100%;
+}
+
+.site-update-modal .modal-info {
+  width: 100%;
+}
+
+.site-update-modal .modal-header {
+  margin-bottom: 24px;
+}
+
+.site-update-modal .modal-title-content h2 {
+  margin: 0;
+  color: #f1f5f2;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.site-update-modal .modal-title-content p {
+  margin: 8px 0 0;
+  color: #8e999c;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.site-update-modal-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.site-update-modal .admin-modal-field {
+  width: 100%;
+}
+
+.site-update-modal .admin-modal-label {
+  display: block;
+  margin-bottom: 7px;
+}
+
+.site-update-modal .admin-modal-single-select {
+  width: 100%;
+}
+
+.site-update-modal textarea {
+  min-height: 240px;
+  resize: vertical;
+}
+
+.site-update-markdown-help {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: -10px;
+  color: #778285;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.site-update-markdown-help strong {
+  color: #9da7aa;
+}
+
+.site-update-published-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 15px;
+  border: 1px solid #30393c;
+  border-radius: 9px;
+  background: #151a1d;
+  cursor: pointer;
+}
+
+.site-update-published-toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: #8fe38b;
+  cursor: pointer;
+}
+
+.site-update-published-toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.site-update-published-toggle strong {
+  color: #e5ece8;
+  font-size: 14px;
+}
+
+.site-update-published-toggle small {
+  color: #7f898c;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.site-update-modal-error {
+  margin-top: 18px;
+  padding: 11px 13px;
+  border: 1px solid #633b3b;
+  border-radius: 8px;
+  background: rgba(116, 45, 45, 0.12);
+  color: #ef9999;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.site-update-modal-actions {
+  margin-top: 24px;
+}
+
+.site-update-delete-modal {
+  width: min(520px, calc(100vw - 32px));
+  max-width: 520px;
+}
+
+.site-update-delete-modal .modal-header {
+  margin-bottom: 20px;
+}
+
+.site-update-delete-modal .modal-title-content h2 {
+  margin: 0;
+  color: #f1f5f2;
+  font-size: 23px;
+}
+
+.site-update-delete-modal .modal-title-content p {
+  margin: 8px 0 0;
+  color: #8e999c;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.site-update-delete-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 16px;
+  border: 1px solid #30393c;
+  border-radius: 9px;
+  background: #151a1d;
+}
+
+.site-update-delete-preview strong {
+  color: #f1f5f2;
+  font-size: 16px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.site-update-delete-preview > span:last-child {
+  color: #737e81;
+  font-size: 12px;
+}
+
+.site-update-delete-label {
+  color: #8fe38b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.site-update-delete-warning {
+  margin: 16px 0 0;
+  color: #d08b8b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.site-update-delete-actions {
+  margin-top: 22px;
+}
+
+.admin-site-update-modal-delete {
+  min-height: 42px;
+  padding: 9px 17px;
+  border: 1px solid #8a4949;
+  border-radius: 8px;
+  background: #3a2022;
+  color: #ffaaaa;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.admin-site-update-modal-delete:hover:not(:disabled) {
+  border-color: #d87979;
+  background: #4a2729;
+  color: #ffc0c0;
+}
+
+.admin-site-update-modal-delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.site-update-modal .admin-modal-save,
+.site-update-modal .admin-modal-edit,
+.site-update-delete-modal .admin-modal-edit {
+  min-height: 42px;
+}
+
+@media (max-width: 600px) {
+  .site-update-modal,
+  .site-update-delete-modal {
+    width: calc(100vw - 20px);
+  }
+
+  .site-update-modal .modal-title-content h2,
+  .site-update-delete-modal .modal-title-content h2 {
+    font-size: 20px;
+  }
+
+  .site-update-modal-actions,
+  .site-update-delete-actions {
+    flex-direction: column-reverse;
+  }
+
+  .site-update-modal-actions button,
+  .site-update-delete-actions button {
+    width: 100%;
+  }
+}

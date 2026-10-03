@@ -531,22 +531,24 @@ export function matchesNonCollectionFilters(
     }
   }
 
-  if (exclude !== "category") {
-    const selectedCategories =
-      categoryOption !== null ? [categoryOption] : category;
+ if (exclude !== "category") {
+  const selectedCategories =
+    categoryOption !== null ? [categoryOption] : category;
 
-    if (selectedCategories.length > 0) {
-      const categoryMatch = selectedCategories.some(
-        (selectedCategory) =>
-          normalizeKey(deck?.category) ===
-          normalizeKey(selectedCategory?.value),
-      );
+  if (selectedCategories.length > 0) {
+    const deckCategories = parseCategories(deck?.category);
 
-      if (!categoryMatch) {
-        return false;
-      }
+    const categoryMatch = selectedCategories.some((selectedCategory) =>
+      deckCategories.includes(
+        normalizeKey(selectedCategory?.value),
+      ),
+    );
+
+    if (!categoryMatch) {
+      return false;
     }
   }
+}
 
   if (exclude !== "archetype") {
     const selectedArchetypes =
@@ -746,24 +748,28 @@ export function getCategoryOptions(decks = [], filterOptions = {}) {
       return;
     }
 
-    const categoryName = normalizeText(deck?.category);
+    const categories = parseCategories(deck?.category);
 
-    if (!categoryName) {
-      return;
-    }
+    categories.forEach((category) => {
+      const key = normalizeKey(category);
 
-    const key = normalizeKey(categoryName);
+      if (!key) {
+        return;
+      }
 
-    if (!categoryMap.has(key)) {
-      categoryMap.set(key, {
-        value: categoryName,
-        label: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
-        count: 0,
-        ...(CATEGORY_META[key] || {}),
-      });
-    }
+      if (!categoryMap.has(key)) {
+        categoryMap.set(key, {
+          value: key,
+          label:
+            key.charAt(0).toUpperCase() +
+            key.slice(1),
+          count: 0,
+          ...(CATEGORY_META[key] || {}),
+        });
+      }
 
-    categoryMap.get(key).count += 1;
+      categoryMap.get(key).count += 1;
+    });
   });
 
   return Array.from(categoryMap.values()).sort((a, b) =>
@@ -896,6 +902,31 @@ export function filterDecks({
     }),
   );
 
+  if (category.length > 1) {
+    const selectedCategories = category.map((selected) =>
+      normalizeKey(selected?.value),
+    );
+
+    return [...filtered].sort((a, b) => {
+      const aCategories = parseCategories(a?.category);
+      const bCategories = parseCategories(b?.category);
+
+      const aMatchesAll = selectedCategories.every((selected) =>
+        aCategories.includes(selected),
+      );
+
+      const bMatchesAll = selectedCategories.every((selected) =>
+        bCategories.includes(selected),
+      );
+
+      if (aMatchesAll !== bMatchesAll) {
+        return aMatchesAll ? -1 : 1;
+      }
+
+      return 0;
+    });
+  }
+
   if (archetype.length > 1) {
     const selectedArchetypes = archetype.map((selected) =>
       normalizeKey(selected?.value),
@@ -903,7 +934,6 @@ export function filterDecks({
 
     return [...filtered].sort((a, b) => {
       const aArchetype = normalizeKey(a?.archetype);
-
       const bArchetype = normalizeKey(b?.archetype);
 
       const aMatchesAll = selectedArchetypes.every((selected) =>

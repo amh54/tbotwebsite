@@ -40,6 +40,11 @@ const PAGE_METADATA = {
     description:
       "Browse the older Tbot Plants vs. Zombies Heroes deck database.",
   },
+  "/publicdecks": {
+  title: "Public Decks - Tbot",
+  description:
+    "Browse public Plants vs. Zombies Heroes decks uploaded by the Tbot community.",
+},
   "/deckbuilders": {
     title: "Deckbuilders - Tbot",
     description:
@@ -54,6 +59,16 @@ const PAGE_METADATA = {
     title: "Tbot Tutorial",
     description:
       "Learn how to use Tbot to browse cards, heroes, decks, collections, profiles, and other features.",
+  },
+    "/suggestions": {
+    title: "Submit a Suggestion - Tbot",
+    description:
+      "Suggest improvements, features, UI changes, and other ideas for the Tbot Plants vs. Zombies Heroes website.",
+  },
+  "/bugreport": {
+    title: "Report a Bug - Tbot",
+    description:
+      "Report bugs and issues with the Tbot Plants vs. Zombies Heroes website.",
   },
   "/updates": {
     title: "Site Updates - Tbot",
@@ -85,6 +100,7 @@ const PRIVATE_ROUTES = [
   "/admin/legacy-decks",
   "/admin/user-decks",
   "/my-bug-reports",
+  "/my-suggestions"
 ];
 
 function normalizeText(value) {
@@ -658,7 +674,24 @@ async function resolveMetadata(pathname, query) {
 
     return deckToOg(data.deck || null);
   }
+  if (pathname === "/publicdecks") {
+    const deckKey = query.deck;
 
+    if (!deckKey) {
+      return {
+        title: "Public Decks - Tbot",
+        description:
+          "Browse public Plants vs. Zombies Heroes decks shared by the Tbot community.",
+        image: DEFAULT_IMAGE,
+      };
+    }
+
+    const data = await fetchJson(`${API}/tbotapp/public-user-decks/`);
+
+    const deck = findDeckInList(data?.decks || data, deckKey);
+
+    return deckToOg(deck);
+  }
   if (
     pathname === "/decklists" ||
     pathname === "/legacydecks" ||
@@ -770,13 +803,7 @@ function buildPublicUrl(pathname, searchParams) {
   return `${SITE_URL}${pathname}${search ? `?${search}` : ""}`;
 }
 
-function buildHtml({
-  title,
-  description,
-  image,
-  url,
-  noindex = false,
-}) {
+function buildHtml({ title, description, image, url, noindex = false }) {
   const safeTitle = escapeHtml(title);
   const safeDescription = escapeHtml(description);
   const safeImage = escapeHtml(image);
@@ -906,14 +933,13 @@ export default async function handler(req, res) {
 
   const canonicalUrl = buildPublicUrl(originalPath, originalUrl.searchParams);
 
-
   const html = buildHtml({
-  title: og.title || DEFAULT_TITLE,
-  description: og.description || DEFAULT_DESCRIPTION,
-  image: og.image || DEFAULT_IMAGE,
-  url: canonicalUrl,
-  noindex: isPrivateRoute(originalPath),
-});
+    title: og.title || DEFAULT_TITLE,
+    description: og.description || DEFAULT_DESCRIPTION,
+    image: og.image || DEFAULT_IMAGE,
+    url: canonicalUrl,
+    noindex: isPrivateRoute(originalPath),
+  });
 
   res.statusCode = 200;
 

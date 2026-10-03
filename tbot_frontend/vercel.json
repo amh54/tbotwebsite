@@ -92,6 +92,19 @@
       "destination": "/api/deck-og?path=/deckbuilders/:name"
     },
     {
+      "source": "/deckbuilders/:name/decks",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
+      "destination": "/api/deck-og?path=/deckbuilders/:name/decks"
+    },
+    {
       "source": "/cardinfo",
       "has": [
         {
@@ -144,6 +157,19 @@
       "destination": "/api/deck-og?path=/users"
     },
     {
+      "source": "/publicdecks",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
+      "destination": "/api/deck-og?path=/publicdecks"
+    },
+    {
       "source": "/tutorial",
       "has": [
         {
@@ -194,6 +220,32 @@
         }
       ],
       "destination": "/api/deck-og?path=/privacypolicy"
+    },
+    {
+      "source": "/suggestions",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
+      "destination": "/api/deck-og?path=/suggestions"
+    },
+    {
+      "source": "/bugreport",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
+      "destination": "/api/deck-og?path=/bugreport"
     },
     {
       "source": "/sitemap.xml",

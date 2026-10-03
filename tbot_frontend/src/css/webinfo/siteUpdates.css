@@ -410,7 +410,145 @@
   background: #8fe38b;
   color: #101416;
 }
+.admin-site-updates-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
 
+.admin-site-update-form {
+  margin-bottom: 40px;
+  padding: 28px;
+  border: 1px solid rgba(143, 227, 139, 0.2);
+  border-radius: 16px;
+  background: rgba(16, 20, 22, 0.9);
+}
+
+.admin-site-update-editor {
+  display: grid;
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.admin-site-update-editor label {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-site-update-editor label > span {
+  font-weight: 600;
+}
+
+.admin-site-update-editor input,
+.admin-site-update-editor select,
+.admin-site-update-editor textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+}
+
+.admin-site-update-editor textarea {
+  min-height: 240px;
+  resize: vertical;
+}
+
+.admin-site-update-editor input:focus,
+.admin-site-update-editor select:focus,
+.admin-site-update-editor textarea:focus {
+  outline: none;
+  border-color: #8fe38b;
+}
+
+.admin-site-update-published {
+  display: flex !important;
+  grid-template-columns: none !important;
+  grid-auto-flow: column;
+  justify-content: start;
+  align-items: center;
+  gap: 12px !important;
+}
+
+.admin-site-update-published input {
+  width: auto;
+}
+
+.admin-site-update-published span {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-site-update-published small {
+  opacity: 0.7;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.admin-site-update-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.admin-site-update-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-site-update-status {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-site-update-status.published {
+  border: 1px solid rgba(143, 227, 139, 0.35);
+  background: rgba(143, 227, 139, 0.1);
+}
+
+.admin-site-update-status.draft {
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  background: rgba(255, 193, 7, 0.08);
+}
+
+.admin-site-update-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.admin-site-update-actions button {
+  padding: 9px 16px;
+  border: 1px solid rgba(143, 227, 139, 0.3);
+  border-radius: 8px;
+  background: rgba(143, 227, 139, 0.08);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.admin-site-update-actions button:hover {
+  background: rgba(143, 227, 139, 0.16);
+}
+
+.admin-site-update-actions button.delete {
+  border-color: rgba(255, 100, 100, 0.3);
+  background: rgba(255, 100, 100, 0.08);
+}
+
+.admin-site-update-actions button.delete:hover {
+  background: rgba(255, 100, 100, 0.15);
+}
 /* ============================================================
    FILTER EMPTY STATE
    ============================================================ */
@@ -538,7 +676,20 @@
   .site-updates-hero {
     padding: 50px 18px 44px;
   }
+  .admin-site-update-form {
+    padding: 20px;
+  }
 
+  .admin-site-update-card-actions {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .admin-site-update-form-actions,
+  .admin-site-update-actions {
+    flex-wrap: wrap;
+  }
   .site-updates-hero p {
     font-size: 0.95rem;
   }

@@ -20,7 +20,7 @@ const BUG_PRIORITIES = [
   { value: "high", label: "High" },
 ];
 
-function BugReportModal({ open, user, profile, onClose }) {
+function BugReportModal({ open, user, profile, onClose, initialPageUrl }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("other");
@@ -28,7 +28,6 @@ function BugReportModal({ open, user, profile, onClose }) {
   const [screenshot, setScreenshot] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-
   const userName =
     profile?.display_name ||
     user?.display_name ||
@@ -37,7 +36,7 @@ function BugReportModal({ open, user, profile, onClose }) {
     "Discord User";
 
   const userInitial = userName.charAt(0).toUpperCase();
-
+  const pageUrl = initialPageUrl || window.location.href;
   useEffect(() => {
     if (!open) {
       return;
@@ -111,7 +110,7 @@ function BugReportModal({ open, user, profile, onClose }) {
 
       formData.append("title", trimmedTitle);
       formData.append("description", trimmedDescription);
-      formData.append("page_url", window.location.href);
+      formData.append("page_url", pageUrl);
       formData.append("category", category);
       formData.append("priority", priority);
       formData.append("browser", getBrowser());
@@ -330,7 +329,7 @@ function BugReportModal({ open, user, profile, onClose }) {
               <input
                 id="bug-report-page-url"
                 type="text"
-                value={window.location.href}
+                value={pageUrl}
                 readOnly
                 disabled={submitting}
               />

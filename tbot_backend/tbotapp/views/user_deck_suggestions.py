@@ -121,13 +121,16 @@ def user_deck_suggestion_create(request):
     # ------------------------------------------------------------
 
     existing_suggestion = (
-        UserDeckSuggestion.objects
-        .filter(
-            deck_id=deck.id,
-            deck_name=deck.name,
-        )
-        .first()
+    UserDeckSuggestion.objects
+    .filter(
+        deck_id=deck.id,
+        deck_name=deck.name,
     )
+    .exclude(
+        consent_status="denied",
+    )
+    .first()
+)
 
     if existing_suggestion:
         return Response(
@@ -150,13 +153,16 @@ def user_deck_suggestion_create(request):
     # ------------------------------------------------------------
 
     previous_suggestion = (
-        UserDeckSuggestion.objects
-        .filter(
-            suggested_by_discord_id=discord_id,
-        )
-        .order_by("-created_at")
-        .first()
+    UserDeckSuggestion.objects
+    .filter(
+        suggested_by_discord_id=discord_id,
     )
+    .exclude(
+        consent_status="denied",
+    )
+    .order_by("-created_at")
+    .first()
+)
 
     if previous_suggestion:
         cooldown_until = (
@@ -293,13 +299,16 @@ def user_deck_suggestion_create(request):
 
     except IntegrityError:
         existing_suggestion = (
-            UserDeckSuggestion.objects
-            .filter(
-                deck_id=deck.id,
-                deck_name=deck.name,
-            )
-            .first()
-        )
+    UserDeckSuggestion.objects
+    .filter(
+        deck_id=deck.id,
+        deck_name=deck.name,
+    )
+    .exclude(
+        consent_status="denied",
+    )
+    .first()
+)
 
         if existing_suggestion:
             return Response(

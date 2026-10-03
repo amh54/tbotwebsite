@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 
 import Navbar from "../../components/navbar.jsx";
@@ -6,8 +5,8 @@ import Footer from "../../components/footer.jsx";
 
 import "../../css/profile/myBugReports.css";
 import "../../css/loading.css";
-import { API_BASE_URL} from "../../utils/api.js";
-
+import { API_BASE_URL } from "../../utils/api.js";
+import Seo from "../../components/seo.jsx";
 const STATUS_LABELS = {
   open: "Open",
   in_progress: "In Progress",
@@ -87,10 +86,7 @@ function getScreenshotUrl(screenshot) {
 
   if (typeof screenshot === "object") {
     return String(
-      screenshot.url ||
-        screenshot.secure_url ||
-        screenshot.secureUrl ||
-        "",
+      screenshot.url || screenshot.secure_url || screenshot.secureUrl || "",
     ).trim();
   }
 
@@ -130,9 +126,7 @@ function MyBugReports() {
 
         if (!response.ok) {
           throw new Error(
-            data.detail ||
-              data.error ||
-              "Unable to load your bug reports.",
+            data.detail || data.error || "Unable to load your bug reports.",
           );
         }
 
@@ -153,10 +147,7 @@ function MyBugReports() {
         console.error("Unable to load bug reports:", requestError);
 
         if (!cancelled) {
-          setError(
-            requestError.message ||
-              "Unable to load your bug reports.",
-          );
+          setError(requestError.message || "Unable to load your bug reports.");
         }
       } finally {
         if (!cancelled) {
@@ -184,15 +175,10 @@ function MyBugReports() {
     return {
       all: bugReports.length,
       open: bugReports.filter((bug) => bug.status === "open").length,
-      in_progress: bugReports.filter(
-        (bug) => bug.status === "in_progress",
-      ).length,
-      resolved: bugReports.filter(
-        (bug) => bug.status === "resolved",
-      ).length,
-      closed: bugReports.filter(
-        (bug) => bug.status === "closed",
-      ).length,
+      in_progress: bugReports.filter((bug) => bug.status === "in_progress")
+        .length,
+      resolved: bugReports.filter((bug) => bug.status === "resolved").length,
+      closed: bugReports.filter((bug) => bug.status === "closed").length,
     };
   }, [bugReports]);
 
@@ -200,32 +186,33 @@ function MyBugReports() {
     setSelectedBug(null);
   };
 
-
   return (
     <>
+      <Seo
+        title="My Bug Reports - Tbot"
+        description="View and track the bug reports you have submitted to the Tbot Plants vs. Zombies Heroes website."
+        canonical="/my-bug-reports"
+        noindex
+      />
       <Navbar />
 
       <main className="my-bug-reports-page">
         <div className="my-bug-reports-container">
           <section className="my-bug-reports-header">
             <div>
-              <span className="my-bug-reports-eyebrow">
-                TBOT SUPPORT
-              </span>
+              <span className="my-bug-reports-eyebrow">TBOT SUPPORT</span>
 
               <h1>My Bug Reports</h1>
 
               <p>
-                Track the bugs you've reported and see updates from
-                the site owner.
+                Track the bugs you've reported and see updates from the site
+                owner.
               </p>
             </div>
 
             <div className="my-bug-reports-total">
               <strong>{counts.all}</strong>
-              <span>
-                {counts.all === 1 ? "Report" : "Reports"}
-              </span>
+              <span>{counts.all === 1 ? "Report" : "Reports"}</span>
             </div>
           </section>
 
@@ -251,9 +238,7 @@ function MyBugReports() {
 
               <button
                 type="button"
-                className={
-                  filter === "in_progress" ? "active" : ""
-                }
+                className={filter === "in_progress" ? "active" : ""}
                 onClick={() => setFilter("in_progress")}
               >
                 In Progress
@@ -295,127 +280,101 @@ function MyBugReports() {
 
               <p>{error}</p>
 
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-              >
+              <button type="button" onClick={() => window.location.reload()}>
                 Try Again
               </button>
             </section>
           )}
 
-          {!loading &&
-            !error &&
-            bugReports.length === 0 && (
-              <section className="my-bug-reports-state">
-                <div className="my-bug-reports-state-icon">
-                  ✓
-                </div>
+          {!loading && !error && bugReports.length === 0 && (
+            <section className="my-bug-reports-state">
+              <div className="my-bug-reports-state-icon">✓</div>
 
-                <h2>No bug reports yet</h2>
+              <h2>No bug reports yet</h2>
 
-                <p>
-                  You haven't submitted any bug reports. If you
-                  find something that isn't working correctly, use
-                  <strong> Report a Bug </strong>
-                  from the Website Info menu.
-                </p>
-              </section>
-            )}
+              <p>
+                You haven't submitted any bug reports. If you find something
+                that isn't working correctly, use
+                <strong> Report a Bug </strong>
+                from the Website Info menu.
+              </p>
+            </section>
+          )}
 
           {!loading &&
             !error &&
             bugReports.length > 0 &&
             filteredBugReports.length === 0 && (
               <section className="my-bug-reports-state">
-                <div className="my-bug-reports-state-icon">
-                  —
-                </div>
+                <div className="my-bug-reports-state-icon">—</div>
 
                 <h2>No reports in this category</h2>
 
-                <p>
-                  You don't have any bug reports with this status.
-                </p>
+                <p>You don't have any bug reports with this status.</p>
               </section>
             )}
 
-          {!loading &&
-            !error &&
-            filteredBugReports.length > 0 && (
-              <section className="my-bug-reports-list">
-                {filteredBugReports.map((bug) => {
-                  return (
-                    <article
-                      key={bug.id}
-                      className="my-bug-report-card"
-                    >
-                      <div className="my-bug-report-card-top">
-                        <div className="my-bug-report-card-title">
-                          <span className="my-bug-report-number">
-                            #{bug.id}
-                          </span>
+          {!loading && !error && filteredBugReports.length > 0 && (
+            <section className="my-bug-reports-list">
+              {filteredBugReports.map((bug) => {
+                return (
+                  <article key={bug.id} className="my-bug-report-card">
+                    <div className="my-bug-report-card-top">
+                      <div className="my-bug-report-card-title">
+                        <span className="my-bug-report-number">#{bug.id}</span>
 
-                          <h2>{bug.title}</h2>
-                        </div>
+                        <h2>{bug.title}</h2>
+                      </div>
 
-                        <span
-                          className={`my-bug-report-status status-${bug.status}`}
+                      <span
+                        className={`my-bug-report-status status-${bug.status}`}
+                      >
+                        {getStatusLabel(bug.status)}
+                      </span>
+                    </div>
+
+                    <div className="my-bug-report-meta">
+                      <span>
+                        <strong>Category:</strong>{" "}
+                        {getCategoryLabel(bug.category)}
+                      </span>
+
+                      <span>
+                        <strong>Priority:</strong>{" "}
+                        {getPriorityLabel(bug.priority)}
+                      </span>
+
+                      <span>
+                        <strong>Submitted:</strong> {formatDate(bug.created_at)}
+                      </span>
+                    </div>
+
+                    <p className="my-bug-report-description">
+                      {bug.description}
+                    </p>
+
+                    <div className="my-bug-report-card-bottom">
+                      <div className="my-bug-report-status-message">
+                        <strong>{getStatusLabel(bug.status)}</strong>
+
+                        <span>{getStatusDescription(bug.status)}</span>
+                      </div>
+
+                      <div className="my-bug-report-actions">
+                        <button
+                          type="button"
+                          className="my-bug-report-button"
+                          onClick={() => setSelectedBug(bug)}
                         >
-                          {getStatusLabel(bug.status)}
-                        </span>
+                          View Details
+                        </button>
                       </div>
-
-                      <div className="my-bug-report-meta">
-                        <span>
-                          <strong>Category:</strong>{" "}
-                          {getCategoryLabel(bug.category)}
-                        </span>
-
-                        <span>
-                          <strong>Priority:</strong>{" "}
-                          {getPriorityLabel(bug.priority)}
-                        </span>
-
-                        <span>
-                          <strong>Submitted:</strong>{" "}
-                          {formatDate(bug.created_at)}
-                        </span>
-                      </div>
-
-                      <p className="my-bug-report-description">
-                        {bug.description}
-                      </p>
-
-                      <div className="my-bug-report-card-bottom">
-                        <div className="my-bug-report-status-message">
-                          <strong>
-                            {getStatusLabel(bug.status)}
-                          </strong>
-
-                          <span>
-                            {getStatusDescription(bug.status)}
-                          </span>
-                        </div>
-
-                        <div className="my-bug-report-actions">
-
-                          <button
-                            type="button"
-                            className="my-bug-report-button"
-                            onClick={() =>
-                              setSelectedBug(bug)
-                            }
-                          >
-                            View Details
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </section>
-            )}
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+          )}
         </div>
       </main>
 
@@ -438,9 +397,7 @@ function MyBugReports() {
                   BUG REPORT #{selectedBug.id}
                 </span>
 
-                <h2 id="my-bug-report-modal-title">
-                  {selectedBug.title}
-                </h2>
+                <h2 id="my-bug-report-modal-title">{selectedBug.title}</h2>
               </div>
 
               <button
@@ -460,38 +417,28 @@ function MyBugReports() {
                 {getStatusLabel(selectedBug.status)}
               </span>
 
-              <p>
-                {getStatusDescription(selectedBug.status)}
-              </p>
+              <p>{getStatusDescription(selectedBug.status)}</p>
             </div>
 
             <div className="my-bug-report-detail-grid">
               <div>
                 <span>Category</span>
-                <strong>
-                  {getCategoryLabel(selectedBug.category)}
-                </strong>
+                <strong>{getCategoryLabel(selectedBug.category)}</strong>
               </div>
 
               <div>
                 <span>Priority</span>
-                <strong>
-                  {getPriorityLabel(selectedBug.priority)}
-                </strong>
+                <strong>{getPriorityLabel(selectedBug.priority)}</strong>
               </div>
 
               <div>
                 <span>Submitted</span>
-                <strong>
-                  {formatDate(selectedBug.created_at)}
-                </strong>
+                <strong>{formatDate(selectedBug.created_at)}</strong>
               </div>
 
               <div>
                 <span>Last Updated</span>
-                <strong>
-                  {formatDate(selectedBug.updated_at)}
-                </strong>
+                <strong>{formatDate(selectedBug.updated_at)}</strong>
               </div>
             </div>
 
@@ -526,9 +473,7 @@ function MyBugReports() {
 
                 <div className="my-bug-report-screenshot">
                   <img
-                    src={getScreenshotUrl(
-                      selectedBug.screenshot,
-                    )}
+                    src={getScreenshotUrl(selectedBug.screenshot)}
                     alt={`Screenshot for bug report #${selectedBug.id}`}
                   />
                 </div>
@@ -537,9 +482,7 @@ function MyBugReports() {
 
             {selectedBug.admin_notes && (
               <div className="my-bug-report-admin-notes">
-                <div className="my-bug-report-admin-notes-icon">
-                  ✓
-                </div>
+                <div className="my-bug-report-admin-notes-icon">✓</div>
 
                 <div>
                   <span>Response from TBOT</span>

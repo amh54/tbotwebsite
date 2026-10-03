@@ -6,7 +6,7 @@ import CardManagerHeader from "../../components/cardmanager/CardManagerHeader.js
 import CardManagerSummary from "../../components/cardmanager/CardManagerSummary.jsx";
 import CardManagerFilters from "../../components/cardmanager/CardManagerFilters.jsx";
 import CollectionCard from "../../components/cardmanager/CollectionCard.jsx";
-
+import Seo from "../../components/seo.jsx";
 import "../../css/cardInfo.css";
 import "../../css/profile/cardManager.css";
 import "../../css/loading.css";
@@ -505,6 +505,12 @@ const UserCardManager = () => {
 
   return (
     <div className="card-manager-page">
+      <Seo
+        title="My Card Collection - Tbot"
+        description="Manage your Plants vs. Zombies Heroes card collection on Tbot."
+        canonical="/dashboard/card-manager"
+        noindex
+      />
       <main className="card-manager-content">
         <CardManagerHeader onAddCards={openAddModal} />
 

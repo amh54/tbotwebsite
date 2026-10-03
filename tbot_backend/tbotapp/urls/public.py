@@ -21,7 +21,9 @@ from ..views.keep_or_scrap import (
     keep_or_scrap_count,
 )
 from ..views.site_updates import site_updates
-
+from ..views.user_decks import (
+     public_user_decks
+     )
 
 urlpatterns = [
     path(
@@ -89,4 +91,9 @@ urlpatterns = [
         site_updates,
         name="site-updates",
     ),
+    path(
+    "public-decks/",
+    public_user_decks,
+    name="public_decks",
+),
 ]
