@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
+
 import { Link } from "react-router-dom";
+
 import DeckCard from "../../components/modals/deckComponent.jsx";
+
 import FilterDropdown from "../../components/filterDropdown.jsx";
+
 import Navbar from "../../components/navbar.jsx";
+
 import Footer from "../../components/footer.jsx";
+
 import Seo from "../../components/seo.jsx";
 
 import useTemporaryMessage from "../../utils/useTemporaryMessage.js";
@@ -18,7 +24,9 @@ import {
 } from "../../utils/deckFilters.js";
 
 import "../../css/decklists.css";
+
 import "../../css/navbar.css";
+
 import "../../css/loading.css";
 
 import { API_BASE_URL } from "../../utils/api.js";
@@ -89,6 +97,7 @@ function PublicDecks() {
       cancelled = true;
     };
   }, []);
+
   const initialDecks = readSessionCache(STORAGE_KEYS.decks, []);
   const initialCards = readSessionCache(STORAGE_KEYS.cards, []);
 
@@ -128,6 +137,38 @@ function PublicDecks() {
 
   useEffect(() => {
     const controller = new AbortController();
+
+    const fetchDeckCount = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/public-user-decks-count/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Public user deck count request failed with status ${response.status}`,
+          );
+        }
+
+        const data = await response.json();
+        const count = Number(data?.count);
+
+        if (Number.isFinite(count)) {
+          setTotalDecks(count);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load public user deck count:", err);
+        }
+      }
+    };
 
     const fetchDecks = async () => {
       try {
@@ -176,12 +217,13 @@ function PublicDecks() {
             : [];
 
         setDecks(results);
-
         writeSessionCache(STORAGE_KEYS.decks, results);
 
         const count = Number(data?.count);
 
-        setTotalDecks(Number.isFinite(count) ? count : results.length);
+        if (Number.isFinite(count)) {
+          setTotalDecks(count);
+        }
 
         setLoading(false);
         setError("");
@@ -206,6 +248,7 @@ function PublicDecks() {
       }
     };
 
+    fetchDeckCount();
     fetchDecks();
 
     return () => {
@@ -283,11 +326,9 @@ function PublicDecks() {
         }
 
         const data = await response.json();
-
         const cards = Array.isArray(data) ? data : [];
 
         setAllCards(cards);
-
         writeSessionCache(STORAGE_KEYS.cards, cards);
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -313,7 +354,6 @@ function PublicDecks() {
       setCollectionLoading(false);
       setCollectionLoaded(false);
       setCollection(null);
-
       return undefined;
     }
 
@@ -468,16 +508,13 @@ function PublicDecks() {
       <div className="loading-page">
         <div className="loading-card">
           <div className="loading-spinner" />
-
           <h2>Loading public decks</h2>
-
           <p>
             Preparing the public deck browser and loading available user decks.
           </p>
 
           <div className="loading-status">
             <span>Loading public deck data</span>
-
             <strong>
               {totalDecks > 0 ? `${totalDecks} decks` : "Loading..."}
             </strong>
@@ -605,7 +642,6 @@ function PublicDecks() {
           {collectionLoginMessage && (
             <div className="collection-login-message">
               <strong>Discord login required</strong>
-
               <span>Log in with Discord to use the Collection filter.</span>
             </div>
           )}
@@ -616,8 +652,8 @@ function PublicDecks() {
         ) : (
           <p className="results-count">
             All decks shown below come from only public accounts. If you want
-            your decks to show up here, please edit your profile from private
-            to public under{" "}
+            your decks to show up here, please edit your profile from private to
+            public under{" "}
             <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
               Your Profile
             </Link>

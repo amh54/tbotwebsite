@@ -731,7 +731,39 @@ def shared_user_deck(
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+@api_view(["GET"])
+def public_user_decks_count(request):
+    try:
+        public_profile_ids = UserProfile.objects.filter(
+            is_public=True
+        ).values_list(
+            "id",
+            flat=True,
+        )
 
+        deck_count = UserDeck.objects.filter(
+            profile_id__in=public_profile_ids
+        ).count()
+
+        return Response(
+            {
+                "success": True,
+                "count": deck_count,
+            },
+            status=status.HTTP_200_OK,
+        )
+    except DatabaseError as exc:
+        logger.exception(
+            "Unable to load public user deck count"
+        )
+
+        return Response(
+            {
+                "error": "Unable to load public user deck count.",
+                "error_type": exc.__class__.__name__,
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 @api_view(["GET"])
 def public_user_decks(request):
     try:
