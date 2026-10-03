@@ -177,8 +177,8 @@ function SiteUpdateModal({ open, update = null, onClose, onComplete }) {
 
       if (!response.ok) {
         throw new Error(
-          data?.detail ||
-            data?.error ||
+          data?.error ||
+            data?.detail ||
             `Unable to ${
               editing ? "update" : "create"
             } site update: ${response.status}`,

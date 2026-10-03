@@ -83,7 +83,11 @@ def admin_site_update_create(request):
         if page_url is not None:
             page_url = str(page_url).strip() or None
 
-        published = bool(published)
+        if isinstance(published, str):
+            published = published.lower() == "true"
+        else:
+            published = bool(published)
+
         now = timezone.now()
 
         update = SiteUpdate.objects.create(
