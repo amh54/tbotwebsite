@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { useLocation, useNavigate } from "react-router-dom";
 
-import BugReportModal from "./modals/BugReportModal.jsx";
+import BugReportModal from "./modals/bugReportModal.jsx";
 
 import Seo from "../components/seo.jsx";
 
