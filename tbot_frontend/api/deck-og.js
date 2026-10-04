@@ -2,7 +2,6 @@ const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
 
 const SITE_URL = "https://pvzhtbot.com";
 
-const DEFAULT_IMAGE = "https://cdn.pvzhtbot.com/art/darth_vader_swabbie.webp";
 
 const DEFAULT_TITLE = "Tbot - Plants vs. Zombies Heroes";
 
@@ -14,11 +13,13 @@ const PAGE_METADATA = {
     title: "Tbot - Plants vs. Zombies Heroes",
     description:
       "A community database for Plants vs. Zombies Heroes cards, heroes, decks, collections, and strategy.",
+    image: "https://cdn.pvzhtbot.com/art/home_backgound_by_flowerr.webp"
   },
   "/decklists": {
     title: "Decklists - Tbot",
     description:
       "Browse the Tbot Plants vs. Zombies Heroes community deck database.",
+    image: "https://cdn.pvzhtbot.com/art/deckbannerbyairheadz.webp"
   },
   "/cardinfo": {
     title: "Card Information - Tbot",
@@ -140,10 +141,6 @@ function escapeHtml(str) {
 
 function resolveImageUrl(image) {
   const img = String(image || "").trim();
-
-  if (!img) {
-    return DEFAULT_IMAGE;
-  }
 
   if (/^(https?:\/\/|data:|blob:)/i.test(img)) {
     return img;
@@ -330,7 +327,7 @@ function cardToOg(card) {
   }
 
   return {
-    title: `${name} — TBOT Card Info`,
+    title: `${name} - TBOT Card Info`,
     description:
       truncate(parts.join("\n"), 500) ||
       `View information about ${name} on Tbot.`,
@@ -514,7 +511,7 @@ function profileToOg(profileData, fallbackSlug, decksPayload) {
   const cardCount = getProfileCardCount(profileData);
 
   return {
-    title: `${name} — Tbot Profile`,
+    title: `${name} - Tbot Profile`,
 
     description: buildProfileDescription(name, bio, deckCount, cardCount),
 
@@ -531,9 +528,8 @@ function buildProfileOg(slug) {
   }
 
   return {
-    title: `${name} — Tbot Profile`,
-    description: `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`,
-    image: DEFAULT_IMAGE,
+    title: `${name} - Tbot Profile`,
+    description: `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`
   };
 }
 
@@ -547,7 +543,6 @@ function buildDeckbuilderOg(name) {
   return {
     title: `${cleanName} - Tbot Deckbuilder`,
     description: `Explore ${cleanName}'s Plants vs. Zombies Heroes decks on Tbot.`,
-    image: DEFAULT_IMAGE,
   };
 }
 
@@ -682,7 +677,6 @@ async function resolveMetadata(pathname, query) {
         title: "Public Decks - Tbot",
         description:
           "Browse public Plants vs. Zombies Heroes decks uploaded by the Tbot community.",
-        image: DEFAULT_IMAGE,
       };
     }
 
@@ -923,7 +917,6 @@ export default async function handler(req, res) {
     og = {
       title: "Tbot",
       description: DEFAULT_DESCRIPTION,
-      image: DEFAULT_IMAGE,
     };
   }
 
@@ -936,7 +929,7 @@ export default async function handler(req, res) {
   const html = buildHtml({
     title: og.title || DEFAULT_TITLE,
     description: og.description || DEFAULT_DESCRIPTION,
-    image: og.image || DEFAULT_IMAGE,
+    image: og.image || "",
     url: canonicalUrl,
     noindex: isPrivateRoute(originalPath),
   });
