@@ -681,7 +681,7 @@ async function resolveMetadata(pathname, query) {
       return {
         title: "Public Decks - Tbot",
         description:
-          "Browse public Plants vs. Zombies Heroes decks shared by the Tbot community.",
+          "Browse public Plants vs. Zombies Heroes decks uploaded by the Tbot community.",
         image: DEFAULT_IMAGE,
       };
     }
