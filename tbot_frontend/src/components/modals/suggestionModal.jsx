@@ -48,6 +48,10 @@ const SUGGESTION_PAGES = [
     label: "Decklists",
   },
   {
+    value: "/publicdecks",
+    label: "Public Decks"
+  },
+  {
     value: "/legacydecks",
     label: "Legacy Decks",
   },
@@ -74,6 +78,10 @@ const SUGGESTION_PAGES = [
   {
     value: "/updates",
     label: "Site Updates",
+  },
+  {
+    value: "/my-bug-reports",
+    label: "Bug Reports"
   },
   {
     value: "/my-suggestions",
