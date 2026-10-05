@@ -244,7 +244,8 @@ body {
   justify-content: center;
   padding: 42px 32px;
   text-align: center;
-  background: transparent;
+  background-color: transparent;
+  background-repeat: no-repeat;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   isolation: isolate;
@@ -257,59 +258,84 @@ body {
   min-height: 300px;
 }
 
-.feature-command::before,
-.quick-answer-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background-repeat: no-repeat;
-  pointer-events: none;
+.feature-command:nth-child(5n + 1),
+.quick-answer-card:nth-child(5n + 1) {
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.18),
+      rgba(16, 20, 22, 0.18)
+    ),
+    url("https://cdn.pvzhtbot.com/art/beastly_grave.webp");
+  background-size:
+    100% 100%,
+    240% 270%;
+  background-position:
+    0 0,
+    20.05% 17.08%;
 }
 
-.feature-command::after,
-.quick-answer-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: rgba(16, 20, 22, 0.18);
-  pointer-events: none;
+.feature-command:nth-child(5n + 2),
+.quick-answer-card:nth-child(5n + 2) {
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.18),
+      rgba(16, 20, 22, 0.18)
+    ),
+    url("https://cdn.pvzhtbot.com/art/brainy_grave.webp");
+  background-size:
+    100% 100%,
+    253.97% 338.03%;
+  background-position:
+    0 0,
+    86.47% 79.88%;
 }
 
-.feature-command:nth-child(5n + 1)::before,
-.quick-answer-card:nth-child(5n + 1)::before {
-  background-image: url("https://cdn.pvzhtbot.com/art/beastly_grave.webp");
-  background-size: 240% 270%;
-  background-position: 20.05% 17.08%;
+.feature-command:nth-child(5n + 3),
+.quick-answer-card:nth-child(5n + 3) {
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.18),
+      rgba(16, 20, 22, 0.18)
+    ),
+    url("https://cdn.pvzhtbot.com/art/crazy_grave.webp");
+  background-size:
+    100% 100%,
+    293.58% 261.82%;
+  background-position:
+    0 0,
+    85.55% 9.66%;
 }
 
-.feature-command:nth-child(5n + 2)::before,
-.quick-answer-card:nth-child(5n + 2)::before {
-  background-image: url("https://cdn.pvzhtbot.com/art/brainy_grave.webp");
-  background-size: 253.97% 338.03%;
-  background-position: 86.47% 79.88%;
+.feature-command:nth-child(5n + 4),
+.quick-answer-card:nth-child(5n + 4) {
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.18),
+      rgba(16, 20, 22, 0.18)
+    ),
+    url("https://cdn.pvzhtbot.com/art/hearty_grave.webp");
+  background-size:
+    100% 100%,
+    239.25% 288%;
+  background-position:
+    0 0,
+    16.91% 11.91%;
 }
 
-.feature-command:nth-child(5n + 3)::before,
-.quick-answer-card:nth-child(5n + 3)::before {
-  background-image: url("https://cdn.pvzhtbot.com/art/crazy_grave.webp");
-  background-size: 293.58% 261.82%;
-  background-position: 85.55% 9.66%;
-}
-
-.feature-command:nth-child(5n + 4)::before,
-.quick-answer-card:nth-child(5n + 4)::before {
-  background-image: url("https://cdn.pvzhtbot.com/art/hearty_grave.webp");
-  background-size: 239.25% 288%;
-  background-position: 16.91% 11.91%;
-}
-
-.feature-command:nth-child(5n + 5)::before,
-.quick-answer-card:nth-child(5n + 5)::before {
-  background-image: url("https://cdn.pvzhtbot.com/art/sneaky_grave.webp");
-  background-size: 238.81% 309.01%;
-  background-position: 18.01% 81.72%;
+.feature-command:nth-child(5n + 5),
+.quick-answer-card:nth-child(5n + 5) {
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.18),
+      rgba(16, 20, 22, 0.18)
+    ),
+    url("https://cdn.pvzhtbot.com/art/sneaky_grave.webp");
+  background-size:
+    100% 100%,
+    238.81% 309.01%;
+  background-position:
+    0 0,
+    18.01% 81.72%;
 }
 
 .feature-command:hover,
@@ -486,14 +512,6 @@ a:hover {
   }
 }
 
-@media (min-width: 769px) and (max-width: 1100px) {
-  .feature-command:nth-child(5n + 1)::before,
-  .quick-answer-card:nth-child(5n + 1)::before {
-    background-size: 210% 250%;
-    background-position: 20% 18%;
-  }
-}
-
 @media (max-width: 768px) {
   .hero {
     padding: 45px 16px 40px;
@@ -533,36 +551,6 @@ a:hover {
     border-radius: 14px;
   }
 
-  .feature-command:nth-child(5n + 1)::before,
-  .quick-answer-card:nth-child(5n + 1)::before {
-    background-size: 185% 225%;
-    background-position: 20% 20%;
-  }
-
-  .feature-command:nth-child(5n + 2)::before,
-  .quick-answer-card:nth-child(5n + 2)::before {
-    background-size: 200% 280%;
-    background-position: 86% 78%;
-  }
-
-  .feature-command:nth-child(5n + 3)::before,
-  .quick-answer-card:nth-child(5n + 3)::before {
-    background-size: 230% 225%;
-    background-position: 85% 10%;
-  }
-
-  .feature-command:nth-child(5n + 4)::before,
-  .quick-answer-card:nth-child(5n + 4)::before {
-    background-size: 190% 245%;
-    background-position: 17% 12%;
-  }
-
-  .feature-command:nth-child(5n + 5)::before,
-  .quick-answer-card:nth-child(5n + 5)::before {
-    background-size: 190% 265%;
-    background-position: 18% 82%;
-  }
-
   .grave-content {
     max-width: 500px;
     padding: 12px 16px;
@@ -589,23 +577,5 @@ a:hover {
 
   .discord {
     padding: 20px;
-  }
-}
-
-@media (max-width: 480px) {
-  .feature-command,
-  .quick-answer-card {
-    min-height: 320px;
-    padding: 28px 16px;
-  }
-
-  .feature-command:nth-child(5n + 1)::before,
-  .quick-answer-card:nth-child(5n + 1)::before {
-    background-size: 165% 205%;
-    background-position: 20% 20%;
-  }
-
-  .grave-content {
-    max-width: calc(100% - 12px);
   }
 }
