@@ -15,6 +15,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "avatar",
             "bio",
             "is_public",
+            "youtube_url",
+            "twitch_url",
+            "tiktok_url",
+            "instagram_url",
+            "twitter_url",
+            "discord_server_url",
             "created_at",
             "updated_at",
         ]

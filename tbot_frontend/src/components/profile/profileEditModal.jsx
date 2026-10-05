@@ -6,10 +6,22 @@ function ProfileEditModal({
   profileSlug,
   bio,
   isPublic,
+  youtubeUrl,
+  twitchUrl,
+  tiktokUrl,
+  instagramUrl,
+  discordServerUrl,
   onDisplayNameChange,
   onProfileSlugChange,
   onBioChange,
   onPublicChange,
+  onYoutubeUrlChange,
+  onTwitchUrlChange,
+  onTiktokUrlChange,
+  onInstagramUrlChange,
+  onDiscordServerUrlChange,
+  twitterUrl,
+  onTwitterUrlChange,
   onSubmit,
   onClose,
 }) {
@@ -68,7 +80,7 @@ function ProfileEditModal({
           </div>
 
           <div className="profile-edit-field">
-            <label htmlFor="profile-bio">Bio</label>
+            <label htmlFor="profile-bio">Bio (Markdown Suppported)</label>
 
             <textarea
               id="profile-bio"
@@ -80,6 +92,98 @@ function ProfileEditModal({
             />
 
             <small>{bio.length}/2000 characters</small>
+          </div>
+
+          <div className="profile-edit-social">
+            <div className="profile-edit-social-header">
+              <h3>Social Connections</h3>
+
+              <p>Add links to your social platforms and Discord server.</p>
+            </div>
+
+            <div className="profile-edit-field">
+              <label htmlFor="profile-youtube">YouTube</label>
+
+              <input
+                id="profile-youtube"
+                type="url"
+                value={youtubeUrl}
+                maxLength={500}
+                onChange={(event) => onYoutubeUrlChange(event.target.value)}
+                placeholder="https://youtube.com/@yourname"
+                disabled={saving}
+              />
+            </div>
+
+            <div className="profile-edit-field">
+              <label htmlFor="profile-twitch">Twitch</label>
+
+              <input
+                id="profile-twitch"
+                type="url"
+                value={twitchUrl}
+                maxLength={500}
+                onChange={(event) => onTwitchUrlChange(event.target.value)}
+                placeholder="https://twitch.tv/yourname"
+                disabled={saving}
+              />
+            </div>
+
+            <div className="profile-edit-field">
+              <label htmlFor="profile-tiktok">TikTok</label>
+
+              <input
+                id="profile-tiktok"
+                type="url"
+                value={tiktokUrl}
+                maxLength={500}
+                onChange={(event) => onTiktokUrlChange(event.target.value)}
+                placeholder="https://tiktok.com/@yourname"
+                disabled={saving}
+              />
+            </div>
+
+            <div className="profile-edit-field">
+              <label htmlFor="profile-instagram">Instagram</label>
+
+              <input
+                id="profile-instagram"
+                type="url"
+                value={instagramUrl}
+                maxLength={500}
+                onChange={(event) => onInstagramUrlChange(event.target.value)}
+                placeholder="https://instagram.com/yourname"
+                disabled={saving}
+              />
+            </div>
+            <div className="profile-edit-field">
+              <label htmlFor="profile-twitter">Twitter/X</label>
+
+              <input
+                id="profile-twitter"
+                type="url"
+                value={twitterUrl}
+                maxLength={500}
+                onChange={(event) => onTwitterUrlChange(event.target.value)}
+                placeholder="https://x.com/yourname"
+                disabled={saving}
+              />
+            </div>
+            <div className="profile-edit-field">
+              <label htmlFor="profile-discord-server">Discord Server</label>
+
+              <input
+                id="profile-discord-server"
+                type="url"
+                value={discordServerUrl}
+                maxLength={500}
+                onChange={(event) =>
+                  onDiscordServerUrlChange(event.target.value)
+                }
+                placeholder="https://discord.gg/yourinvite"
+                disabled={saving}
+              />
+            </div>
           </div>
 
           <div className="profile-public-toggle">

@@ -29,7 +29,27 @@
   overflow: hidden;
   min-width: 0;
 }
+.deck-tutorial-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
 
+.deck-youtube-player {
+  width: 100%;
+  margin-top: 8px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.deck-youtube-player iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
 .deck-listing-info {
   display: flex;
   flex-direction: column;

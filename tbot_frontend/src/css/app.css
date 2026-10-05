@@ -31,16 +31,14 @@ body {
   position: fixed;
   inset: 0;
   z-index: -1;
-
   background-image:
     linear-gradient(
       rgba(16, 20, 22, 0.62),
       rgba(16, 20, 22, 0.62)
     ),
     url("https://cdn.pvzhtbot.com/art/home_backgound_by_flowerr.webp");
-
   background-size: cover;
-  background-position: center top;
+  background-position: bottom right;
   background-repeat: no-repeat;
 }
 
@@ -105,6 +103,7 @@ body {
   color: #8fe38b;
   text-decoration: none;
 }
+
 .tutorial-link {
   width: 100%;
   margin-top: 8px;
@@ -114,21 +113,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-
   width: 100%;
   min-height: 64px;
   padding: 16px 24px;
   box-sizing: border-box;
-
   background: #8fe38b;
   border: 1px solid #8fe38b;
   border-radius: 8px;
-
   color: #101416;
   font-size: 1.15rem;
   font-weight: 800;
   text-decoration: none;
-
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
@@ -145,40 +140,6 @@ body {
 
 .tutorial-link a:active {
   transform: translateY(1px);
-}
-.feature-command a,
-.quick-answer-card a {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 4px;
-  padding: 8px 14px;
-  border: 1px solid #3b454b;
-  border-radius: 6px;
-  background: transparent;
-  color: #7fb9ff;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition:
-    color 0.2s ease,
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    gap 0.2s ease;
-}
-
-.feature-command a + a,
-.quick-answer-card a + a {
-  margin-left: 8px;
-}
-
-.feature-command a:hover,
-.quick-answer-card a:hover {
-  border-color: #8fe38b;
-  background: rgba(143, 227, 139, 0.08);
-  color: #8fe38b;
-  text-decoration: none;
-  gap: 10px;
 }
 
 .features,
@@ -204,7 +165,162 @@ body {
   line-height: 1.3;
 }
 
+.features > p,
+.about > p {
+  max-width: 850px;
+  margin-bottom: 24px;
+  color: #bfc5c8;
+}
 
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.feature-command {
+  min-width: 0;
+  min-height: 320px;
+  padding: 24px;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  border: 1px solid #23272b;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.feature-command:nth-child(5n + 1) {
+  background-color: #4f3d39;
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.35),
+      rgba(16, 20, 22, 0.35)
+    ),
+    url("https://cdn.pvzhtbot.com/art/beastly_grave.webp");
+  background-size:
+    100% 100%,
+    271.19% 300.00%;
+  background-position:
+    0 0,
+    20.05% 17.08%;
+}
+
+.feature-command:nth-child(5n + 2) {
+  background-color: #847282;
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.35),
+      rgba(16, 20, 22, 0.35)
+    ),
+    url("https://cdn.pvzhtbot.com/art/brainy_grave.webp");
+  background-size:
+    100% 100%,
+    253.97% 338.03%;
+  background-position:
+    0 0,
+    86.47% 79.88%;
+}
+
+.feature-command:nth-child(5n + 3) {
+  background-color: #6c7975;
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.35),
+      rgba(16, 20, 22, 0.35)
+    ),
+    url("https://cdn.pvzhtbot.com/art/crazy_grave.webp");
+  background-size:
+    100% 100%,
+    293.58% 261.82%;
+  background-position:
+    0 0,
+    85.55% 9.66%;
+}
+
+.feature-command:nth-child(5n + 4) {
+  background-color: #80856d;
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.35),
+      rgba(16, 20, 22, 0.35)
+    ),
+    url("https://cdn.pvzhtbot.com/art/hearty_grave.webp");
+  background-size:
+    100% 100%,
+    239.25% 288.00%;
+  background-position:
+    0 0,
+    16.91% 11.91%;
+}
+
+.feature-command:nth-child(5n + 5) {
+  background-color: #433b4d;
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.35),
+      rgba(16, 20, 22, 0.35)
+    ),
+    url("https://cdn.pvzhtbot.com/art/sneaky_grave.webp");
+  background-size:
+    100% 100%,
+    238.81% 309.01%;
+  background-position:
+    0 0,
+    18.01% 81.72%;
+}
+
+.feature-command:hover {
+  border-color: #3b454b;
+  transform: translateY(-2px);
+}
+
+.feature-command h3 {
+  margin-bottom: 10px;
+  color: #8fe38b;
+  font-size: 1.15rem;
+}
+
+.feature-command p {
+  margin-bottom: 16px;
+  color: #ffffff;
+}
+
+.feature-command a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+  padding: 8px 14px;
+  border: 1px solid #3b454b;
+  border-radius: 6px;
+  background: rgba(16, 20, 22, 0.65);
+  color: #7fb9ff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    gap 0.2s ease;
+}
+
+.feature-command a + a {
+  margin-left: 8px;
+}
+
+.feature-command a:hover {
+  border-color: #8fe38b;
+  background: rgba(16, 20, 22, 0.8);
+  color: #8fe38b;
+  text-decoration: none;
+  gap: 10px;
+}
+
+.about {
+  padding-top: 8px;
+}
 
 .quick-answers {
   width: 100%;
@@ -228,18 +344,98 @@ body {
 
 .quick-answer-card {
   min-width: 0;
+  min-height: 280px;
   padding: 24px;
-  background: #15181b;
+  background-color: transparent;
+  background-repeat: no-repeat;
   border: 1px solid #23272b;
   transition:
     border-color 0.2s ease,
-    transform 0.2s ease,
-    background 0.2s ease;
+    transform 0.2s ease;
+}
+
+.quick-answer-card:nth-child(5n + 1) {
+  background-color: #4f3d39;
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.35),
+      rgba(16, 20, 22, 0.35)
+    ),
+    url("https://cdn.pvzhtbot.com/art/beastly_grave.webp");
+  background-size:
+    100% 100%,
+    271.19% 300.00%;
+  background-position:
+    0 0,
+    20.05% 17.08%;
+}
+
+.quick-answer-card:nth-child(5n + 2) {
+  background-color: #847282;
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.35),
+      rgba(16, 20, 22, 0.35)
+    ),
+    url("https://cdn.pvzhtbot.com/art/brainy_grave.webp");
+  background-size:
+    100% 100%,
+    253.97% 338.03%;
+  background-position:
+    0 0,
+    86.47% 79.88%;
+}
+
+.quick-answer-card:nth-child(5n + 3) {
+  background-color: #6c7975;
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.35),
+      rgba(16, 20, 22, 0.35)
+    ),
+    url("https://cdn.pvzhtbot.com/art/crazy_grave.webp");
+  background-size:
+    100% 100%,
+    293.58% 261.82%;
+  background-position:
+    0 0,
+    85.55% 9.66%;
+}
+
+.quick-answer-card:nth-child(5n + 4) {
+  background-color: #80856d;
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.35),
+      rgba(16, 20, 22, 0.35)
+    ),
+    url("https://cdn.pvzhtbot.com/art/hearty_grave.webp");
+  background-size:
+    100% 100%,
+    239.25% 288.00%;
+  background-position:
+    0 0,
+    16.91% 11.91%;
+}
+
+.quick-answer-card:nth-child(5n + 5) {
+  background-color: #433b4d;
+  background-image:
+    linear-gradient(
+      rgba(16, 20, 22, 0.35),
+      rgba(16, 20, 22, 0.35)
+    ),
+    url("https://cdn.pvzhtbot.com/art/sneaky_grave.webp");
+  background-size:
+    100% 100%,
+    238.81% 309.01%;
+  background-position:
+    0 0,
+    18.01% 81.72%;
 }
 
 .quick-answer-card:hover {
   border-color: #3b454b;
-  background: #171b1e;
   transform: translateY(-2px);
 }
 
@@ -252,75 +448,41 @@ body {
 
 .quick-answer-card p {
   margin: 0;
-  color: #c4c9cc;
+  color: #ffffff;
   font-size: 1rem;
   line-height: 1.7;
 }
 
 .quick-answer-card a {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   margin-top: 18px;
+  padding: 8px 14px;
+  border: 1px solid #3b454b;
+  border-radius: 6px;
+  background: rgba(16, 20, 22, 0.65);
   color: #7fb9ff;
   font-size: 0.95rem;
   font-weight: 500;
   text-decoration: none;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    gap 0.2s ease;
+}
+
+.quick-answer-card a + a {
+  margin-left: 8px;
 }
 
 .quick-answer-card a:hover {
+  border-color: #8fe38b;
+  background: rgba(16, 20, 22, 0.8);
   color: #8fe38b;
-  text-decoration: underline;
-}
-
-
-
-.features > p,
-.about > p {
-  max-width: 850px;
-  margin-bottom: 24px;
-  color: #bfc5c8;
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.feature-command {
-  min-width: 0;
-  padding: 24px;
-  background: #15181b;
-  border: 1px solid #23272b;
-  transition:
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.feature-command:hover {
-  border-color: #3b454b;
-  transform: translateY(-2px);
-}
-
-.feature-command h3 {
-  margin-bottom: 10px;
-  color: #8fe38b;
-  font-size: 1.15rem;
-}
-
-.feature-command p {
-  margin-bottom: 16px;
-  color: #c4c9cc;
-}
-
-.feature-command a {
-  color: #7fb9ff;
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-
-.about {
-  padding-top: 8px;
+  text-decoration: none;
+  gap: 10px;
 }
 
 .discord {
@@ -360,8 +522,6 @@ body {
   color: #c4c9cc;
 }
 
-
-
 a {
   color: #7fb9ff;
   text-decoration: none;
@@ -377,6 +537,7 @@ a:hover {
     padding-left: 24px;
     padding-right: 24px;
   }
+
   .hero {
     padding: 55px 24px 45px;
   }
@@ -402,8 +563,10 @@ a:hover {
   }
 
   .quick-answer-card {
+    min-height: 280px;
     padding: 20px;
   }
+
   .hero {
     padding: 45px 16px 40px;
   }
@@ -442,10 +605,16 @@ a:hover {
     max-width: 100%;
     margin-bottom: 30px;
   }
+
   .feature-grid {
     grid-template-columns: 1fr;
   }
-  .feature-command,
+
+  .feature-command {
+    min-height: 320px;
+    padding: 20px;
+  }
+
   .discord {
     padding: 20px;
   }

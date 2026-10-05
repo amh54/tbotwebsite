@@ -38,6 +38,7 @@ const readSessionCache = (key, fallback) => {
     return JSON.parse(value);
   } catch (error) {
     console.warn(`Unable to read session cache "${key}":`, error);
+
     return fallback;
   }
 };
@@ -56,12 +57,14 @@ const writeSessionCache = (key, value) => {
 
 const getDiscordAvatarUrl = (profile) => {
   const avatar = normalizeText(profile?.avatar);
+
   const discordId = normalizeText(profile?.discord_id);
 
   if (!avatar) {
     if (discordId) {
       try {
         const numericId = BigInt(discordId);
+
         const defaultAvatarIndex = Number((numericId >> 22n) % 6n);
 
         return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
@@ -94,6 +97,149 @@ const getDiscordAvatarUrl = (profile) => {
   return "";
 };
 
+const YouTubeIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="user-social-icon">
+    <path
+      d="M23 12s0-4-1-5-2-1-4-1H6C4 6 3 6 2 7s-1 5-1 5 0 4 1 5 2 1 4 1h12c2 0 3 0 4-1s1-5 1-5Z"
+      fill="currentColor"
+    />
+    <path d="m10 9 5 3-5 3V9Z" fill="#101416" />
+  </svg>
+);
+
+const TwitchIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="user-social-icon">
+    <path
+      d="M4 2h17v12l-5 5h-4l-3 3v-3H4V2Zm3 3v10h3v3l3-3h4l2-2V5H7Zm3 2h2v5h-2V7Zm5 0h2v5h-2V7Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const TikTokIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="user-social-icon">
+    <path
+      d="M15 3c.3 2 1.4 3.5 3.5 4.1V10c-1.4-.1-2.7-.6-3.5-1.4v6.2a5.2 5.2 0 1 1-4.5-5.1v2.9a2.3 2.3 0 1 0 1.6 2.2V3H15Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const InstagramIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="user-social-icon">
+    <rect
+      x="3"
+      y="3"
+      width="18"
+      height="18"
+      rx="5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    />
+
+    <circle
+      cx="12"
+      cy="12"
+      r="4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    />
+
+    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+  </svg>
+);
+
+const TwitterIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="user-social-icon">
+    <path
+      d="M18.9 2H22l-6.8 7.8L23.2 22h-6.2l-4.9-6.4L6.5 22H3.4l7.3-8.4L2.8 2H9l4.4 5.8L18.9 2Zm-1.1 17.7h1.7L8.3 4.2H6.5l11.3 15.5Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const DiscordIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="user-social-icon">
+    <path
+      d="M19.5 5.2A16.7 16.7 0 0 0 15.3 4l-.5 1a15 15 0 0 0-5.6 0l-.5-1a16.7 16.7 0 0 0-4.2 1.2C1.8 9.1 1.1 13 1.4 16.9a16.9 16.9 0 0 0 5.2 2.6l1.3-1.8c-.7-.3-1.3-.7-1.9-1.1l.5-.4c3.7 1.7 7.7 1.7 11.4 0l.5.4c-.6.4-1.2.8-1.9 1.1l1.3 1.8a16.9 16.9 0 0 0 5.2-2.6c.4-4.5-.8-8.4-3.5-11.7ZM8.5 14.1c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Zm7 0c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const socialConnections = [
+  {
+    key: "youtube_url",
+    label: "YouTube",
+    searchTerms: ["youtube"],
+    Icon: YouTubeIcon,
+    contentCreator: true,
+  },
+  {
+    key: "twitch_url",
+    label: "Twitch",
+    searchTerms: ["twitch"],
+    Icon: TwitchIcon,
+    contentCreator: true,
+  },
+  {
+    key: "tiktok_url",
+    label: "TikTok",
+    searchTerms: ["tiktok", "tik tok"],
+    Icon: TikTokIcon,
+    contentCreator: true,
+  },
+  {
+    key: "instagram_url",
+    label: "Instagram",
+    searchTerms: ["instagram", "insta"],
+    Icon: InstagramIcon,
+    contentCreator: false,
+  },
+  {
+    key: "twitter_url",
+    label: "Twitter/X",
+    searchTerms: ["twitter", "twitter/x", "x"],
+    Icon: TwitterIcon,
+    contentCreator: false,
+  },
+  {
+    key: "discord_server_url",
+    label: "Discord",
+    searchTerms: ["discord", "discord server"],
+    Icon: DiscordIcon,
+    contentCreator: false,
+  },
+];
+
+const getSocialSearchConnection = (value) => {
+  const searchValue = normalizeText(value).toLowerCase();
+
+  if (!searchValue) {
+    return null;
+  }
+
+  if (
+    searchValue === "content creator" ||
+    searchValue === "content creators" ||
+    searchValue === "creator" ||
+    searchValue === "creators"
+  ) {
+    return {
+      contentCreator: true,
+    };
+  }
+
+  return (
+    socialConnections.find(({ searchTerms }) =>
+      searchTerms.some(
+        (term) => searchValue === term || searchValue.includes(term),
+      ),
+    ) || null
+  );
+};
 function Users() {
   const [profileSlug, setProfileSlug] = useState("");
 
@@ -124,7 +270,9 @@ function Users() {
       cancelled = true;
     };
   }, []);
+
   const initialProfiles = readSessionCache(STORAGE_KEYS.profiles, []);
+
   const initialUserCount = readSessionCache(STORAGE_KEYS.userCount, null);
 
   const hasCachedProfiles =
@@ -139,7 +287,9 @@ function Users() {
   );
 
   const [search, setSearch] = useState("");
+
   const [loading, setLoading] = useState(!hasCachedProfiles);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -165,10 +315,12 @@ function Users() {
         }
 
         const data = await response.json();
+
         const count = Number(data?.count);
 
         if (Number.isFinite(count) && count >= 0) {
           setTotalUsers(count);
+
           writeSessionCache(STORAGE_KEYS.userCount, count);
         }
       } catch (err) {
@@ -225,11 +377,14 @@ function Users() {
               : [];
 
         setProfiles(results);
+
         setError("");
+
         writeSessionCache(STORAGE_KEYS.profiles, results);
 
         if (totalUsers === null || totalUsers === 0) {
           setTotalUsers(results.length);
+
           writeSessionCache(STORAGE_KEYS.userCount, results.length);
         }
 
@@ -243,11 +398,14 @@ function Users() {
 
         if (hasCachedProfiles) {
           setError("");
+
           setLoading(false);
+
           return;
         }
 
         setError(err.message || "Unable to load users right now.");
+
         setLoading(false);
       }
     };
@@ -276,6 +434,7 @@ function Users() {
 
     return [...profiles].sort((a, b) => {
       const aKey = getAlphabeticalKey(a);
+
       const bKey = getAlphabeticalKey(b);
 
       if (aKey < bKey) {
@@ -297,10 +456,30 @@ function Users() {
       return sortedProfiles;
     }
 
+    const socialSearch = getSocialSearchConnection(searchValue);
+
+    if (socialSearch) {
+      if (socialSearch.contentCreator) {
+        return sortedProfiles.filter((profile) =>
+          socialConnections.some(
+            ({ key, contentCreator }) =>
+              contentCreator && normalizeText(profile[key]),
+          ),
+        );
+      }
+
+      return sortedProfiles.filter((profile) =>
+        normalizeText(profile[socialSearch.key]),
+      );
+    }
+
     return sortedProfiles.filter((profile) => {
       const displayName = normalizeText(profile.display_name).toLowerCase();
+
       const username = normalizeText(profile.username).toLowerCase();
+
       const profileSlug = normalizeText(profile.profile_slug).toLowerCase();
+
       const bio = normalizeText(profile.bio).toLowerCase();
 
       return (
@@ -317,11 +496,14 @@ function Users() {
       <div className="loading-page">
         <div className="loading-card">
           <div className="loading-spinner" />
+
           <h2>Loading users</h2>
+
           <p>Finding public Tbot profiles.</p>
 
           <div className="loading-status">
             <span>Loading user data</span>
+
             <strong>
               {totalUsers !== null
                 ? `${totalUsers} public users`
@@ -336,10 +518,10 @@ function Users() {
   return (
     <div className="users-page">
       <Seo
-  title="PVZH Players & Community Profiles - PVZ Heroes | Tbot"
-  description="Browse public Plants vs. Zombies Heroes player profiles on Tbot. Discover the PVZH community, player profiles, bios, and shared PVZ Heroes decklists."
-  canonical="/users"
-/>
+        title="PVZH Players & Community Profiles - PVZ Heroes | Tbot"
+        description="Browse public Plants vs. Zombies Heroes player profiles on Tbot. Discover the PVZH community, player profiles, bios, social connections, and shared PVZ Heroes decklists."
+        canonical="/users"
+      />
 
       <Navbar />
 
@@ -347,6 +529,7 @@ function Users() {
         <div className="users-header">
           <div>
             <h1>PVZ Heroes Players & Community Profiles</h1>
+
             <p>
               Browse public Plants vs. Zombies Heroes player profiles and
               explore their decklists.
@@ -358,7 +541,7 @@ function Users() {
           <input
             type="search"
             className="users-search"
-            placeholder="Search users..."
+            placeholder="Search users or connections..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -371,7 +554,8 @@ function Users() {
             to public under{" "}
             <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
               Your Profile
-            </Link> <br/>
+            </Link>{" "}
+            <br />
             Showing <strong>{filteredProfiles.length}</strong> of{" "}
             <strong>
               {totalUsers !== null ? totalUsers : profiles.length}
@@ -383,6 +567,7 @@ function Users() {
         {error ? (
           <div className="users-error">
             <h2>Unable to load users</h2>
+
             <p>{error}</p>
           </div>
         ) : filteredProfiles.length === 0 ? (
@@ -394,7 +579,7 @@ function Users() {
             <p>
               {profiles.length === 0
                 ? "There are currently no public profiles to browse."
-                : "Try a different search."}
+                : "Try a different search or connection."}
             </p>
           </div>
         ) : (
@@ -407,13 +592,20 @@ function Users() {
                 "Tbot User";
 
               const username = normalizeText(profile.username);
+
               const profileSlug = normalizeText(profile.profile_slug);
+
               const bio = normalizeText(profile.bio);
+
               const avatar = getDiscordAvatarUrl(profile);
 
               const profileUrl = profileSlug
                 ? `/profile/${encodeURIComponent(profileSlug)}`
                 : null;
+
+              const availableSocialConnections = socialConnections.filter(
+                ({ key }) => normalizeText(profile[key]),
+              );
 
               const cardContent = (
                 <>
@@ -424,9 +616,7 @@ function Users() {
                           src={avatar}
                           alt={`${displayName} avatar`}
                           onError={(event) => {
-                            const discordId = normalizeText(
-                              profile.discord_id,
-                            );
+                            const discordId = normalizeText(profile.discord_id);
 
                             if (discordId) {
                               try {
@@ -440,6 +630,7 @@ function Users() {
 
                                 if (event.currentTarget.src !== fallbackUrl) {
                                   event.currentTarget.src = fallbackUrl;
+
                                   return;
                                 }
                               } catch {}
@@ -451,6 +642,7 @@ function Users() {
 
                             if (parent) {
                               parent.classList.add("user-avatar-fallback");
+
                               parent.textContent = displayName
                                 .charAt(0)
                                 .toUpperCase();
@@ -480,6 +672,29 @@ function Users() {
                       <p className="user-card-bio user-card-no-bio">
                         No bio provided.
                       </p>
+                    )}
+
+                    {availableSocialConnections.length > 0 && (
+                      <div className="user-social-links">
+                        {availableSocialConnections.map(
+                          ({ key, label, Icon }) => (
+                            <a
+                              key={key}
+                              href={normalizeText(profile[key])}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="user-social-link"
+                              aria-label={`${label} for ${displayName}`}
+                              title={label}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                              }}
+                            >
+                              <Icon />
+                            </a>
+                          ),
+                        )}
+                      </div>
                     )}
                   </div>
                 </>

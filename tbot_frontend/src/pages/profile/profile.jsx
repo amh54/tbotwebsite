@@ -42,18 +42,26 @@ const normalizeText = (value) => String(value ?? "").trim();
 
 const normalizeKey = (value) => normalizeText(value).toLowerCase();
 
-const getProfileCacheKey = (slug) => `tbot_profile_cache_${normalizeKey(slug)}`;
+const getProfileCacheKey = (slug) =>
+  `tbot_profile_cache_${normalizeKey(slug)}`;
 
 function Profile() {
   const { profile_slug } = useParams();
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [userCards, setUserCards] = useState([]);
+
   const [viewerCards, setViewerCards] = useState([]);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   const [profile, setProfile] = useState(null);
+
   const [decks, setDecks] = useState([]);
+
   const [savedDecks, setSavedDecks] = useState([]);
+
   const [allCards, setAllCards] = useState([]);
 
   const [activeTab, setActiveTab] = useState(() =>
@@ -61,17 +69,39 @@ function Profile() {
   );
 
   const [isOwner, setIsOwner] = useState(false);
+
   const [isSiteOwner, setIsSiteOwner] = useState(false);
+
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
 
   const [editOpen, setEditOpen] = useState(false);
+
   const [saving, setSaving] = useState(false);
+
   const [editError, setEditError] = useState("");
+
   const [editDisplayName, setEditDisplayName] = useState("");
+
   const [editProfileSlug, setEditProfileSlug] = useState("");
+
   const [editBio, setEditBio] = useState("");
+
   const [editIsPublic, setEditIsPublic] = useState(false);
+
+  const [editYoutubeUrl, setEditYoutubeUrl] = useState("");
+
+  const [editTwitchUrl, setEditTwitchUrl] = useState("");
+
+  const [editTiktokUrl, setEditTiktokUrl] = useState("");
+
+  const [editInstagramUrl, setEditInstagramUrl] = useState("");
+
+  const [editTwitterUrl, setEditTwitterUrl] = useState("");
+
+  const [editDiscordServerUrl, setEditDiscordServerUrl] = useState("");
+
   const [shareMessage, setShareMessage] = useState("");
 
   useEffect(() => {
@@ -168,6 +198,7 @@ function Profile() {
     nextParams.delete("tab");
 
     setSearchParams(nextParams, { replace: true });
+
     setActiveTab(nextTab);
   };
 
@@ -197,6 +228,7 @@ function Profile() {
       }
 
       const cacheKey = getProfileCacheKey(profile_slug);
+
       let hasCachedData = false;
 
       try {
@@ -207,7 +239,9 @@ function Profile() {
 
           if (cached) {
             const parsed = JSON.parse(cached);
-            const cacheAge = Date.now() - Number(parsed?.timestamp || 0);
+
+            const cacheAge =
+              Date.now() - Number(parsed?.timestamp || 0);
 
             const validCache =
               cacheAge < PROFILE_CACHE_DURATION &&
@@ -220,11 +254,17 @@ function Profile() {
               hasCachedData = true;
 
               setProfile(parsed.profile);
+
               setDecks(parsed.decks);
+
               setUserCards(parsed.userCards);
+
               setAllCards(parsed.allCards);
+
               setIsOwner(Boolean(parsed.isOwner));
+
               setIsSiteOwner(Boolean(parsed.isSiteOwner));
+
               setLoading(false);
 
               return;
@@ -238,48 +278,54 @@ function Profile() {
 
         const encodedSlug = encodeURIComponent(profile_slug);
 
-        const [profileResponse, deckResponse, cardsResponse, allCardsResponse] =
-          await Promise.all([
-            fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/`, {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-              },
-              credentials: "include",
-              signal: controller.signal,
-            }),
+        const [
+          profileResponse,
+          deckResponse,
+          cardsResponse,
+          allCardsResponse,
+        ] = await Promise.all([
+          fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/`, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+            signal: controller.signal,
+          }),
 
-            fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/decks/`, {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-              },
-              credentials: "include",
-              signal: controller.signal,
-            }),
+          fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/decks/`, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+            signal: controller.signal,
+          }),
 
-            fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/cards/`, {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-              },
-              credentials: "include",
-              signal: controller.signal,
-            }),
+          fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/cards/`, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+            signal: controller.signal,
+          }),
 
-            fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
-              method: "GET",
-              headers: {
-                Accept: "application/json",
-              },
-              signal: controller.signal,
-            }),
-          ]);
+          fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            signal: controller.signal,
+          }),
+        ]);
 
         const profileData = await profileResponse.json().catch(() => null);
 
         if (!profileResponse.ok) {
-          throw new Error(profileData?.error || "Unable to load profile.");
+          throw new Error(
+            profileData?.error || "Unable to load profile.",
+          );
         }
 
         const loadedProfile = profileData?.profile || null;
@@ -310,7 +356,8 @@ function Profile() {
               : []
           : [];
 
-        const allCardsData = await allCardsResponse.json().catch(() => null);
+        const allCardsData =
+          await allCardsResponse.json().catch(() => null);
 
         const loadedAllCards = allCardsResponse.ok
           ? Array.isArray(allCardsData)
@@ -321,13 +368,19 @@ function Profile() {
           : [];
 
         const loadedIsOwner = Boolean(profileData?.is_owner);
+
         const loadedIsSiteOwner = Boolean(profileData?.is_site_owner);
 
         setProfile(loadedProfile);
+
         setDecks(loadedDecks);
+
         setUserCards(loadedUserCards);
+
         setAllCards(loadedAllCards);
+
         setIsOwner(loadedIsOwner);
+
         setIsSiteOwner(loadedIsSiteOwner);
 
         try {
@@ -359,12 +412,19 @@ function Profile() {
 
         if (!hasCachedData) {
           setProfile(null);
+
           setDecks([]);
+
           setUserCards([]);
+
           setAllCards([]);
+
           setSavedDecks([]);
+
           setIsOwner(false);
+
           setIsSiteOwner(false);
+
           setError(err.message || "Unable to load profile.");
         }
 
@@ -380,13 +440,19 @@ function Profile() {
   }, [profile_slug]);
 
   const handleRemoveSavedDeck = (removedDeck) => {
-    const removedId = removedDeck.id || removedDeck.source_deck_id;
-    const removedSourceType = removedDeck.source_type || "decklist";
+    const removedId =
+      removedDeck.id || removedDeck.source_deck_id;
+
+    const removedSourceType =
+      removedDeck.source_type || "decklist";
 
     setSavedDecks((current) =>
       current.filter((deck) => {
-        const deckId = deck.id || deck.source_deck_id;
-        const deckSourceType = deck.source_type || "decklist";
+        const deckId =
+          deck.id || deck.source_deck_id;
+
+        const deckSourceType =
+          deck.source_type || "decklist";
 
         return !(
           String(deckId) === String(removedId) &&
@@ -406,20 +472,25 @@ function Profile() {
 
     const loadSavedDecks = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/tbotapp/saved-decks/`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/saved-decks/`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+            signal: controller.signal,
           },
-          credentials: "include",
-          signal: controller.signal,
-        });
+        );
 
         const data = await response.json().catch(() => null);
 
         if (!response.ok) {
           throw new Error(
-            data?.detail || data?.error || "Unable to load saved decks.",
+            data?.detail ||
+              data?.error ||
+              "Unable to load saved decks.",
           );
         }
 
@@ -436,6 +507,7 @@ function Profile() {
         }
 
         console.error("Unable to load saved decks:", err);
+
         setSavedDecks([]);
       }
     };
@@ -453,10 +525,29 @@ function Profile() {
     }
 
     setEditDisplayName(profile.display_name || "");
+
     setEditProfileSlug(profile.profile_slug || "");
+
     setEditBio(profile.bio || "");
+
     setEditIsPublic(Boolean(profile.is_public));
+
+    setEditYoutubeUrl(profile.youtube_url || "");
+
+    setEditTwitchUrl(profile.twitch_url || "");
+
+    setEditTiktokUrl(profile.tiktok_url || "");
+
+    setEditInstagramUrl(profile.instagram_url || "");
+
+    setEditTwitterUrl(profile.twitter_url || "");
+
+    setEditDiscordServerUrl(
+      profile.discord_server_url || "",
+    );
+
     setEditError("");
+
     setEditOpen(true);
   };
 
@@ -466,6 +557,7 @@ function Profile() {
     }
 
     setEditOpen(false);
+
     setEditError("");
   };
 
@@ -483,28 +575,40 @@ function Profile() {
     }
 
     setSaving(true);
+
     setEditError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/tbotapp/profile/update/`, {
-        method: "PATCH",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${API_BASE_URL}/tbotapp/profile/update/`,
+        {
+          method: "PATCH",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            display_name: editDisplayName.trim(),
+            profile_slug: editProfileSlug.trim().toLowerCase(),
+            bio: editBio,
+            is_public: editIsPublic,
+            youtube_url: editYoutubeUrl.trim(),
+            twitch_url: editTwitchUrl.trim(),
+            tiktok_url: editTiktokUrl.trim(),
+            instagram_url: editInstagramUrl.trim(),
+            twitter_url: editTwitterUrl.trim(),
+            discord_server_url: editDiscordServerUrl.trim(),
+          }),
         },
-        credentials: "include",
-        body: JSON.stringify({
-          display_name: editDisplayName.trim(),
-          profile_slug: editProfileSlug.trim().toLowerCase(),
-          bio: editBio,
-          is_public: editIsPublic,
-        }),
-      });
+      );
 
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data?.error || "Unable to update profile.");
+        throw new Error(
+          data?.error || "Unable to update profile.",
+        );
       }
 
       const updatedProfile = data?.profile;
@@ -516,10 +620,14 @@ function Profile() {
       }
 
       setProfile(updatedProfile);
+
       setEditOpen(false);
+
       setEditError("");
 
-      const newSlug = normalizeText(updatedProfile.profile_slug);
+      const newSlug =
+        normalizeText(updatedProfile.profile_slug) ||
+        profile_slug;
 
       if (newSlug && newSlug !== profile_slug) {
         window.history.replaceState(
@@ -530,7 +638,10 @@ function Profile() {
       }
 
       try {
-        const cacheKey = getProfileCacheKey(newSlug || profile_slug);
+        const cacheKey = getProfileCacheKey(
+          newSlug || profile_slug,
+        );
+
         const cached = sessionStorage.getItem(cacheKey);
 
         if (cached) {
@@ -546,18 +657,26 @@ function Profile() {
           );
         }
       } catch (cacheError) {
-        console.warn("Unable to update profile cache:", cacheError);
+        console.warn(
+          "Unable to update profile cache:",
+          cacheError,
+        );
       }
     } catch (err) {
       console.error("Unable to update profile:", err);
-      setEditError(err.message || "Unable to update profile.");
+
+      setEditError(
+        err.message || "Unable to update profile.",
+      );
     } finally {
       setSaving(false);
     }
   };
 
   const handleShareProfile = async () => {
-    const currentSlug = normalizeText(profile?.profile_slug) || profile_slug;
+    const currentSlug =
+      normalizeText(profile?.profile_slug) ||
+      profile_slug;
 
     if (!currentSlug) {
       setShareMessage("Unable to create profile link.");
@@ -565,7 +684,8 @@ function Profile() {
     }
 
     const profileUrl =
-      `${window.location.origin}/profile/` + encodeURIComponent(currentSlug);
+      `${window.location.origin}/profile/` +
+      encodeURIComponent(currentSlug);
 
     try {
       if (navigator.clipboard?.writeText) {
@@ -574,13 +694,17 @@ function Profile() {
         const textArea = document.createElement("textarea");
 
         textArea.value = profileUrl;
+
         textArea.style.position = "fixed";
+
         textArea.style.left = "-9999px";
+
         textArea.style.top = "0";
 
         document.body.appendChild(textArea);
 
         textArea.focus();
+
         textArea.select();
 
         document.execCommand("copy");
@@ -590,7 +714,11 @@ function Profile() {
 
       setShareMessage("Profile link copied!");
     } catch (err) {
-      console.error("Unable to copy profile link:", err);
+      console.error(
+        "Unable to copy profile link:",
+        err,
+      );
+
       setShareMessage("Unable to copy profile link.");
     }
 
@@ -614,7 +742,10 @@ function Profile() {
             </span>
           </h2>
 
-          <p>Preparing this user's profile and available content.</p>
+          <p>
+            Preparing this user's profile and available
+            content.
+          </p>
 
           <div className="loading-status">
             <span>Loading profile data</span>
@@ -631,7 +762,9 @@ function Profile() {
         <Navbar />
 
         <main className="profile-page">
-          <div className="profile-error">{error}</div>
+          <div className="profile-error">
+            {error}
+          </div>
         </main>
 
         <Footer />
@@ -645,7 +778,9 @@ function Profile() {
         <Navbar />
 
         <main className="profile-page">
-          <div className="profile-error">Profile not found.</div>
+          <div className="profile-error">
+            Profile not found.
+          </div>
         </main>
 
         <Footer />
@@ -653,18 +788,25 @@ function Profile() {
     );
   }
 
-  const profileName = profile.display_name || profile.username || "User";
+  const profileName =
+    profile.display_name ||
+    profile.username ||
+    "User";
 
-  const canonicalSlug = normalizeText(profile.profile_slug) || profile_slug;
+  const canonicalSlug =
+    normalizeText(profile.profile_slug) ||
+    profile_slug;
 
   return (
     <div className="profile-page-wrapper">
       <Seo
-  title={`${profileName} - PVZH Player Profile | PVZ Heroes | Tbot`}
-  description={`View ${profileName}'s Plants vs. Zombies Heroes player profile on Tbot. Explore their PVZH and PVZ Heroes decklists, card collection, and profile.`}
-  canonical={`/profile/${encodeURIComponent(canonicalSlug)}`}
-  noindex={!profile.is_public}
-/>
+        title={`${profileName} - PVZH Player Profile | PVZ Heroes | Tbot`}
+        description={`View ${profileName}'s Plants vs. Zombies Heroes player profile on Tbot. Explore their PVZH and PVZ Heroes decklists, card collection, and profile.`}
+        canonical={`/profile/${encodeURIComponent(
+          canonicalSlug,
+        )}`}
+        noindex={!profile.is_public}
+      />
 
       <Navbar />
 
@@ -700,25 +842,33 @@ function Profile() {
               profileName={profile.display_name}
               viewerCards={viewerCards}
               profileSlug={profile_slug}
-              profileIsPublic={Boolean(profile.is_public)}
+              profileIsPublic={Boolean(
+                profile.is_public,
+              )}
               sharedDeckKey={
-                activeTab === "decks" ? searchParams.get("deck") || "" : ""
+                activeTab === "decks"
+                  ? searchParams.get("deck") || ""
+                  : ""
               }
               isAuthenticated={isAuthenticated}
             />
           )}
 
-          {activeTab === "saved" && isOwner && isAuthenticated && (
-            <ProfileSavedDecks
-              savedDecks={savedDecks}
-              allCards={allCards}
-              viewerCards={viewerCards}
-              profileSlug={profile_slug}
-              profileIsPublic={Boolean(profile.is_public)}
-              isAuthenticated={isAuthenticated}
-              onRemoveSaved={handleRemoveSavedDeck}
-            />
-          )}
+          {activeTab === "saved" &&
+            isOwner &&
+            isAuthenticated && (
+              <ProfileSavedDecks
+                savedDecks={savedDecks}
+                allCards={allCards}
+                viewerCards={viewerCards}
+                profileSlug={profile_slug}
+                profileIsPublic={Boolean(
+                  profile.is_public,
+                )}
+                isAuthenticated={isAuthenticated}
+                onRemoveSaved={handleRemoveSavedDeck}
+              />
+            )}
         </div>
 
         {isSiteOwner && (
@@ -742,10 +892,22 @@ function Profile() {
         profileSlug={editProfileSlug}
         bio={editBio}
         isPublic={editIsPublic}
+        youtubeUrl={editYoutubeUrl}
+        twitchUrl={editTwitchUrl}
+        tiktokUrl={editTiktokUrl}
+        instagramUrl={editInstagramUrl}
+        twitterUrl={editTwitterUrl}
+        discordServerUrl={editDiscordServerUrl}
         onDisplayNameChange={setEditDisplayName}
         onProfileSlugChange={setEditProfileSlug}
         onBioChange={setEditBio}
         onPublicChange={setEditIsPublic}
+        onYoutubeUrlChange={setEditYoutubeUrl}
+        onTwitchUrlChange={setEditTwitchUrl}
+        onTiktokUrlChange={setEditTiktokUrl}
+        onInstagramUrlChange={setEditInstagramUrl}
+        onTwitterUrlChange={setEditTwitterUrl}
+        onDiscordServerUrlChange={setEditDiscordServerUrl}
         onSubmit={handleSaveProfile}
         onClose={closeEditProfile}
       />

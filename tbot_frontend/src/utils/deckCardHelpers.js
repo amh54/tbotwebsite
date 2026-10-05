@@ -244,3 +244,290 @@ export const normalizeDeckShareValue = (value) => {
       .toLowerCase();
   }
 };
+export const getDeckCardShareUrl = ({
+  deck,
+  deckKey,
+  shareDeckKey,
+  sourceDeckId,
+  sourceType,
+  profileSlug,
+  profileIsPublic,
+  isSavedDeck,
+  isUserDeck,
+  legacy,
+  decklists,
+  deckbuilder,
+}) => {
+  if (isSavedDeck) {
+    const resolvedProfileSlug =
+      String(
+        profileSlug ||
+          deck.profile_slug ||
+          deck.profileSlug ||
+          "",
+      ).trim();
+
+    if (
+      !resolvedProfileSlug ||
+      !sourceDeckId
+    ) {
+      console.error(
+        "Unable to create saved deck share link:",
+        {
+          profileSlug:
+            resolvedProfileSlug,
+          sourceDeckId,
+          savedDeckId: deck.id,
+          sourceType,
+          deck,
+        },
+      );
+
+      return null;
+    }
+
+    const savedSourceType =
+      sourceType === "user_deck"
+        ? "user"
+        : sourceType === "legacy"
+          ? "legacy"
+          : "deck";
+
+    return new URL(
+      `/deck/${encodeURIComponent(
+        resolvedProfileSlug,
+      )}/${savedSourceType}/${encodeURIComponent(
+        shareDeckKey,
+      )}`,
+      window.location.origin,
+    );
+  }
+
+  if (
+    deckbuilder ||
+    decklists ||
+    legacy
+  ) {
+    const shareUrl = new URL(
+      window.location.pathname,
+      window.location.origin,
+    );
+
+    shareUrl.searchParams.set(
+      "deck",
+      shareDeckKey,
+    );
+
+    return shareUrl;
+  }
+
+  const resolvedProfileSlug =
+    String(
+      profileSlug ||
+        deck.profile_slug ||
+        deck.profileSlug ||
+        "",
+    ).trim();
+
+  const resolvedProfileIsPublic =
+    profileIsPublic !== null &&
+    profileIsPublic !== undefined
+      ? profileIsPublic === true
+      : deck.is_public === true ||
+        deck.profile_is_public === true ||
+        deck.profileIsPublic === true;
+
+  if (
+    resolvedProfileIsPublic &&
+    resolvedProfileSlug
+  ) {
+    const shareUrl = new URL(
+      `/profile/${encodeURIComponent(
+        resolvedProfileSlug,
+      )}`,
+      window.location.origin,
+    );
+
+    shareUrl.searchParams.set(
+      "deck",
+      shareDeckKey,
+    );
+
+    return shareUrl;
+  }
+
+  if (isUserDeck) {
+    if (
+      !resolvedProfileSlug ||
+      !sourceDeckId
+    ) {
+      console.error(
+        "Unable to create user deck share link:",
+        {
+          profileSlug:
+            resolvedProfileSlug,
+          sourceDeckId,
+          deck,
+        },
+      );
+
+      return null;
+    }
+
+    return new URL(
+      `/deck/${encodeURIComponent(
+        resolvedProfileSlug,
+      )}/user/${encodeURIComponent(
+        shareDeckKey,
+      )}`,
+      window.location.origin,
+    );
+  }
+
+  if (resolvedProfileSlug) {
+    return new URL(
+      `/deck/${encodeURIComponent(
+        resolvedProfileSlug,
+      )}/${encodeURIComponent(
+        shareDeckKey,
+      )}`,
+      window.location.origin,
+    );
+  }
+
+  console.error(
+    "Unable to create deck share link: profile slug is missing.",
+  );
+
+  return null;
+};
+
+export const downloadDeckCard = ({
+  deck,
+  isSavedDeck,
+  isUserDeck,
+  legacy,
+  apiBaseUrl,
+}) => {
+  if (isSavedDeck) {
+    const sourceDeckId =
+      deck.source_deck_id ??
+      deck.sourceDeckId ??
+      "";
+
+    if (!sourceDeckId) {
+      console.error(
+        "Unable to download saved deck: source deck ID is missing.",
+        deck,
+      );
+
+      return;
+    }
+
+    const savedSourceType =
+      String(
+        deck.source_type ??
+          deck.sourceType ??
+          "",
+      )
+        .trim()
+        .toLowerCase();
+
+    if (!savedSourceType) {
+      console.error(
+        "Unable to download saved deck: source type is missing.",
+        deck,
+      );
+
+      return;
+    }
+
+    if (
+      savedSourceType ===
+      "user_deck"
+    ) {
+      window.location.href =
+        `${apiBaseUrl}/tbotapp/user-decks/${sourceDeckId}/download/`;
+
+      return;
+    }
+
+    if (
+      savedSourceType ===
+      "legacy"
+    ) {
+      window.location.href =
+        `${apiBaseUrl}/tbotapp/legacy-decks/${sourceDeckId}/download/`;
+
+      return;
+    }
+
+    if (
+      savedSourceType ===
+      "decklist"
+    ) {
+      window.location.href =
+        `${apiBaseUrl}/tbotapp/decks/${sourceDeckId}/download/`;
+
+      return;
+    }
+
+    console.error(
+      "Unable to download saved deck: unknown source type.",
+      {
+        sourceType:
+          savedSourceType,
+        sourceDeckId,
+        deck,
+      },
+    );
+
+    return;
+  }
+
+  if (isUserDeck) {
+    const downloadDeckId =
+      deck.id ??
+      deck.deckid ??
+      deck.deckID ??
+      deck.deckId;
+
+    if (!downloadDeckId) {
+      console.error(
+        "Unable to download user deck: deck ID is missing.",
+        deck,
+      );
+
+      return;
+    }
+
+    window.location.href =
+      `${apiBaseUrl}/tbotapp/user-decks/${downloadDeckId}/download/`;
+
+    return;
+  }
+
+  const downloadDeckId =
+    deck.deckid ??
+    deck.deckID ??
+    deck.deckId;
+
+  if (!downloadDeckId) {
+    console.error(
+      "Unable to download deck: deck ID is missing.",
+      deck,
+    );
+
+    return;
+  }
+
+  if (legacy) {
+    window.location.href =
+      `${apiBaseUrl}/tbotapp/legacy-decks/${downloadDeckId}/download/`;
+
+    return;
+  }
+
+  window.location.href =
+    `${apiBaseUrl}/tbotapp/decks/${downloadDeckId}/download/`;
+};

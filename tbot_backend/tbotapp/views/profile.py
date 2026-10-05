@@ -1,21 +1,26 @@
 from django.db import IntegrityError
+
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
+
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
     permission_classes,
 )
+
 from rest_framework.response import Response
 
 from ..models import UserProfile, UserDeck, UserCard
+
 from ..serializers import (
     UserProfileSerializer,
     UserDeckSerializer,
 )
 
 from .helpers import get_discord_user
+
 
 def get_current_profile(request):
     discord_user = get_discord_user(request)
@@ -144,6 +149,7 @@ def public_profiles(request):
         status=status.HTTP_200_OK,
     )
 
+
 @api_view(["GET"])
 def public_profile_count(request):
     user_count = UserProfile.objects.filter(
@@ -157,6 +163,8 @@ def public_profile_count(request):
         },
         status=status.HTTP_200_OK,
     )
+
+
 @api_view(["GET"])
 def public_profile_decks(request, profile_slug):
     profile = get_object_or_404(
@@ -213,6 +221,12 @@ def profile_update(request):
         "avatar",
         "bio",
         "is_public",
+        "youtube_url",
+        "twitch_url",
+        "tiktok_url",
+        "instagram_url",
+        "twitter_url",
+        "discord_server_url",
     }
 
     update_data = {}
@@ -256,9 +270,6 @@ def profile_update(request):
             )
 
         update_data["display_name"] = display_name
-
-        # The user is explicitly setting their own display
-        # name, so stop letting Discord logins overwrite it.
         update_data["display_name_is_custom"] = True
 
     if "profile_slug" in update_data:
@@ -351,6 +362,53 @@ def profile_update(request):
 
         update_data["bio"] = bio
 
+    social_fields = {
+        "youtube_url",
+        "twitch_url",
+        "tiktok_url",
+        "instagram_url",
+        "twitter_url",
+        "discord_server_url",
+    }
+
+    for field in social_fields:
+        if field not in update_data:
+            continue
+
+        value = update_data[field]
+
+        if value is None:
+            value = ""
+
+        value = str(value).strip()
+
+        if len(value) > 500:
+            return Response(
+                {
+                    "error": (
+                        f"{field} cannot exceed "
+                        "500 characters."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if value and not (
+            value.startswith("https://")
+            or value.startswith("http://")
+        ):
+            return Response(
+                {
+                    "error": (
+                        f"{field} must be a valid "
+                        "HTTP or HTTPS URL."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        update_data[field] = value
+
     if "is_public" in update_data:
         value = update_data["is_public"]
 
@@ -429,6 +487,8 @@ def profile_update(request):
         },
         status=status.HTTP_200_OK,
     )
+
+
 @api_view(["GET"])
 def profile_me_cards(request):
     profile, error = get_current_profile(request)
