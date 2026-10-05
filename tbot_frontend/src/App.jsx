@@ -41,6 +41,7 @@ import PublicDecks from "./pages/decks/publicDecks.jsx";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+
 function HomePage() {
   const [profileSlug, setProfileSlug] = useState("");
 
@@ -79,15 +80,13 @@ function HomePage() {
         description="Tbot is a Plants vs. Zombies Heroes community database featuring decks, cards, heroes, deck builders, guides, and more."
         canonical="/"
       />
+
       <Navbar />
 
       <section className="hero">
         <p className="eyebrow">Plants vs. Zombies Heroes</p>
-
         <h1>Tbot</h1>
-
         <h2>A community database for cards, heroes, decks, and strategy.</h2>
-
         <p>
           Tbot brings together the information you need to build decks, research
           cards, learn about heroes, manage your collection, and make better
@@ -102,142 +101,157 @@ function HomePage() {
       <section className="features">
         <div className="feature-grid">
           <div className="feature-command">
-            <h3>Decklists</h3>
-
-            <p>
-              Browse community decklists and find decks by hero, class,
-              archetype, category, name, and other information. New Decks are
-              being actively tested through the Youtube and Twitch channels
-              below
-            </p>
-
-            <Link to="/decklists">Explore Decklists →</Link>
-            <a
-              href="https://www.youtube.com/@PVZHTbot"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Youtube
-            </a>
-            <a
-              href="https://www.twitch.tv/pvzhtbot"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Twitch
-            </a>
+            <div className="grave-content">
+              <h3>Decklists</h3>
+              <p>
+                Browse Tbot’s community deck database by hero, class, archetype,
+                category, name, and more. New decks are also tested through
+                Tbot’s YouTube and Twitch channels.
+              </p>
+              <div className="grave-links">
+                <Link to="/decklists">Explore Decklists →</Link>
+                <a
+                  href="https://www.youtube.com/@PVZHTbot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Youtube
+                </a>
+                <a
+                  href="https://www.twitch.tv/pvzhtbot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Twitch
+                </a>
+              </div>
+            </div>
           </div>
 
           <div className="feature-command">
-            <h3>Legacy Decks</h3>
-
-            <p>
-              Explore the older Tbot deck database and browse legacy community
-              decklists alongside the current deck collection.
-            </p>
-
-            <Link to="/legacydecks">Explore Legacy Decks →</Link>
+            <div className="grave-content">
+              <h3>Legacy Decks</h3>
+              <p>
+                Explore Tbot’s older deck database and browse legacy community
+                decks from previous versions of the site.
+              </p>
+              <div className="grave-links">
+                <Link to="/legacydecks">Explore Legacy Decks →</Link>
+              </div>
+            </div>
           </div>
 
           <div className="feature-command">
-            <h3>Keep or Scrap</h3>
-
-            <p>
-              Not sure which cards to craft or scrap? Get class-by-class
-              recommendations on which cards are worth keeping.
-            </p>
-
-            <Link to="/keeporscrap">View Keep or Scrap →</Link>
+            <div className="grave-content">
+              <h3>Keep or Scrap</h3>
+              <p>
+                Not sure which cards are worth keeping? <br/>View class-by-class
+                recommendations to help decide which cards to keep, craft, or
+                scrap.
+              </p>
+              <div className="grave-links">
+                <Link to="/keeporscrap">View Keep or Scrap →</Link>
+              </div>
+            </div>
           </div>
 
           <div className="feature-command">
-            <h3>Buildable Decks</h3>
-
-            <p>
-              Log in with Discord and enter your collection in the Card Manager,
-              then use the Can build and Close to building filters on any page
-              that showcases decklists see the decks you can build now and the
-              ones you're only a few cards away from.
-            </p>
-
-            <Link to="/dashboard/card-manager">Manage Your Collection →</Link>
+            <div className="grave-content">
+              <h3>Buildable Decks</h3>
+              <p>
+                Use your card collection to find decks you can build now or are
+                only a few cards away from completing.
+              </p>
+              <div className="grave-links">
+                <Link to="/dashboard/card-manager">
+                  Manage Your Collection →
+                </Link>
+              </div>
+            </div>
           </div>
 
           <div className="feature-command">
-            <h3>Personal Decks and Profiles</h3>
-
-            <p>
-              Log in with Discord to upload your own decks, customize your
-              profile, and share your creations with other players from your
-              profile page.
-            </p>
-
-            <Link to="/dashboard/decks">Manage Your Decks →</Link>
+            <div className="grave-content">
+              <h3>Personal Decks and Profiles</h3>
+              <p>
+                Log in with Discord to create your profile, upload personal
+                decks, customize your profile, and share your creations.
+              </p>
+              <div className="grave-links">
+                <Link to="/dashboard/decks">Manage Your Decks →</Link>
+              </div>
+            </div>
           </div>
 
           <div className="feature-command">
-            <h3>Find Player Decks</h3>
-
-            <p>
-              Browse and click on Public Tbot users to find the personal
-              decklists other players have uploaded. You can also see any cards
-              this player has unlocked in plants vs zombies heroes by checking
-              out their card collection. <br />
-              Make sure your account is on public and not private if you want
-              your account to show up here in users page
-            </p>
-
-            <Link to="/users">Browse Users →</Link>
+            <div className="grave-content">
+              <h3>Find Player Decks</h3>
+              <p>
+                Browse public Tbot users to discover their personal decks and
+                view the cards they have unlocked in their collection.
+              </p>
+              <div className="grave-links">
+                <Link to="/users">Browse Users →</Link>
+              </div>
+            </div>
           </div>
 
           <div className="feature-command">
-            <h3>Card Information</h3>
-
-            <p>
-              Search through Plant and Zombie cards using detailed filters for
-              class, cost, attack, health, keywords, tribes, set, and rarity.
-            </p>
-
-            <Link to="/cardinfo">Explore Cards →</Link>
+            <div className="grave-content">
+              <h3>Card Information</h3>
+              <p>
+                Search the card database using filters for class, cost, attack,
+                health, keywords, tribes, set, rarity, and more.
+              </p>
+              <div className="grave-links">
+                <Link to="/cardinfo">Explore Cards →</Link>
+              </div>
+            </div>
           </div>
 
           <div className="feature-command">
-            <h3>Hero Information</h3>
-
-            <p>
-              Browse Plant and Zombie heroes and view their classes, abilities,
-              traits, stats, and complete card details.
-            </p>
-
-            <Link to="/heroinfo">Explore Heroes →</Link>
+            <div className="grave-content">
+              <h3>Hero Information</h3>
+              <p>
+                Explore Plant and Zombie heroes with their classes, abilities,
+                traits, stats, and associated cards.
+              </p>
+              <div className="grave-links">
+                <Link to="/heroinfo">Explore Heroes →</Link>
+              </div>
+            </div>
           </div>
 
           <div className="feature-command">
-            <h3>Deckbuilders</h3>
-
-            <p>
-              Find Tbot deckbuilders and explore the decks they have submitted
-              to the community.
-            </p>
-
-            <Link to="/deckbuilders">Explore Deckbuilders →</Link>
+            <div className="grave-content">
+              <h3>Deckbuilders</h3>
+              <p>
+                Discover Tbot deckbuilders and browse the decks they have
+                created and submitted to the community.
+              </p>
+              <div className="grave-links">
+                <Link to="/deckbuilders">Explore Deckbuilders →</Link>
+              </div>
+            </div>
           </div>
+
           <div className="feature-command">
-            <h3>Site Updates</h3>
-
-            <p>
-              Stay up to date with new deck additions, updates and removals, new
-              features, improvements, and other changes to the Tbot site.
-            </p>
-
-            <Link to="/updates">Explore Tbot Updates →</Link>
+            <div className="grave-content">
+              <h3>Site Updates</h3>
+              <p>
+                Keep up with new decks, features, improvements, fixes, removals,
+                and other changes to the Tbot website.
+              </p>
+              <div className="grave-links">
+                <Link to="/updates">Explore Tbot Updates →</Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       <section className="about">
         <h2>Your Tbot profile</h2>
-
         <p>
           Log in with Discord to create a profile, upload personal decks, and
           share them with other players. Your personal decks are separate from
@@ -246,72 +260,78 @@ function HomePage() {
 
         <div className="quick-answer-grid">
           <div className="quick-answer-card">
-            <h3>Create Your Profile</h3>
+            <div className="grave-content">
+              <h3>Create Your Profile</h3>
+              <p>
+                Create a personalized profile with your display name, profile
+                URL, bio, personal decks, and card collection.
+              </p>
 
-            <p>
-              Customize your display name, profile URL, and bio. Your profile is
-              the home for the personal decks you create and your card
-              collection.
-            </p>
-
-            {profileSlug ? (
-              <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
-                Manage Your Profile →
-              </Link>
-            ) : (
-              <Link to="/dashboard">
-                Log in with Discord to Create Your Profile →
-              </Link>
-            )}
+              <div className="grave-links">
+                {profileSlug ? (
+                  <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
+                    Manage Your Profile →
+                  </Link>
+                ) : (
+                  <Link to="/dashboard">
+                    Log in with Discord to Create Your Profile →
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="quick-answer-card">
-            <h3>Public or Private</h3>
+            <div className="grave-content">
+              <h3>Public or Private</h3>
+              <p>
+                Choose whether your profile can be discovered and browsed by
+                other players. Private profiles can still share individual
+                decks through direct links.
+              </p>
 
-            <p>
-              A public profile lets other players browse your decks. A private
-              profile can't be browsed, but every personal deck still has its
-              own shareable link. Accounts are set to private on default if you
-              want your account to public change that below.
-            </p>
-
-            {profileSlug ? (
-              <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
-                Manage Profile Visibility →
-              </Link>
-            ) : (
-              <Link to="/dashboard">Create Your Profile →</Link>
-            )}
+              <div className="grave-links">
+                {profileSlug ? (
+                  <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
+                    Manage Profile Visibility →
+                  </Link>
+                ) : (
+                  <Link to="/dashboard">Create Your Profile →</Link>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="quick-answer-card">
-            <h3>Suggest a Community Deck</h3>
+            <div className="grave-content">
+              <h3>Suggest a Community Deck</h3>
+              <p>
+                Found a great deck on the public decks page? Suggest it for
+                consideration on Tbot’s community decklists.
+              </p>
 
-            <p>
-              Found a great deck on another player's profile? Log in with
-              Discord, open its deck details by clicking on the deck, and use{" "}
-              <strong>Suggest Deck</strong> to recommend it for the community
-              decklists page <br />
-              <Link to="/decklists">Community Decklists →</Link>
-            </p>
+              <div className="grave-links">
+                <Link to="/decklists">Community Decklists →</Link>
+              </div>
+            </div>
           </div>
+
           <div className="quick-answer-card">
-            <h3>Share Your Decks</h3>
-            <p>
-              You can upload new decks from your user dashboard. To share decks
-              open your profile, then go to your <strong>profile</strong>{" "}
-              section to manage how your account visibility. Public account
-              decks can be browsed through your public profile, while private
-              account decks can only be accessed by someone who has the deck's
-              direct share link. In order to share a deck simply click on your
-              decks below and click the Share deck button. Send your decks to
-              other players or post them in Discord for deck help.
-            </p>
-            {profileSlug && (
-              <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
-                View Your Decks →
-              </Link>
-            )}
+            <div className="grave-content">
+              <h3>Share Your Decks</h3>
+              <p>
+                Upload and manage your personal decks, then share them through
+                your profile, direct links, or Discord.
+              </p>
+
+              {profileSlug && (
+                <div className="grave-links">
+                  <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
+                    View Your Decks →
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -321,79 +341,88 @@ function HomePage() {
 
         <div className="quick-answer-grid">
           <div className="quick-answer-card">
-            <h3>What is Tbot?</h3>
-
-            <p>
-              Tbot is a Plants vs. Zombies Heroes community website and Discord
-              bot that brings together decklists, card information, hero
-              information, card recommendations, personal decks, and collection
-              tools.
-            </p>
+            <div className="grave-content">
+              <h3>What is Tbot?</h3>
+              <p>
+                Tbot is a Plants vs. Zombies Heroes website and Discord bot
+                combining decklists, card and hero information, recommendations,
+                personal decks, and collection tools.
+              </p>
+            </div>
           </div>
 
           <div className="quick-answer-card">
-            <h3>Do I need an account?</h3>
-
-            <p>
-              No. You can browse the public card, hero, and deck databases
-              without an account. A Discord login is required for personal
-              features such as your card collection, personal decklists, profile
-              management, and deck suggestions.
-            </p>
+            <div className="grave-content">
+              <h3>Do I need an account?</h3>
+              <p>
+                No. You can browse the public card, hero, and deck databases
+                without an account. Discord login is only required for personal
+                features.
+              </p>
+            </div>
           </div>
 
           <div className="quick-answer-card">
-            <h3>Can I contribute?</h3>
+            <div className="grave-content">
+              <h3>Can I contribute?</h3>
+              <p>
+                Yes. You can contribute through deck submissions, suggestions,
+                corrections, bug reports, and other community feedback.
+              </p>
 
-            <p>
-              Yes. Deck submissions, ideas, corrections, bug reports, deck
-              suggestions, and feedback are welcome through the Tbot community.
-              <br />
-              <a
-                href="https://discord.gg/E5XzKf2PjN"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Join the Tbot Discord
-              </a>
-            </p>
+              <div className="grave-links">
+                <a
+                  href="https://discord.gg/E5XzKf2PjN"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Join the Tbot Discord
+                </a>
+              </div>
+            </div>
           </div>
 
           <div className="quick-answer-card">
-            <h3>How can I support Tbot?</h3>
+            <div className="grave-content">
+              <h3>How can I support Tbot?</h3>
+              <p>
+                Help support Tbot’s continued development through Buy Me a
+                Coffee, or follow Tbot on YouTube and Twitch.
+              </p>
 
-            <p>
-              If you find the website or Discord bot useful, you can help
-              support continued development and maintenance through Buy Me a
-              Coffee. You could also subscribe to the Youtube channel below or
-              follow the twitch below.
-            </p>
-            <a
-              href="https://buymeacoffee.com/pvzhtbot"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Support Tbot
-            </a>
-            <a
-              href="https://www.youtube.com/@PVZHTbot"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Youtube
-            </a>
-            <a
-              href="https://www.twitch.tv/pvzhtbot"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Twitch
-            </a>
+              <div className="grave-links">
+                <a
+                  href="https://buymeacoffee.com/pvzhtbot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Support Tbot
+                </a>
+
+                <a
+                  href="https://www.youtube.com/@PVZHTbot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Youtube
+                </a>
+
+                <a
+                  href="https://www.twitch.tv/pvzhtbot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Twitch
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-     <Footer credits="Special thanks to flowerr for designing the background used on the homepage and the card explanations, along with the many PvZ Heroes community members who took the time to provide helpful feedback and critiques before I published this site." />
+      <Footer
+        credits="Special thanks to flowerr for designing the background used on the homepage and the card explanations, along with the many PvZ Heroes community members who took the time to provide helpful feedback and critiques before I published this site."
+      />
     </div>
   );
 }
