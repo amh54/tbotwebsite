@@ -41,7 +41,6 @@ import PublicDecks from "./pages/decks/publicDecks.jsx";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-
 function HomePage() {
   const [profileSlug, setProfileSlug] = useState("");
 
@@ -145,9 +144,9 @@ function HomePage() {
             <div className="grave-content">
               <h3>Keep or Scrap</h3>
               <p>
-                Not sure which cards are worth keeping? <br/>View class-by-class
-                recommendations to help decide which cards to keep, craft, or
-                scrap.
+                Not sure which cards are worth keeping? <br />
+                View class-by-class recommendations to help decide which cards
+                to keep, craft, or scrap.
               </p>
               <div className="grave-links">
                 <Link to="/keeporscrap">View Keep or Scrap →</Link>
@@ -172,10 +171,10 @@ function HomePage() {
 
           <div className="feature-command">
             <div className="grave-content">
-              <h3>Personal Decks and Profiles</h3>
+              <h3>Upload your Personal Decks</h3>
               <p>
-                Log in with Discord to create your profile, upload personal
-                decks, customize your profile, and share your creations.
+                Log in with Discord to create your profile, and upload personal
+                decks.
               </p>
               <div className="grave-links">
                 <Link to="/dashboard/decks">Manage Your Decks →</Link>
@@ -187,11 +186,11 @@ function HomePage() {
             <div className="grave-content">
               <h3>Find Player Decks</h3>
               <p>
-                Browse public Tbot users to discover their personal decks and
-                view the cards they have unlocked in their collection.
+                Browse public PVZH players and discover the decks they have uploaded to the website
               </p>
               <div className="grave-links">
                 <Link to="/users">Browse Users →</Link>
+                <Link to="/users">Browse Public Decks →</Link>
               </div>
             </div>
           </div>
@@ -286,8 +285,8 @@ function HomePage() {
               <h3>Public or Private</h3>
               <p>
                 Choose whether your profile can be discovered and browsed by
-                other players. Private profiles can still share individual
-                decks through direct links.
+                other players. Private profiles can still share individual decks
+                through direct links.
               </p>
 
               <div className="grave-links">
@@ -387,13 +386,13 @@ function HomePage() {
                   Suggestions
                 </a>
                 <div className="grave-links">
-                <a
-                  href="https://pvzhtbot.com/bugreport"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                 Bug Reports
-                </a>
+                  <a
+                    href="https://pvzhtbot.com/bugreport"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Bug Reports
+                  </a>
                 </div>
               </div>
             </div>
@@ -437,9 +436,7 @@ function HomePage() {
         </div>
       </section>
 
-      <Footer
-        credits="Special thanks to flowerr for designing the background used on the homepage and the card explanations, along with the many PvZ Heroes community members who took the time to provide helpful feedback and critiques before I published this site."
-      />
+      <Footer credits="Special thanks to flowerr for designing the background used on the homepage and the card explanations, along with the many PvZ Heroes community members who took the time to provide helpful feedback and critiques before I published this site." />
     </div>
   );
 }
