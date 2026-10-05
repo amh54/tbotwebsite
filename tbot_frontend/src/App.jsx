@@ -393,7 +393,7 @@ function HomePage() {
         </div>
       </section>
 
-      <Footer credits="Special thanks to flowerr for designing the background used here on the homepage and to the many PvZ Heroes community members who took time out of their day to give me helpful feedback and critiques before I published this site." />
+     <Footer credits="Special thanks to flowerr for designing the background used on the homepage and the card explanations, along with the many PvZ Heroes community members who took the time to provide helpful feedback and critiques before I published this site." />
     </div>
   );
 }
