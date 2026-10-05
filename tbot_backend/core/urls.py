@@ -12,8 +12,6 @@ from tbotapp.sitemap import (
 )
 
 
-print("ROOT URLS LOADED:", tbotapp.urls.__file__)
-
 
 sitemaps = {
     "static": StaticViewSitemap,
@@ -52,17 +50,3 @@ urlpatterns = [
         name="robots-txt",
     ),
 ]
-
-
-try:
-    resolved = resolve("/tbotapp/user-decks/5/")
-    print(
-        "RESOLVED USER DECK URL:",
-        resolved.func,
-        "URL NAME:",
-        resolved.url_name,
-        "ROUTE:",
-        resolved.route,
-    )
-except Exception as exc:
-    print("URL RESOLVE FAILED:", exc)

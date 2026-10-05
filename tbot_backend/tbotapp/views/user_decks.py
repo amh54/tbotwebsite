@@ -23,9 +23,6 @@ from .helpers import (
 )
 
 logger = logging.getLogger(__name__)
-logger.warning(
-    "[User Decks Module] user_decks.py LOADED"
-)
 
 def get_current_profile(request):
     discord_user = get_discord_user(request)
