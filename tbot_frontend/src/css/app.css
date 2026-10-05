@@ -58,10 +58,6 @@ body {
   text-transform: uppercase;
 }
 
-.feature-command:nth-child(5) .grave-content {
-  transform: translateY(30px);
-}
-
 .feature-command:nth-child(1) .grave-content {
   transform: translateY(10px);
 }
@@ -76,6 +72,10 @@ body {
 
 .feature-command:nth-child(4) .grave-content {
   transform: translateY(35px);
+}
+
+.feature-command:nth-child(5) .grave-content {
+  transform: translateY(30px);
 }
 
 .feature-command:nth-child(6) .grave-content {
@@ -491,14 +491,7 @@ a:hover {
   color: #8fe38b;
   text-decoration: underline;
 }
-@media (max-width: 768px) {
-  .feature-command:nth-child(5n + 1),
-  .quick-answer-card:nth-child(5n + 1) {
-    background-size:
-      100% 100%,
-      125% 270%;
-  }
-}
+
 @media (max-width: 900px) {
   .hero {
     padding: 55px 24px 45px;
@@ -555,6 +548,16 @@ a:hover {
     min-height: 320px;
     padding: 36px 22px;
     border-radius: 14px;
+  }
+
+  .feature-command:nth-child(5n + 1),
+  .quick-answer-card:nth-child(5n + 1) {
+    background-size:
+      100% 100%,
+      100% auto;
+    background-position:
+      0 0,
+      center center;
   }
 
   .grave-content {
