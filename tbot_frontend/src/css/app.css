@@ -32,7 +32,10 @@ body {
   inset: 0;
   z-index: -1;
   background-image:
-    linear-gradient(rgba(16, 20, 22, 0.62), rgba(16, 20, 22, 0.62)),
+    linear-gradient(
+      rgba(16, 20, 22, 0.62),
+      rgba(16, 20, 22, 0.62)
+    ),
     url("https://cdn.pvzhtbot.com/art/home_backgound_by_flowerr.webp");
   background-size: cover;
   background-position: bottom right;
@@ -245,7 +248,6 @@ body {
   background-repeat: no-repeat;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
-  isolation: isolate;
   transition:
     border-color 0.2s ease,
     transform 0.2s ease;
@@ -258,20 +260,26 @@ body {
 .feature-command:nth-child(5n + 1),
 .quick-answer-card:nth-child(5n + 1) {
   background-image:
-    linear-gradient(rgba(16, 20, 22, 0.18), rgba(16, 20, 22, 0.18)),
+    linear-gradient(
+      rgba(16, 20, 22, 0.18),
+      rgba(16, 20, 22, 0.18)
+    ),
     url("https://cdn.pvzhtbot.com/art/beastly_grave.webp");
   background-size:
     100% 100%,
-    240% 270%;
+    85% 100%;
   background-position:
     0 0,
-    20.05% 17.08%;
+    50% 50%;
 }
 
 .feature-command:nth-child(5n + 2),
 .quick-answer-card:nth-child(5n + 2) {
   background-image:
-    linear-gradient(rgba(16, 20, 22, 0.18), rgba(16, 20, 22, 0.18)),
+    linear-gradient(
+      rgba(16, 20, 22, 0.18),
+      rgba(16, 20, 22, 0.18)
+    ),
     url("https://cdn.pvzhtbot.com/art/brainy_grave.webp");
   background-size:
     100% 100%,
@@ -284,7 +292,10 @@ body {
 .feature-command:nth-child(5n + 3),
 .quick-answer-card:nth-child(5n + 3) {
   background-image:
-    linear-gradient(rgba(16, 20, 22, 0.18), rgba(16, 20, 22, 0.18)),
+    linear-gradient(
+      rgba(16, 20, 22, 0.18),
+      rgba(16, 20, 22, 0.18)
+    ),
     url("https://cdn.pvzhtbot.com/art/crazy_grave.webp");
   background-size:
     100% 100%,
@@ -297,7 +308,10 @@ body {
 .feature-command:nth-child(5n + 4),
 .quick-answer-card:nth-child(5n + 4) {
   background-image:
-    linear-gradient(rgba(16, 20, 22, 0.18), rgba(16, 20, 22, 0.18)),
+    linear-gradient(
+      rgba(16, 20, 22, 0.18),
+      rgba(16, 20, 22, 0.18)
+    ),
     url("https://cdn.pvzhtbot.com/art/hearty_grave.webp");
   background-size:
     100% 100%,
@@ -310,7 +324,10 @@ body {
 .feature-command:nth-child(5n + 5),
 .quick-answer-card:nth-child(5n + 5) {
   background-image:
-    linear-gradient(rgba(16, 20, 22, 0.18), rgba(16, 20, 22, 0.18)),
+    linear-gradient(
+      rgba(16, 20, 22, 0.18),
+      rgba(16, 20, 22, 0.18)
+    ),
     url("https://cdn.pvzhtbot.com/art/sneaky_grave.webp");
   background-size:
     100% 100%,
@@ -474,17 +491,7 @@ a:hover {
   color: #8fe38b;
   text-decoration: underline;
 }
-@media (min-width: 769px) and (max-width: 1100px) {
-  .feature-command:nth-child(5n + 1),
-  .quick-answer-card:nth-child(5n + 1) {
-    background-size:
-      100% 100%,
-      175% 195%;
-    background-position:
-      0 0,
-      22% 19%;
-  }
-}
+
 @media (max-width: 900px) {
   .hero {
     padding: 55px 24px 45px;
@@ -508,15 +515,7 @@ a:hover {
   .hero {
     padding: 45px 16px 40px;
   }
-  .feature-command:nth-child(5n + 1),
-  .quick-answer-card:nth-child(5n + 1) {
-    background-size:
-      100% 100%,
-      155% 175%;
-    background-position:
-      0 0,
-      23% 20%;
-  }
+
   .hero h1 {
     font-size: 2.4rem;
   }
