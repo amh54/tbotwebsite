@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-
+import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
 
 import Navbar from "../components/navbar";
@@ -667,7 +667,21 @@ function Users() {
 
                   <div className="user-card-body">
                     {bio ? (
-                      <p className="user-card-bio">{bio}</p>
+                      <div className="user-card-bio">
+                        <ReactMarkdown
+                          components={{
+                            a: ({ node, ...props }) => (
+                              <a
+                                {...props}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              />
+                            ),
+                          }}
+                        >
+                          {bio}
+                        </ReactMarkdown>
+                      </div>
                     ) : (
                       <p className="user-card-bio user-card-no-bio">
                         No bio provided.
