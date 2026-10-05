@@ -311,6 +311,7 @@ function HomePage() {
               </p>
 
               <div className="grave-links">
+                <Link to="/publicdecks">Public Decks →</Link>
                 <Link to="/decklists">Community Decklists →</Link>
               </div>
             </div>
@@ -367,7 +368,7 @@ function HomePage() {
               <h3>Can I contribute?</h3>
               <p>
                 Yes. You can contribute through deck submissions, suggestions,
-                corrections, bug reports, and other community feedback.
+                bug reports, and other community feedback.
               </p>
 
               <div className="grave-links">
@@ -378,6 +379,22 @@ function HomePage() {
                 >
                   Join the Tbot Discord
                 </a>
+                <a
+                  href="https://pvzhtbot.com/suggestions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Suggestions
+                </a>
+                <div className="grave-links">
+                <a
+                  href="https://pvzhtbot.com/bugreport"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                 Bug Reports
+                </a>
+                </div>
               </div>
             </div>
           </div>
