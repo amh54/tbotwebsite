@@ -181,7 +181,12 @@ body {
 .feature-command {
   min-width: 0;
   min-height: 320px;
-  padding: 24px;
+  padding: 24px 24px 64px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  text-align: center;
   background-color: transparent;
   background-repeat: no-repeat;
   border: 1px solid #23272b;
@@ -274,7 +279,7 @@ body {
    below the bat and inside the curved arch */
 .feature-command:nth-child(5n + 2),
 .quick-answer-card:nth-child(5n + 2) {
-  padding: 110px 56px 24px;
+  padding: 110px 56px 64px;
 }
 
 .feature-command:hover {
@@ -283,6 +288,7 @@ body {
 }
 
 .feature-command h3 {
+  flex: 0 0 100%;
   margin-bottom: 0;
   padding: 12px 14px 4px;
   background: rgba(16, 20, 22, 0.62);
@@ -292,6 +298,7 @@ body {
 }
 
 .feature-command p {
+  flex: 0 0 100%;
   margin-bottom: 16px;
   padding: 0 14px 12px;
   background: rgba(16, 20, 22, 0.62);
@@ -358,7 +365,12 @@ body {
 .quick-answer-card {
   min-width: 0;
   min-height: 280px;
-  padding: 24px;
+  padding: 24px 24px 64px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  text-align: center;
   background-color: transparent;
   background-repeat: no-repeat;
   border: 1px solid #23272b;
@@ -453,6 +465,7 @@ body {
 }
 
 .quick-answer-card h3 {
+  flex: 0 0 100%;
   margin-bottom: 0;
   padding: 12px 14px 4px;
   background: rgba(16, 20, 22, 0.62);
@@ -463,6 +476,7 @@ body {
 }
 
 .quick-answer-card p {
+  flex: 0 0 100%;
   margin: 0;
   padding: 0 14px 12px;
   background: rgba(16, 20, 22, 0.62);
@@ -583,7 +597,7 @@ a:hover {
 
   .quick-answer-card {
     min-height: 280px;
-    padding: 20px;
+    padding: 20px 20px 56px;
   }
 
   .hero {
@@ -631,7 +645,7 @@ a:hover {
 
   .feature-command {
     min-height: 320px;
-    padding: 20px;
+    padding: 20px 20px 56px;
   }
 
   .discord {
@@ -640,6 +654,6 @@ a:hover {
 
   .feature-command:nth-child(5n + 2),
   .quick-answer-card:nth-child(5n + 2) {
-    padding: 100px 44px 20px;
+    padding: 100px 44px 56px;
   }
 }
