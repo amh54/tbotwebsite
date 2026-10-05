@@ -491,7 +491,14 @@ a:hover {
   color: #8fe38b;
   text-decoration: underline;
 }
-
+@media (max-width: 768px) {
+  .feature-command:nth-child(5n + 1),
+  .quick-answer-card:nth-child(5n + 1) {
+    background-size:
+      100% 100%,
+      125% 270%;
+  }
+}
 @media (max-width: 900px) {
   .hero {
     padding: 55px 24px 45px;
