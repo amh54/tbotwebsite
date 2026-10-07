@@ -1118,6 +1118,10 @@
 ============================================================ */
 
 @media (max-width: 700px) {
+  .profile-collection-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
   .card-information-page {
     padding: 20px;
   }
@@ -1189,6 +1193,10 @@
 ============================================================ */
 
 @media (max-width: 450px) {
+    .profile-collection-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+  }
   .card-information-page {
     padding: 15px;
   }
