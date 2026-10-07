@@ -49,7 +49,7 @@ const SUGGESTION_PAGES = [
   },
   {
     value: "/publicdecks",
-    label: "Public Decks"
+    label: "Public Decks",
   },
   {
     value: "/legacydecks",
@@ -81,11 +81,15 @@ const SUGGESTION_PAGES = [
   },
   {
     value: "/my-bug-reports",
-    label: "Bug Reports"
+    label: "Bug Reports",
   },
   {
     value: "/my-suggestions",
     label: "My Suggestions",
+  },
+  {
+    value: "__other__",
+    label: "Other",
   },
 ];
 
@@ -94,6 +98,7 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("improvement");
   const [page, setPage] = useState("");
+  const [customPageUrl, setCustomPageUrl] = useState("");
   const [pageDropdownOpen, setPageDropdownOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -121,6 +126,8 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
     category === "ui" ||
     category === "performance";
 
+  const isOtherPage = page === "__other__";
+
   useEffect(() => {
     if (!open) {
       return;
@@ -130,9 +137,10 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
 
     if (initialPageUrl) {
       try {
-        initialPath = new URL(initialPageUrl).pathname;
+        const url = new URL(initialPageUrl);
+        initialPath = `${url.pathname}${url.search}${url.hash}`;
       } catch {
-        initialPath = "";
+        initialPath = initialPageUrl;
       }
     }
 
@@ -140,10 +148,13 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
       (item) => item.value === initialPath,
     );
 
+    const isKnownPage = Boolean(matchingPage && matchingPage.value !== "__other__");
+
     setTitle("");
     setDescription("");
     setCategory("improvement");
-    setPage(matchingPage?.value || "");
+    setPage(isKnownPage ? matchingPage.value : initialPath ? "__other__" : "");
+    setCustomPageUrl(isKnownPage ? "" : initialPath);
     setPageDropdownOpen(false);
     setSubmitting(false);
     setMessage("");
@@ -183,14 +194,24 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
 
     setCategory(newCategory);
 
-    if (newCategory !== "improvement") {
+    if (
+      newCategory !== "improvement" &&
+      newCategory !== "ui" &&
+      newCategory !== "performance"
+    ) {
       setPage("");
+      setCustomPageUrl("");
       setPageDropdownOpen(false);
     }
   };
 
   const handlePageChange = (value) => {
     setPage(value);
+
+    if (value !== "__other__") {
+      setCustomPageUrl("");
+    }
+
     setPageDropdownOpen(false);
   };
 
@@ -219,6 +240,7 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
 
     const trimmedTitle = title.trim();
     const trimmedDescription = description.trim();
+    const trimmedCustomPageUrl = customPageUrl.trim();
 
     if (!trimmedTitle) {
       setMessage("Please enter a title.");
@@ -240,15 +262,37 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
       return;
     }
 
+    if (requiresPage && isOtherPage && !trimmedCustomPageUrl) {
+      setMessage("Please enter the URL of the page your suggestion is about.");
+      return;
+    }
+
+    let selectedPageUrl = "";
+
+    if (requiresPage) {
+      if (isOtherPage) {
+        try {
+          const customUrl = new URL(
+            trimmedCustomPageUrl,
+            window.location.origin,
+          );
+
+          selectedPageUrl = customUrl.href;
+        } catch {
+          setMessage("Please enter a valid page URL.");
+          return;
+        }
+      } else {
+        selectedPageUrl = `${window.location.origin}${page}`;
+      }
+    }
+
     setSubmitting(true);
     setMessage("");
     setPageDropdownOpen(false);
 
     try {
       const csrfToken = await ensureCsrfToken();
-
-      const selectedPageUrl =
-        requiresPage && page ? `${window.location.origin}${page}` : "";
 
       const response = await fetch(
         `${API_BASE_URL}/tbotapp/suggestions/create/`,
@@ -304,6 +348,7 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
       setDescription("");
       setCategory("improvement");
       setPage("");
+      setCustomPageUrl("");
 
       setTimeout(() => {
         onClose();
@@ -377,7 +422,9 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
               <div>
                 <h3>What would you like to see?</h3>
 
-                <p>Give your suggestion a clear title and explain your idea.</p>
+                <p>
+                  Give your suggestion a clear title and explain your idea.
+                </p>
               </div>
             </div>
 
@@ -461,7 +508,10 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
                   <span className="bug-report-required">*</span>
                 </label>
 
-                <div className="suggestion-page-dropdown" ref={pageDropdownRef}>
+                <div
+                  className="suggestion-page-dropdown"
+                  ref={pageDropdownRef}
+                >
                   <button
                     type="button"
                     id="suggestion-page"
@@ -469,7 +519,8 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
                       pageDropdownOpen ? "open" : ""
                     }`}
                     onClick={() =>
-                      !submitting && setPageDropdownOpen((current) => !current)
+                      !submitting &&
+                      setPageDropdownOpen((current) => !current)
                     }
                     onKeyDown={handlePageKeyDown}
                     disabled={submitting}
@@ -479,7 +530,9 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
                   >
                     <span
                       className={
-                        selectedPage ? "" : "suggestion-page-placeholder"
+                        selectedPage
+                          ? ""
+                          : "suggestion-page-placeholder"
                       }
                     >
                       {selectedPage?.label || "Select a page"}
@@ -515,7 +568,25 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
                   )}
                 </div>
 
-                <small>Select the Tbot page your suggestion is about.</small>
+                {isOtherPage && (
+                  <input
+                    type="url"
+                    value={customPageUrl}
+                    onChange={(event) =>
+                      setCustomPageUrl(event.target.value)
+                    }
+                    placeholder="https://pvzhtbot.com/your-page"
+                    disabled={submitting}
+                    required
+                    style={{ marginTop: "10px" }}
+                  />
+                )}
+
+                <small>
+                  {isOtherPage
+                    ? "Enter the URL of the Tbot page your suggestion is about."
+                    : "Select the Tbot page your suggestion is about."}
+                </small>
               </div>
             )}
           </div>
@@ -523,7 +594,10 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
           <div className="bug-report-user-info">
             <div className="bug-report-user-avatar">
               {user?.avatar ? (
-                <img src={user.avatar} alt={`${userName}'s Discord avatar`} />
+                <img
+                  src={user.avatar}
+                  alt={`${userName}'s Discord avatar`}
+                />
               ) : (
                 userInitial
               )}
