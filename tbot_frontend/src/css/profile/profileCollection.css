@@ -1,0 +1,113 @@
+
+.profile-collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin-top: 18px;
+}
+
+.profile-collection-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 0.72;
+  padding: 6px;
+  border: 0;
+  border-radius: 7px;
+  overflow: hidden;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.profile-collection-card:hover {
+  transform: translateY(-5px) scale(1.025);
+  filter: brightness(1.06);
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.38);
+  z-index: 3;
+}
+
+.profile-collection-card:focus-visible {
+  outline: 3px solid #8fe38b;
+  outline-offset: 3px;
+}
+
+.profile-collection-card-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 7px;
+}
+
+.profile-collection-card-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 150px;
+  padding: 10px;
+  background: #222;
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+}
+
+.profile-collection-quantity {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.86);
+  border: 2px solid #fff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .profile-collection-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-collection-grid {
+    grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .profile-collection-quantity {
+    left: 3px;
+    bottom: 3px;
+    min-width: 25px;
+    height: 20px;
+    padding: 0 4px;
+    border-width: 1px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .profile-collection-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

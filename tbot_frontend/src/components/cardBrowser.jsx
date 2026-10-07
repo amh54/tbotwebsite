@@ -4,7 +4,9 @@ import CardModal from "./modals/cardModal.jsx";
 import Filters from "./cardInfo/filters.jsx";
 import Loading from "./cardInfo/loading.jsx";
 import GridItem from "./cardInfo/gridItem.jsx";
+
 import { API_BASE_URL } from "../utils/api.js";
+
 import {
   CARD_CACHE_KEY,
   getCardCountMemoryCache,
@@ -102,7 +104,6 @@ const findCardByQuery = (cards, cardQuery) => {
       }
 
       const cardName = normalizeText(card.card_name);
-
       const title = normalizeText(card.title);
 
       const aliases = String(card.aliases ?? "")
@@ -149,7 +150,6 @@ const getErrorMessage = async (response) => {
 
 const getSideMatches = (cardSide, selectedSide) => {
   const normalizedCardSide = normalizeText(cardSide);
-
   const normalizedSelectedSide = normalizeText(selectedSide);
 
   if (!normalizedCardSide) {
@@ -224,7 +224,6 @@ const buildFilterData = (normalCards) => {
     );
 
     const rarityName = getRarityName(card.set_rarity);
-
     const setName = getSetName(card.set_rarity);
 
     if (setName) {
@@ -246,7 +245,6 @@ const buildFilterData = (normalCards) => {
 
   const sortedTypes = [...types].sort((a, b) => {
     const aOrder = typeOrder[normalizeText(a)] ?? 99;
-
     const bOrder = typeOrder[normalizeText(b)] ?? 99;
 
     if (aOrder !== bOrder) {
@@ -258,30 +256,29 @@ const buildFilterData = (normalCards) => {
 
   return {
     classes: [...classes].sort((a, b) => a.localeCompare(b)),
-
     types: sortedTypes,
-
     costs: [...costs].sort((a, b) => a - b),
-
     attacks: [...attacks].sort((a, b) => a - b),
-
     healths: [...healths].sort((a, b) => a - b),
-
     keywords: [...keywords.values()].sort((a, b) => a.localeCompare(b)),
-
     tribes: [...tribes.values()].sort((a, b) => a.localeCompare(b)),
-
     sets: [...sets].sort((a, b) => a.localeCompare(b)),
-
     rarities: [...rarities].sort((a, b) => a.localeCompare(b)),
   };
+};
+
+const getCollectionQuantity = (card) => {
+  const quantity = Number(card?.quantity);
+
+  return Number.isFinite(quantity) ? Math.max(0, quantity) : 0;
 };
 
 function CardBrowser({
   cards: providedCards = [],
   userCollection = false,
   allCards = [],
-   profileName
+  profileName,
+  collectionLayout = false,
 }) {
   const [cards, setCards] = useState(() =>
     getInitialCards(providedCards, userCollection),
@@ -295,30 +292,21 @@ function CardBrowser({
   );
 
   const [selectedCard, setSelectedCard] = useState(null);
-
   const [side, setSide] = useState("Plants");
-
   const [search, setSearch] = useState("");
-
   const [typeFilter, setTypeFilter] = useState([]);
-
   const [classFilter, setClassFilter] = useState([]);
-
   const [costFilter, setCostFilter] = useState([]);
-
   const [attackFilter, setAttackFilter] = useState([]);
-
   const [healthFilter, setHealthFilter] = useState([]);
-
   const [keywordFilter, setKeywordFilter] = useState([]);
-
   const [tribeFilter, setTribeFilter] = useState([]);
-
   const [setFilter, setSetFilter] = useState([]);
-
   const [rarityFilter, setRarityFilter] = useState([]);
-
   const [error, setError] = useState("");
+
+  const [showCollectionLayout, setShowCollectionLayout] =
+    useState(collectionLayout);
 
   const modalCards = useMemo(() => {
     const result = [];
@@ -380,7 +368,8 @@ function CardBrowser({
         const normalizedName = normalizeText(card.card_name);
 
         const byName = modalCards.find(
-          (candidate) => normalizeText(candidate?.card_name) === normalizedName,
+          (candidate) =>
+            normalizeText(candidate?.card_name) === normalizedName,
         );
 
         if (byName) {
@@ -419,7 +408,7 @@ function CardBrowser({
 
       window.history.pushState(
         {
-          ...(window.history.state),
+          ...window.history.state,
           card: cardName,
         },
         "",
@@ -452,7 +441,6 @@ function CardBrowser({
         }
 
         const data = await response.json();
-
         const count = Number(data?.count) || 0;
 
         setCardCountMemoryCache(count);
@@ -503,7 +491,9 @@ function CardBrowser({
 
         if (!contentType.includes("application/json")) {
           if (responseText.trim().startsWith("<")) {
-            throw new Error(`Received HTML instead of JSON from ${endpoint}.`);
+            throw new Error(
+              `Received HTML instead of JSON from ${endpoint}.`,
+            );
           }
 
           throw new Error(
@@ -514,13 +504,15 @@ function CardBrowser({
         }
 
         const data = JSON.parse(responseText);
-
         const loadedCards = Array.isArray(data) ? data : [];
 
         setCardInfoMemoryCache(loadedCards);
 
         try {
-          sessionStorage.setItem(CARD_CACHE_KEY, JSON.stringify(loadedCards));
+          sessionStorage.setItem(
+            CARD_CACHE_KEY,
+            JSON.stringify(loadedCards),
+          );
         } catch (cacheError) {
           console.error("Unable to cache card data:", cacheError);
         }
@@ -535,7 +527,9 @@ function CardBrowser({
         console.error(fetchError);
 
         setError(
-          `Unable to load cards right now. ${fetchError.message || ""}`.trim(),
+          `Unable to load cards right now. ${
+            fetchError.message || ""
+          }`.trim(),
         );
       } finally {
         setLoading(false);
@@ -556,7 +550,6 @@ function CardBrowser({
 
     const syncCardFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
-
       const cardQuery = params.get("card");
 
       if (!hasValue(cardQuery)) {
@@ -581,6 +574,7 @@ function CardBrowser({
       window.removeEventListener("popstate", handlePopState);
     };
   }, [cards]);
+
   const normalCards = useMemo(() => {
     return cards.filter((card) => {
       if (!getSideMatches(card?.side, side)) {
@@ -591,7 +585,10 @@ function CardBrowser({
     });
   }, [cards, side]);
 
-  const filterData = useMemo(() => buildFilterData(normalCards), [normalCards]);
+  const filterData = useMemo(
+    () => buildFilterData(normalCards),
+    [normalCards],
+  );
 
   const typeOptions = filterData.types.map((value) => ({
     value,
@@ -706,8 +703,38 @@ function CardBrowser({
   return (
     <div className="card-information-page">
       <h1>
-  {userCollection ? `${profileName}'s Card Collection` : "PVZ Heroes Card Database"}
-</h1>
+        {userCollection
+          ? `${profileName}'s Card Collection`
+          : "PVZ Heroes Card Database"}
+      </h1>
+
+      {userCollection && (
+  <div className="collection-layout-toggle">
+    <span className="collection-layout-toggle-label">
+      {showCollectionLayout ? "Collection View" : "Info View"}
+    </span>
+
+    <button
+      type="button"
+      className={`collection-layout-switch ${
+        showCollectionLayout ? "active" : ""
+      }`}
+      onClick={() =>
+        setShowCollectionLayout((current) => !current)
+      }
+      aria-label={
+        showCollectionLayout
+          ? "Switch to info view"
+          : "Switch to collection view"
+      }
+      aria-pressed={showCollectionLayout}
+    >
+      <span className="collection-layout-switch-track">
+        <span className="collection-layout-switch-thumb" />
+      </span>
+    </button>
+  </div>
+)}
 
       <Filters
         side={side}
@@ -755,18 +782,55 @@ function CardBrowser({
         <p className="no-card-results">No {side} cards found.</p>
       )}
 
-      {!error && filteredCards.length > 0 && (
-        <div className="card-grid">
-          {filteredCards.map((card) => (
-            <GridItem
-              key={card.cardid}
-              card={card}
-              userCollection={userCollection}
-              onOpen={openCardModal}
-            />
-          ))}
-        </div>
-      )}
+      {!error &&
+        filteredCards.length > 0 &&
+        (showCollectionLayout ? (
+          <div className="profile-collection-grid">
+            {filteredCards.map((card) => {
+              const quantity = getCollectionQuantity(card);
+              return (
+                <button
+                  type="button"
+                  className="profile-collection-card"
+                  data-rarity={getRarityName(card.set_rarity)}
+                  key={
+                    card.collection_id ??
+                    card.cardid ??
+                    card.card_name
+                  }
+                  onClick={() => openCardModal(card)}
+                  aria-label={`View ${card.card_name}`}
+                >
+                  {card.thumbnail ? (
+                    <img
+                      src={card.thumbnail}
+                      alt={card.card_name}
+                      className="profile-collection-card-image"
+                    />
+                  ) : (
+                    <div className="profile-collection-card-missing">
+                      {card.card_name}
+                    </div>
+                  )}
+                  <span className="profile-collection-quantity">
+                    x{quantity}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="card-grid">
+            {filteredCards.map((card) => (
+              <GridItem
+                key={card.cardid}
+                card={card}
+                userCollection={userCollection}
+                onOpen={openCardModal}
+              />
+            ))}
+          </div>
+        ))}
 
       {selectedCard && (
         <CardModal

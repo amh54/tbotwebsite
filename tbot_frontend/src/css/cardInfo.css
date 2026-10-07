@@ -6,7 +6,37 @@
   background: #101416;
   color: white;
 }
+.profile-collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
 
+.profile-collection-quantity {
+  position: absolute;
+  left: 6px;
+  bottom: 8px;
+  z-index: 3;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+    background: #000;
+  padding: 3px 6px;
+  border-radius: 4px;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 2px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+.profile-collection-card-missing {
+  color: #1a1a1a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
 .card-information-page h1 {
   margin: 0 0 30px;
   font-size: 48px;
@@ -164,7 +194,197 @@
     border-color 0.15s ease,
     color 0.15s ease;
 }
+.profile-collection-card[data-rarity="Legendary"] {
+  background: linear-gradient(
+    135deg,
+    #c47aeb 0%,
+    #f7f0a8 50%,
+    #8ac5e8 100%
+  );
+}
 
+.profile-collection-card[data-rarity="Rare"] {
+  background-color: #ea9c45;
+}
+
+.profile-collection-card[data-rarity="Super-Rare"] {
+  background-color: #885cd5;
+}
+
+.profile-collection-card[data-rarity="Uncommon"] {
+  background-color: #959a9d;
+}
+
+.profile-collection-card[data-rarity="Common"] {
+  background-color: #f5f5dc;
+}
+
+.profile-collection-card[data-rarity="Event"] {
+  background-color: #c1503d;
+}
+
+.profile-collection-card[data-rarity="Token"] {
+  background-color: #27272a;
+}
+.profile-collection-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 0.72;
+  padding: 6px 6px 30px;
+  border: 0;
+  border-radius: 7px;
+  overflow: hidden;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.profile-collection-card-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 4px;
+}
+.profile-collection-card-stats {
+  position: absolute;
+  right: 6px;
+  bottom: 8px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  width: auto;
+  pointer-events: none;
+}
+.profile-collection-stat {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+.profile-collection-stat > *:not(.profile-collection-stat-value) {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.profile-collection-stat .card-stat-icon {
+  display: block;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px;
+  min-height: 18px;
+  max-width: 18px;
+  max-height: 18px;
+  margin: 0;
+  object-fit: contain;
+}
+
+.profile-collection-stat-value {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 2px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+.collection-layout-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  margin: 0 0 12px;
+}
+
+.collection-layout-toggle-label {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.collection-layout-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.collection-layout-switch-track {
+  position: relative;
+  display: block;
+  width: 42px;
+  height: 22px;
+  border-radius: 11px;
+  background: #4b5256;
+  transition: background 0.15s ease;
+}
+
+.collection-layout-switch.active .collection-layout-switch-track {
+  background: #8fe38b;
+}
+
+.collection-layout-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.15s ease;
+}
+
+.collection-layout-switch.active .collection-layout-switch-thumb {
+  transform: translateX(20px);
+}
+
+.collection-layout-switch-text {
+  min-width: 66px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
 .clear-card-filter-btn:hover {
   background: #333;
   color: #8fe38b;

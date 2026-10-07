@@ -18,7 +18,14 @@ export default function BugReportRoute() {
   const initialPageUrl =
     location.state?.from ||
     `${window.location.origin}/`;
+  const handleClose = () => {
+    if (location.state?.from) {
+      navigate(-1);
+      return;
+    }
 
+    navigate("/", { replace: true });
+  };
   useEffect(() => {
     let cancelled = false;
 
@@ -80,7 +87,7 @@ export default function BugReportRoute() {
         user={user}
         profile={profile}
         initialPageUrl={initialPageUrl}
-        onClose={() => navigate(-1)}
+       onClose={handleClose}
       />
     </>
   );

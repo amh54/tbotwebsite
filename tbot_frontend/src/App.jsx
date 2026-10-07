@@ -190,7 +190,7 @@ function HomePage() {
               </p>
               <div className="grave-links">
                 <Link to="/users">Browse Users →</Link>
-                <Link to="/users">Browse Public Decks →</Link>
+                <Link to="/publicdecks">Browse Public Decks →</Link>
               </div>
             </div>
           </div>

@@ -1,8 +1,7 @@
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
-from django.urls import include, path, resolve
+from django.urls import include, path
 
-import tbotapp.urls
 
 from tbotapp.robots import robots_txt
 from tbotapp.sitemap import (

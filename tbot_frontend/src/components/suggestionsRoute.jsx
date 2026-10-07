@@ -16,8 +16,7 @@ export default function SuggestionsRoute() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
 
-  const initialPageUrl =
-    location.state?.from || `${window.location.origin}/`;
+  const initialPageUrl = location.state?.from || `${window.location.origin}/`;
 
   useEffect(() => {
     let cancelled = false;
@@ -33,9 +32,7 @@ export default function SuggestionsRoute() {
           }),
         ]);
 
-        const authData = authResponse.ok
-          ? await authResponse.json()
-          : null;
+        const authData = authResponse.ok ? await authResponse.json() : null;
 
         const profileData = profileResponse.ok
           ? await profileResponse.json()
@@ -47,11 +44,7 @@ export default function SuggestionsRoute() {
 
         setUser(authData?.user || authData || null);
 
-        setProfile(
-          profileData?.profile_exists
-            ? profileData.profile
-            : null,
-        );
+        setProfile(profileData?.profile_exists ? profileData.profile : null);
       } catch {
         if (!cancelled) {
           setUser(null);
@@ -66,7 +59,14 @@ export default function SuggestionsRoute() {
       cancelled = true;
     };
   }, []);
+  const handleClose = () => {
+    if (location.state?.from) {
+      navigate(-1);
+      return;
+    }
 
+    navigate("/", { replace: true });
+  };
   return (
     <>
       <Seo
@@ -80,7 +80,7 @@ export default function SuggestionsRoute() {
         user={user}
         profile={profile}
         initialPageUrl={initialPageUrl}
-        onClose={() => navigate(-1)}
+        onClose={handleClose}
       />
     </>
   );

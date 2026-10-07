@@ -5,14 +5,13 @@ export default function ProfileCardBrowser({
   allCards = [],
   profileName,
 }) {
-  console.log("PROFILE RAW CARDS:", cards);
-
   return (
     <CardBrowser
       cards={cards}
-      profileName={profileName}
-      userCollection={true}
       allCards={allCards}
+      userCollection
+      profileName={profileName}
+      collectionLayout
     />
   );
 }
