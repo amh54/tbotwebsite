@@ -226,7 +226,7 @@ function Navbar() {
         <div className="navbar-inner">
           <Link to="/" className="navbar-logo" onClick={closeMenus}>
             <img
-              src="https://cdn.pvzhtbot.com/art/darth_vader_swabbie.webp"
+              src="https://cdn.pvzhtbot.com/art/halloween.webp"
               alt="Tbot"
               className="navbar-logo-image"
             />
