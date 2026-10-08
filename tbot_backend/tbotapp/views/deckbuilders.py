@@ -259,10 +259,18 @@ def deckbuilder_decks(request, deckbuilder_name):
         .first()
     )
 
+    deckbuilder_data = deckbuilder_serializer.data
+
+    deckbuilder_data["profile_slug"] = (
+        profile.profile_slug
+        if profile
+        else None
+    )
+
     return Response(
         {
             "success": True,
-            "deckbuilder": deckbuilder_serializer.data,
+            "deckbuilder": deckbuilder_data,
             "has_profile": profile is not None,
             "decks": deck_serializer.data,
             "deck_count": len(decks),
