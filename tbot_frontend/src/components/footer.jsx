@@ -8,7 +8,8 @@ function Footer({ credits }) {
       <div className="footer-content">
         <p>
           © {year} Tbot. All rights reserved. Web page designed and coded by{" "}
-          <span className="footer-highlight">Tbone</span>.
+          <span className="footer-highlight">Tbone</span>. <br/>
+          Halloween Swabbie used on navbar was designed by LumpyMilkTea on Discord
         </p>
 
         {credits && <p className="footer-credits">{credits}</p>}
