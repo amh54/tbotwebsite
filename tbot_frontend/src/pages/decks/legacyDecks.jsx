@@ -189,7 +189,7 @@ function LegacyDecksPage() {
       }
     };
 
-    fetchLegacyDecks();
+   void fetchLegacyDecks();
 
     return () => {
       controller.abort();
@@ -232,7 +232,7 @@ function LegacyDecksPage() {
       }
     };
 
-    fetchLegacyCount();
+    void fetchLegacyCount();
 
     return () => {
       controller.abort();
@@ -275,7 +275,7 @@ function LegacyDecksPage() {
       }
     };
 
-    fetchCards();
+   void fetchCards();
 
     return () => {
       controller.abort();
@@ -334,7 +334,7 @@ function LegacyDecksPage() {
       }
     };
 
-    fetchUserCollection();
+    void fetchUserCollection();
 
     return () => {
       controller.abort();
@@ -597,9 +597,9 @@ function LegacyDecksPage() {
                   decklist={deck}
                   allCards={allCards}
                   legacy
-                  userCollection={userCollection}
-                  collectionLoaded={collectionLoaded}
-                  discordUser={discordUser}
+                  userCollection={collectionCards}
+                  collectionLoaded={isAuthenticated}
+                discordUser={isAuthenticated ? {} : null}
                 />
               ))}
             </div>
