@@ -113,6 +113,7 @@ function DeckCardModal({
   discordUser = null,
 }) {
   const [showMissingCards, setShowMissingCards] = useState(true);
+  const [showDescription, setShowDescription] = useState(true);
   const missingCards = useMemo(() => {
     if (!collectionLoaded || !discordUser) {
       return [];
@@ -338,10 +339,30 @@ function DeckCardModal({
                   </div>
 
                   <section className="modal-section description-section">
-                    <h3>Description</h3>
+                    <div className="missing-cards-header">
+                      <h3>Description</h3>
 
-                    <p className="description">{description}</p>
+                      <button
+                        type="button"
+                        className="missing-cards-toggle"
+                        onClick={() =>
+                          setShowDescription((current) => !current)
+                        }
+                        aria-expanded={showDescription}
+                      >
+                        {showDescription ? "Hide ▲" : "Show ▼"}
+                      </button>
+                    </div>
+
+                    {showDescription ? (
+                      <p className="description">{description}</p>
+                    ) : (
+                      <p className="missing-cards-summary">
+                        Description hidden.
+                      </p>
+                    )}
                   </section>
+
                   {discordUser && collectionLoaded && (
                     <section className="modal-section missing-cards-section">
                       <div className="missing-cards-header">
