@@ -61,8 +61,7 @@ function StandaloneDeckPage() {
 
         const actualDeckId = deckIdMatch[1];
 
-        const normalizedSourceType =
-          String(source_type).trim().toLowerCase();
+        const normalizedSourceType = String(source_type).trim().toLowerCase();
 
         if (
           normalizedSourceType !== "user" &&
@@ -90,9 +89,7 @@ function StandaloneDeckPage() {
         const data = await response.json().catch(() => null);
 
         if (!response.ok) {
-          throw new Error(
-            data?.error || "Unable to load this deck.",
-          );
+          throw new Error(data?.error || "Unable to load this deck.");
         }
 
         if (!data?.deck) {
@@ -106,14 +103,9 @@ function StandaloneDeckPage() {
         });
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error(
-            "Unable to load standalone deck:",
-            err,
-          );
+          console.error("Unable to load standalone deck:", err);
 
-          setError(
-            err.message || "Unable to load this deck.",
-          );
+          setError(err.message || "Unable to load this deck.");
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -132,16 +124,13 @@ function StandaloneDeckPage() {
 
     const fetchCards = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/cardinfo/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
+        const response = await fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
           },
-        );
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           return;
@@ -158,10 +147,7 @@ function StandaloneDeckPage() {
         );
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error(
-            "Unable to load card information:",
-            err,
-          );
+          console.error("Unable to load card information:", err);
         }
       }
     };
@@ -196,9 +182,7 @@ function StandaloneDeckPage() {
         <main className="deck-content">
           <div className="user-decklists-empty">
             <h2>Unable to load deck</h2>
-            <p>
-              {error || "This deck could not be found."}
-            </p>
+            <p>{error || "This deck could not be found."}</p>
           </div>
         </main>
 
@@ -225,12 +209,12 @@ function StandaloneDeckPage() {
           <DeckCard
             decklist={deck}
             allCards={allCards}
-            profileSlug={
-              normalizeText(profile?.profile_slug) ||
-              profile_slug
-            }
+            profileSlug={normalizeText(profile?.profile_slug) || profile_slug}
             profileIsPublic={false}
             autoOpen={true}
+            userCollection={userCollection}
+            collectionLoaded={collectionLoaded}
+            discordUser={discordUser}
           />
         </div>
       </main>

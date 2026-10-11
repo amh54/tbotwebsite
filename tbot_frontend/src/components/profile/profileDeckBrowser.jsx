@@ -295,6 +295,9 @@ function ProfileDeckBrowser({
                 showSuggestDeck={true}
                 autoOpen={isSharedDeck}
                 isUserDeck={true}
+                userCollection={viewerCards}
+                collectionLoaded={isAuthenticated}
+                discordUser={isAuthenticated ? {} : null}
               />
             );
           })}

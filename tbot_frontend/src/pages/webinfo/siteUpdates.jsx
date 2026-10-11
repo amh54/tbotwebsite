@@ -82,13 +82,10 @@ function SiteUpdates() {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/site-updates/`,
-          {
-            method: "GET",
-            credentials: "include",
-          },
-        );
+        const response = await fetch(`${API_BASE_URL}/tbotapp/site-updates/`, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!response.ok) {
           throw new Error(`Unable to load site updates: ${response.status}`);
@@ -114,7 +111,7 @@ function SiteUpdates() {
       }
     };
 
-    loadUpdates();
+    void loadUpdates();
 
     return () => {
       cancelled = true;
@@ -159,9 +156,7 @@ function SiteUpdates() {
       return updates;
     }
 
-    return updates.filter(
-      (update) => update.category === selectedCategory,
-    );
+    return updates.filter((update) => update.category === selectedCategory);
   }, [updates, selectedCategory]);
 
   return (
@@ -277,10 +272,7 @@ function SiteUpdates() {
 
                   <p>
                     There aren't any updates currently available for{" "}
-                    <strong>
-                      {getCategoryLabel(selectedCategory)}
-                    </strong>
-                    .
+                    <strong>{getCategoryLabel(selectedCategory)}</strong>.
                   </p>
 
                   <button
@@ -347,7 +339,13 @@ function SiteUpdates() {
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              View related page →
+                              {[
+                                "new_deck",
+                                "deck_update",
+                                "deleted_deck",
+                              ].includes(update.category)
+                                ? "View related deck →"
+                                : "View related page →"}
                             </a>
                           )}
                         </div>

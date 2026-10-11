@@ -900,13 +900,133 @@
   border: 1px solid #333;
   border-radius: 10px;
 }
-
+.description-section h3{
+  color: #8fe38b;
+}
 .description {
   margin: 0;
   color: #e2e2e2;
   line-height: 1.65;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+.missing-cards-section {
+  padding: 14px;
+  background: linear-gradient(
+    135deg,
+    rgba(143, 227, 139, 0.11),
+    rgba(143, 227, 139, 0.04)
+  );
+  border: 1px solid rgba(143, 227, 139, 0.4);
+  border-radius: 10px;
+  gap: 12px;
+  box-shadow: 0 0 14px rgba(143, 227, 139, 0.06);
+}
+.missing-cards-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.missing-cards-header h3 {
+  margin: 0;
+}
+
+.missing-cards-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #30363b;
+  border-radius: 6px;
+  background: #101416;
+  color: #8fe38b;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.missing-cards-toggle:hover {
+  border-color: #8fe38b;
+  background: #19251b;
+}
+
+.missing-cards-summary {
+  margin: 10px 0 0;
+  color: #aeb7b9;
+  font-size: 0.9rem;
+}
+
+.missing-cards-section h3 {
+display: flex;
+align-items: center;
+flex-wrap: wrap;
+gap: 6px;
+color: #8fe38b;
+font-size: 0.95rem;
+line-height: 1.5;
+}
+
+.missing-cards-list {
+display: flex;
+flex-direction: column;
+gap: 8px;
+list-style: none;
+margin: 0;
+padding: 0;
+}
+
+.missing-cards-list li {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+min-width: 0;
+padding: 10px 12px;
+background: rgba(255, 255, 255, 0.035);
+border: 1px solid #303438;
+border-radius: 7px;
+}
+
+.missing-cards-list li span:first-child {
+min-width: 0;
+color: #ffffff;
+font-weight: 600;
+overflow-wrap: anywhere;
+}
+
+.missing-cards-list li span:last-child {
+flex: 0 0 auto;
+color: #8fe38b;
+font-size: 0.85rem;
+font-weight: 600;
+text-align: right;
+}
+
+.missing-cards-section > p {
+margin: 0;
+color: #ffffff;
+border-radius: 7px;
+line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+.missing-cards-section {
+padding: 11px;
+}
+
+.missing-cards-list li {
+align-items: flex-start;
+flex-direction: column;
+gap: 5px;
+padding: 10px;
+}
+
+.missing-cards-list li span:last-child {
+text-align: left;
+}
 }
 
 .modal-metadata {

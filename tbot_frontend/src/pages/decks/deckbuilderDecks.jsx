@@ -497,11 +497,11 @@ function DeckbuilderDecks() {
     return (
       <div className="deck-page">
         <Seo
-        title="Deckbuilder Not Found | Tbot"
-        description="The requested Tbot deckbuilder could not be found."
-        canonical="/deckbuilders"
-        noindex
-      />
+          title="Deckbuilder Not Found | Tbot"
+          description="The requested Tbot deckbuilder could not be found."
+          canonical="/deckbuilders"
+          noindex
+        />
         <Navbar />
 
         <main className="deck-content">
@@ -526,10 +526,10 @@ function DeckbuilderDecks() {
   return (
     <div className="deck-page">
       <Seo
-  title={`${displayName} Decklists - PVZH Decks | PVZ Heroes | Tbot`}
-  description={`Browse ${displayName}'s Plants vs. Zombies Heroes decklists on Tbot. Explore their PVZH and PVZ Heroes decks and deckbuilding history.`}
-  canonical={`/deckbuilders/${encodeURIComponent(decodedDeckbuilderName)}/decks`}
-/>
+        title={`${displayName} Decklists - PVZH Decks | PVZ Heroes | Tbot`}
+        description={`Browse ${displayName}'s Plants vs. Zombies Heroes decklists on Tbot. Explore their PVZH and PVZ Heroes decks and deckbuilding history.`}
+        canonical={`/deckbuilders/${encodeURIComponent(decodedDeckbuilderName)}/decks`}
+      />
       <Navbar />
 
       <main className="deck-content">
@@ -713,6 +713,9 @@ function DeckbuilderDecks() {
                 decklist={deck}
                 allCards={allCards}
                 deckbuilder
+                userCollection={userCollection}
+                collectionLoaded={collectionLoaded}
+                discordUser={discordUser}
               />
             ))}
           </div>

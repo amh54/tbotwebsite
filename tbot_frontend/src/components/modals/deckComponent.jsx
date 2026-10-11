@@ -40,7 +40,10 @@ function DeckCard({
   onComplete,
   onRemoveSaved,
   editSaving = false,
-  allCards = [],
+   allCards = [],
+  userCollection = [],
+  collectionLoaded = false,
+  discordUser = null,
   profileSlug = "",
   profileIsPublic = null,
   autoOpen = false,
@@ -52,6 +55,7 @@ function DeckCard({
   isSavedDeck = false,
   savedDeckTab = false,
   hideShare = false,
+  
 }) {
   const deck = decklist ?? {};
 
@@ -638,6 +642,9 @@ function DeckCard({
         handleEditComplete={handleEditComplete}
         setEditSavingLocal={setEditSavingLocal}
         closeModal={closeModal}
+        userCollection={userCollection}
+        collectionLoaded={collectionLoaded}
+        discordUser={discordUser}
       />
     </>
   );

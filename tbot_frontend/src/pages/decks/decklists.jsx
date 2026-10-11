@@ -526,15 +526,17 @@ function DecklistsPage() {
 
   return (
     <div className="deck-page">
-       <Seo
-  title="PVZH Decks - PVZ Heroes Decklists | Tbot"
-  description="Browse Plants vs. Zombies Heroes decks on Tbot. Find competitive, budget, ladder, meme, aggro, combo, control, midrange, and tempo PVZH decks."
-  canonical="/decklists"
-/>
+      <Seo
+        title="PVZH Decks - PVZ Heroes Decklists | Tbot"
+        description="Browse Plants vs. Zombies Heroes decks on Tbot. Find competitive, budget, ladder, meme, aggro, combo, control, midrange, and tempo PVZH decks."
+        canonical="/decklists"
+      />
       <Navbar />
 
       <main className="deck-content">
-        <h1><h1>PVZ Heroes Decks</h1></h1>
+        <h1>
+          <h1>PVZ Heroes Decks</h1>
+        </h1>
 
         <div className="deck-browser">
           <img
@@ -686,6 +688,9 @@ function DecklistsPage() {
                   key={`${normalizeSide(deck.side)}-${getDeckKey(deck)}`}
                   decklist={deck}
                   decklists
+                  userCollection={userCollection}
+                  collectionLoaded={collectionLoaded}
+                  discordUser={discordUser}
                 />
               ))}
             </div>

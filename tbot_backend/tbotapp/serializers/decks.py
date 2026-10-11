@@ -108,7 +108,29 @@ class AdminDeckSerializer(serializers.ModelSerializer):
         ]
 
 
+
 class AdminLegacyDeckSerializer(serializers.ModelSerializer):
+    inspiration = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    optimization = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    deck_doc = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    aliases = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+
     class Meta:
         model = LegacyDecklist
         fields = [
@@ -128,6 +150,7 @@ class AdminLegacyDeckSerializer(serializers.ModelSerializer):
             "aliases",
             "cards",
         ]
+
 
 
 class WebDeckbuilderSerializer(serializers.ModelSerializer):

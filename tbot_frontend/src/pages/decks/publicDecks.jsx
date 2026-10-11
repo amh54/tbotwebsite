@@ -688,6 +688,9 @@ function PublicDecks() {
                   decklists
                   isUserDeck
                   showSuggestDeck
+                  userCollection={userCollection}
+                  collectionLoaded={collectionLoaded}
+                  discordUser={discordUser}
                 />
               ))}
             </div>

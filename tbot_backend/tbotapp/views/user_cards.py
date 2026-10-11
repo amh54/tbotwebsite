@@ -7,7 +7,6 @@ from django.views.decorators.http import require_http_methods
 from rest_framework.decorators import api_view
 
 from ..models import UserProfile, UserCard, WebCards
-from ..serializers import UserCardSerializer
 
 EXCLUDED_CARD_TYPES = {
     "superpower",
@@ -231,12 +230,36 @@ def user_cards(request):
                 ),
             }
         )
+    catalog = list(
+        get_collectible_cards().values(
+            "card_name",
+            "set_rarity",
+        )
+    )
+    owned_names = {
+        str(card.card_name).casefold()
+        for card in cards
+    }
 
+    missing_cards = [
+        {
+            "cardid": card.cardid,
+            "card_name": card.card_name,
+            "side": card.side,
+            "card_type": card.card_type,
+            "set_rarity": card.set_rarity,
+            "thumbnail": card.thumbnail,
+        }
+        for card in get_collectible_cards().order_by("card_name")
+        if card.card_name.casefold() not in owned_names
+    ]
     return JsonResponse(
         {
             "authenticated": True,
             "profile_id": profile.id,
             "cards": results,
+            "catalog": catalog,
+            "missing_cards": missing_cards,
         }
     )
 
@@ -398,7 +421,7 @@ def user_card_create(request):
         web_card = item["web_card"]
         quantity = item["quantity"]
 
-        user_card, created = UserCard.objects.update_or_create(
+        user_card, _ = UserCard.objects.update_or_create(
             profile_id=profile.id,
             card_name=web_card.card_name,
             defaults={
@@ -780,7 +803,6 @@ def user_profile_cards(request, profile_slug):
                 ),
             }
         )
-
     return Response(
         {
             "profile": profile_slug,

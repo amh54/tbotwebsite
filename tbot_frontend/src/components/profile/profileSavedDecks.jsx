@@ -47,10 +47,8 @@ function ProfileSavedDecks({
   const [archetype, setArchetype] = useState([]);
   const [collection, setCollection] = useState([]);
 
-  const {
-    visible: collectionLoginMessage,
-    show: showCollectionLoginMessage,
-  } = useTemporaryMessage(4000);
+  const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
+    useTemporaryMessage(4000);
 
   const collectionMap = useMemo(() => {
     if (!isAuthenticated) {
@@ -60,20 +58,28 @@ function ProfileSavedDecks({
     return buildCollectionMap(viewerCards);
   }, [viewerCards, isAuthenticated]);
 
-  const sortedDecks = useMemo(
-    () => sortDecks(savedDecks),
-    [savedDecks],
-  );
+  const sortedDecks = useMemo(() => sortDecks(savedDecks), [savedDecks]);
 
-  const {
-    heroOptions,
-    categoryOptions,
-    archetypeOptions,
-    collectionOptions,
-  } = useMemo(
-    () =>
-      getFilterOptions({
-        decks: sortedDecks,
+  const { heroOptions, categoryOptions, archetypeOptions, collectionOptions } =
+    useMemo(
+      () =>
+        getFilterOptions({
+          decks: sortedDecks,
+          allCards,
+          search,
+          side,
+          hero,
+          category,
+          archetype,
+          collection,
+          collectionMap,
+          collectionLoading: false,
+          collectionLoaded: isAuthenticated,
+          discordUser: isAuthenticated ? {} : null,
+          authLoading: false,
+        }),
+      [
+        sortedDecks,
         allCards,
         search,
         side,
@@ -82,24 +88,9 @@ function ProfileSavedDecks({
         archetype,
         collection,
         collectionMap,
-        collectionLoading: false,
-        collectionLoaded: isAuthenticated,
-        discordUser: isAuthenticated ? {} : null,
-        authLoading: false,
-      }),
-    [
-      sortedDecks,
-      allCards,
-      search,
-      side,
-      hero,
-      category,
-      archetype,
-      collection,
-      collectionMap,
-      isAuthenticated,
-    ],
-  );
+        isAuthenticated,
+      ],
+    );
 
   const filteredDecks = useMemo(
     () =>
@@ -160,9 +151,7 @@ function ProfileSavedDecks({
             {savedDecks.length === 0
               ? "0 saved decks"
               : `${savedDecks.length} ${
-                  savedDecks.length === 1
-                    ? "saved deck"
-                    : "saved decks"
+                  savedDecks.length === 1 ? "saved deck" : "saved decks"
                 }`}
           </p>
         </div>
@@ -270,9 +259,7 @@ function ProfileSavedDecks({
         {collectionLoginMessage && (
           <div className="collection-login-message">
             <strong>Discord login required</strong>
-            <span>
-              Log in with Discord to use the Collection filter.
-            </span>
+            <span>Log in with Discord to use the Collection filter.</span>
           </div>
         )}
       </div>
@@ -286,9 +273,7 @@ function ProfileSavedDecks({
       {filteredDecks.length === 0 ? (
         <div className="user-decklists-empty">
           <h2>
-            {savedDecks.length === 0
-              ? "No saved decks"
-              : "No decks found"}
+            {savedDecks.length === 0 ? "No saved decks" : "No decks found"}
           </h2>
 
           <p>
@@ -300,10 +285,7 @@ function ProfileSavedDecks({
       ) : (
         <div className="deck-grid">
           {filteredDecks.map((deck) => {
-            const sourceDeckId =
-              deck.source_deck_id ??
-              deck.sourceDeckId ??
-              "";
+            const sourceDeckId = deck.source_deck_id ?? deck.sourceDeckId ?? "";
 
             const sourceType = normalizeSavedSourceType(
               deck.source_type ?? deck.sourceType,
@@ -328,6 +310,9 @@ function ProfileSavedDecks({
                 isSavedDeck={true}
                 savedDeckTab={true}
                 onRemoveSaved={onRemoveSaved}
+                userCollection={viewerCards}
+                collectionLoaded={isAuthenticated}
+                discordUser={isAuthenticated ? {} : null}
               />
             );
           })}

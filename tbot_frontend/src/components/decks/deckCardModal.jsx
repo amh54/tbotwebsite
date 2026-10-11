@@ -2,6 +2,7 @@ import EditDeckModal from "../modals/editDeckModal.jsx";
 import DeckCardActions from "../decks/deckCardActions.jsx";
 import DeckSuggestMessage from "../decks/deckSuggestMessage.jsx";
 import DeckCardAdminActions from "./deckCardAdminActions";
+import { useMemo, useState } from "react";
 import {
   formatCardsDisplay,
   formatCost,
@@ -107,7 +108,59 @@ function DeckCardModal({
   handleEditComplete,
   setEditSavingLocal,
   closeModal,
+  userCollection = [],
+  collectionLoaded = false,
+  discordUser = null,
 }) {
+  const [showMissingCards, setShowMissingCards] = useState(true);
+  const missingCards = useMemo(() => {
+    if (!collectionLoaded || !discordUser) {
+      return [];
+    }
+
+    const ownedCards = new Map();
+
+    for (const card of userCollection) {
+      const name = String(card.card_name || card.name || "")
+        .trim()
+        .toLowerCase();
+
+      if (!name) continue;
+
+      const quantity = Number(card.quantity ?? card.count ?? 0);
+
+      ownedCards.set(name, (ownedCards.get(name) || 0) + quantity);
+    }
+
+    const cardList = String(deck.cards || "")
+      .split(/\r?\n/)
+      .map((line) => {
+        const separator = line.lastIndexOf("|");
+
+        if (separator === -1) return null;
+
+        const name = line.slice(0, separator).trim();
+        const required = Number(line.slice(separator + 1).trim());
+
+        if (!name || !Number.isFinite(required) || required <= 0) {
+          return null;
+        }
+
+        return {
+          name,
+          required,
+          owned: ownedCards.get(name.toLowerCase()) || 0,
+        };
+      })
+      .filter(Boolean);
+
+    return cardList
+      .map((card) => ({
+        ...card,
+        missing: Math.max(0, card.required - card.owned),
+      }))
+      .filter((card) => card.missing > 0);
+  }, [deck.cards, userCollection, collectionLoaded, discordUser]);
   if (!open) {
     return null;
   }
@@ -289,6 +342,50 @@ function DeckCardModal({
 
                     <p className="description">{description}</p>
                   </section>
+                  {discordUser && collectionLoaded && (
+                    <section className="modal-section missing-cards-section">
+                      <div className="missing-cards-header">
+                        <h3>Missing Cards</h3>
+
+                        {missingCards.length > 0 && (
+                          <button
+                            type="button"
+                            className="missing-cards-toggle"
+                            onClick={() =>
+                              setShowMissingCards((current) => !current)
+                            }
+                            aria-expanded={showMissingCards}
+                          >
+                            {showMissingCards ? "Hide ▲" : "Show ▼"}
+                          </button>
+                        )}
+                      </div>
+
+                      {!showMissingCards && (
+                        <p className="missing-cards-summary">
+                          {missingCards.length > 0
+                            ? `${missingCards.length} cards missing`
+                            : "You own every card needed for this deck."}
+                        </p>
+                      )}
+
+                      {showMissingCards &&
+                        (missingCards.length > 0 ? (
+                          <ul className="missing-cards-list">
+                            {missingCards.map((card) => (
+                              <li key={card.name}>
+                                <span>{card.name}</span>
+                                <span>
+                                  ({card.owned}/{card.required} owned)
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p>You own every card needed for this deck.</p>
+                        ))}
+                    </section>
+                  )}
 
                   <section className="modal-metadata">
                     {hasValue(tutorialUrl) && (

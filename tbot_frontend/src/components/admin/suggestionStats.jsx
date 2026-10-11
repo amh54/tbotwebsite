@@ -1,8 +1,4 @@
-function SuggestionStats({
-  counts,
-  statusFilter,
-  setStatusFilter,
-}) {
+function SuggestionStats({ counts, statusFilter, setStatusFilter }) {
   const statuses = [
     ["all", "All Suggestions"],
     ["pending", "Pending"],
@@ -25,11 +21,9 @@ function SuggestionStats({
           }
           onClick={() => setStatusFilter(status)}
         >
-          <span className="admin-bugreports-stat-label">
-            {label}
-          </span>
+          <span className="admin-bugreports-stat-label">{label}</span>
 
-          <strong>{counts[status]}</strong>
+          <strong>{counts[status] ?? 0}</strong>
         </button>
       ))}
     </section>

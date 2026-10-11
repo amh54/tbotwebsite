@@ -264,7 +264,7 @@ function Users() {
       } catch {}
     };
 
-    loadProfile();
+    void loadProfile();
 
     return () => {
       cancelled = true;
@@ -330,7 +330,7 @@ function Users() {
       }
     };
 
-    fetchUserCount();
+    void fetchUserCount();
 
     return () => {
       controller.abort();
@@ -410,7 +410,7 @@ function Users() {
       }
     };
 
-    loadProfiles();
+    void loadProfiles();
 
     return () => {
       controller.abort();

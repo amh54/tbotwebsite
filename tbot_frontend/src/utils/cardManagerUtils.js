@@ -109,48 +109,61 @@ export const getCardStats = (stats) => {
   };
 };
 
-export const getSetName = (setRarity) => {
+const KNOWN_RARITIES = new Set([
+  "common",
+  "uncommon",
+  "rare",
+  "super-rare",
+  "legendary",
+  "event",
+  "token",
+  "hero",
+]);
+
+// Matches a trailing rarity word, with any dash/space/colon separator before it.
+const TRAILING_RARITY_PATTERN =
+  /^(.*?)[\s\-–—:|/]*\b(super[\s-]?rare|uncommon|common|rare|legendary)\s*$/i;
+
+const parseSetRarity = (setRarity) => {
   if (!setRarity) {
-    return "";
+    return { setName: "", rarityName: "" };
   }
 
   const value = String(setRarity).trim();
   const separatorIndex = value.lastIndexOf(" - ");
 
-  if (separatorIndex === -1) {
-    return "";
+  // Standard format: "Set - Rarity"
+  if (separatorIndex !== -1) {
+    return {
+      setName: value.slice(0, separatorIndex).trim(),
+      rarityName: value.slice(separatorIndex + 3).trim(),
+    };
   }
 
-  return value.slice(0, separatorIndex).trim();
+  const normalized = normalizeText(value);
+
+  // Event cards have no rarity tier; "Event" is both the set and the rarity.
+  if (normalized === "event") {
+    return { setName: value, rarityName: value };
+  }
+
+  // Fallback for variants like "Colossal Super-Rare" or "Colossal – Super-Rare".
+  const match = TRAILING_RARITY_PATTERN.exec(value);
+
+  if (match && match[1].trim()) {
+    return { setName: match[1].trim(), rarityName: match[2].trim() };
+  }
+
+  return {
+    setName: "",
+    rarityName: KNOWN_RARITIES.has(normalized) ? value : "",
+  };
 };
 
-export const getRarityName = (setRarity) => {
-  if (!setRarity) {
-    return "";
-  }
+export const getSetName = (setRarity) => parseSetRarity(setRarity).setName;
 
-  const value = String(setRarity).trim();
-  const separatorIndex = value.lastIndexOf(" - ");
-
-  if (separatorIndex === -1) {
-    const normalized = normalizeText(value);
-
-    const knownRarities = new Set([
-      "common",
-      "uncommon",
-      "rare",
-      "super-rare",
-      "legendary",
-      "event",
-      "token",
-      "hero",
-    ]);
-
-    return knownRarities.has(normalized) ? value : "";
-  }
-
-  return value.slice(separatorIndex + 3).trim();
-};
+export const getRarityName = (setRarity) =>
+  parseSetRarity(setRarity).rarityName;
 
 export const getQuantityValue = (value) => {
   const parsed = Number.parseInt(value, 10);

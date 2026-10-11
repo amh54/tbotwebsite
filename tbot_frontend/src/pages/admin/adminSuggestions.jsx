@@ -38,6 +38,7 @@ import UserDeckSuggestionCard from "../../components/decks/userDeckSuggestionCar
 
 function AdminSuggestions() {
   const [suggestions, setSuggestions] = useState([]);
+
   const [deckSuggestions, setDeckSuggestions] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -52,7 +53,7 @@ function AdminSuggestions() {
   const [deletingId, setDeletingId] = useState(null);
   const [updatingDeckId, setUpdatingDeckId] = useState(null);
   const [deletingDeckId, setDeletingDeckId] = useState(null);
-
+  const [activeView, setActiveView] = useState("website");
   const [actionError, setActionError] = useState("");
 
   const [adminResponse, setAdminResponse] = useState("");
@@ -106,7 +107,7 @@ function AdminSuggestions() {
   };
 
   useEffect(() => {
-    loadSuggestions();
+    void loadSuggestions();
   }, []);
 
   const filteredSuggestions = useMemo(() => {
@@ -443,10 +444,8 @@ function AdminSuggestions() {
     setAdminNotes("");
   };
 
-  const showSiteSuggestions = categoryFilter !== "deck";
-
-  const showDeckSuggestions =
-    categoryFilter === "all" || categoryFilter === "deck";
+  const showSiteSuggestions = activeView === "website";
+  const showDeckSuggestions = activeView === "decks";
 
   if (loading) {
     return <SuggestionLoading />;
@@ -502,11 +501,48 @@ function AdminSuggestions() {
 
         {!error && (
           <>
-            <SuggestionStats
-              counts={counts}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-            />
+            <section className="admin-bugreports-stats">
+              {[
+                ["all", "All Suggestions"],
+                ["pending", "Pending"],
+                ["reviewing", "Reviewing"],
+                ["planned", "Planned"],
+                ["completed", "Completed"],
+                ["declined", "Declined"],
+              ].map(([status, label]) => (
+                <button
+                  key={status}
+                  type="button"
+                  className={`admin-bugreports-stat ${
+                    showSiteSuggestions && statusFilter === status
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setActiveView("website");
+                    setStatusFilter(status);
+                  }}
+                >
+                  <span className="admin-bugreports-stat-label">{label}</span>
+                  <strong>{counts[status] ?? 0}</strong>
+                </button>
+              ))}
+              <button
+                type="button"
+                className={`admin-bugreports-stat ${
+                  showDeckSuggestions ? "active" : ""
+                }`}
+                onClick={() => {
+                  setActiveView("decks");
+                  setCategoryFilter("all");
+                }}
+              >
+                <span className="admin-bugreports-stat-label">
+                  Deck Suggestions
+                </span>
+                <strong>{deckSuggestions.length}</strong>
+              </button>
+            </section>
 
             <SuggestionToolbar
               search={search}
@@ -565,8 +601,9 @@ function AdminSuggestions() {
                   <>
                     <div className="admin-bugreports-results">
                       <span>
-                        Showing <strong>{filteredDeckSuggestions.length}</strong>{" "}
-                        of <strong>{deckSuggestions.length}</strong> deck
+                        Showing{" "}
+                        <strong>{filteredDeckSuggestions.length}</strong> of{" "}
+                        <strong>{deckSuggestions.length}</strong> deck
                         suggestions
                       </span>
                     </div>
