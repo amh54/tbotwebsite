@@ -35,6 +35,55 @@ const STATUS_OPTIONS = [
   { value: "declined", label: "Declined" },
 ];
 
+function getYouTubeEmbedUrl(url) {
+  const value = String(url || "").trim();
+
+  if (!value) {
+    return "";
+  }
+
+  try {
+    const parsed = new URL(value);
+    const hostname = parsed.hostname.toLowerCase();
+
+    if (
+      ["www.youtube.com", "youtube.com", "m.youtube.com"].includes(hostname)
+    ) {
+      if (parsed.pathname === "/watch") {
+        const videoId = parsed.searchParams.get("v");
+
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}`;
+        }
+      }
+
+      if (parsed.pathname.startsWith("/shorts/")) {
+        const videoId = parsed.pathname.split("/")[2];
+
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}`;
+        }
+      }
+
+      if (parsed.pathname.startsWith("/embed/")) {
+        return value;
+      }
+    }
+
+    if (hostname === "youtu.be") {
+      const videoId = parsed.pathname.split("/")[1];
+
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
+  } catch {
+    return "";
+  }
+
+  return "";
+}
+
 function UserDeckSuggestionCard({
   suggestion,
   admin = false,
@@ -56,6 +105,15 @@ function UserDeckSuggestionCard({
 
   const deckName = suggestion?.deck_name || "Untitled Deck";
   const deckImage = getImageUrl(suggestion?.image);
+
+  const tutorialValue =
+    suggestion?.deck_doc ??
+    suggestion?.tutorial_url ??
+    suggestion?.deck_tutorial_url ??
+    "";
+
+  const tutorialUrl = toExternalUrl(tutorialValue);
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(tutorialUrl);
 
   const description = hasValue(suggestion?.description)
     ? suggestion.description
@@ -407,18 +465,30 @@ function UserDeckSuggestionCard({
                   </section>
 
                   <section className="modal-metadata">
-                    {hasValue(toExternalUrl(suggestion?.deck_doc)) && (
-                      <div className="metadata-item">
+                    {hasValue(tutorialUrl) && (
+                      <div className="metadata-item deck-tutorial-item">
                         <span className="label">Deck Tutorial</span>
 
-                        <a
-                          href={toExternalUrl(suggestion.deck_doc)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="deck-doc-link"
-                        >
-                          Open tutorial
-                        </a>
+                        {youtubeEmbedUrl ? (
+                          <div className="deck-youtube-player">
+                            <iframe
+                              src={youtubeEmbedUrl}
+                              title={`${deckName} tutorial`}
+                              loading="lazy"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                            />
+                          </div>
+                        ) : (
+                          <a
+                            href={tutorialUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="deck-doc-link"
+                          >
+                            Open tutorial
+                          </a>
+                        )}
                       </div>
                     )}
 
@@ -493,6 +563,7 @@ function UserDeckSuggestionCard({
                         </span>
                       </div>
                     )}
+
                     {hasValue(suggestion?.discord_thread_url) && (
                       <div className="metadata-item">
                         <span className="label">Discord Thread</span>

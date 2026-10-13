@@ -7,7 +7,7 @@ from rest_framework.decorators import (
     permission_classes,
 )
 from rest_framework.response import Response
-from ..models import UserDeckSuggestion, Decklist
+from ..models import UserDeckSuggestion, Decklist, UserDeck
 from .helpers import get_discord_user
 from .permissions import is_discord_owner
 
@@ -49,7 +49,15 @@ def _format_deck_date(value):
         return raw
 
 
+
 def serialize_user_deck_suggestion(suggestion):
+    current_deck = (
+        UserDeck.objects
+        .filter(id=suggestion.deck_id)
+        .only("deck_doc")
+        .first()
+    )
+
     return {
         "id": suggestion.id,
         "deck_id": suggestion.deck_id,
@@ -68,7 +76,11 @@ def serialize_user_deck_suggestion(suggestion):
         "optimization": suggestion.optimization,
         "suggested_date": _format_deck_date(suggestion.suggested_date),
         "updated_date": _format_deck_date(suggestion.updated_date),
-        "deck_doc": suggestion.deck_doc,
+        "deck_doc": (
+            current_deck.deck_doc
+            if current_deck
+            else suggestion.deck_doc
+        ),
         "suggested_by_discord_id": suggestion.suggested_by_discord_id,
         "suggested_by_profile_id": suggestion.suggested_by_profile_id,
         "suggested_by_username": suggestion.suggested_by_username,
@@ -85,6 +97,7 @@ def serialize_user_deck_suggestion(suggestion):
         "updated_at": _iso(suggestion.updated_at),
         "published_deckid": suggestion.published_deckid,
     }
+
 
 
 def _owner_denied_response():
