@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.db import IntegrityError
 from django.utils import timezone
-
+from django.db import IntegrityError, connection
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
@@ -22,22 +22,11 @@ from .helpers import get_discord_user
 COOLDOWN_DAYS = 14
 
 
+
 @api_view(["POST"])
 @authentication_classes([])
 @permission_classes([])
 def user_deck_suggestion_create(request):
-    """
-    Create a suggestion for a UserDeck.
-
-    The browser only sends deck_id.
-
-    The backend determines:
-        - who owns the deck
-        - whether the requester is the owner
-        - the creator's Discord ID
-        - whether creator consent is required
-    """
-
     discord_user = get_discord_user(request)
 
     if not discord_user:
@@ -46,21 +35,14 @@ def user_deck_suggestion_create(request):
                 "success": False,
                 "authenticated": False,
                 "reason": "authentication_required",
-                "message": (
-                    "You must be logged in with Discord "
-                    "to suggest a deck."
-                ),
+                "message": "You must be logged in with Discord to suggest a deck.",
             },
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
     discord_id = str(discord_user["id"])
 
-    profile = (
-        UserProfile.objects
-        .filter(discord_id=discord_id)
-        .first()
-    )
+    profile = UserProfile.objects.filter(discord_id=discord_id).first()
 
     if not profile:
         return Response(
@@ -68,15 +50,14 @@ def user_deck_suggestion_create(request):
                 "success": False,
                 "authenticated": True,
                 "reason": "profile_not_found",
-                "message": (
-                    "Your profile could not be found. "
-                    "Please log in with Discord again."
-                ),
+                "message": "Your profile could not be found. Please log in with Discord again.",
             },
             status=status.HTTP_404_NOT_FOUND,
         )
 
     deck_id = request.data.get("deck_id")
+    suggestion_type = request.data.get("suggestion_type", "new")
+    published_deckid = request.data.get("published_deckid")
 
     if deck_id is None:
         return Response(
@@ -100,11 +81,59 @@ def user_deck_suggestion_create(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    deck = (
-        UserDeck.objects
-        .filter(id=deck_id)
-        .first()
-    )
+    if suggestion_type not in ("new", "update"):
+        return Response(
+            {
+                "success": False,
+                "reason": "invalid_suggestion_type",
+                "message": "Suggestion type must be new or update.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if suggestion_type == "update":
+        try:
+            published_deckid = int(published_deckid)
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    "success": False,
+                    "reason": "published_deck_required",
+                    "message": "Select a published deck to update.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if published_deckid <= 0:
+            return Response(
+                {
+                    "success": False,
+                    "reason": "invalid_published_deck",
+                    "message": "Select a valid published deck to update.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+    "SELECT deckid FROM web_decks WHERE deckid = %s LIMIT 1",
+    [published_deckid],
+)
+            published_deck_exists = cursor.fetchone()
+
+        if not published_deck_exists:
+            return Response(
+                {
+                    "success": False,
+                    "reason": "published_deck_not_found",
+                    "message": "The selected published deck could not be found.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+    else:
+        published_deckid = None
+
+    deck = UserDeck.objects.filter(id=deck_id).first()
 
     if not deck:
         return Response(
@@ -116,21 +145,16 @@ def user_deck_suggestion_create(request):
             status=status.HTTP_404_NOT_FOUND,
         )
 
-    # ------------------------------------------------------------
-    # ALREADY SUGGESTED
-    # ------------------------------------------------------------
-
     existing_suggestion = (
-    UserDeckSuggestion.objects
-    .filter(
-        deck_id=deck.id,
-        deck_name=deck.name,
+        UserDeckSuggestion.objects.filter(
+            deck_id=deck.id,
+            deck_name=deck.name,
+            suggestion_type=suggestion_type,
+            published_deckid=published_deckid,
+        )
+        .exclude(consent_status="denied")
+        .first()
     )
-    .exclude(
-        consent_status="denied",
-    )
-    .first()
-)
 
     if existing_suggestion:
         return Response(
@@ -140,29 +164,19 @@ def user_deck_suggestion_create(request):
                 "suggestion_id": existing_suggestion.id,
                 "consent_status": existing_suggestion.consent_status,
                 "status": existing_suggestion.status,
-                "message": (
-                    "This deck has already been suggested. "
-                    "Join the Discord to view the suggestion."
-                ),
+                "message": "This deck suggestion has already been submitted.",
             },
             status=status.HTTP_409_CONFLICT,
         )
 
-        # ------------------------------------------------------------
-    # COOLDOWN
-    # ------------------------------------------------------------
-
     previous_suggestion = (
-    UserDeckSuggestion.objects
-    .filter(
-        suggested_by_discord_id=discord_id,
+        UserDeckSuggestion.objects.filter(
+            suggested_by_discord_id=discord_id,
+        )
+        .exclude(consent_status="denied")
+        .order_by("-created_at")
+        .first()
     )
-    .exclude(
-        consent_status="denied",
-    )
-    .order_by("-created_at")
-    .first()
-)
 
     if previous_suggestion:
         cooldown_until = (
@@ -170,55 +184,36 @@ def user_deck_suggestion_create(request):
             + timedelta(days=COOLDOWN_DAYS)
         )
 
-        now = timezone.now()
-
-        if now < cooldown_until:
+        if timezone.now() < cooldown_until:
             return Response(
                 {
                     "success": False,
                     "reason": "cooldown",
                     "suggestion_id": previous_suggestion.id,
-                    "consent_status": (
-                        previous_suggestion.consent_status
-                    ),
+                    "consent_status": previous_suggestion.consent_status,
                     "status": previous_suggestion.status,
                     "message": (
-                        "You recently suggested a deck. "
-                        "You must wait until your cooldown "
-                        "expires before suggesting another deck."
+                        "You recently suggested a deck. You must wait "
+                        "until your cooldown expires before suggesting another deck."
                     ),
-                    "cooldown_until": (
-                        cooldown_until.isoformat()
-                    ),
+                    "cooldown_until": cooldown_until.isoformat(),
                 },
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
-    # ------------------------------------------------------------
-    # DETERMINE DECK OWNER
-    # ------------------------------------------------------------
-
     is_owner = str(deck.profile_id) == str(profile.id)
 
     if is_owner:
-        # Owners automatically consent to their own deck.
         consent_type = "self_created"
         consent_status = "confirmed"
         creator_discord_id = discord_id
         consent_given_at = timezone.now()
-
     else:
-        # The browser NEVER supplies creator_discord_id.
-        #
-        # We determine the actual creator from deck.profile_id.
-
         consent_type = "permission"
         consent_status = "awaiting_creator"
 
         creator_profile = (
-            UserProfile.objects
-            .filter(id=deck.profile_id)
-            .first()
+            UserProfile.objects.filter(id=deck.profile_id).first()
         )
 
         if not creator_profile:
@@ -226,10 +221,7 @@ def user_deck_suggestion_create(request):
                 {
                     "success": False,
                     "reason": "creator_not_found",
-                    "message": (
-                        "The deck creator's profile could "
-                        "not be found."
-                    ),
+                    "message": "The deck creator's profile could not be found.",
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )
@@ -244,18 +236,14 @@ def user_deck_suggestion_create(request):
                     "success": False,
                     "reason": "creator_not_connected",
                     "message": (
-                        "The deck creator does not have a "
-                        "Discord account connected to Tbot."
+                        "The deck creator does not have a Discord account "
+                        "connected to Tbot."
                     ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         consent_given_at = None
-
-    # ------------------------------------------------------------
-    # CREATE SUGGESTION
-    # ------------------------------------------------------------
 
     suggestion = UserDeckSuggestion(
         deck_id=deck.id,
@@ -275,19 +263,15 @@ def user_deck_suggestion_create(request):
         suggested_date=deck.suggested_date,
         updated_date=deck.updated_date,
         deck_doc=deck.deck_doc,
-
-        # Person making the suggestion
+        suggestion_type=suggestion_type,
+        published_deckid=published_deckid,
         suggested_by_discord_id=discord_id,
         suggested_by_profile_id=profile.id,
         suggested_by_username=profile.username,
         suggested_by_display_name=profile.display_name,
         suggested_by_profile_slug=profile.profile_slug,
         suggested_by_avatar=profile.avatar,
-
-        # Suggestion state
         status="pending",
-
-        # Consent state
         consent_type=consent_type,
         consent_status=consent_status,
         consent_creator_discord_id=creator_discord_id,
@@ -296,19 +280,17 @@ def user_deck_suggestion_create(request):
 
     try:
         suggestion.save()
-
     except IntegrityError:
         existing_suggestion = (
-    UserDeckSuggestion.objects
-    .filter(
-        deck_id=deck.id,
-        deck_name=deck.name,
-    )
-    .exclude(
-        consent_status="denied",
-    )
-    .first()
-)
+            UserDeckSuggestion.objects.filter(
+                deck_id=deck.id,
+                deck_name=deck.name,
+                suggestion_type=suggestion_type,
+                published_deckid=published_deckid,
+            )
+            .exclude(consent_status="denied")
+            .first()
+        )
 
         if existing_suggestion:
             return Response(
@@ -316,53 +298,41 @@ def user_deck_suggestion_create(request):
                     "success": False,
                     "reason": "already_suggested",
                     "suggestion_id": existing_suggestion.id,
-                    "consent_status": (
-                        existing_suggestion.consent_status
-                    ),
+                    "consent_status": existing_suggestion.consent_status,
                     "status": existing_suggestion.status,
-                    "message": (
-                        "This deck has already been suggested. "
-                        "Join the Discord to view the suggestion."
-                    ),
+                    "message": "This deck suggestion has already been submitted.",
                 },
                 status=status.HTTP_409_CONFLICT,
             )
 
         raise
 
-    # ------------------------------------------------------------
-    # RESPONSE
-    # ------------------------------------------------------------
-
     if consent_status == "confirmed":
         message = (
             "Your deck suggestion was submitted successfully!"
+            if suggestion_type == "new"
+            else "Your deck update suggestion was submitted successfully!"
         )
     else:
         message = (
-            "The deck suggestion was created. "
-            "The deck creator must confirm permission "
-            "through Discord before it is posted."
+            "The deck suggestion was created. The deck creator must "
+            "confirm permission through Discord before it is posted."
         )
 
     return Response(
         {
             "success": True,
             "suggestion_id": suggestion.id,
-
-            # Important:
-            # The frontend uses this to show the correct message.
+            "suggestion_type": suggestion_type,
+            "published_deckid": published_deckid,
             "consent_status": consent_status,
-
-            # Keep the overall suggestion status available too.
             "status": suggestion.status,
-
             "consent_type": consent_type,
-
             "message": message,
         },
         status=status.HTTP_201_CREATED,
     )
+
 
 
 # ============================================================

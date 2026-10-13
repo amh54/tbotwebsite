@@ -41,6 +41,7 @@ function DeckCard({
   onRemoveSaved,
   editSaving = false,
    allCards = [],
+   publishedDecks = [],
   userCollection = [],
   collectionLoaded = false,
   discordUser = null,
@@ -604,6 +605,7 @@ function DeckCard({
         deckImage={deckImage}
         editImage={editImage}
         imgError={imgError}
+        publishedDecks={publishedDecks}
         setImgError={setImgError}
         editImgError={editImgError}
         setEditImgError={setEditImgError}

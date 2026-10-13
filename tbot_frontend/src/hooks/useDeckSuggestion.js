@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import { useCallback, useEffect, useState } from "react";
 import { API_BASE_URL } from "../utils/api";
 
 export function useDeckSuggestion({
@@ -13,172 +14,209 @@ export function useDeckSuggestion({
   const [suggestCooldown, setSuggestCooldown] = useState(null);
   const [suggestionId, setSuggestionId] = useState(null);
 
-  const handleSuggestDeck = async () => {
-    if (!showSuggestDeck || suggesting) {
-      return;
-    }
-
-    if (!isLoggedIn) {
-      setSuggestStatus("login");
-      setSuggestMessage(
-        "You must be logged in with Discord to suggest a deck.",
-      );
-      return;
-    }
-
-    if (!deckId) {
-      setSuggestStatus("error");
-      setSuggestMessage("This deck does not have a valid deck ID.");
-      return;
-    }
-
-    if (
-      suggestStatus === "success" ||
-      suggestStatus === "confirmed" ||
-      suggestStatus === "awaiting_creator" ||
-      suggestStatus === "already_suggested" ||
-      suggestStatus === "cooldown"
-    ) {
-      return;
-    }
-
-    setSuggesting(true);
-    setSuggestStatus(null);
-    setSuggestMessage("");
-    setSuggestCooldown(null);
-    setSuggestionId(null);
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/tbotapp/user-deck-suggestions/create/`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            deck_id: deckId,
-          }),
-        },
-      );
-
-      let data = {};
-
-      try {
-        data = await response.json();
-      } catch {
-        data = {};
-      }
-
-      if (
-        response.status === 201 &&
-        (data?.consent_status === "confirmed" ||
-          data?.status === "confirmed" ||
-          data?.status === "success")
-      ) {
-        setSuggestionId(data?.suggestion_id || null);
-        setSuggestStatus("success");
-        setSuggestMessage(
-          data?.message || "Your deck suggestion was submitted successfully!",
-        );
+  const handleSuggestDeck = useCallback(
+    async (suggestionType = "new", publishedDeckId = null) => {
+      if (!showSuggestDeck || suggesting) {
         return;
       }
 
-      if (
-        response.status === 202 ||
-        data?.status === "awaiting_creator" ||
-        data?.status === "pending_creator" ||
-        data?.consent_status === "awaiting_creator"
-      ) {
-        setSuggestionId(data?.suggestion_id || null);
-        setSuggestStatus("awaiting_creator");
-        setSuggestMessage(
-          data?.message ||
-            data?.detail ||
-            "The deck creator must approve this suggestion in Discord before it can be confirmed.",
-        );
-        return;
-      }
-
-      if (response.status === 401) {
-        setIsLoggedIn(false);
+      if (!isLoggedIn) {
         setSuggestStatus("login");
         setSuggestMessage(
-          data?.message ||
-            data?.detail ||
-            "You must be logged in with Discord to suggest a deck.",
+          "You must be logged in with Discord to suggest a deck.",
         );
+        return;
+      }
+
+      if (!deckId) {
+        setSuggestStatus("error");
+        setSuggestMessage("This deck does not have a valid deck ID.");
+        return;
+      }
+
+      if (!["new", "update"].includes(suggestionType)) {
+        setSuggestStatus("error");
+        setSuggestMessage("Invalid suggestion type.");
+        return;
+      }
+
+      const targetDeckId =
+        publishedDeckId === null || publishedDeckId === ""
+          ? null
+          : Number(publishedDeckId);
+
+      if (
+        suggestionType === "update" &&
+        (!Number.isInteger(targetDeckId) || targetDeckId <= 0)
+      ) {
+        setSuggestStatus("error");
+        setSuggestMessage("Select a published deck to update.");
         return;
       }
 
       if (
-        response.status === 409 ||
-        data?.status === "already_suggested" ||
-        data?.reason === "already_suggested"
+        suggestStatus === "success" ||
+        suggestStatus === "confirmed" ||
+        suggestStatus === "awaiting_creator" ||
+        suggestStatus === "already_suggested" ||
+        suggestStatus === "cooldown"
       ) {
-        setSuggestStatus("already_suggested");
-        setSuggestMessage(
-          data?.message ||
-            data?.detail ||
-            "You have already suggested this deck.",
-        );
         return;
       }
 
-      if (
-        response.status === 429 ||
-        data?.status === "cooldown" ||
-        data?.reason === "cooldown"
-      ) {
-        setSuggestStatus("cooldown");
+      setSuggesting(true);
+      setSuggestStatus(null);
+      setSuggestMessage("");
+      setSuggestCooldown(null);
+      setSuggestionId(null);
+
+      try {
+        const payload = {
+          deck_id: deckId,
+          suggestion_type: suggestionType,
+        };
+
+        if (suggestionType === "update") {
+          payload.published_deckid = targetDeckId;
+        }
+
+        const response = await fetch(
+          `${API_BASE_URL}/tbotapp/user-deck-suggestions/create/`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify(payload),
+          },
+        );
+
+        let data = {};
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          response.status === 201 &&
+          (data?.consent_status === "confirmed" ||
+            data?.status === "confirmed" ||
+            data?.status === "success")
+        ) {
+          setSuggestionId(data?.suggestion_id || null);
+          setSuggestStatus("success");
+          setSuggestMessage(
+            data?.message ||
+              "Your deck suggestion was submitted successfully!",
+          );
+          return;
+        }
+
+        if (
+          response.status === 202 ||
+          data?.status === "awaiting_creator" ||
+          data?.status === "pending_creator" ||
+          data?.consent_status === "awaiting_creator"
+        ) {
+          setSuggestionId(data?.suggestion_id || null);
+          setSuggestStatus("awaiting_creator");
+          setSuggestMessage(
+            data?.message ||
+              data?.detail ||
+              "The deck creator must approve this suggestion in Discord before it can be confirmed.",
+          );
+          return;
+        }
+
+        if (response.status === 401) {
+          setIsLoggedIn(false);
+          setSuggestStatus("login");
+          setSuggestMessage(
+            data?.message ||
+              data?.detail ||
+              "You must be logged in with Discord to suggest a deck.",
+          );
+          return;
+        }
+
+        if (
+          response.status === 409 ||
+          data?.status === "already_suggested" ||
+          data?.reason === "already_suggested"
+        ) {
+          setSuggestStatus("already_suggested");
+          setSuggestMessage(
+            data?.message ||
+              data?.detail ||
+              "You have already suggested this deck.",
+          );
+          return;
+        }
+
+        if (
+          response.status === 429 ||
+          data?.status === "cooldown" ||
+          data?.reason === "cooldown"
+        ) {
+          setSuggestStatus("cooldown");
+          setSuggestMessage(
+            data?.message ||
+              data?.detail ||
+              "You are currently on cooldown before you can suggest another deck.",
+          );
+          setSuggestCooldown(
+            data?.next_available ||
+              data?.available_at ||
+              data?.cooldown_until ||
+              data?.nextSuggestionAt ||
+              null,
+          );
+          return;
+        }
+
+        if (
+          data?.status === "denied" ||
+          data?.reason === "denied" ||
+          data?.consent_status === "denied"
+        ) {
+          setSuggestStatus("denied");
+          setSuggestMessage(
+            data?.message ||
+              data?.detail ||
+              "The deck creator did not approve this suggestion.",
+          );
+          return;
+        }
+
+        setSuggestStatus("error");
         setSuggestMessage(
           data?.message ||
             data?.detail ||
-            "You are currently on cooldown before you can suggest another deck.",
+            "Unable to submit the deck suggestion. Please try again.",
         );
-
-        setSuggestCooldown(
-          data?.next_available ||
-            data?.available_at ||
-            data?.cooldown_until ||
-            data?.nextSuggestionAt ||
-            null,
-        );
-
-        return;
-      }
-
-      if (
-        data?.status === "denied" ||
-        data?.reason === "denied" ||
-        data?.consent_status === "denied"
-      ) {
-        setSuggestStatus("denied");
+      } catch (error) {
+        console.error("Unable to suggest deck:", error);
+        setSuggestStatus("error");
         setSuggestMessage(
-          data?.message ||
-            data?.detail ||
-            "The deck creator did not approve this suggestion.",
+          "Unable to connect to the server. Please try again.",
         );
-        return;
+      } finally {
+        setSuggesting(false);
       }
-
-      setSuggestStatus("error");
-      setSuggestMessage(
-        data?.message ||
-          data?.detail ||
-          "Unable to submit the deck suggestion. Please try again.",
-      );
-    } catch (error) {
-      console.error("Unable to suggest deck:", error);
-
-      setSuggestStatus("error");
-      setSuggestMessage("Unable to connect to the server. Please try again.");
-    } finally {
-      setSuggesting(false);
-    }
-  };
+    },
+    [
+      showSuggestDeck,
+      suggesting,
+      isLoggedIn,
+      deckId,
+      suggestStatus,
+      setIsLoggedIn,
+    ],
+  );
 
   useEffect(() => {
     if (
@@ -216,14 +254,7 @@ export function useDeckSuggestion({
           return;
         }
 
-        if (response.status === 404) {
-          console.warn(
-            `Suggestion ${suggestionId} was not found when checking status.`,
-          );
-          return;
-        }
-
-        if (!response.ok) {
+        if (response.status === 404 || !response.ok) {
           return;
         }
 
@@ -248,7 +279,10 @@ export function useDeckSuggestion({
           return;
         }
 
-        if (data?.consent_status === "denied" || data?.status === "denied") {
+        if (
+          data?.consent_status === "denied" ||
+          data?.status === "denied"
+        ) {
           setSuggestStatus("denied");
           setSuggestMessage(
             "The deck creator did not approve this suggestion.",
@@ -261,7 +295,7 @@ export function useDeckSuggestion({
       }
     };
 
-    checkSuggestionStatus();
+    void checkSuggestionStatus();
 
     const interval = window.setInterval(checkSuggestionStatus, 5000);
 
@@ -269,7 +303,13 @@ export function useDeckSuggestion({
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [showSuggestDeck, isLoggedIn, suggestionId, suggestStatus]);
+  }, [
+    showSuggestDeck,
+    isLoggedIn,
+    suggestionId,
+    suggestStatus,
+    setIsLoggedIn,
+  ]);
 
   return {
     suggesting,

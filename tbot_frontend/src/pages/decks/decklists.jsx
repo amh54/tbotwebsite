@@ -687,6 +687,7 @@ function DecklistsPage() {
                 <DeckCard
                   key={`${normalizeSide(deck.side)}-${getDeckKey(deck)}`}
                   decklist={deck}
+                  publishedDecks={decks}
                   decklists
                   userCollection={userCollection}
                   collectionLoaded={collectionLoaded}

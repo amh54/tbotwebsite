@@ -98,6 +98,7 @@ function DeckCardModal({
   handleDelete,
   cancelEditing,
   handleEditSave,
+  publishedDecks = [],
   suggestMessage,
   suggestCooldown,
   suggestionId,
@@ -283,6 +284,8 @@ function DeckCardModal({
                   checkingLogin={checkingLogin}
                   suggesting={suggesting}
                   suggestStatus={suggestStatus}
+                  side={deck.side}
+                  hero={deck.hero}
                   onSuggestDeck={handleSuggestDeck}
                   deckHasImage={deckHasImage}
                   onDownload={handleDownload}
@@ -290,6 +293,7 @@ function DeckCardModal({
                   onSaveDeck={
                     isSavedDeck ? handleRemoveSavedDeck : handleSaveDeck
                   }
+                  publishedDecks={publishedDecks}
                   savingDeck={savingDeck}
                   deckSaved={deckSaved}
                   isSavedDeck={isSavedDeck}

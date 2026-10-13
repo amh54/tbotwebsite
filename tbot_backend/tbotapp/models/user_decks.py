@@ -71,7 +71,7 @@ class UserDeckSuggestion(models.Model):
     consent_creator_discord_id = models.TextField(null=True)
     consent_given_at = models.DateTimeField(null=True)
     consent_denied_at = models.DateTimeField(null=True)
-
+    suggestion_type = models.CharField(max_length=10, default="new")
     created_at = models.DateTimeField(db_default=Now())
     updated_at = models.DateTimeField(db_default=Now())
     discord_thread_url = models.TextField(blank=True, default="")
