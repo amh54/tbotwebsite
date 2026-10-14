@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import DeckCard from "../../components/modals/deckComponent.jsx";
-
+import RandomDeckButton from "../../components/decks/randomDeckButton.jsx";
 import FilterDropdown from "../../components/filterDropdown.jsx";
 
 import Navbar from "../../components/navbar.jsx";
@@ -63,7 +63,48 @@ function writeSessionCache(key, value) {
     console.warn(`Unable to write session cache "${key}":`, error);
   }
 }
+function DeckResults({
+  error,
+  filteredDecks,
+  randomSelection,
+  decks,
+  userCollection,
+  collectionLoaded,
+  discordUser,
+  onRandomOpen,
+}) {
+  if (error) {
+    return null;
+  }
 
+  if (filteredDecks.length === 0) {
+    return <p className="no-results">No decklists found.</p>;
+  }
+
+  return (
+    <div className="deck-grid">
+      {filteredDecks.map((deck) => {
+        const deckKey = `${normalizeSide(deck.side)}-${getDeckKey(deck)}`;
+        const isRandomSelection = randomSelection.deckKey === deckKey;
+
+        return (
+          <DeckCard
+            key={deckKey}
+            decklist={deck}
+            publishedDecks={decks}
+            decklists
+            userCollection={userCollection}
+            collectionLoaded={collectionLoaded}
+            discordUser={discordUser}
+            autoOpen={false}
+            randomOpenKey={isRandomSelection ? randomSelection.version : 0}
+            onRandomOpen={onRandomOpen}
+          />
+        );
+      })}
+    </div>
+  );
+}
 function DecklistsPage() {
   const initialDecks = readSessionCache(STORAGE_KEYS.decks, []);
 
@@ -116,7 +157,6 @@ function DecklistsPage() {
   const [collectionLoading, setCollectionLoading] = useState(false);
 
   const [collectionLoaded, setCollectionLoaded] = useState(false);
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -158,11 +198,15 @@ function DecklistsPage() {
 
         const data = JSON.parse(text);
 
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
+        let results;
+
+        if (Array.isArray(data)) {
+          results = data;
+        } else if (Array.isArray(data?.results)) {
+          results = data.results;
+        } else {
+          results = [];
+        }
 
         setDecks(results);
 
@@ -199,7 +243,7 @@ function DecklistsPage() {
       }
     };
 
-    fetchDecks();
+    void fetchDecks();
 
     return () => {
       controller.abort();
@@ -249,7 +293,7 @@ function DecklistsPage() {
       }
     };
 
-    fetchDiscordUser();
+    void fetchDiscordUser();
 
     return () => {
       controller.abort();
@@ -289,7 +333,7 @@ function DecklistsPage() {
       }
     };
 
-    fetchCards();
+    void fetchCards();
 
     return () => {
       controller.abort();
@@ -334,7 +378,7 @@ function DecklistsPage() {
       }
     };
 
-    fetchDeckCount();
+    void fetchDeckCount();
 
     return () => {
       controller.abort();
@@ -407,7 +451,7 @@ function DecklistsPage() {
       }
     };
 
-    fetchUserCollection();
+    void fetchUserCollection();
 
     return () => {
       controller.abort();
@@ -488,7 +532,24 @@ function DecklistsPage() {
       discordUser,
     ],
   );
+  const [randomSelection, setRandomSelection] = useState({
+    deckKey: null,
+    version: 0,
+  });
 
+  const handleRandomDeck = (deck) => {
+    setRandomSelection((current) => ({
+      deckKey: `${normalizeSide(deck.side)}-${getDeckKey(deck)}`,
+      version: current.version + 1,
+    }));
+  };
+
+  const handleRandomDeckOpened = () => {
+    setRandomSelection((current) => ({
+      ...current,
+      deckKey: null,
+    }));
+  };
   const clearFilters = () => {
     setSearch("");
     setHero([]);
@@ -564,7 +625,7 @@ function DecklistsPage() {
                 alt="Plants"
                 className="tab-icon"
               />
-              Plants
+              <span>Plants</span>
             </button>
 
             <button
@@ -577,7 +638,7 @@ function DecklistsPage() {
                 alt="Zombies"
                 className="tab-icon"
               />
-              Zombies
+              <span>Zombies</span>
             </button>
           </div>
 
@@ -589,7 +650,13 @@ function DecklistsPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-
+          <div className="random-deck-toolbar">
+            <RandomDeckButton
+              decks={filteredDecks}
+              selectedDeckKey={randomSelection.deckKey}
+              onSelectDeck={handleRandomDeck}
+            />
+          </div>
           <div className="filters">
             <div className="select-wrapper">
               <FilterDropdown
@@ -678,25 +745,16 @@ function DecklistsPage() {
             </p>
           )}
 
-        {!error && filteredDecks.length === 0 ? (
-          <p className="no-results">No decklists found.</p>
-        ) : (
-          !error && (
-            <div className="deck-grid">
-              {filteredDecks.map((deck) => (
-                <DeckCard
-                  key={`${normalizeSide(deck.side)}-${getDeckKey(deck)}`}
-                  decklist={deck}
-                  publishedDecks={decks}
-                  decklists
-                  userCollection={userCollection}
-                  collectionLoaded={collectionLoaded}
-                  discordUser={discordUser}
-                />
-              ))}
-            </div>
-          )
-        )}
+        <DeckResults
+          error={error}
+          filteredDecks={filteredDecks}
+          randomSelection={randomSelection}
+          decks={decks}
+          userCollection={userCollection}
+          collectionLoaded={collectionLoaded}
+          discordUser={discordUser}
+          onRandomOpen={handleRandomDeckOpened}
+        />
       </main>
 
       <Footer credits="Special thanks to everyone in the PVZH community who continues to contribute great decks and help grow the Tbot website and Discord bot. Credit to AirheadZ for designing the deck banner used on this page." />

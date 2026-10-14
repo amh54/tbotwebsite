@@ -10,8 +10,27 @@
   margin: 0 auto;
 }
 
+.my-bug-report-modal-overlay[open] {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 24px;
+  overflow-y: auto;
+  border: none;
+  background: rgba(0, 0, 0, 0.75);
+}
 
-
+.my-bug-report-modal-overlay::backdrop {
+  background: transparent;
+}
 
 .my-bug-reports-header {
   display: flex;

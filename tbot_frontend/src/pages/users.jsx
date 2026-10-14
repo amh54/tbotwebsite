@@ -1,17 +1,14 @@
+
 import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
 
 import Navbar from "../components/navbar";
-
 import Footer from "../components/footer";
-
 import Seo from "../components/seo.jsx";
 
 import "../css/users.css";
-
 import "../css/navbar.css";
-
 import "../css/loading.css";
 
 import { API_BASE_URL } from "../utils/api.js";
@@ -24,29 +21,19 @@ const STORAGE_KEYS = {
 const normalizeText = (value) => String(value ?? "").trim();
 
 const readSessionCache = (key, fallback) => {
-  if (typeof window === "undefined") {
-    return fallback;
-  }
+  if (typeof window === "undefined") return fallback;
 
   try {
     const value = window.sessionStorage.getItem(key);
-
-    if (!value) {
-      return fallback;
-    }
-
-    return JSON.parse(value);
+    return value ? JSON.parse(value) : fallback;
   } catch (error) {
     console.warn(`Unable to read session cache "${key}":`, error);
-
     return fallback;
   }
 };
 
 const writeSessionCache = (key, value) => {
-  if (typeof window === "undefined") {
-    return;
-  }
+  if (typeof window === "undefined") return;
 
   try {
     window.sessionStorage.setItem(key, JSON.stringify(value));
@@ -55,46 +42,175 @@ const writeSessionCache = (key, value) => {
   }
 };
 
-const getDiscordAvatarUrl = (profile) => {
-  const avatar = normalizeText(profile?.avatar);
+const getDefaultDiscordAvatarUrl = (discordId) => {
+  if (!discordId) return "";
 
-  const discordId = normalizeText(profile?.discord_id);
+  try {
+    const numericId = BigInt(discordId);
+    const index = Number((numericId >> 22n) % 6n);
 
-  if (!avatar) {
-    if (discordId) {
-      try {
-        const numericId = BigInt(discordId);
-
-        const defaultAvatarIndex = Number((numericId >> 22n) % 6n);
-
-        return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
-      } catch {
-        return "";
-      }
-    }
-
+    return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
+  } catch {
     return "";
   }
+};
 
-  if (
-    avatar.startsWith("http://") ||
-    avatar.startsWith("https://") ||
-    avatar.startsWith("//")
-  ) {
-    return avatar;
-  }
+const getDiscordAvatarUrl = (profile) => {
+  const avatar = normalizeText(profile?.avatar);
+  const discordId = normalizeText(profile?.discord_id);
+
+  if (!avatar) return getDefaultDiscordAvatarUrl(discordId);
+
+  if (/^(https?:)?\/\//.test(avatar)) return avatar;
 
   if (avatar.startsWith("/avatars/") || avatar.startsWith("/embed/avatars/")) {
     return `https://cdn.discordapp.com${avatar}`;
   }
 
-  if (discordId) {
-    const extension = avatar.startsWith("a_") ? "gif" : "png";
+  if (!discordId) return "";
 
-    return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=256`;
+  const extension = avatar.startsWith("a_") ? "gif" : "png";
+
+  return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${extension}?size=256`;
+};
+
+const getProfilesFromResponse = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.profiles)) return data.profiles;
+  if (Array.isArray(data?.results)) return data.results;
+
+  return [];
+};
+
+const getResponseErrorMessage = async (response) => {
+  let message = `Request failed with status ${response.status}`;
+
+  try {
+    const payload = await response.json();
+    const detail = normalizeText(payload?.detail || payload?.error);
+
+    if (detail) message += `: ${detail}`;
+  } catch {
+    return message;
   }
 
-  return "";
+  return message;
+};
+
+const getProfileName = (profile) =>
+  normalizeText(profile?.display_name) ||
+  normalizeText(profile?.username) ||
+  normalizeText(profile?.profile_slug) ||
+  "Tbot User";
+
+const getProfileSortKey = (profile) =>
+  getProfileName(profile)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toLowerCase();
+
+const sortProfiles = (profiles) =>
+  [...profiles].sort((a, b) =>
+    getProfileSortKey(a).localeCompare(getProfileSortKey(b)),
+  );
+
+const getSocialSearchConnection = (value, connections) => {
+  const searchValue = normalizeText(value).toLowerCase();
+
+  if (!searchValue) return null;
+
+  const creatorTerms = [
+    "content creator",
+    "content creators",
+    "creator",
+    "creators",
+  ];
+
+  if (creatorTerms.includes(searchValue)) {
+    return { contentCreator: true };
+  }
+
+  return (
+    connections.find(({ searchTerms }) =>
+      searchTerms.some(
+        (term) => searchValue === term || searchValue.includes(term),
+      ),
+    ) || null
+  );
+};
+
+const filterProfiles = (profiles, search) => {
+  const searchValue = normalizeText(search).toLowerCase();
+
+  if (!searchValue) return profiles;
+
+  const socialSearch = getSocialSearchConnection(
+    searchValue,
+    socialConnections,
+  );
+
+  if (socialSearch?.contentCreator) {
+    return profiles.filter((profile) =>
+      socialConnections.some(
+        ({ key, contentCreator }) =>
+          contentCreator && normalizeText(profile?.[key]),
+      ),
+    );
+  }
+
+  if (socialSearch) {
+    return profiles.filter((profile) =>
+      normalizeText(profile?.[socialSearch.key]),
+    );
+  }
+
+  return profiles.filter((profile) => {
+    const searchableFields = [
+      profile?.display_name,
+      profile?.username,
+      profile?.profile_slug,
+      profile?.bio,
+    ];
+
+    return searchableFields.some((field) =>
+      normalizeText(field).toLowerCase().includes(searchValue),
+    );
+  });
+};
+
+const handleAvatarError = (event, discordId, displayName) => {
+  const image = event.currentTarget;
+  const fallbackUrl = getDefaultDiscordAvatarUrl(discordId);
+
+  if (fallbackUrl && image.src !== fallbackUrl) {
+    image.src = fallbackUrl;
+    return;
+  }
+
+  image.style.display = "none";
+
+  const parent = image.parentElement;
+  if (!parent) return;
+
+  parent.classList.add("user-avatar-fallback");
+  parent.textContent = displayName.charAt(0).toUpperCase();
+};
+
+const MarkdownLink = ({ node, ...props }) => (
+  <a {...props} target="_blank" rel="noopener noreferrer" />
+);
+
+const ProfileBio = ({ bio }) => {
+  if (!bio) {
+    return <p className="user-card-bio user-card-no-bio">No bio provided.</p>;
+  }
+
+  return (
+    <div className="user-card-bio">
+      <ReactMarkdown components={{ a: MarkdownLink }}>{bio}</ReactMarkdown>
+    </div>
+  );
 };
 
 const YouTubeIcon = () => (
@@ -137,7 +253,6 @@ const InstagramIcon = () => (
       stroke="currentColor"
       strokeWidth="2"
     />
-
     <circle
       cx="12"
       cy="12"
@@ -146,7 +261,6 @@ const InstagramIcon = () => (
       stroke="currentColor"
       strokeWidth="2"
     />
-
     <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
   </svg>
 );
@@ -214,83 +328,202 @@ const socialConnections = [
   },
 ];
 
-const getSocialSearchConnection = (value) => {
-  const searchValue = normalizeText(value).toLowerCase();
+const UserCard = ({ profile }) => {
+  const displayName = getProfileName(profile);
+  const username = normalizeText(profile?.username);
+  const profileSlug = normalizeText(profile?.profile_slug);
+  const bio = normalizeText(profile?.bio);
+  const avatar = getDiscordAvatarUrl(profile);
+  const profileUrl = profileSlug
+    ? `/profile/${encodeURIComponent(profileSlug)}`
+    : null;
 
-  if (!searchValue) {
-    return null;
-  }
+  const availableSocialConnections = socialConnections.filter(({ key }) =>
+    normalizeText(profile?.[key]),
+  );
 
-  if (
-    searchValue === "content creator" ||
-    searchValue === "content creators" ||
-    searchValue === "creator" ||
-    searchValue === "creators"
-  ) {
-    return {
-      contentCreator: true,
-    };
+  const cardContent = (
+    <>
+      <div className="user-card-top">
+        <div className="user-avatar">
+          {avatar ? (
+            <img
+              src={avatar}
+              alt={`${displayName} avatar`}
+              onError={(event) =>
+                handleAvatarError(event, profile?.discord_id, displayName)
+              }
+            />
+          ) : (
+            <span>{displayName.charAt(0).toUpperCase()}</span>
+          )}
+        </div>
+
+        <div className="user-card-info">
+          <h2>{displayName}</h2>
+          <ProfileUsername username={username} profileSlug={profileSlug} />
+        </div>
+      </div>
+
+      <div className="user-card-body">
+        <ProfileBio bio={bio} />
+
+        {availableSocialConnections.length > 0 && (
+          <div className="user-social-links">
+            {availableSocialConnections.map(({ key, label, Icon }) => (
+              <a
+                key={key}
+                href={normalizeText(profile?.[key])}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="user-social-link"
+                aria-label={`${label} for ${displayName}`}
+                title={label}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <Icon />
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  const key = profile?.id || profileSlug || username;
+
+  if (!profileUrl) {
+    return (
+      <article className="user-card" key={key}>
+        {cardContent}
+      </article>
+    );
   }
 
   return (
-    socialConnections.find(({ searchTerms }) =>
-      searchTerms.some(
-        (term) => searchValue === term || searchValue.includes(term),
-      ),
-    ) || null
+    <Link
+      key={key}
+      to={profileUrl}
+      className="user-card user-card-link"
+      aria-label={`View ${displayName}'s profile`}
+    >
+      {cardContent}
+    </Link>
   );
 };
+
+const ProfileUsername = ({ username, profileSlug }) => {
+  if (username) {
+    return <p className="user-card-username">@{username}</p>;
+  }
+
+  if (profileSlug) {
+    return <p className="user-card-slug">@{profileSlug}</p>;
+  }
+
+  return null;
+};
+
+const LoadingUsers = ({ totalUsers }) => (
+  <div className="loading-page">
+    <div className="loading-card">
+      <div className="loading-spinner" />
+      <h2>Loading users</h2>
+      <p>Finding public Tbot profiles.</p>
+      <div className="loading-status">
+        <span>Loading user data</span>
+        <strong>
+          {totalUsers !== null ? `${totalUsers} public users` : "Loading..."}
+        </strong>
+      </div>
+    </div>
+  </div>
+);
+
+const ProfileResults = ({ error, profiles, filteredProfiles }) => {
+  if (error) {
+    return (
+      <div className="users-error">
+        <h2>Unable to load users</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (filteredProfiles.length === 0) {
+    const noProfiles = profiles.length === 0;
+    const heading = noProfiles ? "No public users yet" : "No users found";
+    const description = noProfiles
+      ? "There are currently no public profiles to browse."
+      : "Try a different search or connection.";
+
+    return (
+      <div className="users-empty">
+        <h2>{heading}</h2>
+        <p>{description}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="users-grid">
+      {filteredProfiles.map((profile) => (
+        <UserCard
+          key={profile?.id || profile?.profile_slug || profile?.username}
+          profile={profile}
+        />
+      ))}
+    </div>
+  );
+};
+
 function Users() {
   const [profileSlug, setProfileSlug] = useState("");
 
+  const initialProfiles = readSessionCache(STORAGE_KEYS.profiles, []);
+  const initialUserCount = readSessionCache(STORAGE_KEYS.userCount, null);
+
+  const cachedProfiles = Array.isArray(initialProfiles) ? initialProfiles : [];
+  const hasCachedProfiles = cachedProfiles.length > 0;
+
+  const [profiles, setProfiles] = useState(cachedProfiles);
+  const [totalUsers, setTotalUsers] = useState(
+    Number.isFinite(Number(initialUserCount)) && initialUserCount !== null
+      ? Number(initialUserCount)
+      : null,
+  );
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(!hasCachedProfiles);
+  const [error, setError] = useState("");
+
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     const loadProfile = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/tbotapp/profile/me/`, {
           credentials: "include",
+          signal: controller.signal,
         });
 
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) return;
 
         const data = await response.json();
 
-        if (!cancelled && data?.profile_exists && data?.profile?.profile_slug) {
+        if (data?.profile_exists && data?.profile?.profile_slug) {
           setProfileSlug(data.profile.profile_slug);
         }
-      } catch {}
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Unable to load current profile:", err);
+        }
+      }
     };
 
     void loadProfile();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, []);
-
-  const initialProfiles = readSessionCache(STORAGE_KEYS.profiles, []);
-
-  const initialUserCount = readSessionCache(STORAGE_KEYS.userCount, null);
-
-  const hasCachedProfiles =
-    Array.isArray(initialProfiles) && initialProfiles.length > 0;
-
-  const [profiles, setProfiles] = useState(
-    Array.isArray(initialProfiles) ? initialProfiles : [],
-  );
-
-  const [totalUsers, setTotalUsers] = useState(
-    Number.isFinite(Number(initialUserCount)) ? Number(initialUserCount) : null,
-  );
-
-  const [search, setSearch] = useState("");
-
-  const [loading, setLoading] = useState(!hasCachedProfiles);
-
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -301,9 +534,7 @@ function Users() {
           `${API_BASE_URL}/tbotapp/profiles/count/`,
           {
             method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
+            headers: { Accept: "application/json" },
             signal: controller.signal,
           },
         );
@@ -315,14 +546,12 @@ function Users() {
         }
 
         const data = await response.json();
-
         const count = Number(data?.count);
 
-        if (Number.isFinite(count) && count >= 0) {
-          setTotalUsers(count);
+        if (!Number.isFinite(count) || count < 0) return;
 
-          writeSessionCache(STORAGE_KEYS.userCount, count);
-        }
+        setTotalUsers(count);
+        writeSessionCache(STORAGE_KEYS.userCount, count);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to refresh public user count:", err);
@@ -332,9 +561,7 @@ function Users() {
 
     void fetchUserCount();
 
-    return () => {
-      controller.abort();
-    };
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -344,175 +571,61 @@ function Users() {
       try {
         const response = await fetch(`${API_BASE_URL}/tbotapp/profiles/`, {
           method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
+          headers: { Accept: "application/json" },
           signal: controller.signal,
         });
 
         if (!response.ok) {
-          let message = `Request failed with status ${response.status}`;
-
-          try {
-            const payload = await response.json();
-
-            if (payload?.detail) {
-              message += `: ${payload.detail}`;
-            } else if (payload?.error) {
-              message += `: ${payload.error}`;
-            }
-          } catch {}
-
-          throw new Error(message);
+          throw new Error(await getResponseErrorMessage(response));
         }
 
         const data = await response.json();
-
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.profiles)
-            ? data.profiles
-            : Array.isArray(data?.results)
-              ? data.results
-              : [];
+        const results = getProfilesFromResponse(data);
 
         setProfiles(results);
-
         setError("");
-
         writeSessionCache(STORAGE_KEYS.profiles, results);
 
-        if (totalUsers === null || totalUsers === 0) {
-          setTotalUsers(results.length);
+        setTotalUsers((currentCount) => {
+          if (currentCount !== null && currentCount !== 0) {
+            return currentCount;
+          }
 
           writeSessionCache(STORAGE_KEYS.userCount, results.length);
-        }
+          return results.length;
+        });
 
         setLoading(false);
       } catch (err) {
-        if (err.name === "AbortError") {
-          return;
-        }
+        if (err.name === "AbortError") return;
 
         console.error("Unable to load public profiles:", err);
 
         if (hasCachedProfiles) {
           setError("");
-
           setLoading(false);
-
           return;
         }
 
         setError(err.message || "Unable to load users right now.");
-
         setLoading(false);
       }
     };
 
     void loadProfiles();
 
-    return () => {
-      controller.abort();
-    };
-  }, []);
+    return () => controller.abort();
+  }, [hasCachedProfiles]);
 
-  const sortedProfiles = useMemo(() => {
-    const getAlphabeticalKey = (profile) => {
-      const name =
-        normalizeText(profile.display_name) ||
-        normalizeText(profile.username) ||
-        normalizeText(profile.profile_slug) ||
-        "";
+  const sortedProfiles = useMemo(() => sortProfiles(profiles), [profiles]);
 
-      return name
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9]/g, "")
-        .toLowerCase();
-    };
-
-    return [...profiles].sort((a, b) => {
-      const aKey = getAlphabeticalKey(a);
-
-      const bKey = getAlphabeticalKey(b);
-
-      if (aKey < bKey) {
-        return -1;
-      }
-
-      if (aKey > bKey) {
-        return 1;
-      }
-
-      return 0;
-    });
-  }, [profiles]);
-
-  const filteredProfiles = useMemo(() => {
-    const searchValue = search.trim().toLowerCase();
-
-    if (!searchValue) {
-      return sortedProfiles;
-    }
-
-    const socialSearch = getSocialSearchConnection(searchValue);
-
-    if (socialSearch) {
-      if (socialSearch.contentCreator) {
-        return sortedProfiles.filter((profile) =>
-          socialConnections.some(
-            ({ key, contentCreator }) =>
-              contentCreator && normalizeText(profile[key]),
-          ),
-        );
-      }
-
-      return sortedProfiles.filter((profile) =>
-        normalizeText(profile[socialSearch.key]),
-      );
-    }
-
-    return sortedProfiles.filter((profile) => {
-      const displayName = normalizeText(profile.display_name).toLowerCase();
-
-      const username = normalizeText(profile.username).toLowerCase();
-
-      const profileSlug = normalizeText(profile.profile_slug).toLowerCase();
-
-      const bio = normalizeText(profile.bio).toLowerCase();
-
-      return (
-        displayName.includes(searchValue) ||
-        username.includes(searchValue) ||
-        profileSlug.includes(searchValue) ||
-        bio.includes(searchValue)
-      );
-    });
-  }, [sortedProfiles, search]);
+  const filteredProfiles = useMemo(
+    () => filterProfiles(sortedProfiles, search),
+    [sortedProfiles, search],
+  );
 
   if (loading) {
-    return (
-      <div className="loading-page">
-        <div className="loading-card">
-          <div className="loading-spinner" />
-
-          <h2>Loading users</h2>
-
-          <p>Finding public Tbot profiles.</p>
-
-          <div className="loading-status">
-            <span>Loading user data</span>
-
-            <strong>
-              {totalUsers !== null
-                ? `${totalUsers} public users`
-                : "Loading..."}
-            </strong>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingUsers totalUsers={totalUsers} />;
   }
 
   return (
@@ -529,7 +642,6 @@ function Users() {
         <div className="users-header">
           <div>
             <h1>PVZ Heroes Players & Community Profiles</h1>
-
             <p>
               Browse public Plants vs. Zombies Heroes player profiles and
               explore their decklists.
@@ -549,191 +661,25 @@ function Users() {
 
         <div className="users-results-bar">
           <p>
-            All Profiles shown below come from only public accounts. If you want
-            your profile to show up here, please edit your profile from private
-            to public under{" "}
+            All profiles shown below come from only public accounts. If you
+            want your profile to show up here, please edit your profile from
+            private to public under{" "}
             <Link to={`/profile/${encodeURIComponent(profileSlug)}`}>
               Your Profile
-            </Link>{" "}
+            </Link>
+            .{" "}
             <br />
             Showing <strong>{filteredProfiles.length}</strong> of{" "}
-            <strong>
-              {totalUsers !== null ? totalUsers : profiles.length}
-            </strong>{" "}
+            <strong>{totalUsers !== null ? totalUsers : profiles.length}</strong>{" "}
             public users
           </p>
         </div>
 
-        {error ? (
-          <div className="users-error">
-            <h2>Unable to load users</h2>
-
-            <p>{error}</p>
-          </div>
-        ) : filteredProfiles.length === 0 ? (
-          <div className="users-empty">
-            <h2>
-              {profiles.length === 0 ? "No public users yet" : "No users found"}
-            </h2>
-
-            <p>
-              {profiles.length === 0
-                ? "There are currently no public profiles to browse."
-                : "Try a different search or connection."}
-            </p>
-          </div>
-        ) : (
-          <div className="users-grid">
-            {filteredProfiles.map((profile) => {
-              const displayName =
-                normalizeText(profile.display_name) ||
-                normalizeText(profile.username) ||
-                normalizeText(profile.profile_slug) ||
-                "Tbot User";
-
-              const username = normalizeText(profile.username);
-
-              const profileSlug = normalizeText(profile.profile_slug);
-
-              const bio = normalizeText(profile.bio);
-
-              const avatar = getDiscordAvatarUrl(profile);
-
-              const profileUrl = profileSlug
-                ? `/profile/${encodeURIComponent(profileSlug)}`
-                : null;
-
-              const availableSocialConnections = socialConnections.filter(
-                ({ key }) => normalizeText(profile[key]),
-              );
-
-              const cardContent = (
-                <>
-                  <div className="user-card-top">
-                    <div className="user-avatar">
-                      {avatar ? (
-                        <img
-                          src={avatar}
-                          alt={`${displayName} avatar`}
-                          onError={(event) => {
-                            const discordId = normalizeText(profile.discord_id);
-
-                            if (discordId) {
-                              try {
-                                const numericId = BigInt(discordId);
-
-                                const defaultAvatarIndex = Number(
-                                  (numericId >> 22n) % 6n,
-                                );
-
-                                const fallbackUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
-
-                                if (event.currentTarget.src !== fallbackUrl) {
-                                  event.currentTarget.src = fallbackUrl;
-
-                                  return;
-                                }
-                              } catch {}
-                            }
-
-                            event.currentTarget.style.display = "none";
-
-                            const parent = event.currentTarget.parentElement;
-
-                            if (parent) {
-                              parent.classList.add("user-avatar-fallback");
-
-                              parent.textContent = displayName
-                                .charAt(0)
-                                .toUpperCase();
-                            }
-                          }}
-                        />
-                      ) : (
-                        <span>{displayName.charAt(0).toUpperCase()}</span>
-                      )}
-                    </div>
-
-                    <div className="user-card-info">
-                      <h2>{displayName}</h2>
-
-                      {username ? (
-                        <p className="user-card-username">@{username}</p>
-                      ) : profileSlug ? (
-                        <p className="user-card-slug">@{profileSlug}</p>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="user-card-body">
-                    {bio ? (
-                      <div className="user-card-bio">
-                        <ReactMarkdown
-                          components={{
-                            a: ({ node, ...props }) => (
-                              <a
-                                {...props}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              />
-                            ),
-                          }}
-                        >
-                          {bio}
-                        </ReactMarkdown>
-                      </div>
-                    ) : (
-                      <p className="user-card-bio user-card-no-bio">
-                        No bio provided.
-                      </p>
-                    )}
-
-                    {availableSocialConnections.length > 0 && (
-                      <div className="user-social-links">
-                        {availableSocialConnections.map(
-                          ({ key, label, Icon }) => (
-                            <a
-                              key={key}
-                              href={normalizeText(profile[key])}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="user-social-link"
-                              aria-label={`${label} for ${displayName}`}
-                              title={label}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                              }}
-                            >
-                              <Icon />
-                            </a>
-                          ),
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </>
-              );
-
-              return profileUrl ? (
-                <Link
-                  key={profile.id || profile.profile_slug || profile.username}
-                  to={profileUrl}
-                  className="user-card user-card-link"
-                  aria-label={`View ${displayName}'s profile`}
-                >
-                  {cardContent}
-                </Link>
-              ) : (
-                <article
-                  className="user-card"
-                  key={profile.id || profile.profile_slug || profile.username}
-                >
-                  {cardContent}
-                </article>
-              );
-            })}
-          </div>
-        )}
+        <ProfileResults
+          error={error}
+          profiles={profiles}
+          filteredProfiles={filteredProfiles}
+        />
       </main>
 
       <Footer credits="Browse public Tbot profiles and explore their decklists." />

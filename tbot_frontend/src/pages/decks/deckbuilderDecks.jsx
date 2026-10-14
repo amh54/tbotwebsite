@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import DeckCard from "../../components/modals/deckComponent.jsx";
-
+import RandomDeckButton from "../../components/decks/randomDeckButton.jsx";
 import FilterDropdown from "../../components/filterDropdown.jsx";
 
 import Navbar from "../../components/navbar";
@@ -62,7 +62,25 @@ function DeckbuilderDecks() {
   const [userCollection, setUserCollection] = useState([]);
   const [collectionLoading, setCollectionLoading] = useState(false);
   const [collectionLoaded, setCollectionLoaded] = useState(false);
+  const [randomSelection, setRandomSelection] = useState({
+    deckKey: null,
+    version: 0,
+  });
 
+  const handleRandomDeck = (deck) => {
+    const deckKey = `${normalizeSide(deck.side)}-${getDeckKey(deck)}`;
+
+    setRandomSelection((current) => ({
+      deckKey,
+      version: current.version + 1,
+    }));
+  };
+  const handleRandomDeckOpened = () => {
+    setRandomSelection((current) => ({
+      ...current,
+      deckKey: null,
+    }));
+  };
   useEffect(() => {
     const controller = new AbortController();
 
@@ -103,7 +121,7 @@ function DeckbuilderDecks() {
       }
     };
 
-    loadDeckCount();
+    void loadDeckCount();
 
     return () => controller.abort();
   }, [decodedDeckbuilderName]);
@@ -171,7 +189,7 @@ function DeckbuilderDecks() {
     };
 
     if (decodedDeckbuilderName) {
-      loadDeckbuilderDecks();
+      void loadDeckbuilderDecks();
     }
 
     return () => controller.abort();
@@ -196,13 +214,15 @@ function DeckbuilderDecks() {
 
         const data = await response.json();
 
-        setAllCards(
-          Array.isArray(data)
-            ? data
-            : Array.isArray(data?.results)
-              ? data.results
-              : [],
-        );
+        let cards = [];
+
+        if (Array.isArray(data)) {
+          cards = data;
+        } else if (Array.isArray(data?.results)) {
+          cards = data.results;
+        }
+
+        setAllCards(cards);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to load card information:", err);
@@ -210,7 +230,7 @@ function DeckbuilderDecks() {
       }
     };
 
-    fetchCards();
+    void fetchCards();
 
     return () => controller.abort();
   }, []);
@@ -257,7 +277,7 @@ function DeckbuilderDecks() {
       }
     };
 
-    fetchDiscordUser();
+    void fetchDiscordUser();
 
     return () => controller.abort();
   }, []);
@@ -327,7 +347,7 @@ function DeckbuilderDecks() {
       }
     };
 
-    fetchUserCollection();
+    void fetchUserCollection();
 
     return () => controller.abort();
   }, [discordUser, authLoading]);
@@ -471,7 +491,15 @@ function DeckbuilderDecks() {
     setSide(newSide);
     clearFilters();
   };
+  let deckCountLabel;
 
+  if (deckCount === null) {
+    deckCountLabel = "Loading...";
+  } else if (deckCount === 1) {
+    deckCountLabel = "1 deck";
+  } else {
+    deckCountLabel = `${deckCount} decks`;
+  }
   if (loading) {
     return (
       <div className="loading-page">
@@ -482,11 +510,7 @@ function DeckbuilderDecks() {
 
           <div className="loading-status">
             <span>Loading deck data</span>
-            <strong>
-              {deckCount !== null
-                ? `${deckCount} ${deckCount === 1 ? "deck" : "decks"}`
-                : "Loading..."}
-            </strong>
+            <strong>{deckCountLabel}</strong>
           </div>
         </div>
       </div>
@@ -591,7 +615,7 @@ function DeckbuilderDecks() {
                 alt="Plants"
                 className="tab-icon"
               />
-              Plants
+              <span>Plants </span>
             </button>
 
             <button
@@ -604,7 +628,7 @@ function DeckbuilderDecks() {
                 alt="Zombies"
                 className="tab-icon"
               />
-              Zombies
+              <span> Zombies</span>
             </button>
           </div>
 
@@ -616,7 +640,13 @@ function DeckbuilderDecks() {
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
-
+          <div className="random-deck-toolbar">
+            <RandomDeckButton
+              decks={filteredDecks}
+              selectedDeckKey={randomSelection.deckKey}
+              onSelectDeck={handleRandomDeck}
+            />
+          </div>
           <div className="filters">
             <div className="select-wrapper">
               <FilterDropdown
@@ -707,17 +737,27 @@ function DeckbuilderDecks() {
           </div>
         ) : (
           <div className="deck-grid">
-            {filteredDecks.map((deck) => (
-              <DeckCard
-                key={`${normalizeSide(deck.side)}-${getDeckKey(deck)}`}
-                decklist={deck}
-                allCards={allCards}
-                deckbuilder
-                userCollection={userCollection}
-                collectionLoaded={collectionLoaded}
-                discordUser={discordUser}
-              />
-            ))}
+            {filteredDecks.map((deck) => {
+              const deckKey = `${normalizeSide(deck.side)}-${getDeckKey(deck)}`;
+              const isRandomSelection = randomSelection.deckKey === deckKey;
+
+              return (
+                <DeckCard
+                  key={deckKey}
+                  decklist={deck}
+                  allCards={allCards}
+                  deckbuilder
+                  userCollection={userCollection}
+                  collectionLoaded={collectionLoaded}
+                  discordUser={discordUser}
+                  autoOpen={false}
+                  randomOpenKey={
+                    isRandomSelection ? randomSelection.version : 0
+                  }
+                  onRandomOpen={handleRandomDeckOpened}
+                />
+              );
+            })}
           </div>
         )}
       </main>

@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import DeckCard from "../modals/deckComponent.jsx";
 
 import FilterDropdown from "../filterDropdown.jsx";
-
+import RandomDeckButton from "../decks/randomDeckButton.jsx";
 import useTemporaryMessage from "../../utils/useTemporaryMessage";
 
 import {
@@ -33,7 +33,30 @@ function ProfileDeckBrowser({
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
   const [collection, setCollection] = useState([]);
+  const [randomSelection, setRandomSelection] = useState({
+    deckKey: null,
+    version: 0,
+  });
 
+  const handleRandomDeck = (deck) => {
+    const deckId = deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? "";
+
+    const deckKey = `user-deck-${
+      deckId || `${normalizeSide(deck.side)}-${normalizeKey(deck.name)}`
+    }`;
+
+    setRandomSelection((current) => ({
+      deckKey,
+      version: current.version + 1,
+    }));
+  };
+
+  const handleRandomDeckOpened = () => {
+    setRandomSelection((current) => ({
+      ...current,
+      deckKey: null,
+    }));
+  };
   const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
     useTemporaryMessage(4000);
 
@@ -190,7 +213,13 @@ function ProfileDeckBrowser({
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
-
+        <div className="random-deck-toolbar">
+          <RandomDeckButton
+            decks={filteredDecks}
+            selectedDeckKey={randomSelection.deckKey}
+            onSelectDeck={handleRandomDeck}
+          />
+        </div>
         <div className="filters">
           <div className="select-wrapper">
             <FilterDropdown
@@ -261,7 +290,6 @@ function ProfileDeckBrowser({
       {filteredDecks.length === 0 ? (
         <div className="user-decklists-empty">
           <h2>No decks found</h2>
-
           <p>This user hasn't added any decks matching these filters.</p>
         </div>
       ) : (
@@ -269,6 +297,10 @@ function ProfileDeckBrowser({
           {filteredDecks.map((deck) => {
             const deckId =
               deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? "";
+
+            const deckKey = `user-deck-${
+              deckId || `${normalizeSide(deck.side)}-${normalizeKey(deck.name)}`
+            }`;
 
             const deckName = String(deck.name || "deck")
               .trim()
@@ -285,15 +317,19 @@ function ProfileDeckBrowser({
               (String(sharedDeckKey) === String(deckId) ||
                 String(sharedDeckKey) === shareDeckKey);
 
+            const isRandomSelection = randomSelection.deckKey === deckKey;
+
             return (
               <DeckCard
-                key={`user-deck-${deck.deckid || deck.deckID || deck.id || `${normalizeSide(deck.side)}-${normalizeKey(deck.name)}`}`}
+                key={deckKey}
                 decklist={deck}
                 allCards={allCards}
                 profileSlug={profileSlug}
                 profileIsPublic={profileIsPublic}
                 showSuggestDeck={true}
                 autoOpen={isSharedDeck}
+                randomOpenKey={isRandomSelection ? randomSelection.version : 0}
+                onRandomOpen={handleRandomDeckOpened}
                 isUserDeck={true}
                 userCollection={viewerCards}
                 collectionLoaded={isAuthenticated}

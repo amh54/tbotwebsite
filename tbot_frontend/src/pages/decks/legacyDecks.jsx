@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import DeckCard from "../../components/modals/deckComponent.jsx";
 
 import FilterDropdown from "../../components/filterDropdown.jsx";
-
+import RandomDeckButton from "../../components/decks/randomDeckButton.jsx";
 import Navbar from "../../components/navbar.jsx";
 
 import Footer from "../../components/footer.jsx";
@@ -97,7 +97,33 @@ function LegacyDecksPage() {
 
   const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
     useTemporaryMessage(4000);
+  const getResponseErrorMessage = async (response, prefix) => {
+    let message = `${prefix} ${response.status}`;
 
+    try {
+      const payload = await response.json();
+
+      if (payload?.detail) {
+        message += `: ${payload.detail}`;
+      } else if (payload?.error) {
+        message += `: ${payload.error}`;
+      }
+    } catch {}
+
+    return message;
+  };
+
+  const getArrayResults = (data) => {
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    if (Array.isArray(data?.results)) {
+      return data.results;
+    }
+
+    return [];
+  };
   useEffect(() => {
     const controller = new AbortController();
 
@@ -115,19 +141,12 @@ function LegacyDecksPage() {
         );
 
         if (!response.ok) {
-          let message = `Legacy deck request failed with status ${response.status}`;
-
-          try {
-            const payload = await response.json();
-
-            if (payload?.detail) {
-              message += `: ${payload.detail}`;
-            } else if (payload?.error) {
-              message += `: ${payload.error}`;
-            }
-          } catch {}
-
-          throw new Error(message);
+          throw new Error(
+            await getResponseErrorMessage(
+              response,
+              "Legacy deck request failed with status",
+            ),
+          );
         }
 
         const contentType = (
@@ -139,12 +158,7 @@ function LegacyDecksPage() {
         }
 
         const data = await response.json();
-
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
+        const results = getArrayResults(data);
 
         const normalizedResults = results.map((deck) => ({
           ...deck,
@@ -180,16 +194,14 @@ function LegacyDecksPage() {
         }
 
         setError(
-          `Unable to load legacy decklists right now. ${
-            err.message || ""
-          }`.trim(),
+          `Unable to load legacy decklists right now. ${err.message || ""}`.trim(),
         );
 
         setLoading(false);
       }
     };
 
-   void fetchLegacyDecks();
+    void fetchLegacyDecks();
 
     return () => {
       controller.abort();
@@ -260,11 +272,15 @@ function LegacyDecksPage() {
 
         const data = await response.json();
 
-        const cards = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
+        let cards;
+
+        if (Array.isArray(data)) {
+          cards = data;
+        } else if (Array.isArray(data?.results)) {
+          cards = data.results;
+        } else {
+          cards = [];
+        }
 
         setAllCards(cards);
         writeSessionCache(STORAGE_KEYS.cards, cards);
@@ -275,7 +291,7 @@ function LegacyDecksPage() {
       }
     };
 
-   void fetchCards();
+    void fetchCards();
 
     return () => {
       controller.abort();
@@ -314,13 +330,17 @@ function LegacyDecksPage() {
 
         setIsAuthenticated(true);
 
-        setCollectionCards(
-          Array.isArray(data?.cards)
-            ? data.cards
-            : Array.isArray(data?.results)
-              ? data.results
-              : [],
-        );
+        let cards;
+
+        if (Array.isArray(data?.cards)) {
+          cards = data.cards;
+        } else if (Array.isArray(data?.results)) {
+          cards = data.results;
+        } else {
+          cards = [];
+        }
+
+        setCollectionCards(cards);
       } catch (err) {
         if (err.name === "AbortError") {
           return;
@@ -432,7 +452,30 @@ function LegacyDecksPage() {
 
     setCollectionFilter(value);
   };
+  const [randomSelection, setRandomSelection] = useState({
+    deckKey: null,
+    version: 0,
+  });
 
+  const handleRandomDeck = (deck) => {
+    const deckKey =
+      deck.deckid ??
+      deck.deckID ??
+      deck.deckId ??
+      deck.id ??
+      `${deck.side}-${deck.hero}-${deck.name}`;
+
+    setRandomSelection((current) => ({
+      deckKey: String(deckKey),
+      version: current.version + 1,
+    }));
+  };
+  const handleRandomDeckOpened = () => {
+    setRandomSelection((current) => ({
+      ...current,
+      deckKey: null,
+    }));
+  };
   if (loading) {
     return (
       <div className="loading-page">
@@ -485,7 +528,7 @@ function LegacyDecksPage() {
                 alt="Plants"
                 className="tab-icon"
               />
-              Plants
+              <span>Plants</span>
             </button>
 
             <button
@@ -498,7 +541,7 @@ function LegacyDecksPage() {
                 alt="Zombies"
                 className="tab-icon"
               />
-              Zombies
+              <span>Zombies</span>
             </button>
           </div>
 
@@ -510,7 +553,13 @@ function LegacyDecksPage() {
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
-
+          <div className="random-deck-toolbar">
+            <RandomDeckButton
+              decks={filteredDecks}
+              selectedDeckKey={randomSelection.deckKey}
+              onSelectDeck={handleRandomDeck}
+            />
+          </div>
           <div className="filters">
             <div className="select-wrapper">
               <FilterDropdown
@@ -586,22 +635,34 @@ function LegacyDecksPage() {
         ) : (
           !error && (
             <div className="deck-grid">
-              {filteredDecks.map((deck, index) => (
-                <DeckCard
-                  key={
-                    deck.deckid ??
+              {filteredDecks.map((deck, index) => {
+                const deckKey = String(
+                  deck.deckid ??
                     deck.deckID ??
+                    deck.deckId ??
                     deck.id ??
-                    `${deck.side}-${deck.hero}-${deck.name}-${index}`
-                  }
-                  decklist={deck}
-                  allCards={allCards}
-                  legacy
-                  userCollection={collectionCards}
-                  collectionLoaded={isAuthenticated}
-                discordUser={isAuthenticated ? {} : null}
-                />
-              ))}
+                    `${deck.side}-${deck.hero}-${deck.name}-${index}`,
+                );
+
+                const isRandomSelection = randomSelection.deckKey === deckKey;
+
+                return (
+                  <DeckCard
+                    key={deckKey}
+                    decklist={deck}
+                    allCards={allCards}
+                    legacy
+                    userCollection={collectionCards}
+                    collectionLoaded={isAuthenticated}
+                    discordUser={isAuthenticated ? {} : null}
+                    autoOpen={false}
+                    randomOpenKey={
+                      isRandomSelection ? randomSelection.version : 0
+                    }
+                    onRandomOpen={handleRandomDeckOpened}
+                  />
+                );
+              })}
             </div>
           )
         )}

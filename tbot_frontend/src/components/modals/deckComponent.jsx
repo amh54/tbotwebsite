@@ -39,9 +39,11 @@ function DeckCard({
   onAdd,
   onComplete,
   onRemoveSaved,
+  randomOpenKey = 0,
+  onRandomOpen,
   editSaving = false,
-   allCards = [],
-   publishedDecks = [],
+  allCards = [],
+  publishedDecks = [],
   userCollection = [],
   collectionLoaded = false,
   discordUser = null,
@@ -56,7 +58,6 @@ function DeckCard({
   isSavedDeck = false,
   savedDeckTab = false,
   hideShare = false,
-  
 }) {
   const deck = decklist ?? {};
 
@@ -132,7 +133,7 @@ function DeckCard({
   const [deckSaved, setDeckSaved] = useState(false);
 
   const [saveMessage, setSaveMessage] = useState("");
-
+  const [randomOpen, setRandomOpen] = useState(false);
   const editModalRef = useRef(null);
 
   const { isLoggedIn, setIsLoggedIn, checkingLogin } = useDiscordLoginStatus();
@@ -205,7 +206,7 @@ function DeckCard({
       return;
     }
 
-    if (!autoOpen) {
+    if (!autoOpen && !randomOpen) {
       setOpen(false);
       setEditing(false);
     }
@@ -257,7 +258,20 @@ function DeckCard({
       setEditImagePreview(deck.image ?? "");
     }
   }, [editing, deck.image, editImageFile]);
+  const lastRandomOpenKey = useRef(0);
 
+useEffect(() => {
+  if (
+    randomOpenKey > 0 &&
+    lastRandomOpenKey.current !== randomOpenKey
+  ) {
+    lastRandomOpenKey.current = randomOpenKey;
+    setRandomOpen(true);
+    setOpen(true);
+    setEditing(false);
+    onRandomOpen?.();
+  }
+}, [randomOpenKey, onRandomOpen]);
   const openModal = () => {
     if (addMode) {
       setOpen(true);
@@ -308,6 +322,7 @@ function DeckCard({
     setEditImageFile(null);
     setEditImagePreview("");
     setEditImgError(false);
+    setRandomOpen(false);
 
     if (autoOpen) {
       return;

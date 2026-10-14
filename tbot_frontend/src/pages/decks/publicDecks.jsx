@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import DeckCard from "../../components/modals/deckComponent.jsx";
-
+import RandomDeckButton from "../../components/decks/randomDeckButton.jsx";
 import FilterDropdown from "../../components/filterDropdown.jsx";
 
 import Navbar from "../../components/navbar.jsx";
@@ -91,7 +91,7 @@ function PublicDecks() {
       } catch {}
     };
 
-    loadProfile();
+    void loadProfile();
 
     return () => {
       cancelled = true;
@@ -170,86 +170,95 @@ function PublicDecks() {
       }
     };
 
-    const fetchDecks = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/tbotapp/public-decks/`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-        });
+    const getRequestErrorMessage = async (response) => {
+  let message = `Request failed with status ${response.status}`;
 
-        if (!response.ok) {
-          let message = `Request failed with status ${response.status}`;
+  try {
+    const payload = await response.json();
 
-          try {
-            const payload = await response.json();
+    if (payload?.detail) {
+      message += `: ${payload.detail}`;
+    } else if (payload?.error) {
+      message += `: ${payload.error}`;
+    }
+  } catch {}
 
-            if (payload?.detail) {
-              message += `: ${payload.detail}`;
-            } else if (payload?.error) {
-              message += `: ${payload.error}`;
-            }
-          } catch {}
+  return message;
+};
 
-          throw new Error(message);
-        }
+const getPublicDeckResults = (data) => {
+  if (Array.isArray(data?.decks)) {
+    return data.decks;
+  }
 
-        const contentType = (
-          response.headers.get("content-type") || ""
-        ).toLowerCase();
+  if (Array.isArray(data)) {
+    return data;
+  }
 
-        const text = await response.text();
+  return [];
+};
 
-        if (!contentType.includes("application/json")) {
-          throw new Error(
-            "The public user decks endpoint did not return JSON.",
-          );
-        }
+const fetchDecks = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/tbotapp/public-decks/`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+    });
 
-        const data = JSON.parse(text);
+    if (!response.ok) {
+      throw new Error(await getRequestErrorMessage(response));
+    }
 
-        const results = Array.isArray(data?.decks)
-          ? data.decks
-          : Array.isArray(data)
-            ? data
-            : [];
+    const contentType = (
+      response.headers.get("content-type") || ""
+    ).toLowerCase();
 
-        setDecks(results);
-        writeSessionCache(STORAGE_KEYS.decks, results);
+    if (!contentType.includes("application/json")) {
+      throw new Error(
+        "The public user decks endpoint did not return JSON.",
+      );
+    }
 
-        const count = Number(data?.count);
+    const text = await response.text();
+    const data = JSON.parse(text);
+    const results = getPublicDeckResults(data);
 
-        if (Number.isFinite(count)) {
-          setTotalDecks(count);
-        }
+    setDecks(results);
+    writeSessionCache(STORAGE_KEYS.decks, results);
 
-        setLoading(false);
-        setError("");
-      } catch (err) {
-        if (err.name === "AbortError") {
-          return;
-        }
+    const count = Number(data?.count);
 
-        console.error("Unable to load public user decks:", err);
+    if (Number.isFinite(count)) {
+      setTotalDecks(count);
+    }
 
-        if (hasCachedDecks) {
-          setLoading(false);
-          setError("");
-          return;
-        }
+    setLoading(false);
+    setError("");
+  } catch (err) {
+    if (err.name === "AbortError") {
+      return;
+    }
 
-        setLoading(false);
+    console.error("Unable to load public user decks:", err);
 
-        setError(
-          `Unable to load public decks right now. ${err.message || ""}`.trim(),
-        );
-      }
-    };
+    if (hasCachedDecks) {
+      setLoading(false);
+      setError("");
+      return;
+    }
 
-    fetchDeckCount();
-    fetchDecks();
+    setLoading(false);
+    setError(
+      `Unable to load public decks right now. ${err.message || ""}`.trim(),
+    );
+  }
+};
+
+    void fetchDeckCount();
+    void fetchDecks();
 
     return () => {
       controller.abort();
@@ -299,7 +308,7 @@ function PublicDecks() {
       }
     };
 
-    fetchDiscordUser();
+    void fetchDiscordUser();
 
     return () => {
       controller.abort();
@@ -337,7 +346,7 @@ function PublicDecks() {
       }
     };
 
-    fetchCards();
+    void fetchCards();
 
     return () => {
       controller.abort();
@@ -408,7 +417,7 @@ function PublicDecks() {
       }
     };
 
-    fetchUserCollection();
+    void fetchUserCollection();
 
     return () => {
       controller.abort();
@@ -502,7 +511,24 @@ function PublicDecks() {
     setSide(newSide);
     clearFilters();
   };
+  const [randomSelection, setRandomSelection] = useState({
+    deckKey: null,
+    version: 0,
+  });
 
+  const handleRandomDeck = (deck) => {
+    setRandomSelection((current) => ({
+      deckKey: `${normalizeSide(deck.side)}-${getDeckKey(deck)}`,
+      version: current.version + 1,
+    }));
+  };
+
+  const handleRandomDeckOpened = () => {
+    setRandomSelection((current) => ({
+      ...current,
+      deckKey: null,
+    }));
+  };
   if (loading) {
     return (
       <div className="loading-page">
@@ -557,7 +583,7 @@ function PublicDecks() {
                 alt="Plants"
                 className="tab-icon"
               />
-              Plants
+              <span> Plants </span>
             </button>
 
             <button
@@ -570,7 +596,7 @@ function PublicDecks() {
                 alt="Zombies"
                 className="tab-icon"
               />
-              Zombies
+              <span>Zombies</span>
             </button>
           </div>
 
@@ -582,7 +608,13 @@ function PublicDecks() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-
+          <div className="random-deck-toolbar">
+            <RandomDeckButton
+              decks={filteredDecks}
+              selectedDeckKey={randomSelection.deckKey}
+              onSelectDeck={handleRandomDeck}
+            />
+          </div>
           <div className="filters">
             <div className="select-wrapper">
               <FilterDropdown
@@ -681,18 +713,28 @@ function PublicDecks() {
         ) : (
           !error && (
             <div className="deck-grid">
-              {filteredDecks.map((deck) => (
-                <DeckCard
-                  key={`${normalizeSide(deck.side)}-${getDeckKey(deck)}`}
-                  decklist={deck}
-                  decklists
-                  isUserDeck
-                  showSuggestDeck
-                  userCollection={userCollection}
-                  collectionLoaded={collectionLoaded}
-                  discordUser={discordUser}
-                />
-              ))}
+              {filteredDecks.map((deck) => {
+                const deckKey = `${normalizeSide(deck.side)}-${getDeckKey(deck)}`;
+                const isRandomSelection = randomSelection.deckKey === deckKey;
+
+                return (
+                  <DeckCard
+                    key={deckKey}
+                    decklist={deck}
+                    decklists
+                    isUserDeck
+                    showSuggestDeck
+                    userCollection={userCollection}
+                    collectionLoaded={collectionLoaded}
+                    discordUser={discordUser}
+                    autoOpen={false}
+                    randomOpenKey={
+                      isRandomSelection ? randomSelection.version : 0
+                    }
+                    onRandomOpen={handleRandomDeckOpened}
+                  />
+                );
+              })}
             </div>
           )
         )}

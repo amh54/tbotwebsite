@@ -22,7 +22,9 @@ const normalizeText = (value) => String(value ?? "").trim();
 
 function StandaloneDeckPage() {
   const { profile_slug, source_type, deckId } = useParams();
-
+  const [userCollection] = useState([]);
+  const [collectionLoaded] = useState(false);
+  const [discordUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [deck, setDeck] = useState(null);
   const [allCards, setAllCards] = useState([]);
@@ -53,7 +55,7 @@ function StandaloneDeckPage() {
 
         const sharedDeckKey = String(deckId).trim();
 
-        const deckIdMatch = sharedDeckKey.match(/-(\d+)$/);
+        const deckIdMatch = /-(\d+)$/.exec(sharedDeckKey);
 
         if (!deckIdMatch) {
           throw new Error("Invalid deck link.");
@@ -99,7 +101,7 @@ function StandaloneDeckPage() {
         setDeck(data.deck);
 
         setProfile({
-          ...(data.profile || {}),
+          ...data.profile,
         });
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -114,7 +116,7 @@ function StandaloneDeckPage() {
       }
     };
 
-    loadDeck();
+    void loadDeck();
 
     return () => controller.abort();
   }, [profile_slug, source_type, deckId]);
@@ -137,14 +139,17 @@ function StandaloneDeckPage() {
         }
 
         const data = await response.json();
+        let cards;
 
-        setAllCards(
-          Array.isArray(data)
-            ? data
-            : Array.isArray(data?.results)
-              ? data.results
-              : [],
-        );
+        if (Array.isArray(data)) {
+          cards = data;
+        } else if (Array.isArray(data?.results)) {
+          cards = data.results;
+        } else {
+          cards = [];
+        }
+
+        setAllCards(cards);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to load card information:", err);
@@ -152,7 +157,7 @@ function StandaloneDeckPage() {
       }
     };
 
-    fetchCards();
+    void fetchCards();
 
     return () => controller.abort();
   }, []);

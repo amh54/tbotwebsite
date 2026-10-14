@@ -42,62 +42,51 @@ const isIntroEntry = (entry) => {
   return sideValue === "intro" || sideValue === "intro/explanation";
 };
 
+const renderTextLines = (text, keyPrefix) => {
+  const lines = text.split(/\r?\n/);
+
+  return lines.flatMap((line, index) => [
+    <span key={`${keyPrefix}-${line}-${index}`}>{line}</span>,
+    ...(index < lines.length - 1
+      ? [<br key={`${keyPrefix}-br-${index}`} />]
+      : []),
+  ]);
+};
+
 const renderBoldText = (text) => {
   if (!hasValue(text)) {
     return null;
   }
 
   const rawText = String(text);
-
-  const pattern = /\*\*(.+?)\*\*/g;
-  const matches = [...rawText.matchAll(pattern)];
-
-  if (matches.length === 0) {
-    const lines = rawText.split(/\r?\n/);
-
-    return lines.map((line, index) => (
-      <span key={`line-${index}`}>
-        {line}
-        {index < lines.length - 1 && <br />}
-      </span>
-    ));
-  }
-
+  const pattern = /\*\*([^*\n]+)\*\*/g;
   const parts = [];
   let lastIndex = 0;
+  let match;
+  let index = 0;
 
-  matches.forEach((match, index) => {
-    const matchIndex = match.index;
-
-    if (matchIndex > lastIndex) {
-      const textBefore = rawText.slice(lastIndex, matchIndex);
-      const lines = textBefore.split(/\r?\n/);
-
-      lines.forEach((line, lineIndex) => {
-        parts.push(<span key={`text-${index}-${lineIndex}`}>{line}</span>);
-
-        if (lineIndex < lines.length - 1) {
-          parts.push(<br key={`br-${index}-${lineIndex}`} />);
-        }
-      });
+  while ((match = pattern.exec(rawText)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(
+        ...renderTextLines(
+          rawText.slice(lastIndex, match.index),
+          `text-${index}`,
+        ),
+      );
     }
 
     parts.push(<strong key={`bold-${index}`}>{match[1]}</strong>);
 
-    lastIndex = matchIndex + match[0].length;
-  });
+    lastIndex = pattern.lastIndex;
+    index += 1;
+  }
+
+  if (lastIndex === 0) {
+    return renderTextLines(rawText, "line");
+  }
 
   if (lastIndex < rawText.length) {
-    const textAfter = rawText.slice(lastIndex);
-    const lines = textAfter.split(/\r?\n/);
-
-    lines.forEach((line, lineIndex) => {
-      parts.push(<span key={`end-${lineIndex}`}>{line}</span>);
-
-      if (lineIndex < lines.length - 1) {
-        parts.push(<br key={`end-br-${lineIndex}`} />);
-      }
-    });
+    parts.push(...renderTextLines(rawText.slice(lastIndex), "end"));
   }
 
   return parts;
@@ -109,29 +98,7 @@ const renderIntroText = (text) => {
   }
 
   return (
-    <ReactMarkdown
-      components={{
-        h1: ({ children }) => <h1 className="kos-intro-heading">{children}</h1>,
-
-        h2: ({ children }) => <h2 className="kos-intro-heading">{children}</h2>,
-
-        h3: ({ children }) => <h3 className="kos-intro-heading">{children}</h3>,
-
-        blockquote: ({ children }) => (
-          <blockquote className="kos-intro-quote">{children}</blockquote>
-        ),
-
-        p: ({ children }) => <p className="kos-intro-paragraph">{children}</p>,
-
-        strong: ({ children }) => <strong>{children}</strong>,
-
-        ul: ({ children }) => <ul className="kos-intro-list">{children}</ul>,
-
-        ol: ({ children }) => <ol className="kos-intro-list">{children}</ol>,
-
-        li: ({ children }) => <li>{children}</li>,
-      }}
-    >
+    <ReactMarkdown components={INTRO_MARKDOWN_COMPONENTS}>
       {String(text)}
     </ReactMarkdown>
   );
@@ -143,18 +110,44 @@ const renderCreatorText = (text) => {
   }
 
   const rawText = String(text).trim();
+  const colonIndex = rawText.indexOf(":");
+  const hasHeading =
+    colonIndex !== -1 && rawText.slice(colonIndex + 1).startsWith(" **");
 
-  const headingMatch = rawText.match(/^([^:]+:)\s\*\*/);
+  const heading = hasHeading ? rawText.slice(0, colonIndex + 1) : null;
 
-  const heading = headingMatch ? headingMatch[1] : null;
+  let rest = hasHeading ? rawText.slice(colonIndex + 4) : rawText;
 
-  const rest = headingMatch ? rawText.slice(headingMatch[0].length) : rawText;
+  if (rest.startsWith("- **")) {
+    rest = rest.slice(4);
+  }
 
-  const items = rest
-    .replace(/^-\s\*\*/, "")
-    .split(/\s+-\s+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
+  const items = [];
+  let start = 0;
+
+  for (let index = 0; index < rest.length; index += 1) {
+    if (
+      rest[index] === "-" &&
+      index > 0 &&
+      /\s/.test(rest[index - 1]) &&
+      index + 1 < rest.length &&
+      /\s/.test(rest[index + 1])
+    ) {
+      const item = rest.slice(start, index).trim();
+
+      if (item) {
+        items.push(item);
+      }
+
+      start = index + 1;
+    }
+  }
+
+  const lastItem = rest.slice(start).trim();
+
+  if (lastItem) {
+    items.push(lastItem);
+  }
 
   if (items.length <= 1) {
     return <span>{rawText}</span>;
@@ -165,12 +158,24 @@ const renderCreatorText = (text) => {
       {heading && <span className="kos-creator-heading">{heading}</span>}
 
       <ul className="kos-creator-list">
-        {items.map((item, index) => (
-          <li key={index}>{item}</li>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
         ))}
       </ul>
     </>
   );
+};
+
+const INTRO_MARKDOWN_COMPONENTS = {
+  h1: ({ children }) => <h1 className="kos-intro-heading">{children}</h1>,
+  h2: ({ children }) => <h2 className="kos-intro-heading">{children}</h2>,
+  h3: ({ children }) => <h3 className="kos-intro-heading">{children}</h3>,
+  blockquote: ({ children }) => (
+    <blockquote className="kos-intro-quote">{children}</blockquote>
+  ),
+  p: ({ children }) => <p className="kos-intro-paragraph">{children}</p>,
+  ul: ({ children }) => <ul className="kos-intro-list">{children}</ul>,
+  ol: ({ children }) => <ol className="kos-intro-list">{children}</ol>,
 };
 
 function KeepOrScrap() {
@@ -226,7 +231,7 @@ function KeepOrScrap() {
       }
     };
 
-    fetchCount();
+    void fetchCount();
 
     return () => {
       controller.abort();
@@ -290,11 +295,13 @@ function KeepOrScrap() {
 
         const data = JSON.parse(responseText);
 
-        const loadedEntries = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
+        let loadedEntries = [];
+
+        if (Array.isArray(data)) {
+          loadedEntries = data;
+        } else if (Array.isArray(data?.results)) {
+          loadedEntries = data.results;
+        }
 
         keepOrScrapCache.entries = loadedEntries;
         keepOrScrapCache.loaded = true;
@@ -319,7 +326,7 @@ function KeepOrScrap() {
       }
     };
 
-    fetchEntries();
+    void fetchEntries();
 
     return () => {
       controller.abort();
@@ -421,7 +428,8 @@ function KeepOrScrap() {
         return a.name.localeCompare(b.name);
       });
   }, [entries]);
-
+  const loadingCountLabel =
+    totalEntries === null ? "Loading count..." : `${totalEntries} entries`;
   if (loading) {
     return (
       <div className="loading-page">
@@ -429,7 +437,7 @@ function KeepOrScrap() {
           <div className="loading-spinner" />
 
           <h2>
-            Loading Keep or Scrap
+            Loading Keep or Scrap{" "}
             <span className="loading-dots">
               <span />
               <span />
@@ -444,11 +452,7 @@ function KeepOrScrap() {
           <div className="loading-status">
             <span>Loading Keep or Scrap data</span>
 
-            <strong>
-              {totalEntries !== null
-                ? `${totalEntries} entries`
-                : "Loading count..."}
-            </strong>
+           <strong>{loadingCountLabel}</strong>
           </div>
         </div>
       </div>
@@ -457,11 +461,11 @@ function KeepOrScrap() {
 
   return (
     <div className="keep-or-scrap-page">
-       <Seo
-  title="PVZH Keep or Scrap - PVZ Heroes Card Guide | Tbot"
-  description="Use Tbot's Plants vs. Zombies Heroes Keep or Scrap guide to learn which PVZH cards to keep, scrap, or craft based on their usefulness and value."
-  canonical="/keeporscrap"
-/>
+      <Seo
+        title="PVZH Keep or Scrap - PVZ Heroes Card Guide | Tbot"
+        description="Use Tbot's Plants vs. Zombies Heroes Keep or Scrap guide to learn which PVZH cards to keep, scrap, or craft based on their usefulness and value."
+        canonical="/keeporscrap"
+      />
       <Navbar />
 
       <main className="kos-content">
@@ -529,41 +533,34 @@ function KeepOrScrap() {
                 const firstEntry = group.entries[0];
 
                 return (
-                  <section
-                    className="kos-class-section"
-                    key={group.name}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedGroup(group)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        setSelectedGroup(group);
-                      }
-                    }}
-                  >
-                    <div className="kos-class-header">
-                      <h2>{group.name}</h2>
-                    </div>
+                 <button
+  type="button"
+  className="kos-class-section"
+  key={group.name}
+  onClick={() => setSelectedGroup(group)}
+>
+  <div className="kos-class-header">
+    <h2>{group.name}</h2>
+  </div>
 
-                    <div className="kos-class-preview">
-                      <div className="kos-class-media">
-                        {hasValue(firstEntry?.image) && (
-                          <img src={firstEntry.image} alt={group.name} />
-                        )}
-                      </div>
+  <div className="kos-class-preview">
+    <div className="kos-class-media">
+      {hasValue(firstEntry?.image) && (
+        <img src={firstEntry.image} alt={group.name} />
+      )}
+    </div>
 
-                      <div className="kos-class-content">
-                        <ul className="kos-tier-list">
-                          {group.entries.map((entry) => (
-                            <li key={entry.tierid} className="kos-tier-item">
-                              {renderBoldText(entry.reasoning)}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </section>
+    <div className="kos-class-content">
+      <ul className="kos-tier-list">
+        {group.entries.map((entry) => (
+          <li key={entry.tierid} className="kos-tier-item">
+            {renderBoldText(entry.reasoning)}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</button>
                 );
               })
             )}
@@ -600,14 +597,7 @@ function KeepOrScrap() {
       </main>
 
       {selectedGroup && (
-        <div
-          className="kos-modal-overlay"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setSelectedGroup(null);
-            }
-          }}
-        >
+    <div className="kos-modal-overlay">
           <div className="kos-modal">
             <button
               type="button"

@@ -114,12 +114,7 @@
   padding: 35px 0;
   box-sizing: border-box;
 }
-.kos-class-section {
-  cursor: pointer;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-}
+
 
 .kos-class-section:hover {
   transform: translateY(-3px);

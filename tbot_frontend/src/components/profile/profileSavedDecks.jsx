@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import DeckCard from "../modals/deckComponent.jsx";
 
 import FilterDropdown from "../filterDropdown.jsx";
-
+import RandomDeckButton from "../decks/randomDeckButton.jsx";
 import useTemporaryMessage from "../../utils/useTemporaryMessage";
 
 import {
@@ -46,7 +46,32 @@ function ProfileSavedDecks({
   const [category, setCategory] = useState([]);
   const [archetype, setArchetype] = useState([]);
   const [collection, setCollection] = useState([]);
+  const [randomSelection, setRandomSelection] = useState({
+    deckKey: null,
+    version: 0,
+  });
 
+  const handleRandomDeck = (deck) => {
+    const sourceDeckId = deck.source_deck_id ?? deck.sourceDeckId ?? "";
+    const sourceType = normalizeSavedSourceType(
+      deck.source_type ?? deck.sourceType,
+    );
+
+    const deckKey = `saved-deck-${sourceType}-${
+      sourceDeckId || deck.id || "unknown"
+    }`;
+
+    setRandomSelection((current) => ({
+      deckKey,
+      version: current.version + 1,
+    }));
+  };
+  const handleRandomDeckOpened = () => {
+    setRandomSelection((current) => ({
+      ...current,
+      deckKey: null,
+    }));
+  };
   const { visible: collectionLoginMessage, show: showCollectionLoginMessage } =
     useTemporaryMessage(4000);
 
@@ -202,7 +227,13 @@ function ProfileSavedDecks({
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
-
+        <div className="random-deck-toolbar">
+          <RandomDeckButton
+            decks={filteredDecks}
+            selectedDeckKey={randomSelection.deckKey}
+            onSelectDeck={handleRandomDeck}
+          />
+        </div>
         <div className="filters">
           <div className="select-wrapper">
             <FilterDropdown
@@ -291,11 +322,15 @@ function ProfileSavedDecks({
               deck.source_type ?? deck.sourceType,
             );
 
+            const deckKey = `saved-deck-${sourceType}-${
+              sourceDeckId || deck.id || "unknown"
+            }`;
+
+            const isRandomSelection = randomSelection.deckKey === deckKey;
+
             return (
               <DeckCard
-                key={`saved-deck-${sourceType}-${
-                  sourceDeckId || deck.id || "unknown"
-                }`}
+                key={deckKey}
                 decklist={{
                   ...deck,
                   source_type: sourceType,
@@ -306,6 +341,8 @@ function ProfileSavedDecks({
                 profileIsPublic={profileIsPublic}
                 showSuggestDeck={false}
                 autoOpen={false}
+                randomOpenKey={isRandomSelection ? randomSelection.version : 0}
+                onRandomOpen={handleRandomDeckOpened}
                 isUserDeck={false}
                 isSavedDeck={true}
                 savedDeckTab={true}

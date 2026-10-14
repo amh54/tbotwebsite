@@ -35,8 +35,9 @@ const getCategoryLabel = (category) => {
   }
 
   return String(category)
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+    .split(/[_-]+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 };
 
 const formatDate = (dateString) => {
@@ -62,10 +63,31 @@ const normalizeCategoryClass = (category) => {
     return "unknown";
   }
 
-  return String(category)
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  let result = "";
+  let lastWasSeparator = true;
+
+  for (const character of String(category).toLowerCase()) {
+    const code = character.codePointAt(0);
+    const isLetter = code >= 97 && code <= 122;
+    const isDigit = code >= 48 && code <= 57;
+    const isAllowed = isLetter || isDigit || character === "_";
+
+    if (isAllowed) {
+      result += character;
+      lastWasSeparator = false;
+    } else if (!lastWasSeparator) {
+      result += "-";
+      lastWasSeparator = true;
+    }
+  }
+
+  return result.endsWith("-") ? result.slice(0, -1) : result;
+};
+
+const markdownComponents = {
+  a: ({ node, ...props }) => (
+    <a {...props} target="_blank" rel="noopener noreferrer" />
+  ),
 };
 
 function SiteUpdates() {
@@ -317,17 +339,7 @@ function SiteUpdates() {
                           <h2>{update.title}</h2>
 
                           <div className="site-update-content">
-                            <ReactMarkdown
-                              components={{
-                                a: ({ node, ...props }) => (
-                                  <a
-                                    {...props}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  />
-                                ),
-                              }}
-                            >
+                            <ReactMarkdown components={markdownComponents}>
                               {update.content || ""}
                             </ReactMarkdown>
                           </div>

@@ -3,7 +3,49 @@
   background: #101416;
   color: white;
 }
+.random-deck-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px;
+}
 
+.random-deck-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #8fe38b;
+  border-radius: 8px;
+  background: transparent;
+  color: #8fe38b;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.random-deck-btn:hover:not(:disabled) {
+  background: #8fe38b;
+  border-color: #8fe38b;
+  color: #101416;
+}
+
+.random-deck-btn:focus-visible {
+  outline: 2px solid #8fe38b;
+  outline-offset: 3px;
+}
+
+.random-deck-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 .collection-login-message {
   display: flex;
   align-items: center;
@@ -430,6 +472,13 @@
 }
 
 @media (max-width: 600px) {
+  .random-deck-toolbar {
+    justify-content: stretch;
+  }
+
+  .random-deck-btn {
+    width: 100%;
+  }
   .deck-content {
     padding: 15px;
   }

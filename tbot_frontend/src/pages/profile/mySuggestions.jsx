@@ -212,7 +212,7 @@ function MySuggestions() {
       }
     };
 
-    loadSuggestions();
+    void loadSuggestions();
 
     return () => {
       cancelled = true;
@@ -246,7 +246,7 @@ function MySuggestions() {
       }
     };
 
-    loadCards();
+    void loadCards();
 
     return () => {
       cancelled = true;
@@ -294,7 +294,7 @@ function MySuggestions() {
       }
     };
 
-    loadAuth();
+    void loadAuth();
 
     return () => {
       cancelled = true;
@@ -357,7 +357,7 @@ function MySuggestions() {
       }
     };
 
-    loadCollection();
+    void loadCollection();
 
     return () => {
       cancelled = true;
