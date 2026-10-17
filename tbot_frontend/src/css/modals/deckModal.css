@@ -603,18 +603,6 @@
   text-align: left;
 }
 
-.suggestion-dropdown-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  height: auto;
-  min-height: 0;
-  padding: 10px 12px;
-  text-align: left;
-}
-
 .suggestion-dropdown-option .suggestion-dropdown-check {
   flex-shrink: 0;
 }
@@ -1498,12 +1486,12 @@ text-align: left;
 }
 
 .spark-icon {
-  width: 18px !important;
-  height: 18px !important;
-  object-fit: contain !important;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
   vertical-align: middle;
   margin-left: 4px;
-  border-radius: 0 !important;
+  border-radius: 0;
 }
 
 .deck-doc-link {

@@ -180,7 +180,7 @@ function Profile() {
       }
     };
 
-    loadViewerCollection();
+    void loadViewerCollection();
 
     return () => {
       controller.abort();
@@ -432,7 +432,7 @@ function Profile() {
       }
     };
 
-    loadProfile();
+    void loadProfile();
 
     return () => {
       controller.abort();

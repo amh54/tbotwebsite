@@ -22,7 +22,8 @@ const NAVIGATION = [
     label: "Community",
     links: [
       { label: "Users", path: "/users" },
-      { label: "Discord Server", path: "https://discord.gg/gU53MGSgWA" },
+      { label: "Pvzh Servers", path: "/servers" },
+      { label: "Tbot Server", path: "https://discord.gg/gU53MGSgWA" },
       { label: "Youtube", path: "https://www.youtube.com/@PVZHTbot" },
       { label: "Twitch", path: "https://www.twitch.tv/pvzhtbot" },
     ],

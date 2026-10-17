@@ -22,7 +22,7 @@
   font-size: 12px;
   font-weight: 800;
   line-height: 1;
-    background: #000;
+  background: #000;
   padding: 3px 6px;
   border-radius: 4px;
   text-shadow:
@@ -46,10 +46,6 @@
 .card-information-page h2 {
   margin: 0 0 8px;
 }
-
-/* ============================================================
-   SIDE TABS
-============================================================ */
 
 .card-side-tabs {
   display: flex;
@@ -86,10 +82,6 @@
   color: #8fe38b;
   box-shadow: inset 0 -3px 0 #8fe38b;
 }
-
-/* ============================================================
-   CARD BROWSER / SEARCH / FILTERS
-============================================================ */
 
 .card-browser {
   width: 100%;
@@ -138,10 +130,6 @@
 .card-search::placeholder {
   color: #888;
 }
-
-/* ============================================================
-   FILTERS
-============================================================ */
 
 .card-filters {
   display: grid;
@@ -195,12 +183,7 @@
     color 0.15s ease;
 }
 .profile-collection-card[data-rarity="Legendary"] {
-  background: linear-gradient(
-    135deg,
-    #c47aeb 0%,
-    #f7f0a8 50%,
-    #8ac5e8 100%
-  );
+  background: linear-gradient(135deg, #c47aeb 0%, #f7f0a8 50%, #8ac5e8 100%);
 }
 
 .profile-collection-card[data-rarity="Rare"] {
@@ -245,7 +228,15 @@
     filter 0.12s ease,
     box-shadow 0.12s ease;
 }
-
+.profile-collection-card:hover {
+  transform: translateY(-4px) scale(1.06);
+  filter: brightness(1.15);
+  box-shadow:
+    0 0 0 3px #8fe38b,
+    0 0 0 5px #101416,
+    0 0 18px 4px rgba(143, 227, 139, 0.5);
+  z-index: 5;
+}
 .profile-collection-card-image {
   display: block;
   width: 100%;
@@ -391,10 +382,6 @@
   border-color: #8fe38b;
 }
 
-/* ============================================================
-   RESULTS
-============================================================ */
-
 .card-results-count {
   margin: 0 0 20px;
   color: #aaa;
@@ -409,10 +396,6 @@
   color: #ff7777;
 }
 
-/* ============================================================
-   CARD GRID
-============================================================ */
-
 .card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -420,41 +403,41 @@
   width: 100%;
 }
 
-/* ============================================================
-   CARD
-============================================================ */
-
 .card-item {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-
   display: grid;
   grid-template-columns: minmax(180px, 38%) minmax(0, 1fr);
-
   gap: 20px;
   align-items: start;
-
   padding: 18px;
-
   background: #15181b;
   border: 1px solid #2a2f34;
   border-radius: 12px;
   overflow: hidden;
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
 }
-
-/* ============================================================
-   CARD IMAGE
-============================================================ */
+.card-item:hover {
+  transform: translateY(-5px);
+  border-color: #8fe38b;
+  box-shadow:
+    0 0 0 2px #8fe38b,
+    0 0 0 5px #101416,
+    0 0 24px 5px rgba(143, 227, 139, 0.4),
+    0 16px 32px rgba(0, 0, 0, 0.55);
+  z-index: 5;
+}
 
 .card-item-media {
   width: 100%;
   min-width: 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: transparent;
   border-radius: 8px;
   overflow: hidden;
@@ -464,24 +447,16 @@
   display: block;
   width: 100%;
   height: 300px;
-
   object-fit: contain;
   object-position: center;
-
   background: transparent;
   border: none;
   outline: none;
-
   mix-blend-mode: normal;
 }
 
-/* ============================================================
-   CARD INFORMATION
-============================================================ */
-
 .card-item-info {
   min-width: 0;
-
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -489,13 +464,10 @@
 
 .card-item-info h2 {
   margin: 0;
-
   min-width: 0;
   max-width: 100%;
-
   font-size: 1.3rem;
   line-height: 1.2;
-
   overflow-wrap: anywhere;
 }
 
@@ -511,23 +483,12 @@
   font-weight: 700;
 }
 
-/* ============================================================
-   CARD TITLE
-============================================================ */
-
 .card-item-title {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 3px;
 }
-
-/*
-   IMPORTANT:
-   The title renderer uses card-title-content.
-   Keeping this as inline-flex keeps the title icon attached
-   to the title text instead of allowing it to drop down.
-*/
 
 .card-title-content {
   display: inline-flex;
@@ -541,11 +502,6 @@
   overflow-wrap: break-word;
   word-break: normal;
 }
-
-/*
-   TITLE EMOJI ONLY
-   This is intentionally separate from stats.
-*/
 
 .card-title-icon {
   display: inline-block;
@@ -573,10 +529,6 @@
   background: transparent;
 }
 
-/*
-   Existing class icon used elsewhere in the title.
-*/
-
 .card-title-class-icon {
   width: 18px;
   height: 18px;
@@ -597,19 +549,11 @@
   flex: 0 0 18px;
 }
 
-/* ============================================================
-   TRIBES
-============================================================ */
-
 .card-tribe-line {
   display: flex;
   align-items: center;
   gap: 5px;
 }
-
-/* ============================================================
-   TRAITS
-============================================================ */
 
 .card-traits-line {
   display: flex;
@@ -617,11 +561,6 @@
   gap: 6px;
   flex-wrap: wrap;
 }
-
-/*
-   The label must NOT have the normal field-label bottom margin
-   when it is inside the Traits flex row.
-*/
 
 .card-traits-line > .card-field-label {
   display: inline-flex;
@@ -632,10 +571,6 @@
 
   flex: 0 0 auto;
 }
-
-/*
-   Trait value stays directly beside "Traits:"
-*/
 
 .card-traits-value {
   color: #dde5ea;
@@ -650,10 +585,6 @@
 
   min-width: 0;
 }
-
-/*
-   Rendered trait container.
-*/
 
 .trait-rendered {
   display: inline-flex;
@@ -675,13 +606,6 @@
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
-
-/*
-   THIS is the class your JSX actually uses:
-   className="card-trait-icon"
-
-   Keep it separate from stat/title icons.
-*/
 
 .card-trait-icon {
   display: inline-block;
@@ -710,8 +634,6 @@
   background: transparent;
 }
 
-/* Keep compatibility if any old JSX still uses trait-icon */
-
 .trait-icon {
   width: 18px !important;
   height: 18px !important;
@@ -725,10 +647,6 @@
   flex: 0 0 18px;
 }
 
-/* ============================================================
-   DESCRIPTION LINE
-============================================================ */
-
 .card-description-line {
   display: block;
 }
@@ -738,21 +656,12 @@
   margin-bottom: 0;
 }
 
-/* ============================================================
-   STATS
-============================================================ */
-
 .card-stats-line {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
 }
-
-/*
-   Prevent the normal .card-field-label styles from pushing
-   "Stats:" downward.
-*/
 
 .card-stats-line > .card-field-label {
   display: inline-flex;
@@ -763,11 +672,6 @@
 
   flex: 0 0 auto;
 }
-
-/*
-   Stat value sits on the exact same vertical centerline
-   as "Stats:".
-*/
 
 .card-stats-value {
   display: inline-flex;
@@ -780,12 +684,6 @@
 
   min-width: 0;
 }
-
-/*
-   IMPORTANT:
-   Stats get their own icon class and do NOT share the title
-   icon class anymore.
-*/
 
 .card-stat-icon {
   display: inline-block;
@@ -814,10 +712,6 @@
   background: transparent;
 }
 
-/* ============================================================
-   SUPERPOWERS
-============================================================ */
-
 .card-superpowers {
   width: 100%;
   margin-top: 4px;
@@ -831,10 +725,6 @@
   font-weight: 700;
 }
 
-/*
-   Superpowers are always a clean 2x2 grid.
-*/
-
 .card-superpowers-grid {
   width: 100%;
 
@@ -845,10 +735,6 @@
 
   align-items: stretch;
 }
-
-/*
-   Every superpower gets exactly the same box.
-*/
 
 .card-superpower-button {
   position: relative;
@@ -890,10 +776,6 @@
   transform: translateY(1px);
 }
 
-/*
-   Superpower images stay inside the identical square.
-*/
-
 .card-superpower-button img {
   display: block;
 
@@ -915,10 +797,6 @@
 
   mix-blend-mode: normal;
 }
-
-/* ============================================================
-   DESCRIPTION
-============================================================ */
 
 .card-description-box {
   width: 100%;
@@ -947,10 +825,6 @@
   font-size: 0.92rem;
   line-height: 1.4;
 }
-
-/* ============================================================
-   CARD BUTTON
-============================================================ */
 
 .card-item-info > button {
   align-self: flex-start;
@@ -984,10 +858,6 @@
   color: #8fe38b;
 }
 
-/* ============================================================
-   RARITY COLORS
-============================================================ */
-
 .card-item[data-rarity="Legendary"] {
   background: linear-gradient(135deg, #c47aeb 0%, #f7f0a8 50%, #8ac5e8 100%);
 }
@@ -1016,10 +886,6 @@
   background-color: #27272a;
 }
 
-/* ============================================================
-   LIGHT RARITY TEXT
-============================================================ */
-
 .card-item[data-rarity="Common"],
 .card-item[data-rarity="Uncommon"] {
   color: #1a1a1a;
@@ -1044,10 +910,6 @@
   color: #1a1a1a;
 }
 
-/* ============================================================
-   LEGENDARY TEXT
-============================================================ */
-
 .card-item[data-rarity="Legendary"] .card-item-info,
 .card-item[data-rarity="Legendary"] .card-item-info p,
 .card-item[data-rarity="Legendary"] .trait-rendered u,
@@ -1062,9 +924,6 @@
 
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
-/* ============================================================
-   CARD TEXT SHADOW
-============================================================ */
 
 .card-item:not([data-rarity="Legendary"]) .card-item-info,
 .card-item:not([data-rarity="Legendary"]) .card-item-info h2,
@@ -1074,9 +933,6 @@
 .card-item:not([data-rarity="Legendary"]) .card-item-info u {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
-/* ============================================================
-   ABILITY ICON
-============================================================ */
 
 .card-ability-icon {
   width: 18px !important;
@@ -1088,10 +944,6 @@
   object-fit: contain;
   vertical-align: middle;
 }
-
-/* ============================================================
-   TABLET
-============================================================ */
 
 @media (max-width: 1100px) {
   .card-information-page {
@@ -1112,10 +964,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-
-/* ============================================================
-   MOBILE
-============================================================ */
 
 @media (max-width: 700px) {
   .profile-collection-grid {
@@ -1188,12 +1036,8 @@
   }
 }
 
-/* ============================================================
-   SMALL MOBILE
-============================================================ */
-
 @media (max-width: 450px) {
-    .profile-collection-grid {
+  .profile-collection-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 5px;
   }

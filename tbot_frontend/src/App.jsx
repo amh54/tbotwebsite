@@ -40,7 +40,7 @@ import MyBugReports from "./pages/profile/myBugReports.jsx";
 import PublicDecks from "./pages/decks/publicDecks.jsx";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-
+import DiscordServers from "./pages/discordServers.jsx";
 function HomePage() {
   const [profileSlug, setProfileSlug] = useState("");
 
@@ -65,7 +65,7 @@ function HomePage() {
       } catch {}
     };
 
-    loadProfile();
+    void loadProfile();
 
     return () => {
       cancelled = true;
@@ -186,7 +186,8 @@ function HomePage() {
             <div className="grave-content">
               <h3>Find Player Decks</h3>
               <p>
-                Browse public PVZH players and discover the decks they have uploaded to the website
+                Browse public PVZH players and discover the decks they have
+                uploaded to the website
               </p>
               <div className="grave-links">
                 <Link to="/users">Browse Users →</Link>
@@ -455,7 +456,7 @@ function App() {
         <Route path="/legacydecks" element={<LegacyDecksPage />} />
 
         <Route path="/cardinfo" element={<CardInfo />} />
-
+        <Route path="/servers" element={<DiscordServers />} />
         <Route path="/keeporscrap" element={<KeepOrScrap />} />
 
         <Route path="/heroinfo" element={<HeroInfo />} />
