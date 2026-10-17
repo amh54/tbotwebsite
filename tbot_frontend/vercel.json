@@ -248,6 +248,19 @@
       "destination": "/api/deck-og?path=/bugreport"
     },
     {
+      "source": "/servers",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": {
+            "re": "(discordbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|skypeuripreview|googlebot|bingbot|yandexbot|duckduckbot)"
+          }
+        }
+      ],
+      "destination": "/api/deck-og?path=/servers"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "https://api.pvzhtbot.com/sitemap.xml"
     },
