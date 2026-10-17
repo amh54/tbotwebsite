@@ -87,7 +87,7 @@ def download_deck_image(request, deckid):
 
     return _download_image(
         deck.image,
-        f"{deck.deckid}-{deck.name or 'decklist'}",
+        f"{deck.name or 'decklist'}-{deck.deckid}",
     )
 
 
@@ -106,7 +106,7 @@ def download_legacy_deck_image(request, deckid):
 
     return _download_image(
         deck.image,
-        f"{deck.deckid}-{deck.name or 'legacy-deck'}",
+        f"{deck.name or 'legacy-deck'}-{deck.deckid}",
     )
 
 
