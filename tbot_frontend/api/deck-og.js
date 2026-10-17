@@ -86,7 +86,7 @@ const PAGE_METADATA = {
   "/servers": {
     title: "PvZ Heroes Discord Servers - Tbot",
     description:
-      "Find PvZ Heroes Discord servers and communities. Explore Plants vs. Zombies Heroes servers for tournaments, deck building, strategy, and connecting with other players.",
+      "Explore Plants vs. Zombies Heroes servers for tournaments, deck building, strategy, and connecting with other players.",
   },
 };
 
