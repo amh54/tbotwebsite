@@ -13,6 +13,56 @@
   min-width: 0;
 }
 
+.deck-page .deck-content {
+  display: block;
+  overflow: visible;
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  text-align: left;
+}
+
+.deck-page .profile-header.deckbuilder-profile-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 18px;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 24px;
+  padding: 24px;
+  box-sizing: border-box;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  transform: none;
+  text-align: left;
+}
+
+.deck-page .deckbuilder-profile-header .profile-avatar {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.deck-page .deckbuilder-profile-header .profile-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.deck-page .deckbuilder-profile-header .profile-social-links {
+  justify-content: flex-start;
+}
+
+.deck-page .deckbuilder-profile-header .profile-header-actions {
+  margin-left: auto;
+}
+
 .user-decklists-avatar {
   width: 80px;
   height: 80px;
@@ -25,18 +75,18 @@
 }
 
 .user-decklists-avatar-image {
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
   object-fit: cover;
 }
 
 .user-decklists-avatar-placeholder {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
   background: #202020;
   color: #8fe38b;
   font-size: 30px;
@@ -51,36 +101,14 @@
   margin: 0;
   color: #ffffff;
 }
-.profile-tab-content {
-  width: min(1100px, 100%) !important;
-  margin: 0 auto !important;
-}
 
-.profile-tabs {
-  margin-bottom: 12px !important;
-}
-
-.profile-tab-content .card-information-page {
-  padding: 0 !important;
-  min-height: 0 !important;
-  background: transparent !important;
-}
-
-.profile-tab-content .card-information-page h1 {
-  margin: 0 0 16px !important;
-  line-height: 1.1 !important;
-}
-
-.profile-decks {
-  margin-top: 12px !important;
-}
 .user-decklists-profile-info > p {
   margin: 6px 0 0;
 }
 
 .user-decklists-profile-bio {
   max-width: 700px;
-  margin-top: 8px !important;
+  margin-top: 8px;
   color: #b7b7b7;
   line-height: 1.5;
 }
@@ -178,7 +206,46 @@
   filter: brightness(1.05);
 }
 
+.profile-tab-content {
+  width: 100%;
+  margin: 0;
+}
+
+.profile-tabs {
+  margin-bottom: 12px;
+}
+.deck-page .profile-share-inline {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 14px;
+}
+
+.deck-page .profile-share-inline .profile-share-button {
+  width: auto;
+  min-height: 40px;
+}
+.profile-tab-content .card-information-page {
+  padding: 24px;
+  box-sizing: border-box;
+  height: auto;
+  overflow: visible;
+  min-height: 0;
+  background: transparent;
+}
+
+.profile-tab-content .card-information-page h1 {
+  margin: 0 0 16px;
+  line-height: 1.1;
+}
+
+.profile-decks {
+  margin-top: 12px;
+}
+
 @media (max-width: 700px) {
+  .deck-page .profile-share-inline .profile-share-button {
+    width: auto;
+  }
   .user-decklists-header {
     align-items: flex-start;
     flex-direction: column;
@@ -204,5 +271,9 @@
 
   .user-decklists-share {
     width: 100%;
+  }
+
+  .deck-page .profile-header.deckbuilder-profile-header {
+    gap: 12px;
   }
 }

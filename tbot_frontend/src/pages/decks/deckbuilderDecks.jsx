@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { useParams } from "react-router-dom";
-
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import DeckCard from "../../components/modals/deckComponent.jsx";
 import RandomDeckButton from "../../components/decks/randomDeckButton.jsx";
 import FilterDropdown from "../../components/filterDropdown.jsx";
@@ -32,6 +33,39 @@ import "../../css/userDecklists.css";
 
 import { API_BASE_URL } from "../../utils/api.js";
 
+const socialConnections = [
+  {
+    key: "youtube_url",
+    label: "YouTube",
+    path: "M23 12s0-4-1-5-2-1-4-1H6C4 6 3 6 2 7s-1 5-1 5 0 4 1 5 2 1 4 1h12c2 0 3 0 4-1s1-5 1-5Z",
+  },
+  {
+    key: "twitch_url",
+    label: "Twitch",
+    path: "M4 2h17v12l-5 5h-4l-3 3v-3H4V2Zm3 3v10h3v3l3-3h4l2-2V5H7Zm3 2h2v5h-2V7Zm5 0h2v5h-2V7Z",
+  },
+  {
+    key: "tiktok_url",
+    label: "TikTok",
+    path: "M15 3c.3 2 1.4 3.5 3.5 4.1V10c-1.4-.1-2.7-.6-3.5-1.4v6.2a5.2 5.2 0 1 1-4.5-5.1v2.9a2.3 2.3 0 1 0 1.6 2.2V3H15Z",
+  },
+  {
+    key: "instagram_url",
+    label: "Instagram",
+    type: "instagram",
+  },
+  {
+    key: "twitter_url",
+    label: "Twitter/X",
+    path: "M18.9 2H22l-6.8 7.8L23.2 22h-6.2l-4.9-6.4L6.5 22H3.4l7.3-8.4L2.8 2H9l4.4 5.8L18.9 2Zm-1.1 17.7h1.7L8.3 4.2H6.5l11.3 15.5Z",
+  },
+  {
+    key: "discord_server_url",
+    label: "Discord Server",
+    path: "M19.5 5.2A16.7 16.7 0 0 0 15.3 4l-.5 1a15 15 0 0 0-5.6 0l-.5-1a16.7 16.7 0 0 0-4.2 1.2C1.8 9.1 1.1 13 1.4 16.9a16.9 16.9 0 0 0 5.2 2.6l1.3-1.8c-.7-.3-1.3-.7-1.9-1.1l.5-.4c3.7 1.7 7.7 1.7 11.4 0l.5.4c-.6.4-1.2.8-1.9 1.1l1.3 1.8a16.9 16.9 0 0 0 5.2-2.6c.4-4.5-.8-8.4-3.5-11.7ZM8.5 14.1c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Zm7 0c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Z",
+  },
+];
+
 function DeckbuilderDecks() {
   const { deckbuilder_name } = useParams();
 
@@ -41,7 +75,7 @@ function DeckbuilderDecks() {
   const [decks, setDecks] = useState([]);
   const [deckCount, setDeckCount] = useState(null);
   const [allCards, setAllCards] = useState([]);
-
+  const [shareLabel, setShareLabel] = useState("Share Deckbuilder");
   const [search, setSearch] = useState("");
   const [side, setSide] = useState("All");
   const [hero, setHero] = useState([]);
@@ -81,6 +115,19 @@ function DeckbuilderDecks() {
       deckKey: null,
     }));
   };
+  const handleShareDeckbuilder = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareLabel("Link Copied!");
+      window.setTimeout(() => setShareLabel("Share Deckbuilder"), 2000);
+    } catch {
+      setShareLabel("Unable to Copy Link");
+      window.setTimeout(() => setShareLabel("Share Deckbuilder"), 2000);
+    }
+  };
+  const availableSocialConnections = socialConnections.filter(({ key }) =>
+    normalizeText(deckbuilder?.[key]),
+  );
   useEffect(() => {
     const controller = new AbortController();
 
@@ -557,43 +604,119 @@ function DeckbuilderDecks() {
       <Navbar />
 
       <main className="deck-content">
-        <div className="user-decklists-header">
-          <div className="user-decklists-profile">
-            <div className="user-decklists-avatar">
-              {avatarUrl && !avatarError ? (
-                <img
-                  src={avatarUrl}
-                  alt={`${displayName} avatar`}
-                  className="user-decklists-avatar-image"
-                  onError={() => setAvatarError(true)}
-                />
-              ) : (
-                <div className="user-decklists-avatar-placeholder">
-                  {displayName.charAt(0).toUpperCase()}
-                </div>
-              )}
+        <section className="profile-header deckbuilder-profile-header">
+          <div className="profile-avatar">
+            {avatarUrl && !avatarError ? (
+              <img
+                src={avatarUrl}
+                alt={`${displayName} avatar`}
+                onError={() => setAvatarError(true)}
+              />
+            ) : (
+              <div className="profile-avatar-placeholder">
+                {displayName.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+
+          <div className="profile-info">
+            <h1>{displayName}</h1>
+
+            <div className="profile-username">
+              @{deckbuilder?.username || displayName}
             </div>
 
-            <div className="user-decklists-profile-info">
-              <h1>{displayName} Decklists</h1>
+            {deckbuilder?.bio && (
+              <div className="profile-bio">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  skipHtml
+                  components={{
+                    a: ({ node, ...props }) => (
+                      <a {...props} target="_blank" rel="noopener noreferrer" />
+                    ),
+                  }}
+                >
+                  {deckbuilder.bio}
+                </ReactMarkdown>
+              </div>
+            )}
 
-              {deckbuilder?.username && (
-                <p className="user-decklists-profile-bio">
-                  @{deckbuilder.username}
-                </p>
-              )}
+            {availableSocialConnections.length > 0 && (
+              <div className="profile-social-links">
+                {availableSocialConnections.map(
+                  ({ key, label, path, type }) => (
+                    <a
+                      key={key}
+                      href={normalizeText(deckbuilder[key])}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="profile-social-link"
+                      aria-label={label}
+                      title={label}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        className="profile-social-icon"
+                      >
+                        {type === "instagram" ? (
+                          <>
+                            <rect
+                              x="3"
+                              y="3"
+                              width="18"
+                              height="18"
+                              rx="5"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            />
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            />
+                            <circle
+                              cx="17.5"
+                              cy="6.5"
+                              r="1"
+                              fill="currentColor"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <path d={path} fill="currentColor" />
+                            {key === "youtube_url" && (
+                              <path d="m10 9 5 3-5 3V9Z" fill="#101416" />
+                            )}
+                          </>
+                        )}
+                      </svg>
+                      <span className="profile-social-label">{label}</span>
+                    </a>
+                  ),
+                )}
+              </div>
+            )}
 
-              {deckbuilder?.bio && (
-                <p className="user-decklists-profile-bio">{deckbuilder.bio}</p>
-              )}
-
-              <p className="user-decklists-profile-bio">
-                {deckCount ?? 0}
-                {" Tbot Decks"}
-              </p>
+            <div className="profile-meta">
+              {deckCount ?? 0} {deckCount === 1 ? "deck" : "decks"}
             </div>
           </div>
-        </div>
+          <div className="profile-share-inline">
+            <button
+              type="button"
+              className="profile-share-button"
+              onClick={handleShareDeckbuilder}
+            >
+              {shareLabel}
+            </button>
+          </div>
+        </section>
 
         <div className="deck-browser">
           <div className="tabs">

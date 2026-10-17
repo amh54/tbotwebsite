@@ -1,13 +1,13 @@
 .profile-page {
-  width: min(1450px, calc(100% - 80px));
-  margin: 0 auto;
-  padding: 20px 0 80px;
+  width: 100%;
+  margin: 0;
+  padding: 20px 40px 80px;
   box-sizing: border-box;
 }
 
 .profile-page > section {
-  width: min(1100px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 .profile-header {
@@ -15,8 +15,8 @@
   display: flex;
   align-items: center;
   gap: 28px;
-  width: min(1100px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 32px;
   box-sizing: border-box;
   background: #15181b;
@@ -261,8 +261,8 @@
   display: flex;
   align-items: stretch;
   gap: 6px;
-  width: min(1100px, 100%);
-  margin: 28px auto 0;
+  width: 100%;
+  margin: 28px 0 0;
   padding: 5px;
   box-sizing: border-box;
   background: #15181b;
@@ -366,7 +366,7 @@
 
 .profile-tab-content {
   width: 100%;
-  margin-top: 0;
+  margin: 0;
   padding-top: 0;
 }
 .profile-decks {
@@ -550,8 +550,8 @@
 }
 
 .profile-loading {
-  width: min(1100px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 80px 24px;
   box-sizing: border-box;
   text-align: center;
@@ -560,8 +560,8 @@
 }
 
 .profile-error {
-  width: min(1100px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 80px 24px;
   box-sizing: border-box;
   text-align: center;
@@ -809,9 +809,9 @@
 
   .profile-header {
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     padding: 28px 20px;
-    text-align: center;
+    text-align: left;
   }
 
   .profile-avatar {
