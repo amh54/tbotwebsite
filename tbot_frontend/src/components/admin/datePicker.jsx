@@ -123,7 +123,7 @@ function DatePicker({
       </button>
 
       {open && (
-        <div className="custom-date-calendar" role="dialog" aria-label={label}>
+        <dialog className="custom-date-calendar" open aria-label={label}>
           <div className="custom-date-calendar-header">
             <button
               type="button"
@@ -158,9 +158,12 @@ function DatePicker({
           </div>
 
           <div className="custom-date-grid">
-            {days.map((day, index) =>
+            {days.map((day) =>
               day === null ? (
-                <span key={`empty-${index}`} className="custom-date-empty" />
+                <span
+                  key={`empty-${month.getFullYear()}-${month.getMonth()}-${days.indexOf(day)}`}
+                  className="custom-date-empty"
+                />
               ) : (
                 <button
                   key={day}
@@ -213,7 +216,7 @@ function DatePicker({
               Today
             </button>
           </div>
-        </div>
+        </dialog>
       )}
     </div>
   );

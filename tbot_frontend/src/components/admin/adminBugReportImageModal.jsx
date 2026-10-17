@@ -7,17 +7,11 @@ function AdminBugReportImageModal({
   }
 
   return (
-    <div
-      className="admin-bugreport-image-overlay"
-      onMouseDown={(event) => {
-        if (
-          event.target ===
-          event.currentTarget
-        ) {
-          onClose();
-        }
-      }}
-    >
+  <dialog
+  className="admin-bugreport-image-overlay"
+  open
+  aria-label="Bug report screenshot"
+>
       <button
         type="button"
         className="admin-bugreport-image-close"
@@ -40,7 +34,7 @@ function AdminBugReportImageModal({
             "Unable to load screenshot";
         }}
       />
-    </div>
+    </dialog>
   );
 }
 

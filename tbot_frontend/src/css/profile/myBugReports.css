@@ -131,7 +131,7 @@
   padding: 1px 5px;
   border-radius: 4px;
   background: #1c2123;
-  color: #69746f;
+  color: #b0bbb5;
   font-size: 0.68rem;
   text-align: center;
 }
@@ -420,16 +420,23 @@
 }
 
 /* Modal */
-
 .my-bug-report-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 10000;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: none;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: 40px 20px 20px;
   background: rgba(5, 7, 8, 0.88);
+  color: inherit;
+  overflow-y: auto;
 }
 
 .my-bug-report-modal {

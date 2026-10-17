@@ -314,13 +314,10 @@ function MySuggestions() {
       setCollectionLoading(true);
 
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/user-cards/`,
-          {
-            method: "GET",
-            credentials: "include",
-          },
-        );
+        const response = await fetch(`${API_BASE_URL}/tbotapp/user-cards/`, {
+          method: "GET",
+          credentials: "include",
+        });
 
         if (!response.ok) {
           throw new Error("Unable to load your collection.");
@@ -386,15 +383,26 @@ function MySuggestions() {
     [userCollection],
   );
 
-  const {
-    heroOptions,
-    categoryOptions,
-    archetypeOptions,
-    collectionOptions,
-  } = useMemo(
-    () =>
-      getFilterOptions({
-        decks: sortedDeckSuggestions,
+  const { heroOptions, categoryOptions, archetypeOptions, collectionOptions } =
+    useMemo(
+      () =>
+        getFilterOptions({
+          decks: sortedDeckSuggestions,
+          allCards,
+          search,
+          side,
+          hero,
+          category,
+          archetype,
+          collection,
+          collectionMap,
+          collectionLoading,
+          collectionLoaded,
+          discordUser,
+          authLoading,
+        }),
+      [
+        sortedDeckSuggestions,
         allCards,
         search,
         side,
@@ -407,23 +415,8 @@ function MySuggestions() {
         collectionLoaded,
         discordUser,
         authLoading,
-      }),
-    [
-      sortedDeckSuggestions,
-      allCards,
-      search,
-      side,
-      hero,
-      category,
-      archetype,
-      collection,
-      collectionMap,
-      collectionLoading,
-      collectionLoaded,
-      discordUser,
-      authLoading,
-    ],
-  );
+      ],
+    );
 
   const filteredDeckSuggestions = useMemo(
     () =>
@@ -461,15 +454,13 @@ function MySuggestions() {
     return {
       all: combined.length,
       decks: deckSuggestions.length,
-      pending: combined.filter(
-        (suggestion) => suggestion.status === "pending",
-      ).length,
+      pending: combined.filter((suggestion) => suggestion.status === "pending")
+        .length,
       reviewing: combined.filter(
         (suggestion) => suggestion.status === "reviewing",
       ).length,
-      planned: combined.filter(
-        (suggestion) => suggestion.status === "planned",
-      ).length,
+      planned: combined.filter((suggestion) => suggestion.status === "planned")
+        .length,
       completed: combined.filter(
         (suggestion) => suggestion.status === "completed",
       ).length,
@@ -517,12 +508,12 @@ function MySuggestions() {
 
   return (
     <>
-    <Seo
-      title="My Suggestions - Tbot"
-      description="View and track the suggestions you have submitted to the Tbot Plants vs. Zombies Heroes website."
-      canonical="/mysuggestions"
-      noindex
-    />
+      <Seo
+        title="My Suggestions - Tbot"
+        description="View and track the suggestions you have submitted to the Tbot Plants vs. Zombies Heroes website."
+        canonical="/mysuggestions"
+        noindex
+      />
       <Navbar />
 
       <main className="my-bug-reports-page">
@@ -542,9 +533,7 @@ function MySuggestions() {
             <div className="my-bug-reports-total">
               <strong>{counts.all}</strong>
 
-              <span>
-                {counts.all === 1 ? "Suggestion" : "Suggestions"}
-              </span>
+              <span>{counts.all === 1 ? "Suggestion" : "Suggestions"}</span>
             </div>
           </section>
 
@@ -555,7 +544,7 @@ function MySuggestions() {
                 className={filter === "all" ? "active" : ""}
                 onClick={() => setFilter("all")}
               >
-                All
+                <p>All</p>
                 <span>{counts.all}</span>
               </button>
 
@@ -564,7 +553,7 @@ function MySuggestions() {
                 className={filter === "pending" ? "active" : ""}
                 onClick={() => setFilter("pending")}
               >
-                Pending
+                <p>Pending</p>
                 <span>{counts.pending}</span>
               </button>
 
@@ -573,7 +562,7 @@ function MySuggestions() {
                 className={filter === "reviewing" ? "active" : ""}
                 onClick={() => setFilter("reviewing")}
               >
-                Reviewing
+                <p>Reviewing</p>
                 <span>{counts.reviewing}</span>
               </button>
 
@@ -582,7 +571,7 @@ function MySuggestions() {
                 className={filter === "planned" ? "active" : ""}
                 onClick={() => setFilter("planned")}
               >
-                Planned
+                <p>Planned</p>
                 <span>{counts.planned}</span>
               </button>
 
@@ -591,7 +580,7 @@ function MySuggestions() {
                 className={filter === "completed" ? "active" : ""}
                 onClick={() => setFilter("completed")}
               >
-                Completed
+                <p>Completed</p>
                 <span>{counts.completed}</span>
               </button>
 
@@ -600,7 +589,7 @@ function MySuggestions() {
                 className={filter === "declined" ? "active" : ""}
                 onClick={() => setFilter("declined")}
               >
-                Declined
+                <p>Declined</p>
                 <span>{counts.declined}</span>
               </button>
 
@@ -609,7 +598,7 @@ function MySuggestions() {
                 className={filter === "decks" ? "active" : ""}
                 onClick={() => setFilter("decks")}
               >
-                Decks
+                <p>Decks</p>
                 <span>{counts.decks}</span>
               </button>
             </section>
@@ -631,10 +620,7 @@ function MySuggestions() {
 
               <p>{error}</p>
 
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-              >
+              <button type="button" onClick={() => window.location.reload()}>
                 Try Again
               </button>
             </section>
@@ -645,12 +631,13 @@ function MySuggestions() {
               <div className="my-bug-reports-state-icon">✓</div>
 
               <h2>No suggestions yet</h2>
-
               <p>
-                You haven't submitted any suggestions. If you have an idea for
-                Tbot, use
-                <strong> Submit a Suggestion </strong>
-                from the Website Info menu.
+                <span>
+                  You haven't submitted any suggestions. If you have an idea for
+                  Tbot, use{" "}
+                </span>
+                <strong>Submit a Suggestion</strong>
+                <span> from the Website Info menu.</span>
               </p>
             </section>
           )}
@@ -675,10 +662,7 @@ function MySuggestions() {
             filteredSuggestions.length > 0 && (
               <section className="my-bug-reports-list">
                 {filteredSuggestions.map((suggestion) => (
-                  <article
-                    key={suggestion.id}
-                    className="my-bug-report-card"
-                  >
+                  <article key={suggestion.id} className="my-bug-report-card">
                     <div className="my-bug-report-card-top">
                       <div className="my-bug-report-card-title">
                         <h2>{suggestion.title}</h2>
@@ -715,13 +699,9 @@ function MySuggestions() {
 
                     <div className="my-bug-report-card-bottom">
                       <div className="my-bug-report-status-message">
-                        <strong>
-                          {getStatusLabel(suggestion.status)}
-                        </strong>
+                        <strong>{getStatusLabel(suggestion.status)}</strong>
 
-                        <span>
-                          {getStatusDescription(suggestion.status)}
-                        </span>
+                        <span>{getStatusDescription(suggestion.status)}</span>
                       </div>
 
                       <div className="my-bug-report-actions">
@@ -773,7 +753,7 @@ function MySuggestions() {
                     alt="Plants"
                     className="tab-icon"
                   />
-                  Plants
+                  <span>Plants</span>
                 </button>
 
                 <button
@@ -786,7 +766,7 @@ function MySuggestions() {
                     alt="Zombies"
                     className="tab-icon"
                   />
-                  Zombies
+                  <span>Zombies</span>
                 </button>
               </div>
 
@@ -855,19 +835,17 @@ function MySuggestions() {
               {collectionLoginMessage && (
                 <div className="collection-login-message">
                   <strong>Discord login required</strong>
-                  <span>
-                    Log in with Discord to use the Collection filter.
-                  </span>
+                  <span>Log in with Discord to use the Collection filter.</span>
                 </div>
               )}
 
               {filteredDeckSuggestions.length > 0 ? (
-                
                 <div className="deck-grid">
-                                <p className="results-count">
-                Showing {filteredDeckSuggestions.length} of{" "}
-                {deckSuggestions.length} deck suggestions
-              </p> <br/>
+                  <p className="results-count">
+                    Showing {filteredDeckSuggestions.length} of{" "}
+                    {deckSuggestions.length} deck suggestions
+                  </p>{" "}
+                  <br />
                   {filteredDeckSuggestions.map((deckSuggestion) => (
                     <UserDeckSuggestionCard
                       key={deckSuggestion.id}
@@ -881,9 +859,7 @@ function MySuggestions() {
 
                   <h2>No deck suggestions found</h2>
 
-                  <p>
-                    No deck suggestions match your current filters.
-                  </p>
+                  <p>No deck suggestions match your current filters.</p>
                 </section>
               )}
             </section>
@@ -892,17 +868,12 @@ function MySuggestions() {
       </main>
 
       {selectedSuggestion && (
-        <div
-          className="my-bug-report-modal-overlay"
-          onClick={closeDetails}
-          role="presentation"
-        >
+        <dialog
+  className="my-bug-report-modal-overlay"
+  open
+>
           <div
             className="my-bug-report-modal"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="my-suggestion-modal-title"
           >
             <div className="my-bug-report-modal-header">
               <div>
@@ -932,42 +903,32 @@ function MySuggestions() {
                 {getStatusLabel(selectedSuggestion.status)}
               </span>
 
-              <p>
-                {getStatusDescription(selectedSuggestion.status)}
-              </p>
+              <p>{getStatusDescription(selectedSuggestion.status)}</p>
             </div>
 
             <div className="my-bug-report-detail-grid">
               <div>
                 <span>Category</span>
 
-                <strong>
-                  {getCategoryLabel(selectedSuggestion.category)}
-                </strong>
+                <strong>{getCategoryLabel(selectedSuggestion.category)}</strong>
               </div>
 
               <div>
                 <span>Status</span>
 
-                <strong>
-                  {getStatusLabel(selectedSuggestion.status)}
-                </strong>
+                <strong>{getStatusLabel(selectedSuggestion.status)}</strong>
               </div>
 
               <div>
                 <span>Submitted</span>
 
-                <strong>
-                  {formatDate(selectedSuggestion.created_at)}
-                </strong>
+                <strong>{formatDate(selectedSuggestion.created_at)}</strong>
               </div>
 
               <div>
                 <span>Last Updated</span>
 
-                <strong>
-                  {formatDate(selectedSuggestion.updated_at)}
-                </strong>
+                <strong>{formatDate(selectedSuggestion.updated_at)}</strong>
               </div>
             </div>
 
@@ -1016,7 +977,7 @@ function MySuggestions() {
               </button>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
 
       <Footer />

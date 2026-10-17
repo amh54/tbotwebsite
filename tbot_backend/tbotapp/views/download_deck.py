@@ -119,5 +119,5 @@ def download_user_deck_image(request, deck_id):
 
     return _download_image(
         deck.image,
-        f"{deck.id}-{deck.name or 'decklist'}",
+        f"{deck.name or 'decklist'}-{deck.id}",
     )
