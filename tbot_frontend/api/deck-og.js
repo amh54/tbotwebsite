@@ -2,7 +2,6 @@ const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
 
 const SITE_URL = "https://pvzhtbot.com";
 
-
 const DEFAULT_TITLE = "Tbot - Plants vs. Zombies Heroes";
 
 const DEFAULT_DESCRIPTION =
@@ -13,13 +12,13 @@ const PAGE_METADATA = {
     title: "Tbot - Plants vs. Zombies Heroes",
     description:
       "A community database for Plants vs. Zombies Heroes cards, heroes, decks, collections, and strategy.",
-    image: "https://cdn.pvzhtbot.com/art/home_backgound_by_flowerr.webp"
+    image: "https://cdn.pvzhtbot.com/art/home_backgound_by_flowerr.webp",
   },
   "/decklists": {
     title: "Decklists - Tbot",
     description:
       "Browse the Tbot Plants vs. Zombies Heroes community deck database.",
-    image: "https://cdn.pvzhtbot.com/art/deckbannerbyairheadz.webp"
+    image: "https://cdn.pvzhtbot.com/art/deckbannerbyairheadz.webp",
   },
   "/cardinfo": {
     title: "Card Information - Tbot",
@@ -42,10 +41,10 @@ const PAGE_METADATA = {
       "Browse the older Tbot Plants vs. Zombies Heroes deck database.",
   },
   "/publicdecks": {
-  title: "Public Decks - Tbot",
-  description:
-    "Browse public Plants vs. Zombies Heroes decks uploaded by the Tbot community.",
-},
+    title: "Public Decks - Tbot",
+    description:
+      "Browse public Plants vs. Zombies Heroes decks uploaded by the Tbot community.",
+  },
   "/deckbuilders": {
     title: "Deckbuilders - Tbot",
     description:
@@ -61,7 +60,7 @@ const PAGE_METADATA = {
     description:
       "Learn how to use Tbot to browse cards, heroes, decks, collections, profiles, and other features.",
   },
-    "/suggestions": {
+  "/suggestions": {
     title: "Submit a Suggestion - Tbot",
     description:
       "Suggest improvements, features, UI changes, and other ideas for the Tbot Plants vs. Zombies Heroes website.",
@@ -84,11 +83,11 @@ const PAGE_METADATA = {
     title: "Privacy Policy - Tbot",
     description: "Read the Tbot Privacy Policy.",
   },
- "/servers": {
-  title: "PvZ Heroes Discord Servers - Tbot",
-  description:
-    "Find PvZ Heroes (PVZH) Discord servers and communities. Explore Plants vs. Zombies Heroes servers for tournaments, deck building, strategy, and connecting with other players.",
-},
+  "/servers": {
+    title: "PvZ Heroes Discord Servers - Tbot",
+    description:
+      "Find PvZ Heroes (PVZH) Discord servers and communities. Explore Plants vs. Zombies Heroes servers for tournaments, deck building, strategy, and connecting with other players.",
+  },
 };
 
 const PRIVATE_ROUTES = [
@@ -106,7 +105,7 @@ const PRIVATE_ROUTES = [
   "/admin/legacy-decks",
   "/admin/user-decks",
   "/my-bug-reports",
-  "/my-suggestions"
+  "/my-suggestions",
 ];
 
 function normalizeText(value) {
@@ -534,7 +533,7 @@ function buildProfileOg(slug) {
 
   return {
     title: `${name} - Tbot Profile`,
-    description: `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`
+    description: `View ${name}'s Plants vs. Zombies Heroes profile and personal decks on Tbot.`,
   };
 }
 
@@ -950,7 +949,7 @@ export default async function handler(req, res) {
     "Cache-Control",
     isProfileMetadata
       ? "no-store, max-age=0"
-      : "public, s-maxage=300, stale-while-revalidate=3600",
+      : "no-store, max-age=0, must-revalidate",
   );
 
   return res.end(html);
