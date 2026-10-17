@@ -85,7 +85,7 @@ const PAGE_METADATA = {
     description: "Read the Tbot Privacy Policy.",
   },
  "/servers": {
-  title: "PvZ Heroes Discord Servers | Tbot",
+  title: "PvZ Heroes Discord Servers - Tbot",
   description:
     "Find PvZ Heroes (PVZH) Discord servers and communities. Explore Plants vs. Zombies Heroes servers for tournaments, deck building, strategy, and connecting with other players.",
 },
