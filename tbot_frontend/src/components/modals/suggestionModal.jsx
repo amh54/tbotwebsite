@@ -75,6 +75,9 @@ const SUGGESTION_PAGES = [
     value: "/users",
     label: "Users",
   },
+  {value: "/servers",
+    label: "Discord Servers"
+  },
   {
     value: "/updates",
     label: "Site Updates",
