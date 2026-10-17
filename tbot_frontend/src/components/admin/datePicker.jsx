@@ -1,5 +1,43 @@
 import { useEffect, useRef, useState } from "react";
 
+function parseDate(value) {
+  if (typeof value !== "string" || !value) {
+    return null;
+  }
+
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function formatDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0",
+  )}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 function DatePicker({
   label,
   value,
@@ -9,24 +47,24 @@ function DatePicker({
   setOpenPicker,
 }) {
   const open = openPicker === pickerId;
-
-  const [viewDate, setViewDate] = useState(() => {
-    if (value) {
-      const [year, month, day] = value.split("-").map(Number);
-
-      if (year && month && day) {
-        return new Date(year, month - 1, day);
-      }
-    }
-
-    return new Date();
-  });
-
+  const selectedDate = parseDate(value);
   const wrapperRef = useRef(null);
+
+  const [viewDate, setViewDate] = useState(
+    () => {
+      const initialDate = parseDate(value);
+      const current = initialDate || new Date();
+
+      return new Date(current.getFullYear(), current.getMonth(), 1);
+    },
+  );
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target)
+      ) {
         setOpenPicker(null);
       }
     };
@@ -39,53 +77,43 @@ function DatePicker({
   }, [setOpenPicker]);
 
   useEffect(() => {
-    if (value) {
-      const [year, month, day] = value.split("-").map(Number);
-
-      if (year && month && day) {
-        setViewDate(new Date(year, month - 1, 1));
-      }
+    if (selectedDate) {
+      setViewDate(
+        new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          1,
+        ),
+      );
     }
   }, [value]);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
-
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const days = [];
-
-  for (let i = 0; i < firstDay; i += 1) {
-    days.push(null);
-  }
-
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    days.push(day);
-  }
-
-  const selectedDate = value
-    ? (() => {
-        const [y, m, d] = value.split("-").map(Number);
-
-        return y && m && d ? new Date(y, m - 1, d) : null;
-      })()
-    : null;
+  const days = [
+    ...Array.from({ length: firstDay }, (_, index) => ({
+      type: "empty",
+      id: `empty-${year}-${month}-${index}`,
+    })),
+    ...Array.from({ length: daysInMonth }, (_, index) => ({
+      type: "day",
+      day: index + 1,
+    })),
+  ];
 
   const today = new Date();
 
   const isSameDate = (a, b) =>
-    a &&
-    b &&
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-
-  const formatDate = (date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-      2,
-      "0",
-    )}-${String(date.getDate()).padStart(2, "0")}`;
+    Boolean(
+      a &&
+        b &&
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate(),
+    );
 
   const displayValue = selectedDate
     ? selectedDate.toLocaleDateString("en-US", {
@@ -107,10 +135,12 @@ function DatePicker({
       <button
         type="button"
         className={`custom-date-input${open ? " is-open" : ""}${
-          value ? " has-value" : ""
+          selectedDate ? " has-value" : ""
         }`}
         onClick={() =>
-          setOpenPicker((current) => (current === pickerId ? null : pickerId))
+          setOpenPicker((current) =>
+            current === pickerId ? null : pickerId,
+          )
         }
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -123,12 +153,18 @@ function DatePicker({
       </button>
 
       {open && (
-        <dialog className="custom-date-calendar" open aria-label={label}>
+        <dialog
+          className="custom-date-calendar"
+          open
+          aria-label={label}
+        >
           <div className="custom-date-calendar-header">
             <button
               type="button"
               className="custom-date-nav"
-              onClick={() => setViewDate(new Date(year, month - 1, 1))}
+              onClick={() =>
+                setViewDate(new Date(year, month - 1, 1))
+              }
               aria-label="Previous month"
             >
               ‹
@@ -144,7 +180,9 @@ function DatePicker({
             <button
               type="button"
               className="custom-date-nav"
-              onClick={() => setViewDate(new Date(year, month + 1, 1))}
+              onClick={() =>
+                setViewDate(new Date(year, month + 1, 1))
+              }
               aria-label="Next month"
             >
               ›
@@ -152,35 +190,47 @@ function DatePicker({
           </div>
 
           <div className="custom-date-weekdays">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <span key={day}>{day}</span>
-            ))}
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+              (day) => (
+                <span key={day}>{day}</span>
+              ),
+            )}
           </div>
 
           <div className="custom-date-grid">
-            {days.map((day) =>
-              day === null ? (
+            {days.map((item) =>
+              item.type === "empty" ? (
                 <span
-                  key={`empty-${month.getFullYear()}-${month.getMonth()}-${days.indexOf(day)}`}
+                  key={item.id}
                   className="custom-date-empty"
+                  aria-hidden="true"
                 />
               ) : (
                 <button
-                  key={day}
+                  key={item.day}
                   type="button"
                   className={`custom-date-day${
-                    selectedDate &&
-                    isSameDate(new Date(year, month, day), selectedDate)
+                    isSameDate(
+                      new Date(year, month, item.day),
+                      selectedDate,
+                    )
                       ? " selected"
                       : ""
                   }${
-                    isSameDate(new Date(year, month, day), today)
+                    isSameDate(
+                      new Date(year, month, item.day),
+                      today,
+                    )
                       ? " today"
                       : ""
                   }`}
-                  onClick={() => selectDay(day)}
+                  onClick={() => selectDay(item.day)}
+                  aria-pressed={isSameDate(
+                    new Date(year, month, item.day),
+                    selectedDate,
+                  )}
                 >
-                  {day}
+                  {item.day}
                 </button>
               ),
             )}
@@ -205,11 +255,13 @@ function DatePicker({
                 const current = new Date();
 
                 onChange(formatDate(current));
-
                 setViewDate(
-                  new Date(current.getFullYear(), current.getMonth(), 1),
+                  new Date(
+                    current.getFullYear(),
+                    current.getMonth(),
+                    1,
+                  ),
                 );
-
                 setOpenPicker(null);
               }}
             >
