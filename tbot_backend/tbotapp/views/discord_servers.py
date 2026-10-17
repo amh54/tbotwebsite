@@ -2,6 +2,9 @@
 from django.db import connection
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 
 
 @require_GET
@@ -34,3 +37,18 @@ def discord_servers(request):
             {"error": "Unable to load Discord servers."},
             status=500,
         )
+
+
+@api_view(["GET"])
+def discord_server_count(request):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM discord_servers")
+        count = cursor.fetchone()[0]
+
+    return Response(
+        {
+            "success": True,
+            "count": count,
+        },
+        status=status.HTTP_200_OK,
+    )

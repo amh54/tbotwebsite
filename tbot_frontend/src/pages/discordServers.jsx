@@ -10,13 +10,53 @@ import "../css/loading.css";
 
 import { API_BASE_URL } from "../utils/api.js";
 
+const STORAGE_KEY = "tbot_discord_servers";
+
+const readSessionCache = () => {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const cached = window.sessionStorage.getItem(STORAGE_KEY);
+    const parsed = cached ? JSON.parse(cached) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeSessionCache = (servers) => {
+  try {
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(servers));
+  } catch {}
+};
+
+const LoadingServers = ({ totalServers }) => (
+  <div className="loading-page">
+    <div className="loading-card">
+      <div className="loading-spinner" />
+      <h2>Loading Discord servers</h2>
+      <p>Finding PvZ Heroes Discord communities.</p>
+      <div className="loading-status">
+        <span>Loading server data</span>
+        <strong>
+          {totalServers === null
+            ? "Loading..."
+            : `${totalServers} Discord servers`}
+        </strong>
+      </div>
+    </div>
+  </div>
+);
+
 function DiscordServers() {
-  const [servers, setServers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [servers, setServers] = useState(readSessionCache);
+  const [loading, setLoading] = useState(() => readSessionCache().length === 0);
   const [error, setError] = useState("");
+  const [totalServers, setTotalServers] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
+    let active = true;
 
     const loadServers = async () => {
       try {
@@ -31,33 +71,57 @@ function DiscordServers() {
           throw new Error(data?.error || "Unable to load Discord servers.");
         }
 
-        setServers(Array.isArray(data.servers) ? data.servers : []);
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          setError(err.message || "Unable to load Discord servers right now.");
+        const results = Array.isArray(data.servers) ? data.servers : [];
+
+        if (active) {
+          setServers(results);
+          setError("");
+          writeSessionCache(results);
+          setLoading(false);
         }
-      } finally {
-        if (!controller.signal.aborted) {
+      } catch (err) {
+        if (active && err.name !== "AbortError") {
+          setError(err.message || "Unable to load Discord servers.");
           setLoading(false);
         }
       }
     };
 
-    void loadServers();
+   const loadCount = async () => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/tbotapp/servers/count/`,
+      {
+        headers: { Accept: "application/json" },
+      },
+    );
 
-    return () => controller.abort();
+    const data = await response.json();
+
+    if (response.ok && Number.isInteger(data.count)) {
+      setTotalServers(data.count);
+    }
+  } catch {
+    // Keep the server list usable if the count request fails.
+  }
+};
+
+    void loadServers();
+    void loadCount();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, []);
+
+  if (loading) {
+    return <LoadingServers totalServers={totalServers} />;
+  }
 
   let serverContent;
 
-  if (loading) {
-    serverContent = (
-      <output className="discord-servers-status">
-        <span className="loading-spinner" aria-hidden="true" />
-        <span>Loading Discord servers...</span>
-      </output>
-    );
-  } else if (error) {
+  if (error) {
     serverContent = (
       <div className="discord-servers-empty" role="alert">
         <h2>Unable to load Discord servers</h2>
@@ -159,13 +223,14 @@ function DiscordServers() {
 
         <p className="discord-servers-note">
           New servers are added on a case-by-case basis and must be discussed
-          with Tbone before being added. Click on one of the cards below to join
+          with Tbone before being added. Click on one of the cards below to
+          join.
         </p>
 
         {serverContent}
       </main>
 
-      <Footer/>
+      <Footer />
     </div>
   );
 }

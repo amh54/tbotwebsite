@@ -6,7 +6,7 @@ from ..views.cards import (
     hero_count,
     heroinfo,
 )
-from ..views.discord_servers import discord_servers
+from ..views.discord_servers import discord_servers, discord_server_count
 from ..views.decklists import (
     decklist_count,
     decklists,
@@ -103,6 +103,7 @@ urlpatterns = [
     discord_servers,
     name="servers",
 ),
+ path("servers/count/", discord_server_count, name="discord-server-count"),   
     path(
     "public-user-decks-count/",
     public_user_decks_count,
