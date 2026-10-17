@@ -16,7 +16,7 @@ export default function CardInfo() {
 />
       <Navbar />
       <CardBrowser />
-      <Footer credits="Special thanks to The_Cute_Chick, otherwise known as TCC, for uploading all of the card images and transcribing most of the initial card information used here." />
+      <Footer credits="Special thanks to The_Cute_Chick, otherwise known as TCC, for transcribing most of the initial card information used here." />
     </>
   );
 }

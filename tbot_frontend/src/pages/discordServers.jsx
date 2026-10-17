@@ -165,7 +165,7 @@ function DiscordServers() {
         {serverContent}
       </main>
 
-      <Footer credits="Discover PvZ Heroes Discord communities and tournament servers." />
+      <Footer/>
     </div>
   );
 }
