@@ -18,7 +18,7 @@ const PAGE_METADATA = {
     title: "Decklists - Tbot",
     description:
       "Browse the Tbot Plants vs. Zombies Heroes community deck database.",
-    image: "https://cdn.pvzhtbot.com/art/deckbannerbyairheadz.webp",
+    image: "https://cdn.pvzhtbot.com/art/main_deck_banner.webp",
   },
   "/cardinfo": {
     title: "Card Information - Tbot",
@@ -39,11 +39,13 @@ const PAGE_METADATA = {
     title: "Legacy Decks - Tbot",
     description:
       "Browse the older Tbot Plants vs. Zombies Heroes deck database.",
+    image: "https://cdn.pvzhtbot.com/art/legacy_deck_banner.webp"
   },
   "/publicdecks": {
     title: "Public Decks - Tbot",
     description:
       "Browse public Plants vs. Zombies Heroes decks uploaded by the Tbot community.",
+    image: "https://cdn.pvzhtbot.com/art/public_deck_banner.webp"
   },
   "/deckbuilders": {
     title: "Deckbuilders - Tbot",

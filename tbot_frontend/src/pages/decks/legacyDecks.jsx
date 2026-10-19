@@ -509,6 +509,11 @@ function LegacyDecksPage() {
         <h1>PVZ Heroes Legacy Decks</h1>
 
         <div className="deck-browser">
+          <img
+            className="deck-banner"
+            src="https://cdn.pvzhtbot.com/art/legacy_deck_banner.webp"
+            alt="Deck Banner"
+          />
           <div className="tabs">
             <button
               type="button"

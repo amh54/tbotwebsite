@@ -564,6 +564,11 @@ const fetchDecks = async () => {
         <h1>Public PVZ Heroes Decks</h1>
 
         <div className="deck-browser">
+        <img
+            className="deck-banner"
+            src="https://cdn.pvzhtbot.com/art/public_deck_banner.webp"
+            alt="Deck Banner"
+          />
           <div className="tabs">
             <button
               type="button"
