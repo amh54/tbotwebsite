@@ -442,9 +442,12 @@ def user_deck_update(request, deck_id):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        now = timezone.now()
+
         updated_deck = serializer.save(
-            updated_date=timezone.now()
-        )
+        modified_at=now,
+        updated_date=now,
+    )
         return Response(
             {
                 "success": True,
