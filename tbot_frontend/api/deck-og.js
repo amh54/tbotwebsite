@@ -39,13 +39,13 @@ const PAGE_METADATA = {
     title: "Legacy Decks - Tbot",
     description:
       "Browse the older Tbot Plants vs. Zombies Heroes deck database.",
-    image: "https://cdn.pvzhtbot.com/art/legacy_deck_banner.webp"
+    image: "https://cdn.pvzhtbot.com/art/legacy_deck_banner.webp",
   },
   "/publicdecks": {
     title: "Public Decks - Tbot",
     description:
       "Browse public Plants vs. Zombies Heroes decks uploaded by the Tbot community.",
-    image: "https://cdn.pvzhtbot.com/art/public_deck_banner.webp"
+    image: "https://cdn.pvzhtbot.com/art/public_deck_banner.webp",
   },
   "/deckbuilders": {
     title: "Deckbuilders - Tbot",
@@ -690,7 +690,7 @@ async function resolveMetadata(pathname, query) {
 
     const deck = findDeckInList(data?.decks || data, deckKey);
 
-    return deckToOg(deck);
+    return deck ? deckToOg(deck) : getStaticMetadata("/publicdecks");
   }
   if (
     pathname === "/decklists" ||
