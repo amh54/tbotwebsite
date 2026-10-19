@@ -1,5 +1,5 @@
 from django.db import DatabaseError
-
+from django.utils import timezone
 from rest_framework.decorators import api_view, parser_classes
 
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
@@ -250,10 +250,14 @@ def admin_user_deck_update(request, deck_id):
 
         updated_deck = serializer.save()
 
-        updated_deck.updated_date = updated_deck.modified_at
+        now = timezone.now()
+
+        updated_deck.modified_at = now
+        updated_deck.updated_date = now
 
         updated_deck.save(
             update_fields=[
+                "modified_at",
                 "updated_date",
             ]
         )
