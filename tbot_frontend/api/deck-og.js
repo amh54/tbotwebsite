@@ -675,23 +675,39 @@ async function resolveMetadata(pathname, query) {
 
     return deckToOg(data.deck || null);
   }
+ 
   if (pathname === "/publicdecks") {
     const deckKey = query.deck;
 
     if (!deckKey) {
-      return {
-        title: "Public Decks - Tbot",
-        description:
-          "Browse public Plants vs. Zombies Heroes decks uploaded by the Tbot community.",
-      };
+      return getStaticMetadata("/publicdecks");
     }
 
     const data = await fetchJson(`${API}/tbotapp/public-user-decks/`);
 
-    const deck = findDeckInList(data?.decks || data, deckKey);
+    const deck = findDeckInList(data, deckKey);
 
-    return deck ? deckToOg(deck) : getStaticMetadata("/publicdecks");
+    if (deck) {
+      return deckToOg(deck);
+    }
+
+    const nestedDeck = findDeckInList(data?.decks, deckKey);
+
+    if (nestedDeck) {
+      return deckToOg(nestedDeck);
+    }
+
+    const resultsDeck = findDeckInList(data?.results, deckKey);
+
+    if (resultsDeck) {
+      return deckToOg(resultsDeck);
+    }
+
+    console.error("Public deck not found for OG metadata:", deckKey);
+
+    return getStaticMetadata("/publicdecks");
   }
+
   if (
     pathname === "/decklists" ||
     pathname === "/legacydecks" ||
