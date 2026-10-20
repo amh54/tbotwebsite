@@ -286,7 +286,7 @@ function HomePage() {
             <div className="grave-content">
               <h3>Share Your Decks</h3>
               <p>
-                Share your decks on your profile with a direct link to Discord.
+                Share your decks on your profile to Discord for help improving your decks.
               </p>
 
               {profileSlug && (
