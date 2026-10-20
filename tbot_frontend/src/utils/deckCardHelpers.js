@@ -125,7 +125,7 @@ export const formatCost = (value) => {
   }
 
   const raw = String(value).trim();
-  const numericValue = Number(raw.replace(/,/g, ""));
+  const numericValue = Number(raw.replaceAll(",", ""));
 
   if (Number.isFinite(numericValue)) {
     return numericValue.toLocaleString("en-US");
@@ -244,9 +244,77 @@ export const normalizeDeckShareValue = (value) => {
       .toLowerCase();
   }
 };
+const getResolvedProfileSlug = (profileSlug, deck) =>
+  String(profileSlug || deck.profile_slug || deck.profileSlug || "").trim();
+
+const createDeckUrl = (path) => new URL(path, window.location.origin);
+
+const createDeckBuilderShareUrl = (shareDeckKey) => {
+  const shareUrl = createDeckUrl(window.location.pathname);
+  shareUrl.searchParams.set("deck", shareDeckKey);
+  return shareUrl;
+};
+
+const logMissingDeckShareData = (message, details) => {
+  console.error(message, details);
+  return null;
+};
+
+const getSavedDeckShareUrl = ({
+  deck,
+  shareDeckKey,
+  sourceDeckId,
+  sourceType,
+  profileSlug,
+}) => {
+  const resolvedProfileSlug = getResolvedProfileSlug(profileSlug, deck);
+
+  if (!resolvedProfileSlug || !sourceDeckId) {
+    return logMissingDeckShareData("Unable to create saved deck share link:", {
+      profileSlug: resolvedProfileSlug,
+      sourceDeckId,
+      savedDeckId: deck.id,
+      sourceType,
+      deck,
+    });
+  }
+
+  let savedSourceType = "deck";
+
+  if (sourceType === "user_deck") {
+    savedSourceType = "user";
+  } else if (sourceType === "legacy") {
+    savedSourceType = "legacy";
+  }
+
+  return createDeckUrl(
+    `/deck/${encodeURIComponent(resolvedProfileSlug)}/${savedSourceType}/${encodeURIComponent(shareDeckKey)}`,
+  );
+};
+
+const getUserDeckShareUrl = ({
+  deck,
+  shareDeckKey,
+  sourceDeckId,
+  profileSlug,
+}) => {
+  const resolvedProfileSlug = getResolvedProfileSlug(profileSlug, deck);
+
+  if (!resolvedProfileSlug || !sourceDeckId) {
+    return logMissingDeckShareData("Unable to create user deck share link:", {
+      profileSlug: resolvedProfileSlug,
+      sourceDeckId,
+      deck,
+    });
+  }
+
+  return createDeckUrl(
+    `/deck/${encodeURIComponent(resolvedProfileSlug)}/user/${encodeURIComponent(shareDeckKey)}`,
+  );
+};
+
 export const getDeckCardShareUrl = ({
   deck,
-  deckKey,
   shareDeckKey,
   sourceDeckId,
   sourceType,
@@ -259,147 +327,70 @@ export const getDeckCardShareUrl = ({
   deckbuilder,
 }) => {
   if (isSavedDeck) {
-    const resolvedProfileSlug =
-      String(
-        profileSlug ||
-          deck.profile_slug ||
-          deck.profileSlug ||
-          "",
-      ).trim();
-
-    if (
-      !resolvedProfileSlug ||
-      !sourceDeckId
-    ) {
-      console.error(
-        "Unable to create saved deck share link:",
-        {
-          profileSlug:
-            resolvedProfileSlug,
-          sourceDeckId,
-          savedDeckId: deck.id,
-          sourceType,
-          deck,
-        },
-      );
-
-      return null;
-    }
-
-    const savedSourceType =
-      sourceType === "user_deck"
-        ? "user"
-        : sourceType === "legacy"
-          ? "legacy"
-          : "deck";
-
-    return new URL(
-      `/deck/${encodeURIComponent(
-        resolvedProfileSlug,
-      )}/${savedSourceType}/${encodeURIComponent(
-        shareDeckKey,
-      )}`,
-      window.location.origin,
-    );
-  }
-
-  if (
-    deckbuilder ||
-    decklists ||
-    legacy
-  ) {
-    const shareUrl = new URL(
-      window.location.pathname,
-      window.location.origin,
-    );
-
-    shareUrl.searchParams.set(
-      "deck",
+    return getSavedDeckShareUrl({
+      deck,
       shareDeckKey,
-    );
-
-    return shareUrl;
+      sourceDeckId,
+      sourceType,
+      profileSlug,
+    });
   }
 
-  const resolvedProfileSlug =
-    String(
-      profileSlug ||
-        deck.profile_slug ||
-        deck.profileSlug ||
-        "",
-    ).trim();
+  if (deckbuilder || decklists || legacy) {
+    return createDeckBuilderShareUrl(shareDeckKey);
+  }
+
+  const resolvedProfileSlug = getResolvedProfileSlug(profileSlug, deck);
 
   const resolvedProfileIsPublic =
-    profileIsPublic !== null &&
-    profileIsPublic !== undefined
+    profileIsPublic !== null && profileIsPublic !== undefined
       ? profileIsPublic === true
       : deck.is_public === true ||
         deck.profile_is_public === true ||
         deck.profileIsPublic === true;
 
-  if (
-    resolvedProfileIsPublic &&
-    resolvedProfileSlug
-  ) {
-    const shareUrl = new URL(
-      `/profile/${encodeURIComponent(
-        resolvedProfileSlug,
-      )}`,
-      window.location.origin,
+  if (resolvedProfileIsPublic && resolvedProfileSlug) {
+    const shareUrl = createDeckUrl(
+      `/profile/${encodeURIComponent(resolvedProfileSlug)}`,
     );
-
-    shareUrl.searchParams.set(
-      "deck",
-      shareDeckKey,
-    );
-
+    shareUrl.searchParams.set("deck", shareDeckKey);
     return shareUrl;
   }
 
   if (isUserDeck) {
-    if (
-      !resolvedProfileSlug ||
-      !sourceDeckId
-    ) {
-      console.error(
-        "Unable to create user deck share link:",
-        {
-          profileSlug:
-            resolvedProfileSlug,
-          sourceDeckId,
-          deck,
-        },
-      );
-
-      return null;
-    }
-
-    return new URL(
-      `/deck/${encodeURIComponent(
-        resolvedProfileSlug,
-      )}/user/${encodeURIComponent(
-        shareDeckKey,
-      )}`,
-      window.location.origin,
-    );
+    return getUserDeckShareUrl({
+      deck,
+      shareDeckKey,
+      sourceDeckId,
+      profileSlug,
+    });
   }
 
   if (resolvedProfileSlug) {
-    return new URL(
-      `/deck/${encodeURIComponent(
-        resolvedProfileSlug,
-      )}/${encodeURIComponent(
-        shareDeckKey,
-      )}`,
-      window.location.origin,
+    return createDeckUrl(
+      `/deck/${encodeURIComponent(resolvedProfileSlug)}/${encodeURIComponent(shareDeckKey)}`,
     );
   }
 
-  console.error(
-    "Unable to create deck share link: profile slug is missing.",
-  );
-
+  console.error("Unable to create deck share link: profile slug is missing.");
   return null;
+};
+
+const redirectToDeckDownload = (apiBaseUrl, endpoint, deckId) => {
+  window.location.href = `${apiBaseUrl}/tbotapp/${endpoint}/${deckId}/download/`;
+};
+
+const getDeckId = (deck, ...keys) =>
+  keys.reduce((id, key) => id ?? deck[key], undefined);
+
+const getSavedDeckDownloadEndpoint = (sourceType) => {
+  const endpoints = {
+    user_deck: "user-decks",
+    legacy: "legacy-decks",
+    decklist: "decks",
+  };
+
+  return endpoints[sourceType] ?? null;
 };
 
 export const downloadDeckCard = ({
@@ -410,124 +401,63 @@ export const downloadDeckCard = ({
   apiBaseUrl,
 }) => {
   if (isSavedDeck) {
-    const sourceDeckId =
-      deck.source_deck_id ??
-      deck.sourceDeckId ??
-      "";
+    const sourceDeckId = deck.source_deck_id ?? deck.sourceDeckId ?? "";
 
     if (!sourceDeckId) {
       console.error(
         "Unable to download saved deck: source deck ID is missing.",
         deck,
       );
-
       return;
     }
 
-    const savedSourceType =
-      String(
-        deck.source_type ??
-          deck.sourceType ??
-          "",
-      )
-        .trim()
-        .toLowerCase();
+    const savedSourceType = String(deck.source_type ?? deck.sourceType ?? "")
+      .trim()
+      .toLowerCase();
 
     if (!savedSourceType) {
       console.error(
         "Unable to download saved deck: source type is missing.",
         deck,
       );
-
       return;
     }
 
-    if (
-      savedSourceType ===
-      "user_deck"
-    ) {
-      window.location.href =
-        `${apiBaseUrl}/tbotapp/user-decks/${sourceDeckId}/download/`;
+    const endpoint = getSavedDeckDownloadEndpoint(savedSourceType);
 
-      return;
-    }
-
-    if (
-      savedSourceType ===
-      "legacy"
-    ) {
-      window.location.href =
-        `${apiBaseUrl}/tbotapp/legacy-decks/${sourceDeckId}/download/`;
-
-      return;
-    }
-
-    if (
-      savedSourceType ===
-      "decklist"
-    ) {
-      window.location.href =
-        `${apiBaseUrl}/tbotapp/decks/${sourceDeckId}/download/`;
-
-      return;
-    }
-
-    console.error(
-      "Unable to download saved deck: unknown source type.",
-      {
-        sourceType:
-          savedSourceType,
+    if (!endpoint) {
+      console.error("Unable to download saved deck: unknown source type.", {
+        sourceType: savedSourceType,
         sourceDeckId,
         deck,
-      },
-    );
-
-    return;
-  }
-
-  if (isUserDeck) {
-    const downloadDeckId =
-      deck.id ??
-      deck.deckid ??
-      deck.deckID ??
-      deck.deckId;
-
-    if (!downloadDeckId) {
-      console.error(
-        "Unable to download user deck: deck ID is missing.",
-        deck,
-      );
-
+      });
       return;
     }
 
-    window.location.href =
-      `${apiBaseUrl}/tbotapp/user-decks/${downloadDeckId}/download/`;
-
+    redirectToDeckDownload(apiBaseUrl, endpoint, sourceDeckId);
     return;
   }
 
-  const downloadDeckId =
-    deck.deckid ??
-    deck.deckID ??
-    deck.deckId;
+  const downloadDeckId = isUserDeck
+    ? getDeckId(deck, "id", "deckid", "deckID", "deckId")
+    : getDeckId(deck, "deckid", "deckID", "deckId");
 
   if (!downloadDeckId) {
-    console.error(
-      "Unable to download deck: deck ID is missing.",
-      deck,
-    );
+    const message = isUserDeck
+      ? "Unable to download user deck: deck ID is missing."
+      : "Unable to download deck: deck ID is missing.";
 
+    console.error(message, deck);
     return;
   }
 
-  if (legacy) {
-    window.location.href =
-      `${apiBaseUrl}/tbotapp/legacy-decks/${downloadDeckId}/download/`;
+  let endpoint = "decks";
 
-    return;
+  if (isUserDeck) {
+    endpoint = "user-decks";
+  } else if (legacy) {
+    endpoint = "legacy-decks";
   }
 
-  window.location.href =
-    `${apiBaseUrl}/tbotapp/decks/${downloadDeckId}/download/`;
+  redirectToDeckDownload(apiBaseUrl, endpoint, downloadDeckId);
 };

@@ -5,7 +5,7 @@ import Navbar from "../../components/navbar.jsx";
 import Footer from "../../components/footer.jsx";
 import HeroCard from "../../components/heroInfo/heroCard.jsx";
 import HeroLoading from "../../components/heroInfo/heroLoading.jsx";
-import { API_BASE_URL} from "../../utils/api.js";
+import { API_BASE_URL } from "../../utils/api.js";
 import { CARD_CACHE_KEY } from "../../utils/cardInfo/cardCache.js";
 import { getRarityName } from "../../utils/cardInfo/dataUtils.js";
 import { normalizeText } from "../../utils/cardInfo/textUtils.js";
@@ -22,6 +22,40 @@ import { getSuperpowerCards } from "../../utils/heroInfo/superpowerUtils.js";
 import "../../css/cardInfo.css";
 import "../../css/navbar.css";
 import "../../css/loading.css";
+async function fetchJson(url, signal, label) {
+  const response = await fetch(url, { signal });
+
+  if (!response.ok) {
+    throw new Error(`${label} request failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
+function getResults(data) {
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return [];
+}
+
+function saveCache(key, data) {
+  sessionStorage.setItem(
+    key,
+    JSON.stringify({
+      timestamp: Date.now(),
+      ...data,
+    }),
+  );
+}
+function isAbortError(err) {
+  return err.name === "AbortError";
+}
 
 function HeroInfo() {
   const initialHeroCache = getCachedData(HERO_CACHE_KEY);
@@ -45,7 +79,36 @@ function HeroInfo() {
   const [totalHeroes, setTotalHeroes] = useState(
     Number(initialHeroCache?.count) || initialHeroCache?.results?.length || 0,
   );
+  function applyHeroData(heroData) {
+    if (!heroData) return;
 
+    const heroResults = getResults(heroData);
+    const heroCount = Number(heroData?.count) || heroResults.length;
+
+    if (heroResults.length === 0) return;
+
+    setCards(heroResults);
+    setTotalHeroes(heroCount);
+
+    saveCache(HERO_CACHE_KEY, {
+      count: heroCount,
+      results: heroResults,
+    });
+  }
+
+  function applyCardData(cardData) {
+    if (!cardData) return;
+
+    const cardResults = getResults(cardData);
+
+    if (cardResults.length === 0) return;
+
+    setAllCards(cardResults);
+
+    saveCache(CARD_CACHE_KEY, {
+      results: cardResults,
+    });
+  }
   const openCardModal = (card, isHero = false) => {
     if (!card) {
       return;
@@ -78,121 +141,48 @@ function HeroInfo() {
         setError("");
 
         const cachedHeroes = getCachedData(HERO_CACHE_KEY);
+        const cachedCards = getCachedData(CARD_CACHE_KEY);
 
-        if (cachedHeroes?.results?.length) {
-          hasCachedHeroes = true;
+        hasCachedHeroes = Boolean(cachedHeroes?.results?.length);
+        hasCachedCards = Boolean(cachedCards?.results?.length);
 
+        if (hasCachedHeroes) {
           setCards(cachedHeroes.results);
-
           setTotalHeroes(
             Number(cachedHeroes.count) || cachedHeroes.results.length,
           );
-
           setLoading(false);
         }
 
-        const cachedCards = getCachedData(CARD_CACHE_KEY);
-
-        if (cachedCards?.results?.length) {
-          hasCachedCards = true;
-
+        if (hasCachedCards) {
           setAllCards(cachedCards.results);
         }
 
-        const requests = [];
+        const [heroData, cardData] = await Promise.all([
+          hasCachedHeroes
+            ? null
+            : fetchJson(
+                `${API_BASE_URL}/tbotapp/heroinfo/`,
+                controller.signal,
+                "Hero",
+              ),
+          hasCachedCards
+            ? null
+            : fetchJson(
+                `${API_BASE_URL}/tbotapp/cardinfo/`,
+                controller.signal,
+                "Card",
+              ),
+        ]);
 
-        if (!hasCachedHeroes) {
-          requests.push(
-            fetch(`${API_BASE_URL}/tbotapp/heroinfo/`, {
-              signal: controller.signal,
-            }).then(async (response) => {
-              if (!response.ok) {
-                throw new Error(
-                  `Hero request failed with status ${response.status}`,
-                );
-              }
-
-              return response.json();
-            }),
-          );
-        } else {
-          requests.push(null);
-        }
-
-        if (!hasCachedCards) {
-          requests.push(
-            fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
-              signal: controller.signal,
-            }).then(async (response) => {
-              if (!response.ok) {
-                throw new Error(
-                  `Card request failed with status ${response.status}`,
-                );
-              }
-
-              return response.json();
-            }),
-          );
-        } else {
-          requests.push(null);
-        }
-
-        const [heroData, cardData] = await Promise.all(requests);
-
-        if (heroData) {
-          const heroResults = Array.isArray(heroData?.results)
-            ? heroData.results
-            : Array.isArray(heroData)
-              ? heroData
-              : [];
-
-          const heroCount = Number(heroData?.count) || heroResults.length;
-
-          if (heroResults.length > 0) {
-            setCards(heroResults);
-            setTotalHeroes(heroCount);
-
-            sessionStorage.setItem(
-              HERO_CACHE_KEY,
-              JSON.stringify({
-                timestamp: Date.now(),
-                count: heroCount,
-                results: heroResults,
-              }),
-            );
-          }
-        }
-
-        if (cardData) {
-          const cardResults = Array.isArray(cardData)
-            ? cardData
-            : Array.isArray(cardData?.results)
-              ? cardData.results
-              : [];
-
-          if (cardResults.length > 0) {
-            setAllCards(cardResults);
-
-            sessionStorage.setItem(
-              CARD_CACHE_KEY,
-              JSON.stringify({
-                timestamp: Date.now(),
-                results: cardResults,
-              }),
-            );
-          }
-        }
-      } catch (err) {
-        if (err.name === "AbortError") {
-          return;
-        }
+        applyHeroData(heroData);
+        applyCardData(cardData);
 
         console.error("Hero loading failed:", err);
 
         if (!hasCachedHeroes) {
           setCards([]);
           setTotalHeroes(0);
-
           setError(
             `Unable to load heroes right now. ${err.message || ""}`.trim(),
           );
@@ -204,7 +194,7 @@ function HeroInfo() {
       }
     };
 
-    loadHeroes();
+    void loadHeroes();
 
     return () => controller.abort();
   }, []);
@@ -273,11 +263,11 @@ function HeroInfo() {
 
   return (
     <>
-  <Seo
-  title="PVZH Heroes - PVZ Heroes Hero Database | Tbot"
-  description="Browse the Plants vs. Zombies Heroes hero database on Tbot. Explore PVZH Plant and Zombie heroes, their superpowers, abilities, rarities, and card information."
-  canonical="/heroinfo"
-/>
+      <Seo
+        title="PVZH Heroes - PVZ Heroes Hero Database | Tbot"
+        description="Browse the Plants vs. Zombies Heroes hero database on Tbot. Explore PVZH Plant and Zombie heroes, their superpowers, abilities, rarities, and card information."
+        canonical="/heroinfo"
+      />
       <Navbar />
 
       <div className="card-information-page">

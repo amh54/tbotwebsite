@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import Navbar from "../../components/navbar.jsx";
 import Footer from "../../components/footer.jsx";
-import ProfileCardBrowser from "../../components/profile/profilecardbrowser.jsx";
+import ProfileCardBrowser from "../../components/profile/profileCardBrowser.jsx";
 
 import "../../css/cardInfo.css";
 import "../../css/navbar.css";
@@ -26,7 +26,7 @@ export default function ProfileCards() {
       setUserCards(data.cards || []);
     }
 
-    loadCards();
+    void loadCards();
   }, []);
 
   return (

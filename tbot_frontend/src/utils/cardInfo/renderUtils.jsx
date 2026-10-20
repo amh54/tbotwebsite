@@ -1,8 +1,12 @@
-import { CLASS_ICON_LINKS, STAT_ICON_LINKS, TRAIT_ICON_LINKS } from "./iconLinks.js";
+import {
+  CLASS_ICON_LINKS,
+  STAT_ICON_LINKS,
+  TRAIT_ICON_LINKS,
+} from "./iconLinks.js";
 import { getTraitNames } from "./dataUtils.js";
 
 export const getEmojiIcon = (emoji) => {
-  const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
+  const match = /^<:([^:>]+):\d+>$/.exec(String(emoji || ""));
 
   if (!match) {
     return null;
@@ -172,7 +176,7 @@ export const getFilterIcon = (type, side) => {
   );
 };
 
-export const renderFilterLabel = (text, iconType = null, side) => {
+export const renderFilterLabel = (text, side, iconType = null) => {
   return (
     <span className="card-filter-option-label">
       <span>{text}</span>
@@ -203,7 +207,7 @@ export const renderTitleText = (title) => {
 
     if (matchIndex > lastIndex) {
       parts.push(
-        <span key={`title-text-${index}`}>
+        <span key={`title-text-${lastIndex}`}>
           {text.slice(lastIndex, matchIndex)}
         </span>,
       );
@@ -214,7 +218,7 @@ export const renderTitleText = (title) => {
     if (icon?.url) {
       parts.push(
         <img
-          key={`title-icon-${index}`}
+          key={`title-icon-${matchIndex}-${fullMatch}`}
           src={icon.url}
           alt={icon.alt}
           className="card-stat-icon"
@@ -256,7 +260,7 @@ export const renderStatsText = (stats) => {
 
     if (matchIndex > lastIndex) {
       parts.push(
-        <span key={`stats-text-${index}`}>
+        <span key={`stats-text-${lastIndex}`}>
           {text.slice(lastIndex, matchIndex)}
         </span>,
       );
@@ -267,7 +271,7 @@ export const renderStatsText = (stats) => {
     if (icon?.url) {
       parts.push(
         <img
-          key={`stats-icon-${index}`}
+          key={`stats-icon-${matchIndex}-${fullEmoji}`}
           src={icon.url}
           alt={icon.alt}
           className="card-stat-icon"
@@ -319,13 +323,13 @@ export const renderTraitText = (text) => {
     if (matchIndex > lastIndex) {
       const textBeforeIcon = rawText
         .slice(lastIndex, matchIndex)
-        .replace(/\*\*/g, "")
-        .replace(/\_\_/g, "")
+        .replaceAll("**", "")
+        .replaceAll("__", "")
         .trim();
 
       if (textBeforeIcon) {
         parts.push(
-          <span key={`trait-text-${index}`}>
+          <span key={`trait-text-${lastIndex}`}>
             <u>{textBeforeIcon}</u>
           </span>,
         );
@@ -337,7 +341,7 @@ export const renderTraitText = (text) => {
     if (icon?.url) {
       parts.push(
         <img
-          key={`trait-icon-${index}`}
+          key={`trait-icon-${matchIndex}-${fullEmoji}`}
           src={icon.url}
           alt={icon.alt}
           className="card-trait-icon"
@@ -351,8 +355,8 @@ export const renderTraitText = (text) => {
   if (lastIndex < rawText.length) {
     const remainingText = rawText
       .slice(lastIndex)
-      .replace(/\*\*/g, "")
-      .replace(/\_\_/g, "")
+      .replaceAll("**", "")
+      .replaceAll("__", "")
       .trim();
 
     if (remainingText) {
@@ -386,10 +390,14 @@ export const renderAbilityText = (text, maxLength = 177) => {
     value = `${cut.trimEnd()}…`;
   }
 
-  const pattern =
-    /(<:[^:>]+:\d+>)|(\*\*\_\_[\s\S]*?\_\_\*\*)|(\_\_\*\*[\s\S]*?\*\*\_\_)|(\*\*[\s\S]*?\*\*)|(\_\_[\s\S]*?\_\_)/gi;
+  const emojiPattern = /<:[^:>]+:\d+>/gi;
+  const formattingPattern =
+    /\*\*__[\s\S]*?__\*\*|__\*\*[\s\S]*?\*\*__|\*\*[\s\S]*?\*\*|__[\s\S]*?__/g;
 
-  const matches = [...value.matchAll(pattern)];
+  const matches = [
+    ...value.matchAll(emojiPattern),
+    ...value.matchAll(formattingPattern),
+  ].sort((a, b) => a.index - b.index);
 
   if (matches.length === 0) {
     return (
@@ -402,7 +410,7 @@ export const renderAbilityText = (text, maxLength = 177) => {
   const parts = [];
   let lastIndex = 0;
 
-  matches.forEach((match, index) => {
+  matches.forEach((match) => {
     const fullMatch = match[0];
     const matchIndex = match.index;
 
@@ -410,11 +418,8 @@ export const renderAbilityText = (text, maxLength = 177) => {
       const normalText = value.slice(lastIndex, matchIndex);
 
       parts.push(
-        <span key={`ability-text-${index}`}>
-          {normalText.replace(
-            /<:([^:>]+):\d+>/gi,
-            (_, emojiName) => emojiName,
-          )}
+        <span key={`ability-text-${lastIndex}`}>
+          {normalText.replace(/<:([^:>]+):\d+>/gi, (_, emojiName) => emojiName)}
         </span>,
       );
     }
@@ -425,7 +430,7 @@ export const renderAbilityText = (text, maxLength = 177) => {
       if (icon?.url) {
         parts.push(
           <img
-            key={`ability-icon-${index}`}
+            key={`ability-icon-${matchIndex}`}
             src={icon.url}
             alt={icon.alt}
             className="card-ability-icon"
@@ -434,26 +439,30 @@ export const renderAbilityText = (text, maxLength = 177) => {
       } else {
         const emojiName = match[1].replace(/^<:([^:>]+):\d+>$/, "$1");
 
-        parts.push(<span key={`ability-unknown-${index}`}>{emojiName}</span>);
+        parts.push(
+          <span key={`ability-unknown-${matchIndex}`}>{emojiName}</span>,
+        );
       }
     } else if (match[2]) {
       parts.push(
-        <strong key={`bold-underline-${index}`}>
+        <strong key={`bold-underline-${matchIndex}`}>
           <u>{match[2].slice(4, -4)}</u>
         </strong>,
       );
     } else if (match[3]) {
       parts.push(
-        <strong key={`underline-bold-${index}`}>
+        <strong key={`underline-bold-${matchIndex}`}>
           <u>{match[3].slice(4, -4)}</u>
         </strong>,
       );
     } else if (match[4]) {
       parts.push(
-        <strong key={`bold-${index}`}>{match[4].slice(2, -2)}</strong>,
+        <strong key={`bold-${matchIndex}`}>{match[4].slice(2, -2)}</strong>,
       );
     } else if (match[5]) {
-      parts.push(<u key={`underline-${index}`}>{match[5].slice(2, -2)}</u>);
+      parts.push(
+        <u key={`underline-${matchIndex}`}>{match[5].slice(2, -2)}</u>,
+      );
     }
 
     lastIndex = matchIndex + fullMatch.length;

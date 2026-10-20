@@ -10,10 +10,10 @@
   gap: 0.6rem;
   width: 100%;
   padding: 0.55rem 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid #666666;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  background: #1a1a1a;
+  color: #ffffff;
   font: inherit;
   text-align: left;
   cursor: pointer;

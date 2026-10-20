@@ -42,7 +42,7 @@ const removeDiscordEmojis = (value) =>
 
 const normalizeTraitName = (trait) => {
   const value = removeDiscordEmojis(trait)
-    .replace(/[\\_\\~\\`]/g, "")
+    .replace(/[_~`\\]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -71,7 +71,7 @@ const normalizeTraitName = (trait) => {
     untrickable: "Untrickable",
   };
 
-  const numberedMatch = normalized.match(/^(.+?)\s+(\d+)$/);
+  const numberedMatch = /^(.+)\s(\d+)$/.exec(normalized);
 
   if (numberedMatch) {
     const baseTrait = numberedMatch[1];
@@ -248,7 +248,7 @@ function CardModal({
 
     window.history.pushState(
       {
-        ...(window.history.state || {}),
+        ...window.history.state,
         card: linkedCardName,
       },
       "",
@@ -291,7 +291,7 @@ function CardModal({
   };
 
   const getEmojiIcon = (emoji) => {
-    const match = String(emoji || "").match(/^<:([^:>]+):\d+>$/);
+    const match = /^<:([^:>]+):\d+>$/.exec(String(emoji || ""));
 
     if (!match) {
       return null;
@@ -410,9 +410,12 @@ function CardModal({
   };
 
   const getTraitIcon = (trait) => {
-    const baseTrait = String(trait)
-      .replace(/\s+\d+$/, "")
-      .trim();
+    const value = String(trait).trim();
+    const lastSpace = value.lastIndexOf(" ");
+    const baseTrait =
+      lastSpace !== -1 && /^\d+$/.test(value.slice(lastSpace + 1))
+        ? value.slice(0, lastSpace).trim()
+        : value;
 
     const iconMap = {
       "Anti-Hero": {
@@ -470,7 +473,7 @@ function CardModal({
       return null;
     }
 
-    const text = String(title).replace(/\*\*/g, "").replace(/__/g, "").trim();
+    const text = String(title).replaceAll("**", "").replaceAll("__", "").trim();
 
     const emojiPattern = /<:([^:>]+):\d+>/gi;
     const matches = [...text.matchAll(emojiPattern)];
@@ -501,7 +504,7 @@ function CardModal({
 
       if (matchIndex > lastIndex) {
         titleParts.push(
-          <span key={`title-text-${index}`}>
+          <span key={`title-text-${lastIndex}`}>
             {text.slice(lastIndex, matchIndex)}
           </span>,
         );
@@ -512,7 +515,7 @@ function CardModal({
       if (icon?.url) {
         classIcons.push(
           <img
-            key={`title-icon-${index}`}
+            key={`title-icon-${icon.url}`}
             src={icon.url}
             alt={icon.alt}
             className="card-modal-title-class-icon"
@@ -551,7 +554,7 @@ function CardModal({
 
   const renderStatsText = (stats) => {
     if (!stats) {
-      return null;
+      return [];
     }
 
     const text = String(stats);
@@ -559,19 +562,19 @@ function CardModal({
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
-      return <span>{text}</span>;
+      return [<span key="stats-text">{text}</span>];
     }
 
     const parts = [];
     let lastIndex = 0;
 
-    matches.forEach((match, index) => {
+    matches.forEach((match) => {
       const fullEmoji = match[1];
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
         parts.push(
-          <span key={`stats-text-${index}`}>
+          <span key={`stats-text-${lastIndex}`}>
             {text.slice(lastIndex, matchIndex)}
           </span>,
         );
@@ -582,7 +585,7 @@ function CardModal({
       if (icon?.url) {
         parts.push(
           <img
-            key={`stats-icon-${index}`}
+            key={`stats-icon-${matchIndex}`}
             src={icon.url}
             alt={icon.alt}
             className="ability-stat-icon"
@@ -599,27 +602,30 @@ function CardModal({
 
     return parts;
   };
-
   const renderAbilityText = (ability) => {
     if (!ability) {
-      return null;
+      return [];
     }
 
     const text = String(ability);
 
     const pattern =
-      /(<:[^:>]+:\d+>)|(\*\*__[\s\S]*?__\*\*)|(__\*\*[\s\S]*?\*\*__)|(\*\*[\s\S]*?\*\*)|(__[\s\S]*?__)/gi;
+      /(<:[^:>]+:\d+>)|(\*\*__.*?__\*\*)|(__\*\*.*?\*\*__)|(\*\*.*?\*\*)|(__.*?__)/gi;
 
     const matches = [...text.matchAll(pattern)];
 
     if (matches.length === 0) {
-      return <span>{text.replace(/<:([^:>]+):\d+>/gi, "$1")}</span>;
+      return [
+        <span key="ability-text">
+          {text.replace(/<:([^:>]+):\d+>/gi, "$1")}
+        </span>,
+      ];
     }
 
     const parts = [];
     let lastIndex = 0;
 
-    matches.forEach((match, index) => {
+    matches.forEach((match) => {
       const fullMatch = match[0];
       const matchIndex = match.index;
 
@@ -627,7 +633,7 @@ function CardModal({
         const normalText = text.slice(lastIndex, matchIndex);
 
         parts.push(
-          <span key={`ability-text-${index}`}>
+          <span key={`ability-text-${lastIndex}`}>
             {normalText.replace(/<:([^:>]+):\d+>/gi, "$1")}
           </span>,
         );
@@ -639,7 +645,7 @@ function CardModal({
         if (icon?.url) {
           parts.push(
             <img
-              key={`ability-icon-${index}`}
+              key={`ability-icon-${matchIndex}`}
               className="ability-stat-icon"
               src={icon.url}
               alt={icon.alt}
@@ -648,22 +654,24 @@ function CardModal({
         }
       } else if (match[2]) {
         parts.push(
-          <strong key={`bold-underline-${index}`}>
+          <strong key={`bold-underline-${matchIndex}`}>
             <u>{match[2].slice(4, -4)}</u>
           </strong>,
         );
       } else if (match[3]) {
         parts.push(
-          <strong key={`underline-bold-${index}`}>
+          <strong key={`underline-bold-${matchIndex}`}>
             <u>{match[3].slice(4, -4)}</u>
           </strong>,
         );
       } else if (match[4]) {
         parts.push(
-          <strong key={`bold-${index}`}>{match[4].slice(2, -2)}</strong>,
+          <strong key={`bold-${matchIndex}`}>{match[4].slice(2, -2)}</strong>,
         );
       } else if (match[5]) {
-        parts.push(<u key={`underline-${index}`}>{match[5].slice(2, -2)}</u>);
+        parts.push(
+          <u key={`underline-${matchIndex}`}>{match[5].slice(2, -2)}</u>,
+        );
       }
 
       lastIndex = matchIndex + fullMatch.length;
@@ -718,94 +726,19 @@ function CardModal({
 
     const segments = String(text).split(triggerPattern);
 
-    return segments.map((segment, index) => {
+    return segments.map((segment) => {
+      const key = `tribe-${segment.trim()}`;
+
       if (
         /^(when revealed in an environment|when revealed on heights|when this enters a lane|when hurt|when destroyed|when revealed|zombie evolution|end of turn)$/i.test(
           segment.trim(),
         )
       ) {
-        return <strong key={`tribe-${index}`}>{segment}</strong>;
+        return <strong key={key}>{segment}</strong>;
       }
 
-      return <span key={`tribe-${index}`}>{segment}</span>;
+      return <span key={key}>{segment}</span>;
     });
-  };
-
-  /*
-   * SUPERPOWERS
-   *
-   * Left unchanged.
-   * Superpowers still come only from matching card names
-   * inside the current card's ability text.
-   */
-  const getSuperpowerCards = () => {
-    if (!card?.ability || !Array.isArray(allCards) || allCards.length === 0) {
-      return [];
-    }
-
-    const searchableAbility = normalizeText(
-      removeDiscordEmojis(card.ability)
-        .replace(/\*\*/g, "")
-        .replace(/__/g, "")
-        .replace(/`/g, ""),
-    );
-
-    const candidates = allCards
-      .filter(
-        (candidate) =>
-          candidate && candidate.card_name && candidate.cardid !== card.cardid,
-      )
-      .map((candidate) => ({
-        card: candidate,
-        name: normalizeText(candidate.card_name),
-      }))
-      .filter(({ name }) => name.length > 0)
-      .sort((a, b) => b.name.length - a.name.length);
-
-    const found = [];
-
-    for (const { card: candidate, name } of candidates) {
-      if (searchableAbility.includes(name)) {
-        found.push(candidate);
-
-        if (found.length === 4) {
-          break;
-        }
-      }
-    }
-
-    found.sort((a, b) => {
-      const aName = normalizeText(a.card_name);
-      const bName = normalizeText(b.card_name);
-
-      return (
-        searchableAbility.indexOf(aName) - searchableAbility.indexOf(bName)
-      );
-    });
-
-    return found;
-  };
-
-  const superpowers = getSuperpowerCards();
-
-  const openSuperpower = (superpower) => {
-    const url = new URL(window.location.href);
-
-    url.searchParams.set("card", superpower.card_name);
-
-    window.history.pushState(
-      {
-        card: superpower.card_name,
-      },
-      "",
-      url,
-    );
-
-    window.dispatchEvent(
-      new CustomEvent("tbot-open-card", {
-        detail: superpower,
-      }),
-    );
   };
 
   if (!card) {
@@ -813,14 +746,12 @@ function CardModal({
   }
 
   return (
-    <div className="card-modal-overlay" onClick={close} role="presentation">
-      <div
-        className="card-modal"
-        onClick={(event) => event.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={card.card_name || "Card information"}
-      >
+    <dialog
+      className="card-modal-overlay"
+      open
+      aria-label={card.card_name || "Card information"}
+    >
+      <div className="card-modal">
         <button
           type="button"
           className="card-modal-close"
@@ -901,63 +832,63 @@ function CardModal({
             )}
 
             <section className="modal-metadata">
-  {hasValue(card.ability) && (
-    <div className="metadata-item">
-      <span className="label">
-        {showShareHero ? "Superpowers" : "Ability"}
-      </span>
-      <span className="value ability-value">
-        {renderAbilityText(card.ability)}
-      </span>
-    </div>
-  )}
+              {hasValue(card.ability) && (
+                <div className="metadata-item">
+                  <span className="label">
+                    {showShareHero ? "Superpowers" : "Ability"}
+                  </span>
+                  <span className="value ability-value">
+                    {renderAbilityText(card.ability)}
+                  </span>
+                </div>
+              )}
 
-  {relatedCards.length > 0 && (
-    <section className="modal-section linked-cards-section">
-      <h3 className="label">Related Cards</h3>
+              {relatedCards.length > 0 && (
+                <section className="modal-section linked-cards-section">
+                  <h3 className="label">Related Cards</h3>
 
-      <div className="card-modal-linked-buttons">
-        {relatedCards.map(({ label, card: linkedCard }) => (
-          <button
-            key={linkedCard.cardid ?? linkedCard.card_name}
-            type="button"
-            className="card-modal-linked-button"
-            onClick={() => openLinkedCard(linkedCard)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-    </section>
-  )}
+                  <div className="card-modal-linked-buttons">
+                    {relatedCards.map(({ label, card: linkedCard }) => (
+                      <button
+                        key={linkedCard.cardid ?? linkedCard.card_name}
+                        type="button"
+                        className="card-modal-linked-button"
+                        onClick={() => openLinkedCard(linkedCard)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
 
-  {hasValue(card.traits) && (
-    <div className="metadata-item trait-item">
-      <span className="label">Traits</span>
-      <span className="value trait-value">
-        {renderTraitText(card.traits)}
-      </span>
-    </div>
-  )}
+              {hasValue(card.traits) && (
+                <div className="metadata-item trait-item">
+                  <span className="label">Traits</span>
+                  <span className="value trait-value">
+                    {renderTraitText(card.traits)}
+                  </span>
+                </div>
+              )}
 
-  {hasValue(card.set_rarity) && (
-    <div className="metadata-item">
-      <span className="label">Rarity</span>
-      <span className="value">{card.set_rarity}</span>
-    </div>
-  )}
+              {hasValue(card.set_rarity) && (
+                <div className="metadata-item">
+                  <span className="label">Rarity</span>
+                  <span className="value">{card.set_rarity}</span>
+                </div>
+              )}
 
-  {hasValue(card.flavor_text) && (
-    <div className="metadata-item full-width-item">
-      <span className="label">Flavor Text</span>
-      <span className="value">{card.flavor_text}</span>
-    </div>
-  )}
-</section>
+              {hasValue(card.flavor_text) && (
+                <div className="metadata-item full-width-item">
+                  <span className="label">Flavor Text</span>
+                  <span className="value">{card.flavor_text}</span>
+                </div>
+              )}
+            </section>
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
 

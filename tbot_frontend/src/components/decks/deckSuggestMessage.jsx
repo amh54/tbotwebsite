@@ -12,10 +12,9 @@ function DeckSuggestMessage({
   }
 
   return (
-    <div
-      className={`suggest-deck-message suggest-message-${suggestStatus}`}
-      role="status"
-    >
+    <output
+  className={`suggest-deck-message suggest-message-${suggestStatus}`}
+>
       {(suggestStatus === "success" || suggestStatus === "confirmed") && (
         <>
           <strong>Thanks for suggesting this deck!</strong>
@@ -147,7 +146,7 @@ function DeckSuggestMessage({
           <p>{suggestMessage}</p>
         </>
       )}
-    </div>
+    </output>
   );
 }
 

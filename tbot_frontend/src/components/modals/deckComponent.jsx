@@ -75,10 +75,16 @@ function DeckCard({
 
   const deckId = sourceDeckId;
 
+  let defaultSourceType = "decklist";
+
+  if (legacy) {
+    defaultSourceType = "legacy";
+  } else if (isUserDeck) {
+    defaultSourceType = "user_deck";
+  }
+
   const sourceType = String(
-    deck.source_type ??
-      deck.sourceType ??
-      (isUserDeck ? "user_deck" : legacy ? "legacy" : "decklist"),
+    deck.source_type ?? deck.sourceType ?? defaultSourceType,
   )
     .trim()
     .toLowerCase();
@@ -86,10 +92,11 @@ function DeckCard({
   const deckKey = String(deckId || deck.name || "").trim();
 
   const deckName = String(deck.name || "deck")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  .trim()
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-/, "")
+  .replace(/-$/, "");
 
   const shareDeckKey = deckName ? `${deckName}-${deckKey}` : deckKey;
 
@@ -260,18 +267,15 @@ function DeckCard({
   }, [editing, deck.image, editImageFile]);
   const lastRandomOpenKey = useRef(0);
 
-useEffect(() => {
-  if (
-    randomOpenKey > 0 &&
-    lastRandomOpenKey.current !== randomOpenKey
-  ) {
-    lastRandomOpenKey.current = randomOpenKey;
-    setRandomOpen(true);
-    setOpen(true);
-    setEditing(false);
-    onRandomOpen?.();
-  }
-}, [randomOpenKey, onRandomOpen]);
+  useEffect(() => {
+    if (randomOpenKey > 0 && lastRandomOpenKey.current !== randomOpenKey) {
+      lastRandomOpenKey.current = randomOpenKey;
+      setRandomOpen(true);
+      setOpen(true);
+      setEditing(false);
+      onRandomOpen?.();
+    }
+  }, [randomOpenKey, onRandomOpen]);
   const openModal = () => {
     if (addMode) {
       setOpen(true);

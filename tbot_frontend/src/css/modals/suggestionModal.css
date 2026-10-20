@@ -105,8 +105,8 @@
 
 .bug-report-select-option:hover,
 .bug-report-select-option.selected {
-  background: rgba(143, 227, 139, 0.08);
-  color: #8fe38b;
+  background: #203b20;
+  color: #b5f5b0;
 }
 
 .bug-report-select-check {
@@ -230,13 +230,13 @@
 
 .suggestion-page-dropdown-option:hover,
 .suggestion-page-dropdown-option:focus {
-  background: rgba(143, 227, 139, 0.08);
-  color: #8fe38b;
+  background: #203b20;
+  color: #b5f5b0;
   outline: none;
 }
 
 .suggestion-page-dropdown-option.selected {
-  background: rgba(143, 227, 139, 0.12);
-  color: #8fe38b;
+  background: #294829;
+  color: #b5f5b0;
   font-weight: 700;
 }

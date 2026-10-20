@@ -80,13 +80,15 @@ function AdminLegacyDecks() {
 
         const data = await response.json();
 
-        setAllCards(
-          Array.isArray(data)
-            ? data
-            : Array.isArray(data?.results)
-              ? data.results
-              : [],
-        );
+        let cards = [];
+
+        if (Array.isArray(data)) {
+          cards = data;
+        } else if (Array.isArray(data?.results)) {
+          cards = data.results;
+        }
+
+        setAllCards(cards);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error(err);
@@ -95,7 +97,7 @@ function AdminLegacyDecks() {
       }
     };
 
-    loadCards();
+    void loadCards();
 
     return () => controller.abort();
   }, []);
@@ -143,11 +145,13 @@ function AdminLegacyDecks() {
 
         const data = await response.json();
 
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
+        let results = [];
+
+        if (Array.isArray(data)) {
+          results = data;
+        } else if (Array.isArray(data?.results)) {
+          results = data.results;
+        }
 
         setDecks(results);
       } catch (err) {
@@ -162,7 +166,7 @@ function AdminLegacyDecks() {
       }
     };
 
-    loadDecks();
+    void loadDecks();
 
     return () => controller.abort();
   }, []);
@@ -533,7 +537,7 @@ function AdminLegacyDecks() {
                 alt="Plants"
                 className="tab-icon"
               />
-              Plants
+              <span>Plants</span>
             </button>
 
             <button
@@ -546,7 +550,7 @@ function AdminLegacyDecks() {
                 alt="Zombies"
                 className="tab-icon"
               />
-              Zombies
+              <span>Zombies</span>
             </button>
           </div>
 

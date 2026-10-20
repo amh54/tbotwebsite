@@ -106,10 +106,10 @@
 .site-update-modal-error {
   margin-top: 18px;
   padding: 11px 13px;
-  border: 1px solid #633b3b;
+  border: 1px solid #8b3030;
   border-radius: 8px;
-  background: rgba(116, 45, 45, 0.12);
-  color: #ef9999;
+  background: #2a1212;
+  color: #ffb3b3;
   font-size: 13px;
   line-height: 1.45;
 }

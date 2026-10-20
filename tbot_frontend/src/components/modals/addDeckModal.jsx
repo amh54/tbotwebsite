@@ -34,6 +34,7 @@ import {
   sumCardRatios,
   validationErrorStyle,
 } from "../../utils/addDeckModalUtils";
+let cardsPlaceholder;
 
 function AddDeckModal({
   open,
@@ -90,7 +91,13 @@ function AddDeckModal({
   }, [open]);
 
   const normalizedFormSide = normalizeSide(form.side);
-
+  if (!normalizedFormSide) {
+    cardsPlaceholder = "Select side first...";
+  } else if (!form.hero) {
+    cardsPlaceholder = "Select hero first...";
+  } else {
+    cardsPlaceholder = "Search cards...";
+  }
   const heroOptions = useMemo(() => {
     const seen = new Set();
     const options = [];
@@ -605,12 +612,7 @@ function AddDeckModal({
 
   return (
     <div className="modal-overlay">
-      <dialog
-        open
-        className="modal"
-        aria-label="Add Deck"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
+      <dialog open className="modal" aria-label="Add Deck">
         <button
           type="button"
           className="modal-close"
@@ -636,7 +638,9 @@ function AddDeckModal({
 
               <label className="admin-modal-field">
                 <span className="admin-modal-label">
-                  <RequiredLabel>Please Upload screenshot of a deck built in game </RequiredLabel>
+                  <RequiredLabel>
+                    Please Upload screenshot of a deck built in game{" "}
+                  </RequiredLabel>
                 </span>
 
                 <input
@@ -880,13 +884,7 @@ function AddDeckModal({
                       options={cardOptions}
                       value={form.cardsSelected}
                       onChange={handleCardsChange}
-                      placeholder={
-                        !normalizedFormSide
-                          ? "Select side first..."
-                          : !form.hero
-                            ? "Select hero first..."
-                            : "Search cards..."
-                      }
+                      placeholder={cardsPlaceholder}
                       styles={selectStyles}
                       closeMenuOnSelect={false}
                       isSearchable

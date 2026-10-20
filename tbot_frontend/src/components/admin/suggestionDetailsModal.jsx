@@ -34,14 +34,7 @@ function SuggestionDetailsModal({
   const reporter = getSubmitterName(suggestion);
 
   return (
-    <div
-      className="admin-bugreport-modal-overlay"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
-      }}
-    >
+    <dialog open className="admin-bugreport-modal-overlay">
       <div className="admin-bugreport-modal">
         <div className="admin-bugreport-modal-header">
           <div>
@@ -211,7 +204,7 @@ function SuggestionDetailsModal({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
 

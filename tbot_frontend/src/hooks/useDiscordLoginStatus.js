@@ -82,7 +82,7 @@ export function useDiscordLoginStatus() {
 
     requestStarted = true;
 
-    checkLogin();
+    void checkLogin();
   }, []);
 
   return {

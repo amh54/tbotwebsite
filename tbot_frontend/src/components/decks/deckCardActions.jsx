@@ -1,7 +1,48 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { normalizeSide, normalizeKey } from "../../utils/deckFilters";
 import { API_BASE_URL } from "../../utils/api";
+function getDeckId(deck) {
+  return deck?.deckid ?? deck?.deckID ?? deck?.id;
+}
 
+function normalizePublishedDecks(value) {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.results)) return value.results;
+  return [];
+}
+
+function getSuggestionButtonText(suggesting, suggestStatus) {
+  if (suggesting) return "Submitting...";
+  if (suggestStatus === "success" || suggestStatus === "confirmed") {
+    return "Deck Suggested!";
+  }
+  if (suggestStatus === "awaiting_creator") {
+    return "Awaiting Creator Approval";
+  }
+  if (suggestStatus === "already_suggested") return "Already Suggested";
+  if (suggestStatus === "cooldown") return "Suggestion On Cooldown";
+  if (suggestStatus === "denied") return "Suggestion Denied";
+  return "Suggest Deck";
+}
+
+function getSaveButtonText({
+  checkingLogin,
+  savingDeck,
+  isSavedDeck,
+  deckSaved,
+}) {
+  if (checkingLogin) return "Checking Login...";
+  if (savingDeck && isSavedDeck) return "Removing...";
+  if (savingDeck) return "Saving...";
+  if (isSavedDeck) return "Remove Saved Deck";
+  if (deckSaved) return "Deck Saved";
+  return "Save Deck";
+}
+
+function getConfirmButtonText(suggesting) {
+  if (suggesting) return "Submitting...";
+  return "Confirm Suggestion";
+}
 function CustomDropdown({
   label,
   placeholder,
@@ -12,7 +53,6 @@ function CustomDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
-
   const selectedOption = options.find(
     (option) => String(option.value) === String(value),
   );
@@ -21,12 +61,11 @@ function CustomDropdown({
     if (!open) return;
 
     const close = (event) => {
-      if (event.type === "keydown" && event.key === "Escape") {
-        setOpen(false);
-      } else if (
-        event.type === "pointerdown" &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
+      if (
+        (event.type === "keydown" && event.key === "Escape") ||
+        (event.type === "pointerdown" &&
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target))
       ) {
         setOpen(false);
       }
@@ -160,12 +199,10 @@ function DeckCardActions({
   const [fetchedDecks, setFetchedDecks] = useState([]);
   const [loadingPublishedDecks, setLoadingPublishedDecks] = useState(false);
   const [publishedDeckLoadFailed, setPublishedDeckLoadFailed] = useState(false);
-
-  const incomingDecks = useMemo(() => {
-    if (Array.isArray(publishedDecks)) return publishedDecks;
-    if (Array.isArray(publishedDecks?.results)) return publishedDecks.results;
-    return [];
-  }, [publishedDecks]);
+  const incomingDecks = useMemo(
+    () => normalizePublishedDecks(publishedDecks),
+    [publishedDecks],
+  );
 
   const getDeckId = (deck) => deck?.deckid ?? deck?.deckID ?? deck?.id;
 
@@ -196,11 +233,13 @@ function DeckCardActions({
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
+        let results = [];
+
+        if (Array.isArray(data)) {
+          results = data;
+        } else if (Array.isArray(data?.results)) {
+          results = data.results;
+        }
 
         if (!cancelled) {
           setFetchedDecks(results);
@@ -227,16 +266,6 @@ function DeckCardActions({
   const decks = useMemo(
     () => (hasUsableDecks ? incomingDecks : fetchedDecks),
     [hasUsableDecks, incomingDecks, fetchedDecks],
-  );
-  console.log(
-    "Published deck field values:",
-    decks.slice(0, 10).map((deck) => ({
-      id: deck.deckid ?? deck.deckID ?? deck.id,
-      name: deck.name,
-      side: deck.side,
-      hero: deck.hero,
-      keys: Object.keys(deck),
-    })),
   );
   const sides = useMemo(() => {
     const found = new Set();
@@ -311,14 +340,6 @@ function DeckCardActions({
       })),
     [matchingDecks],
   );
-  useEffect(() => {
-    console.log("Published decks:", decks.length, decks.slice(0, 3));
-    console.log("Selected deck ID:", selectedDeckId);
-    console.log("Selected deck:", selectedDeck);
-    console.log("Dropdown options:", { sides, heroes, deckOptions });
-  }, [decks, selectedDeckId, selectedDeck, sides, heroes, deckOptions]);
-  const isExistingDeckSelected =
-    suggestionType === "update" && Boolean(selectedDeckId);
 
   const displayedSide = selectedDeck
     ? normalizeSide(selectedDeck.side)
@@ -402,6 +423,13 @@ function DeckCardActions({
     resetSelection();
   };
 
+  const suggestDeckClassName = [
+    "suggest-deck-btn",
+    suggesting ? "suggesting" : "",
+    suggestStatus ? `suggest-${suggestStatus}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <>
       <div className="modal-actions">
@@ -412,27 +440,14 @@ function DeckCardActions({
                 {copied ? "Link Copied!" : "Share Deck"}
               </button>
             )}
-
             {showSuggestDeck && !checkingLogin && (
               <button
                 type="button"
-                className={`suggest-deck-btn ${suggesting ? "suggesting" : ""} ${suggestStatus ? `suggest-${suggestStatus}` : ""}`}
+                className={suggestDeckClassName}
                 onClick={openSuggestConfirmation}
                 disabled={suggestionDisabled}
               >
-                {suggesting
-                  ? "Submitting..."
-                  : ["success", "confirmed"].includes(suggestStatus)
-                    ? "Deck Suggested!"
-                    : suggestStatus === "awaiting_creator"
-                      ? "Awaiting Creator Approval"
-                      : suggestStatus === "already_suggested"
-                        ? "Already Suggested"
-                        : suggestStatus === "cooldown"
-                          ? "Suggestion On Cooldown"
-                          : suggestStatus === "denied"
-                            ? "Suggestion Denied"
-                            : "Suggest Deck"}
+                {getSuggestionButtonText(suggesting, suggestStatus)}
               </button>
             )}
           </>
@@ -447,17 +462,12 @@ function DeckCardActions({
               checkingLogin || savingDeck || (deckSaved && !isSavedDeck)
             }
           >
-            {checkingLogin
-              ? "Checking Login..."
-              : savingDeck
-                ? isSavedDeck
-                  ? "Removing..."
-                  : "Saving..."
-                : isSavedDeck
-                  ? "Remove Saved Deck"
-                  : deckSaved
-                    ? "Deck Saved"
-                    : "Save Deck"}
+            {getSaveButtonText({
+              checkingLogin,
+              savingDeck,
+              isSavedDeck,
+              deckSaved,
+            })}
           </button>
         )}
 
@@ -469,158 +479,153 @@ function DeckCardActions({
       </div>
 
       {showSuggestConfirmation && (
-        <div
-          className="suggest-confirm-overlay"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeSuggestionConfirmation();
+        <dialog
+          className="suggest-confirm-modal"
+          aria-labelledby="suggest-confirm-title"
+          aria-describedby="suggest-confirm-description"
+          ref={(dialog) => {
+            if (dialog && !dialog.open) {
+              dialog.showModal();
             }
           }}
+          onCancel={(event) => {
+            event.preventDefault();
+            closeSuggestionConfirmation();
+          }}
         >
-          <div
-            className="suggest-confirm-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="suggest-confirm-title"
-            aria-describedby="suggest-confirm-description"
-          >
-            <h3 id="suggest-confirm-title">Suggest Deck</h3>
+          <h3 id="suggest-confirm-title">Suggest Deck</h3>
 
-            <p id="suggest-confirm-description">
-              Choose whether to suggest a new deck or propose updates to an
-              existing published deck. <br/>
-              Make sure to check existing decks first because if your deck is too similar to one in the DB already you need to suggest it as an update.
+          <p id="suggest-confirm-description">
+            Choose whether to suggest a new deck or propose updates to an
+            existing published deck.
+            <br />
+            Make sure to check existing decks first because if your deck is too
+            similar to one in the DB already you need to suggest it as an
+            update.
+          </p>
+
+          <div className="suggestion-type-options">
+            <button
+              type="button"
+              className={`suggestion-type-option${suggestionType === "new" ? " selected" : ""}`}
+              aria-pressed={suggestionType === "new"}
+              onClick={() => {
+                setSuggestionType("new");
+                resetSelection();
+              }}
+            >
+              New Deck
+            </button>
+
+            <button
+              type="button"
+              className={`suggestion-type-option${suggestionType === "update" ? " selected" : ""}`}
+              aria-pressed={suggestionType === "update"}
+              onClick={() => {
+                setSuggestionType("update");
+                setSelectedSide(normalizeSide(side));
+                setSelectedHero(String(hero ?? "").trim());
+                setSelectedDeckId("");
+              }}
+            >
+              Update Existing Deck
+            </button>
+          </div>
+
+          {suggestionType === "new" ? (
+            <p>
+              This submits the deck as a new suggestion. If it is not your own
+              deck, the creator may need to approve it.
             </p>
-
-            <div className="suggestion-type-options">
-              <button
-                type="button"
-                className={`suggestion-type-option${suggestionType === "new" ? " selected" : ""}`}
-                aria-pressed={suggestionType === "new"}
-                onClick={() => {
-                  setSuggestionType("new");
-                  resetSelection();
-                }}
-              >
-                New Deck
-              </button>
-
-              <button
-                type="button"
-                className={`suggestion-type-option${suggestionType === "update" ? " selected" : ""}`}
-                aria-pressed={suggestionType === "update"}
-                onClick={() => {
-                  setSuggestionType("update");
-                  setSelectedSide(normalizeSide(side));
-                  setSelectedHero(String(hero ?? "").trim());
+          ) : (
+            <div className="suggestion-target-fields">
+              <CustomDropdown
+                label="Side"
+                placeholder="Select side"
+                value={displayedSide}
+                options={sideOptions}
+                disabled={Boolean(selectedDeck)}
+                onChange={(value) => {
+                  setSelectedSide(value);
+                  setSelectedHero("");
                   setSelectedDeckId("");
                 }}
-              >
-                Update Existing Deck
-              </button>
+              />
+
+              <CustomDropdown
+                label="Hero"
+                placeholder="Select hero"
+                value={displayedHero}
+                options={heroOptions}
+                disabled={!selectedSide || Boolean(selectedDeck)}
+                onChange={(value) => {
+                  setSelectedHero(value);
+                  setSelectedDeckId("");
+                }}
+              />
+
+              <CustomDropdown
+                label="Deck Name"
+                placeholder="Select deck"
+                value={selectedDeckId}
+                options={deckOptions}
+                disabled={!selectedHero || loadingPublishedDecks}
+                onChange={(value) => {
+                  const deck = decks.find(
+                    (item) => String(getDeckId(item)) === String(value),
+                  );
+
+                  if (!deck) return;
+
+                  setSelectedSide(normalizeSide(deck.side));
+                  setSelectedHero(String(deck.hero ?? "").trim());
+                  setSelectedDeckId(String(getDeckId(deck)));
+                }}
+              />
+
+              {loadingPublishedDecks && <p>Loading published decks...</p>}
+
+              {!loadingPublishedDecks &&
+                publishedDeckLoadFailed &&
+                decks.length === 0 && (
+                  <p>
+                    Could not load published decks. Please try again shortly.
+                  </p>
+                )}
+
+              {selectedHero &&
+                !loadingPublishedDecks &&
+                matchingDecks.length === 0 &&
+                !selectedDeck && (
+                  <p>No published decks were found for this hero.</p>
+                )}
             </div>
+          )}
 
-            {suggestionType === "new" ? (
-              <p>
-                This submits the deck as a new suggestion. If it is not your own
-                deck, the creator may need to approve it.
-              </p>
-            ) : (
-              <div className="suggestion-target-fields">
-                <CustomDropdown
-                  label="Side"
-                  placeholder="Select side"
-                  value={displayedSide}
-                  options={sideOptions}
-                  disabled={
-                    suggestionType === "update" || Boolean(selectedDeck)
-                  }
-                  onChange={(value) => {
-                    setSelectedSide(value);
-                    setSelectedHero("");
-                    setSelectedDeckId("");
-                  }}
-                />
+          <div className="suggest-confirm-actions">
+            <button
+              type="button"
+              className="suggest-confirm-cancel"
+              onClick={closeSuggestionConfirmation}
+              disabled={suggesting}
+            >
+              Cancel
+            </button>
 
-                <CustomDropdown
-                  label="Hero"
-                  placeholder="Select hero"
-                  value={displayedHero}
-                  options={heroOptions}
-                  disabled={
-                    suggestionType === "update" ||
-                    !selectedSide ||
-                    Boolean(selectedDeck)
-                  }
-                  onChange={(value) => {
-                    setSelectedHero(value);
-                    setSelectedDeckId("");
-                  }}
-                />
-
-                <CustomDropdown
-                  label="Deck Name"
-                  placeholder="Select deck"
-                  value={selectedDeckId}
-                  options={deckOptions}
-                  disabled={!selectedHero || loadingPublishedDecks}
-                  onChange={(value) => {
-                    const deck = decks.find(
-                      (item) => String(getDeckId(item)) === String(value),
-                    );
-
-                    if (!deck) return;
-
-                    setSelectedSide(normalizeSide(deck.side));
-                    setSelectedHero(String(deck.hero ?? "").trim());
-                    setSelectedDeckId(String(getDeckId(deck)));
-                  }}
-                />
-
-                {loadingPublishedDecks && <p>Loading published decks...</p>}
-
-                {!loadingPublishedDecks &&
-                  publishedDeckLoadFailed &&
-                  decks.length === 0 && (
-                    <p>
-                      Could not load published decks. Please try again shortly.
-                    </p>
-                  )}
-
-                {selectedHero &&
-                  !loadingPublishedDecks &&
-                  matchingDecks.length === 0 &&
-                  !selectedDeck && (
-                    <p>No published decks were found for this hero.</p>
-                  )}
-              </div>
-            )}
-
-            <div className="suggest-confirm-actions">
-              <button
-                type="button"
-                className="suggest-confirm-cancel"
-                onClick={closeSuggestionConfirmation}
-                disabled={suggesting}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                className="suggest-confirm-submit"
-                onClick={confirmSuggestion}
-                disabled={
-                  suggesting ||
-                  (suggestionType === "update" &&
-                    (!selectedDeckId || !selectedDeck))
-                }
-              >
-                {suggesting ? "Submitting..." : "Confirm Suggestion"}
-              </button>
-            </div>
+            <button
+              type="button"
+              className="suggest-confirm-submit"
+              onClick={confirmSuggestion}
+              disabled={
+                suggesting ||
+                (suggestionType === "update" &&
+                  (!selectedDeckId || !selectedDeck))
+              }
+            >
+              {getConfirmButtonText(suggesting)}
+            </button>
           </div>
-        </div>
+        </dialog>
       )}
     </>
   );

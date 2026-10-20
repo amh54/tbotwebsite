@@ -20,27 +20,27 @@ function Admin() {
         });
 
         if (!response.ok) {
-          navigate("/");
+          void navigate("/");
           return;
         }
 
         const data = await response.json();
 
         if (!data.authorized || !data.is_owner) {
-          navigate("/");
+          void navigate("/");
           return;
         }
 
         setAuthorized(true);
       } catch (error) {
         console.error("Unable to verify admin permissions:", error);
-        navigate("/");
+        void navigate("/");
       } finally {
         setLoading(false);
       }
     };
 
-    checkOwner();
+    void checkOwner();
   }, [navigate]);
 
   if (loading) {

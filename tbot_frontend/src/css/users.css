@@ -45,21 +45,20 @@
   justify-content: center;
   width: 34px;
   height: 34px;
-  border: 1px solid rgba(143, 227, 139, 0.2);
+  border: 1px solid #386b35;
   border-radius: 8px;
-  color: #8fe38b;
-  background: rgba(143, 227, 139, 0.05);
+  color: #b5f5b0;
+  background: #142414;
   text-decoration: none;
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease,
     transform 0.2s ease;
 }
-
 .user-social-link:hover {
-  background: rgba(143, 227, 139, 0.14);
-  border-color: rgba(143, 227, 139, 0.5);
-  color: #8fe38b;
+  background: #203b20;
+  border-color: #579653;
+  color: #b5f5b0;
   transform: translateY(-1px);
 }
 

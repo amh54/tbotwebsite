@@ -9,19 +9,12 @@ import { hasValue } from "../../utils/cardInfo/textUtils.js";
 
 function GridItem({ card, userCollection, onOpen }) {
   return (
-    <div
-      className="card-item"
-      data-rarity={getRarityName(card.set_rarity)}
-      role="button"
-      tabIndex={0}
-      onClick={() => onOpen(card)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen(card);
-        }
-      }}
-    >
+   <button
+  type="button"
+  className="card-item"
+  data-rarity={getRarityName(card.set_rarity)}
+  onClick={() => onOpen(card)}
+>
       <div className="card-item-media">
         <img
           src={card.thumbnail}
@@ -95,7 +88,7 @@ function GridItem({ card, userCollection, onOpen }) {
           </p>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 

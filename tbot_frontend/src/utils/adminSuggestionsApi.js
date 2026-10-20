@@ -36,13 +36,19 @@ export const fetchSuggestions = async () => {
 
   const data = await response.json();
 
-  return Array.isArray(data)
-    ? data
-    : Array.isArray(data?.results)
-      ? data.results
-      : Array.isArray(data?.suggestions)
-        ? data.suggestions
-        : [];
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
+  if (Array.isArray(data?.suggestions)) {
+    return data.suggestions;
+  }
+
+  return [];
 };
 
 export const fetchUserDeckSuggestions = async () => {
@@ -80,13 +86,19 @@ export const fetchUserDeckSuggestions = async () => {
 
   const data = await response.json();
 
-  return Array.isArray(data)
-    ? data
-    : Array.isArray(data?.results)
-      ? data.results
-      : Array.isArray(data?.suggestions)
-        ? data.suggestions
-        : [];
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
+  if (Array.isArray(data?.suggestions)) {
+    return data.suggestions;
+  }
+
+  return [];
 };
 
 const makeRequest = async (

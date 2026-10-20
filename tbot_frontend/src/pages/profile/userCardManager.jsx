@@ -106,40 +106,276 @@ const canonicalKey = (name) =>
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 
-const canonicalizeCards = (cards, catalog) => {
-  const catalogByKey = new Map(
-    catalog.map((entry) => [canonicalKey(entry.card_name), entry]),
+const CollectionContent = ({
+  loading,
+  cards,
+  filteredCollection,
+  openAddModal,
+  savingCardId,
+  deletingCardId,
+  handleQuantityChange,
+  changeQuantity,
+  saveQuantity,
+  handleDelete,
+}) => {
+  if (loading) {
+    return (
+      <div className="card-manager-loading">Loading your collection...</div>
+    );
+  }
+
+  if (cards.length === 0) {
+    return (
+      <div className="card-manager-empty">
+        <h3>Your collection is empty</h3>
+        <p>Add cards to start building your collection.</p>
+        <button
+          type="button"
+          className="add-cards-button"
+          onClick={openAddModal}
+        >
+          Add Cards
+        </button>
+      </div>
+    );
+  }
+
+  if (filteredCollection.length === 0) {
+    return (
+      <div className="card-manager-empty">
+        <h3>No cards match your filters</h3>
+        <p>Try changing your search or collection filters.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card-manager-grid">
+      {filteredCollection.map((card) => (
+        <CollectionCard
+          key={card.id}
+          card={card}
+          saving={savingCardId === card.id}
+          deleting={deletingCardId === card.id}
+          onQuantityChange={handleQuantityChange}
+          onDecrease={(item) => changeQuantity(item, -1)}
+          onIncrease={(item) => changeQuantity(item, 1)}
+          onSave={saveQuantity}
+          onDelete={handleDelete}
+        />
+      ))}
+    </div>
   );
-  const result = new Map();
+};
+const MissingDeckResults = ({
+  missingDecks,
+  filteredMissingDecks,
+  cards,
+  collectionLoaded,
+  discordUser,
+}) => {
+  if (missingDecks.length === 0) {
+    return (
+      <div className="card-manager-empty">
+        <h3>You can build every available deck!</h3>
+        <p>
+          Your collection has all the required cards for the main, legacy, and
+          public decks.
+        </p>
+      </div>
+    );
+  }
 
-  cards.forEach((card) => {
-    const key = canonicalKey(card.card_name);
-    const match = catalogByKey.get(key);
-    const fixed = match ? { ...card, card_name: match.card_name } : card;
-    const existing = result.get(key);
+  if (filteredMissingDecks.length === 0) {
+    return <p className="no-results">No decklists found.</p>;
+  }
 
-    if (!existing) {
-      result.set(key, fixed);
-      return;
-    }
+  return (
+    <>
+      <p className="results-count">
+        Showing {filteredMissingDecks.length} of {missingDecks.length} decks you
+        cannot fully build
+      </p>
 
-    const preferred =
-      match &&
-      existing.card_name !== match.card_name &&
-      card.card_name === match.card_name
-        ? fixed
-        : existing;
+      <div className="deck-grid">
+        {filteredMissingDecks.map((deck) => (
+          <DeckCard
+            key={`${deck.missingDeckKey}-${normalizeSide(deck.side)}-${getDeckKey(deck)}`}
+            decklist={deck}
+            decklists
+            userCollection={cards}
+            collectionLoaded={collectionLoaded}
+            discordUser={discordUser}
+          />
+        ))}
+      </div>
+    </>
+  );
+};
+const MissingDeckBrowser = ({
+  missingDecksLoading,
+  missingDecksError,
+  deckSide,
+  handleDeckSideChange,
+  deckSearch,
+  setDeckSearch,
+  deckPageValue,
+  setDeckPage,
+  missingDeckFilterOptions,
+  deckHero,
+  setDeckHero,
+  deckCategory,
+  setDeckCategory,
+  deckArchetype,
+  setDeckArchetype,
+  clearDeckFilters,
+  loading,
+  discordUser,
+  authLoading,
+  collectionLoaded,
+  missingDecks,
+  filteredMissingDecks,
+  cards,
+}) => {
+  if (missingDecksLoading) {
+    return <div className="card-manager-loading">Loading decks...</div>;
+  }
 
-    result.set(key, {
-      ...preferred,
-      quantity: Math.max(
-        getQuantityValue(existing.quantity),
-        getQuantityValue(card.quantity),
-      ),
-    });
-  });
+  if (missingDecksError) {
+    return (
+      <div className="card-manager-empty">
+        <h3>Unable to load decks</h3>
+        <p>{missingDecksError}</p>
+      </div>
+    );
+  }
 
-  return [...result.values()];
+  return (
+    <>
+      <div className="deck-browser">
+        <div className="tabs">
+          <button
+            type="button"
+            className={deckSide === "All" ? "active" : ""}
+            onClick={() => handleDeckSideChange("All")}
+          >
+            All
+          </button>
+
+          <button
+            type="button"
+            className={deckSide === "Plants" ? "active" : ""}
+            onClick={() => handleDeckSideChange("Plants")}
+          >
+            <img
+              src="https://cdn.pvzhtbot.com/icons/plants.png"
+              alt="Plants"
+              className="tab-icon"
+            />
+            <span>Plants</span>
+          </button>
+
+          <button
+            type="button"
+            className={deckSide === "Zombies" ? "active" : ""}
+            onClick={() => handleDeckSideChange("Zombies")}
+          >
+            <img
+              src="https://cdn.pvzhtbot.com/icons/zombies.png"
+              alt="Zombies"
+              className="tab-icon"
+            />
+            <span>Zombies</span>
+          </button>
+        </div>
+
+        <div className="search-container">
+          <input
+            className="search"
+            placeholder="Search decks, creators, heroes, cards..."
+            value={deckSearch}
+            onChange={(event) => setDeckSearch(event.target.value)}
+          />
+        </div>
+
+        <div className="filters">
+          <div className="select-wrapper">
+            <FilterDropdown
+              label="Page"
+              options={[
+                { value: "All", label: "All Pages" },
+                { value: "Main Decks", label: "Main Decks" },
+                { value: "Legacy Decks", label: "Legacy Decks" },
+                { value: "Public Decks", label: "Public Decks" },
+              ]}
+              value={deckPageValue}
+              onChange={(value) => {
+                const selected = Array.isArray(value) ? value[0] : value;
+                setDeckPage(selected?.value || "All");
+              }}
+            />
+          </div>
+
+          <div className="select-wrapper">
+            <FilterDropdown
+              label="Hero"
+              options={missingDeckFilterOptions.heroOptions}
+              value={deckHero}
+              onChange={setDeckHero}
+              multi
+            />
+          </div>
+
+          <div className="select-wrapper">
+            <FilterDropdown
+              label="Category"
+              options={missingDeckFilterOptions.categoryOptions}
+              value={deckCategory}
+              onChange={setDeckCategory}
+              multi
+            />
+          </div>
+
+          <div className="select-wrapper archetype-select-wrapper">
+            <FilterDropdown
+              label="Archetype"
+              options={missingDeckFilterOptions.archetypeOptions}
+              value={deckArchetype}
+              onChange={setDeckArchetype}
+              multi
+            />
+          </div>
+
+          <button
+            type="button"
+            className="clear-filter-btn"
+            onClick={clearDeckFilters}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+
+      {loading && discordUser && (
+        <p className="results-count">Loading your collection...</p>
+      )}
+
+      {!authLoading && discordUser && !loading && !collectionLoaded && (
+        <p className="results-count">
+          Unable to load your collection. Collection filters are temporarily
+          unavailable.
+        </p>
+      )}
+
+      <MissingDeckResults
+        missingDecks={missingDecks}
+        filteredMissingDecks={filteredMissingDecks}
+        cards={cards}
+        collectionLoaded={collectionLoaded}
+        discordUser={discordUser}
+      />
+    </>
+  );
 };
 const UserCardManager = () => {
   const [cards, setCards] = useState([]);
@@ -193,7 +429,7 @@ const UserCardManager = () => {
 
       setDiscordUser({ authenticated: true });
       setAuthLoading(false);
-           setCards(Array.isArray(data.cards) ? data.cards : []);
+      setCards(Array.isArray(data.cards) ? data.cards : []);
       setCatalog(Array.isArray(data.catalog) ? data.catalog : []);
       setCollectionLoaded(true);
     } catch (requestError) {
@@ -346,9 +582,9 @@ const UserCardManager = () => {
       if (quantity === 0) {
         group.missing += 1;
         group.missingCards.push({
-  cardName,
-  owned: quantity,
-});
+          cardName,
+          owned: quantity,
+        });
       } else if (quantity < 4) {
         group.incomplete += 1;
         group.incompleteCards.push({
@@ -836,54 +1072,18 @@ const UserCardManager = () => {
       setDeletingCardId(null);
     }
   };
+  let deckPageValue = [];
 
-  let collectionContent;
-
-  if (loading) {
-    collectionContent = (
-      <div className="card-manager-loading">Loading your collection...</div>
-    );
-  } else if (cards.length === 0) {
-    collectionContent = (
-      <div className="card-manager-empty">
-        <h3>Your collection is empty</h3>
-        <p>Add cards to start building your collection.</p>
-        <button
-          type="button"
-          className="add-cards-button"
-          onClick={openAddModal}
-        >
-          Add Cards
-        </button>
-      </div>
-    );
-  } else if (filteredCollection.length === 0) {
-    collectionContent = (
-      <div className="card-manager-empty">
-        <h3>No cards match your filters</h3>
-        <p>Try changing your search or collection filters.</p>
-      </div>
-    );
-  } else {
-    collectionContent = (
-      <div className="card-manager-grid">
-        {filteredCollection.map((card) => (
-          <CollectionCard
-            key={card.id}
-            card={card}
-            saving={savingCardId === card.id}
-            deleting={deletingCardId === card.id}
-            onQuantityChange={handleQuantityChange}
-            onDecrease={(item) => changeQuantity(item, -1)}
-            onIncrease={(item) => changeQuantity(item, 1)}
-            onSave={saveQuantity}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
-    );
+  if (deckPage !== "All") {
+    deckPageValue = [{ value: deckPage, label: deckPage }];
   }
+  let sectionSubtitle = `${missingDecks.length} deck${
+    missingDecks.length === 1 ? "" : "s"
+  } you cannot fully build`;
 
+  if (activeTab === "collection") {
+    sectionSubtitle = `${ownedCount} unique card${ownedCount === 1 ? "" : "s"}`;
+  }
   return (
     <div className="card-manager-page">
       <Seo
@@ -914,11 +1114,7 @@ const UserCardManager = () => {
               <h2>
                 {activeTab === "collection" ? "My Collection" : "Missing Decks"}
               </h2>
-              <span>
-                {activeTab === "collection"
-                  ? `${ownedCount} unique card${ownedCount === 1 ? "" : "s"}`
-                  : `${missingDecks.length} deck${missingDecks.length === 1 ? "" : "s"} you cannot fully build`}
-              </span>
+              <span>{sectionSubtitle}</span>
             </div>
 
             <button
@@ -987,174 +1183,46 @@ const UserCardManager = () => {
                 onClear={clearCollectionFilters}
               />
 
-              {collectionContent}
+              <CollectionContent
+                loading={loading}
+                cards={cards}
+                filteredCollection={filteredCollection}
+                openAddModal={openAddModal}
+                savingCardId={savingCardId}
+                deletingCardId={deletingCardId}
+                handleQuantityChange={handleQuantityChange}
+                changeQuantity={changeQuantity}
+                saveQuantity={saveQuantity}
+                handleDelete={handleDelete}
+              />
             </>
           ) : (
             <div className="missing-decks-content">
-              {missingDecksLoading ? (
-                <div className="card-manager-loading">Loading decks...</div>
-              ) : missingDecksError ? (
-                <div className="card-manager-empty">
-                  <h3>Unable to load decks</h3>
-                  <p>{missingDecksError}</p>
-                </div>
-              ) : (
-                <>
-                  <div className="deck-browser">
-                    <div className="tabs">
-                      <button
-                        type="button"
-                        className={deckSide === "All" ? "active" : ""}
-                        onClick={() => handleDeckSideChange("All")}
-                      >
-                        All
-                      </button>
-
-                      <button
-                        type="button"
-                        className={deckSide === "Plants" ? "active" : ""}
-                        onClick={() => handleDeckSideChange("Plants")}
-                      >
-                        <img
-                          src="https://cdn.pvzhtbot.com/icons/plants.png"
-                          alt="Plants"
-                          className="tab-icon"
-                        />
-                        Plants
-                      </button>
-
-                      <button
-                        type="button"
-                        className={deckSide === "Zombies" ? "active" : ""}
-                        onClick={() => handleDeckSideChange("Zombies")}
-                      >
-                        <img
-                          src="https://cdn.pvzhtbot.com/icons/zombies.png"
-                          alt="Zombies"
-                          className="tab-icon"
-                        />
-                        Zombies
-                      </button>
-                    </div>
-
-                    <div className="search-container">
-                      <input
-                        className="search"
-                        placeholder="Search decks, creators, heroes, cards..."
-                        value={deckSearch}
-                        onChange={(event) => setDeckSearch(event.target.value)}
-                      />
-                    </div>
-
-                    <div className="filters">
-                      <div className="select-wrapper">
-                        <FilterDropdown
-                          label="Page"
-                          options={[
-                            { value: "All", label: "All Pages" },
-                            { value: "Main Decks", label: "Main Decks" },
-                            { value: "Legacy Decks", label: "Legacy Decks" },
-                            { value: "Public Decks", label: "Public Decks" },
-                          ]}
-                          value={
-                            deckPage === "All"
-                              ? []
-                              : [{ value: deckPage, label: deckPage }]
-                          }
-                          onChange={(value) => {
-                            const selected = Array.isArray(value)
-                              ? value[0]
-                              : value;
-                            setDeckPage(selected?.value || "All");
-                          }}
-                        />
-                      </div>
-                      <div className="select-wrapper">
-                        <FilterDropdown
-                          label="Hero"
-                          options={missingDeckFilterOptions.heroOptions}
-                          value={deckHero}
-                          onChange={setDeckHero}
-                          multi
-                        />
-                      </div>
-
-                      <div className="select-wrapper">
-                        <FilterDropdown
-                          label="Category"
-                          options={missingDeckFilterOptions.categoryOptions}
-                          value={deckCategory}
-                          onChange={setDeckCategory}
-                          multi
-                        />
-                      </div>
-
-                      <div className="select-wrapper archetype-select-wrapper">
-                        <FilterDropdown
-                          label="Archetype"
-                          options={missingDeckFilterOptions.archetypeOptions}
-                          value={deckArchetype}
-                          onChange={setDeckArchetype}
-                          multi
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className="clear-filter-btn"
-                        onClick={clearDeckFilters}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
-
-                  {loading && discordUser && (
-                    <p className="results-count">Loading your collection...</p>
-                  )}
-
-                  {!authLoading &&
-                    discordUser &&
-                    !loading &&
-                    !collectionLoaded && (
-                      <p className="results-count">
-                        Unable to load your collection. Collection filters are
-                        temporarily unavailable.
-                      </p>
-                    )}
-
-                  {missingDecks.length === 0 ? (
-                    <div className="card-manager-empty">
-                      <h3>You can build every available deck!</h3>
-                      <p>
-                        Your collection has all the required cards for the main,
-                        legacy, and public decks.
-                      </p>
-                    </div>
-                  ) : filteredMissingDecks.length === 0 ? (
-                    <p className="no-results">No decklists found.</p>
-                  ) : (
-                    <>
-                      <p className="results-count">
-                        Showing {filteredMissingDecks.length} of{" "}
-                        {missingDecks.length} decks you cannot fully build
-                      </p>
-
-                      <div className="deck-grid">
-                        {filteredMissingDecks.map((deck) => (
-                          <DeckCard
-                            key={`${deck.missingDeckKey}-${normalizeSide(deck.side)}-${getDeckKey(deck)}`}
-                            decklist={deck}
-                            decklists
-                            userCollection={cards}
-                            collectionLoaded={collectionLoaded}
-                            discordUser={discordUser}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
+              <MissingDeckBrowser
+                missingDecksLoading={missingDecksLoading}
+                missingDecksError={missingDecksError}
+                deckSide={deckSide}
+                handleDeckSideChange={handleDeckSideChange}
+                deckSearch={deckSearch}
+                setDeckSearch={setDeckSearch}
+                deckPageValue={deckPageValue}
+                setDeckPage={setDeckPage}
+                missingDeckFilterOptions={missingDeckFilterOptions}
+                deckHero={deckHero}
+                setDeckHero={setDeckHero}
+                deckCategory={deckCategory}
+                setDeckCategory={setDeckCategory}
+                deckArchetype={deckArchetype}
+                setDeckArchetype={setDeckArchetype}
+                clearDeckFilters={clearDeckFilters}
+                loading={loading}
+                discordUser={discordUser}
+                authLoading={authLoading}
+                collectionLoaded={collectionLoaded}
+                missingDecks={missingDecks}
+                filteredMissingDecks={filteredMissingDecks}
+                cards={cards}
+              />
             </div>
           )}
         </section>

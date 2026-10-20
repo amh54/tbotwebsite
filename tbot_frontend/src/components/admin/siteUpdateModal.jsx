@@ -208,14 +208,25 @@ function SiteUpdateModal({ open, update = null, onClose, onComplete }) {
 
   const selectedCategory =
     CATEGORY_OPTIONS.find((option) => option.value === form.category) || null;
+  let saveButtonText = "Create Update";
 
+  if (editing) {
+    saveButtonText = "Save Changes";
+  }
+
+  if (saving && editing) {
+    saveButtonText = "Saving...";
+  }
+
+  if (saving && !editing) {
+    saveButtonText = "Creating...";
+  }
   return (
     <div className="modal-overlay">
       <dialog
         open
         className="modal site-update-modal"
         aria-label={editing ? "Edit Site Update" : "Create Site Update"}
-        onMouseDown={(event) => event.stopPropagation()}
       >
         <button
           type="button"
@@ -302,11 +313,11 @@ function SiteUpdateModal({ open, update = null, onClose, onComplete }) {
                         handleChange("published", event.target.checked)
                       }
                       disabled={saving}
+                      aria-label="Published"
                     />
 
                     <span>
                       <strong>Published</strong>
-
                       <small>
                         Published updates appear on the public Site Updates
                         page.
@@ -334,13 +345,7 @@ function SiteUpdateModal({ open, update = null, onClose, onComplete }) {
                   onClick={handleSave}
                   disabled={saving}
                 >
-                  {saving
-                    ? editing
-                      ? "Saving..."
-                      : "Creating..."
-                    : editing
-                      ? "Save Changes"
-                      : "Create Update"}
+                 {saveButtonText}
                 </button>
               </div>
             </div>

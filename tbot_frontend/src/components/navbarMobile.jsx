@@ -6,19 +6,14 @@ function NavbarMobile({
   mobileOpenSection,
   toggleMobileSection,
   closeMenus,
+  currentPageUrl,
   closeMobileMenu,
-  openBugReport,
-  openSuggestion,
   account,
 }) {
   return (
     <div className={`navbar-mobile-overlay ${mobileOpen ? "open" : ""}`}>
       <div className="navbar-mobile-header">
-        <Link
-          to="/"
-          className="navbar-logo"
-          onClick={closeMenus}
-        >
+        <Link to="/" className="navbar-logo" onClick={closeMenus}>
           <img
             src="https://cdn.pvzhtbot.com/art/halloween.webp"
             alt="Tbot"
@@ -58,43 +53,21 @@ function NavbarMobile({
             </button>
 
             <div className="navbar-mobile-section-menu">
-              {menu.links.map((link) => {
-                if (link.action === "reportBug") {
-                  return (
-                    <button
-                      key={link.label}
-                      type="button"
-                      className="navbar-mobile-link-button"
-                      onClick={openBugReport}
-                    >
-                      {link.label}
-                    </button>
-                  );
-                }
-
-                if (link.action === "suggestion") {
-                  return (
-                    <button
-                      key={link.label}
-                      type="button"
-                      className="navbar-mobile-link-button"
-                      onClick={openSuggestion}
-                    >
-                      {link.label}
-                    </button>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    onClick={closeMenus}
-                  >
-                    {link.label}
-                  </Link>
-                );
-              })}
+              {menu.links.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  state={
+                    ["/bugreport", "/suggestions"].includes(link.path)
+                      ? { from: currentPageUrl }
+                      : undefined
+                  }
+                  onClick={closeMenus}
+                  className="navbar-mobile-link-button"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
         ))}

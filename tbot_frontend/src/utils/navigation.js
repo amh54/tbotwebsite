@@ -10,11 +10,11 @@ const NAVIGATION = [
       { label: "Privacy Policy", path: "/privacypolicy" },
       {
         label: "Report a Bug",
-        action: "reportBug",
+        path: "/bugreport",
       },
       {
         label: "Submit a Suggestion",
-        action: "suggestion",
+        path: "/suggestions",
       },
     ],
   },

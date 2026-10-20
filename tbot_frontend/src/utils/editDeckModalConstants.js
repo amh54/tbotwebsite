@@ -76,17 +76,23 @@ export const selectStyles = {
     },
   }),
 
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isSelected
-      ? "#343b43"
-      : state.isFocused
-        ? "#2a3036"
-        : "#1b1f23",
-    color: "#f2f2f2",
-    cursor: "pointer",
-    padding: "10px 12px",
-  }),
+  option: (base, state) => {
+    let backgroundColor = "#1b1f23";
+
+    if (state.isSelected) {
+      backgroundColor = "#343b43";
+    } else if (state.isFocused) {
+      backgroundColor = "#2a3036";
+    }
+
+    return {
+      ...base,
+      backgroundColor,
+      color: "#f2f2f2",
+      cursor: "pointer",
+      padding: "10px 12px",
+    };
+  },
 
   valueContainer: (base) => ({
     ...base,

@@ -18,25 +18,16 @@ function HeroCard({
 
   const [heroColor1, heroColor2] = getHeroColors(hero);
 
-  const handleHeroKeyDown = (event) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onOpenHero(hero);
-    }
-  };
-
   return (
-    <div
-      className="card-item hero-colored-card"
-      style={{
-        "--hero-color-1": heroColor1,
-        "--hero-color-2": heroColor2,
-      }}
-      role="button"
-      tabIndex={0}
-      onClick={() => onOpenHero(hero)}
-      onKeyDown={handleHeroKeyDown}
-    >
+    <button
+  type="button"
+  className="card-item hero-colored-card"
+  style={{
+    "--hero-color-1": heroColor1,
+    "--hero-color-2": heroColor2,
+  }}
+  onClick={() => onOpenHero(hero)}
+>
       <div className="card-item-media">
         <img
           src={hero.thumbnail}
@@ -107,7 +98,7 @@ function HeroCard({
           </div>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 

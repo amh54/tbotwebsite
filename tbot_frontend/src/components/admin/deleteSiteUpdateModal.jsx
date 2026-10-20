@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 import {
   API_BASE_URL,
@@ -6,11 +6,7 @@ import {
   getApiErrorMessage,
 } from "../../utils/api.js";
 
-const DeleteSiteUpdateModal = ({
-  update,
-  onClose,
-  onDeleteComplete,
-}) => {
+const DeleteSiteUpdateModal = ({ update, onClose, onDeleteComplete }) => {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,43 +34,39 @@ const DeleteSiteUpdateModal = ({
 
       if (!response.ok) {
         throw new Error(
-          await getApiErrorMessage(
-            response,
-            "Failed to delete site update",
-          ),
+          await getApiErrorMessage(response, "Failed to delete site update"),
         );
       }
 
       onDeleteComplete?.(update.id);
       onClose?.();
     } catch (err) {
-      setError(
-        err?.message || "Failed to delete site update.",
-      );
+      setError(err?.message || "Failed to delete site update.");
     } finally {
       setDeleting(false);
     }
   };
+const dialogRef = useRef(null);
 
+useEffect(() => {
+  const dialog = dialogRef.current;
+
+  if (dialog && !dialog.open) {
+    dialog.showModal();
+  }
+}, []);
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className="site-update-modal-overlay"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !deleting) {
-          onClose?.();
-        }
-      }}
+      onClose={onClose}
     >
       <div
         className="site-update-modal"
-        role="dialog"
-        aria-modal="true"
         aria-labelledby="delete-site-update-title"
       >
         <div className="site-update-modal-header">
-          <h2 id="delete-site-update-title">
-            Delete Site Update
-          </h2>
+          <h2 id="delete-site-update-title">Delete Site Update</h2>
 
           <button
             type="button"
@@ -89,19 +81,12 @@ const DeleteSiteUpdateModal = ({
 
         <div className="site-update-modal-body">
           <p>
-            Are you sure you want to delete{" "}
-            <strong>{update.title}</strong>?
+            Are you sure you want to delete <strong>{update.title}</strong>?
           </p>
 
-          <p>
-            This action cannot be undone.
-          </p>
+          <p>This action cannot be undone.</p>
 
-          {error && (
-            <div className="site-update-modal-error">
-              {error}
-            </div>
-          )}
+          {error && <div className="site-update-modal-error">{error}</div>}
         </div>
 
         <div className="site-update-modal-footer">
@@ -124,7 +109,7 @@ const DeleteSiteUpdateModal = ({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };
 

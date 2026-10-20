@@ -42,8 +42,7 @@ const normalizeText = (value) => String(value ?? "").trim();
 
 const normalizeKey = (value) => normalizeText(value).toLowerCase();
 
-const getProfileCacheKey = (slug) =>
-  `tbot_profile_cache_${normalizeKey(slug)}`;
+const getProfileCacheKey = (slug) => `tbot_profile_cache_${normalizeKey(slug)}`;
 
 function Profile() {
   const { profile_slug } = useParams();
@@ -164,11 +163,13 @@ function Profile() {
           return;
         }
 
-        const loadedViewerCards = Array.isArray(cardsData)
-          ? cardsData
-          : Array.isArray(cardsData?.cards)
-            ? cardsData.cards
-            : [];
+        let loadedViewerCards = [];
+
+        if (Array.isArray(cardsData)) {
+          loadedViewerCards = cardsData;
+        } else if (Array.isArray(cardsData?.cards)) {
+          loadedViewerCards = cardsData.cards;
+        }
 
         setViewerCards(loadedViewerCards);
       } catch (err) {
@@ -216,10 +217,80 @@ function Profile() {
 
     setActiveTab("decks");
   }, [searchParams]);
+  const applyCachedProfile = (parsed) => {
+    setProfile(parsed.profile);
+    setDecks(parsed.decks);
+    setUserCards(parsed.userCards);
+    setAllCards(parsed.allCards);
+    setIsOwner(Boolean(parsed.isOwner));
+    setIsSiteOwner(Boolean(parsed.isSiteOwner));
+  };
 
+  const readProfileCache = (cacheKey) => {
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (!cached) return null;
+
+      const parsed = JSON.parse(cached);
+      const cacheAge = Date.now() - Number(parsed?.timestamp || 0);
+
+      if (
+        cacheAge >= PROFILE_CACHE_DURATION ||
+        !parsed?.profile ||
+        !Array.isArray(parsed?.decks) ||
+        !Array.isArray(parsed?.userCards) ||
+        !Array.isArray(parsed?.allCards)
+      ) {
+        return null;
+      }
+
+      return parsed;
+    } catch (cacheError) {
+      console.warn("Unable to read profile cache:", cacheError);
+      return null;
+    }
+  };
+
+  const parseArrayResponse = (data, key) => {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.[key])) return data[key];
+    return [];
+  };
+  const fetchJson = async (url, signal, itemName) => {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      credentials: "include",
+      signal,
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(`Unable to load ${itemName.toLowerCase()} data.`);
+    }
+
+    return data;
+  };
+  const fetchProfileData = async (url, signal, errorMessage) => {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      credentials: "include",
+      signal,
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(data?.error || errorMessage);
+    }
+
+    return data;
+  };
   useEffect(() => {
     const controller = new AbortController();
-
+    const isAbortError = (error) => error?.name === "AbortError";
     const loadProfile = async () => {
       if (!profile_slug) {
         setLoading(false);
@@ -228,159 +299,74 @@ function Profile() {
       }
 
       const cacheKey = getProfileCacheKey(profile_slug);
-
       let hasCachedData = false;
 
       try {
         setError("");
 
-        try {
-          const cached = sessionStorage.getItem(cacheKey);
+        const cached = readProfileCache(cacheKey);
 
-          if (cached) {
-            const parsed = JSON.parse(cached);
-
-            const cacheAge =
-              Date.now() - Number(parsed?.timestamp || 0);
-
-            const validCache =
-              cacheAge < PROFILE_CACHE_DURATION &&
-              parsed?.profile &&
-              Array.isArray(parsed?.decks) &&
-              Array.isArray(parsed?.userCards) &&
-              Array.isArray(parsed?.allCards);
-
-            if (validCache) {
-              hasCachedData = true;
-
-              setProfile(parsed.profile);
-
-              setDecks(parsed.decks);
-
-              setUserCards(parsed.userCards);
-
-              setAllCards(parsed.allCards);
-
-              setIsOwner(Boolean(parsed.isOwner));
-
-              setIsSiteOwner(Boolean(parsed.isSiteOwner));
-
-              setLoading(false);
-
-              return;
-            }
-          }
-        } catch (cacheError) {
-          console.warn("Unable to read profile cache:", cacheError);
+        if (cached) {
+          hasCachedData = true;
+          applyCachedProfile(cached);
+          setLoading(false);
+          return;
         }
 
         setLoading(true);
 
         const encodedSlug = encodeURIComponent(profile_slug);
+        const profileUrl = `${API_BASE_URL}/tbotapp/profile/${encodedSlug}/`;
 
-        const [
-          profileResponse,
-          deckResponse,
-          cardsResponse,
-          allCardsResponse,
-        ] = await Promise.all([
-          fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/`, {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            credentials: "include",
-            signal: controller.signal,
-          }),
+        const [profileData, deckData, cardsData, allCardsData] =
+          await Promise.all([
+            fetchProfileData(
+              profileUrl,
+              controller.signal,
+              "Unable to load profile.",
+            ),
+            fetchProfileData(
+              `${profileUrl}decks/`,
+              controller.signal,
+              "Unable to load this user's decklists.",
+            ),
+            fetchProfileData(
+              `${profileUrl}cards/`,
+              controller.signal,
+              "Unable to load this user's cards.",
+            ),
+            fetchJson(
+              `${API_BASE_URL}/tbotapp/cardinfo/`,
+              controller.signal,
+              "Card",
+            ).catch((err) => {
+              if (err.name === "AbortError") throw err;
+              console.error("Unable to load all cards:", err);
+              return null;
+            }),
+          ]);
 
-          fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/decks/`, {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            credentials: "include",
-            signal: controller.signal,
-          }),
+        const loadedProfile = profileData?.profile ?? profileData;
 
-          fetch(`${API_BASE_URL}/tbotapp/profile/${encodedSlug}/cards/`, {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            credentials: "include",
-            signal: controller.signal,
-          }),
-
-          fetch(`${API_BASE_URL}/tbotapp/cardinfo/`, {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            signal: controller.signal,
-          }),
-        ]);
-
-        const profileData = await profileResponse.json().catch(() => null);
-
-        if (!profileResponse.ok) {
-          throw new Error(
-            profileData?.error || "Unable to load profile.",
-          );
-        }
-
-        const loadedProfile = profileData?.profile || null;
-
-        if (!loadedProfile) {
+        if (
+          !loadedProfile ||
+          typeof loadedProfile !== "object" ||
+          !loadedProfile.profile_slug
+        ) {
           throw new Error("Profile data was not returned.");
         }
 
-        const deckData = await deckResponse.json().catch(() => null);
-
-        if (!deckResponse.ok) {
-          throw new Error(
-            deckData?.error || "Unable to load this user's decklists.",
-          );
-        }
-
-        const loadedDecks = Array.isArray(deckData?.decks)
-          ? deckData.decks
-          : [];
-
-        const cardsData = await cardsResponse.json().catch(() => null);
-
-        const loadedUserCards = cardsResponse.ok
-          ? Array.isArray(cardsData)
-            ? cardsData
-            : Array.isArray(cardsData?.cards)
-              ? cardsData.cards
-              : []
-          : [];
-
-        const allCardsData =
-          await allCardsResponse.json().catch(() => null);
-
-        const loadedAllCards = allCardsResponse.ok
-          ? Array.isArray(allCardsData)
-            ? allCardsData
-            : Array.isArray(allCardsData?.results)
-              ? allCardsData.results
-              : []
-          : [];
-
+        const loadedDecks = parseArrayResponse(deckData, "decks");
+        const loadedUserCards = parseArrayResponse(cardsData, "cards");
+        const loadedAllCards = parseArrayResponse(allCardsData, "results");
         const loadedIsOwner = Boolean(profileData?.is_owner);
-
         const loadedIsSiteOwner = Boolean(profileData?.is_site_owner);
 
         setProfile(loadedProfile);
-
         setDecks(loadedDecks);
-
         setUserCards(loadedUserCards);
-
         setAllCards(loadedAllCards);
-
         setIsOwner(loadedIsOwner);
-
         setIsSiteOwner(loadedIsSiteOwner);
 
         try {
@@ -399,36 +385,25 @@ function Profile() {
         } catch (cacheError) {
           console.warn("Unable to save profile cache:", cacheError);
         }
-
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
       } catch (err) {
-        if (err.name === "AbortError") {
-          return;
-        }
+        if (isAbortError(err)) return;
 
         console.error("Unable to load profile:", err);
 
         if (!hasCachedData) {
           setProfile(null);
-
           setDecks([]);
-
           setUserCards([]);
-
           setAllCards([]);
-
           setSavedDecks([]);
-
           setIsOwner(false);
-
           setIsSiteOwner(false);
-
           setError(err.message || "Unable to load profile.");
         }
-
-        setLoading(false);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -440,19 +415,15 @@ function Profile() {
   }, [profile_slug]);
 
   const handleRemoveSavedDeck = (removedDeck) => {
-    const removedId =
-      removedDeck.id || removedDeck.source_deck_id;
+    const removedId = removedDeck.id || removedDeck.source_deck_id;
 
-    const removedSourceType =
-      removedDeck.source_type || "decklist";
+    const removedSourceType = removedDeck.source_type || "decklist";
 
     setSavedDecks((current) =>
       current.filter((deck) => {
-        const deckId =
-          deck.id || deck.source_deck_id;
+        const deckId = deck.id || deck.source_deck_id;
 
-        const deckSourceType =
-          deck.source_type || "decklist";
+        const deckSourceType = deck.source_type || "decklist";
 
         return !(
           String(deckId) === String(removedId) &&
@@ -472,33 +443,30 @@ function Profile() {
 
     const loadSavedDecks = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/tbotapp/saved-decks/`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            credentials: "include",
-            signal: controller.signal,
+        const response = await fetch(`${API_BASE_URL}/tbotapp/saved-decks/`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
           },
-        );
+          credentials: "include",
+          signal: controller.signal,
+        });
 
         const data = await response.json().catch(() => null);
 
         if (!response.ok) {
           throw new Error(
-            data?.detail ||
-              data?.error ||
-              "Unable to load saved decks.",
+            data?.detail || data?.error || "Unable to load saved decks.",
           );
         }
 
-        const loadedSavedDecks = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.saved_decks)
-            ? data.saved_decks
-            : [];
+        let loadedSavedDecks = [];
+
+        if (Array.isArray(data)) {
+          loadedSavedDecks = data;
+        } else if (Array.isArray(data?.saved_decks)) {
+          loadedSavedDecks = data.saved_decks;
+        }
 
         setSavedDecks(loadedSavedDecks);
       } catch (err) {
@@ -512,7 +480,7 @@ function Profile() {
       }
     };
 
-    loadSavedDecks();
+    void loadSavedDecks();
 
     return () => {
       controller.abort();
@@ -542,9 +510,7 @@ function Profile() {
 
     setEditTwitterUrl(profile.twitter_url || "");
 
-    setEditDiscordServerUrl(
-      profile.discord_server_url || "",
-    );
+    setEditDiscordServerUrl(profile.discord_server_url || "");
 
     setEditError("");
 
@@ -579,36 +545,31 @@ function Profile() {
     setEditError("");
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/tbotapp/profile/update/`,
-        {
-          method: "PATCH",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            display_name: editDisplayName.trim(),
-            profile_slug: editProfileSlug.trim().toLowerCase(),
-            bio: editBio,
-            is_public: editIsPublic,
-            youtube_url: editYoutubeUrl.trim(),
-            twitch_url: editTwitchUrl.trim(),
-            tiktok_url: editTiktokUrl.trim(),
-            instagram_url: editInstagramUrl.trim(),
-            twitter_url: editTwitterUrl.trim(),
-            discord_server_url: editDiscordServerUrl.trim(),
-          }),
+      const response = await fetch(`${API_BASE_URL}/tbotapp/profile/update/`, {
+        method: "PATCH",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
         },
-      );
+        credentials: "include",
+        body: JSON.stringify({
+          display_name: editDisplayName.trim(),
+          profile_slug: editProfileSlug.trim().toLowerCase(),
+          bio: editBio,
+          is_public: editIsPublic,
+          youtube_url: editYoutubeUrl.trim(),
+          twitch_url: editTwitchUrl.trim(),
+          tiktok_url: editTiktokUrl.trim(),
+          instagram_url: editInstagramUrl.trim(),
+          twitter_url: editTwitterUrl.trim(),
+          discord_server_url: editDiscordServerUrl.trim(),
+        }),
+      });
 
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(
-          data?.error || "Unable to update profile.",
-        );
+        throw new Error(data?.error || "Unable to update profile.");
       }
 
       const updatedProfile = data?.profile;
@@ -626,8 +587,7 @@ function Profile() {
       setEditError("");
 
       const newSlug =
-        normalizeText(updatedProfile.profile_slug) ||
-        profile_slug;
+        normalizeText(updatedProfile.profile_slug) || profile_slug;
 
       if (newSlug && newSlug !== profile_slug) {
         window.history.replaceState(
@@ -638,9 +598,7 @@ function Profile() {
       }
 
       try {
-        const cacheKey = getProfileCacheKey(
-          newSlug || profile_slug,
-        );
+        const cacheKey = getProfileCacheKey(newSlug || profile_slug);
 
         const cached = sessionStorage.getItem(cacheKey);
 
@@ -657,26 +615,19 @@ function Profile() {
           );
         }
       } catch (cacheError) {
-        console.warn(
-          "Unable to update profile cache:",
-          cacheError,
-        );
+        console.warn("Unable to update profile cache:", cacheError);
       }
     } catch (err) {
       console.error("Unable to update profile:", err);
 
-      setEditError(
-        err.message || "Unable to update profile.",
-      );
+      setEditError(err.message || "Unable to update profile.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleShareProfile = async () => {
-    const currentSlug =
-      normalizeText(profile?.profile_slug) ||
-      profile_slug;
+    const currentSlug = normalizeText(profile?.profile_slug) || profile_slug;
 
     if (!currentSlug) {
       setShareMessage("Unable to create profile link.");
@@ -684,41 +635,13 @@ function Profile() {
     }
 
     const profileUrl =
-      `${window.location.origin}/profile/` +
-      encodeURIComponent(currentSlug);
+      `${window.location.origin}/profile/` + encodeURIComponent(currentSlug);
 
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(profileUrl);
-      } else {
-        const textArea = document.createElement("textarea");
-
-        textArea.value = profileUrl;
-
-        textArea.style.position = "fixed";
-
-        textArea.style.left = "-9999px";
-
-        textArea.style.top = "0";
-
-        document.body.appendChild(textArea);
-
-        textArea.focus();
-
-        textArea.select();
-
-        document.execCommand("copy");
-
-        document.body.removeChild(textArea);
-      }
-
+      await navigator.clipboard.writeText(profileUrl);
       setShareMessage("Profile link copied!");
     } catch (err) {
-      console.error(
-        "Unable to copy profile link:",
-        err,
-      );
-
+      console.error("Unable to copy profile link:", err);
       setShareMessage("Unable to copy profile link.");
     }
 
@@ -734,7 +657,7 @@ function Profile() {
           <div className="loading-spinner" />
 
           <h2>
-            Loading profile
+            <p>Loading profile</p>
             <span className="loading-dots">
               <span />
               <span />
@@ -742,10 +665,7 @@ function Profile() {
             </span>
           </h2>
 
-          <p>
-            Preparing this user's profile and available
-            content.
-          </p>
+          <p>Preparing this user's profile and available content.</p>
 
           <div className="loading-status">
             <span>Loading profile data</span>
@@ -762,9 +682,7 @@ function Profile() {
         <Navbar />
 
         <main className="profile-page">
-          <div className="profile-error">
-            {error}
-          </div>
+          <div className="profile-error">{error}</div>
         </main>
 
         <Footer />
@@ -778,9 +696,7 @@ function Profile() {
         <Navbar />
 
         <main className="profile-page">
-          <div className="profile-error">
-            Profile not found.
-          </div>
+          <div className="profile-error">Profile not found.</div>
         </main>
 
         <Footer />
@@ -788,23 +704,16 @@ function Profile() {
     );
   }
 
-  const profileName =
-    profile.display_name ||
-    profile.username ||
-    "User";
+  const profileName = profile.display_name || profile.username || "User";
 
-  const canonicalSlug =
-    normalizeText(profile.profile_slug) ||
-    profile_slug;
+  const canonicalSlug = normalizeText(profile.profile_slug) || profile_slug;
 
   return (
     <div className="profile-page-wrapper">
       <Seo
         title={`${profileName} - PVZH Player Profile | PVZ Heroes | Tbot`}
         description={`View ${profileName}'s Plants vs. Zombies Heroes player profile on Tbot. Explore their PVZH and PVZ Heroes decklists, card collection, and profile.`}
-        canonical={`/profile/${encodeURIComponent(
-          canonicalSlug,
-        )}`}
+        canonical={`/profile/${encodeURIComponent(canonicalSlug)}`}
         noindex={!profile.is_public}
       />
 
@@ -842,33 +751,25 @@ function Profile() {
               profileName={profile.display_name}
               viewerCards={viewerCards}
               profileSlug={profile_slug}
-              profileIsPublic={Boolean(
-                profile.is_public,
-              )}
+              profileIsPublic={Boolean(profile.is_public)}
               sharedDeckKey={
-                activeTab === "decks"
-                  ? searchParams.get("deck") || ""
-                  : ""
+                activeTab === "decks" ? searchParams.get("deck") || "" : ""
               }
               isAuthenticated={isAuthenticated}
             />
           )}
 
-          {activeTab === "saved" &&
-            isOwner &&
-            isAuthenticated && (
-              <ProfileSavedDecks
-                savedDecks={savedDecks}
-                allCards={allCards}
-                viewerCards={viewerCards}
-                profileSlug={profile_slug}
-                profileIsPublic={Boolean(
-                  profile.is_public,
-                )}
-                isAuthenticated={isAuthenticated}
-                onRemoveSaved={handleRemoveSavedDeck}
-              />
-            )}
+          {activeTab === "saved" && isOwner && isAuthenticated && (
+            <ProfileSavedDecks
+              savedDecks={savedDecks}
+              allCards={allCards}
+              viewerCards={viewerCards}
+              profileSlug={profile_slug}
+              profileIsPublic={Boolean(profile.is_public)}
+              isAuthenticated={isAuthenticated}
+              onRemoveSaved={handleRemoveSavedDeck}
+            />
+          )}
         </div>
 
         {isSiteOwner && (

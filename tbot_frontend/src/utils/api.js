@@ -1,19 +1,20 @@
 export const getApiBaseUrl = () => {
-  const envBaseUrl = String(
-    import.meta.env.VITE_API_BASE_URL || "",
-  ).trim();
+  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
 
   if (envBaseUrl) {
-    return envBaseUrl.replace(/\/+$/, "");
+    let url = envBaseUrl;
+
+    while (url.endsWith("/")) {
+      url = url.slice(0, -1);
+    }
+
+    return url;
   }
 
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
 
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1"
-    ) {
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
       return "http://localhost:8000";
     }
   }
@@ -36,23 +37,18 @@ export function getCsrfToken() {
     return null;
   }
 
-  return decodeURIComponent(
-    cookie.substring("csrftoken=".length),
-  );
+  return decodeURIComponent(cookie.substring("csrftoken=".length));
 }
 
 export async function ensureCsrfToken() {
-  const response = await fetch(
-    `${API_BASE_URL}/tbotapp/csrf/`,
-    {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-      },
-      cache: "no-store",
+  const response = await fetch(`${API_BASE_URL}/tbotapp/csrf/`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
     },
-  );
+    cache: "no-store",
+  });
 
   let data = null;
 
@@ -73,18 +69,13 @@ export async function ensureCsrfToken() {
   const csrfToken = data?.csrfToken;
 
   if (!csrfToken) {
-    throw new Error(
-      "Django did not return a CSRF token.",
-    );
+    throw new Error("Django did not return a CSRF token.");
   }
 
   return csrfToken;
 }
 
-export const getApiErrorMessage = async (
-  response,
-  fallback,
-) => {
+export const getApiErrorMessage = async (response, fallback) => {
   let message = fallback;
 
   try {
@@ -94,10 +85,7 @@ export const getApiErrorMessage = async (
       message += `: ${data.detail}`;
     } else if (data?.error) {
       message += `: ${data.error}`;
-    } else if (
-      data &&
-      typeof data === "object"
-    ) {
+    } else if (data && typeof data === "object") {
       const fieldMessages = Object.entries(data)
         .map(([field, messages]) => {
           const text = Array.isArray(messages)

@@ -70,14 +70,14 @@ function UserDeckManager() {
         );
 
         if (!response.ok) {
-          navigate("/");
+          void navigate("/");
           return;
         }
 
         const data = await response.json();
 
         if (!data.authenticated) {
-          navigate("/");
+          void navigate("/");
           return;
         }
 
@@ -85,12 +85,12 @@ function UserDeckManager() {
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to verify authentication:", err);
-          navigate("/");
+          void navigate("/");
         }
       }
     };
 
-    checkAuthentication();
+    void checkAuthentication();
 
     return () => controller.abort();
   }, [navigate]);
@@ -126,13 +126,15 @@ function UserDeckManager() {
 
         const data = await response.json();
 
-        setAllCards(
-          Array.isArray(data)
-            ? data
-            : Array.isArray(data?.results)
-              ? data.results
-              : [],
-        );
+        let cards = [];
+
+        if (Array.isArray(data)) {
+          cards = data;
+        } else if (Array.isArray(data?.results)) {
+          cards = data.results;
+        }
+
+        setAllCards(cards);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Unable to load card information:", err);
@@ -143,7 +145,7 @@ function UserDeckManager() {
       }
     };
 
-    fetchCards();
+    void fetchCards();
 
     return () => controller.abort();
   }, [authenticated]);
@@ -172,13 +174,15 @@ function UserDeckManager() {
 
       const data = await response.json();
 
-      const results = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.decks)
-          ? data.decks
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
+      let results = [];
+
+      if (Array.isArray(data)) {
+        results = data;
+      } else if (Array.isArray(data?.decks)) {
+        results = data.decks;
+      } else if (Array.isArray(data?.results)) {
+        results = data.results;
+      }
 
       setDecks(results);
     } catch (err) {
@@ -197,7 +201,7 @@ function UserDeckManager() {
       return;
     }
 
-    loadDecks();
+    void loadDecks();
   }, [authenticated]);
 
   const sortedDecks = useMemo(() => sortDecks(decks), [decks]);
@@ -650,7 +654,7 @@ function UserDeckManager() {
                 alt="Plants"
                 className="tab-icon"
               />
-              Plants
+              <span> Plants </span>
             </button>
 
             <button
@@ -663,7 +667,7 @@ function UserDeckManager() {
                 alt="Zombies"
                 className="tab-icon"
               />
-              Zombies
+              <span> Zombies </span>
             </button>
           </div>
 

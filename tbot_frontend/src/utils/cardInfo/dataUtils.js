@@ -10,7 +10,7 @@ import {
 
 const normalizeClassName = (className) => {
   const value = removeDiscordEmojis(className)
-    .replace(/[\_\~\`]/g, "")
+    .replace(/[_~`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -88,10 +88,10 @@ const keywordMatchesText = (keyword, text) => {
 
   const escaped = simplifyForMatch(keyword).replace(
     /[.*+?^${}()|[\]\\]/g,
-    "\\$&",
+    String.raw`\$&`,
   );
 
-  return new RegExp(`\\b${escaped}\\b`, "i").test(normalized);
+  return new RegExp(String.raw`\b${escaped}\b`, "i").test(normalized);
 };
 
 const getAbilityKeywords = (ability, description = "") => {
@@ -124,7 +124,7 @@ export const getCardKeywords = (card) => {
 };
 
 const TRIBE_LINE_PATTERN =
-  /\b([A-Za-z][A-Za-z'\-]*)\s+(Plants?|Zombies?|Tricks?|Environments?|Heroes?)\b/gi;
+  /\b([A-Z][A-Z'-]*)\s+(Plants?|Zombies?|Tricks?|Environments?|Heroes?)\b/gi;
 
 export const extractTribes = (description, side = "", cardType = "") => {
   const source = `${description || ""} ${side || ""} ${cardType || ""}`;
@@ -134,8 +134,8 @@ export const extractTribes = (description, side = "", cardType = "") => {
   }
 
   const cleaned = removeDiscordEmojis(source)
-    .replace(/\*\*/g, "")
-    .replace(/\_\_/g, "")
+    .replaceAll("**", "")
+    .replaceAll("__", "")
     .trim();
 
   const tribes = [];
@@ -208,10 +208,10 @@ export const extractTribes = (description, side = "", cardType = "") => {
     }
   }
 
-  const words = cleaned.toLowerCase().split(/\s+/);
+  const words = new Set(cleaned.toLowerCase().split(/\s+/));
 
   knownTribes.forEach((tribe) => {
-    if (words.includes(tribe.toLowerCase())) {
+    if (words.has(tribe.toLowerCase())) {
       addTribe(tribe);
     }
   });

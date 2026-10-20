@@ -11,7 +11,7 @@ export const removeDiscordEmojis = (value) =>
 
 export const normalizeClassName = (className) => {
   const value = removeDiscordEmojis(className)
-    .replace(/[\\_\\~\\`]/g, "")
+    .replace(/[_~`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -120,9 +120,8 @@ const KNOWN_RARITIES = new Set([
   "hero",
 ]);
 
-// Matches a trailing rarity word, with any dash/space/colon separator before it.
 const TRAILING_RARITY_PATTERN =
-  /^(.*?)[\s\-–—:|/]*\b(super[\s-]?rare|uncommon|common|rare|legendary)\s*$/i;
+  /\b(super[\s-]?rare|uncommon|common|rare|legendary)\s*$/i;
 
 const parseSetRarity = (setRarity) => {
   if (!setRarity) {
@@ -131,8 +130,6 @@ const parseSetRarity = (setRarity) => {
 
   const value = String(setRarity).trim();
   const separatorIndex = value.lastIndexOf(" - ");
-
-  // Standard format: "Set - Rarity"
   if (separatorIndex !== -1) {
     return {
       setName: value.slice(0, separatorIndex).trim(),
@@ -142,16 +139,31 @@ const parseSetRarity = (setRarity) => {
 
   const normalized = normalizeText(value);
 
-  // Event cards have no rarity tier; "Event" is both the set and the rarity.
   if (normalized === "event") {
     return { setName: value, rarityName: value };
   }
 
-  // Fallback for variants like "Colossal Super-Rare" or "Colossal – Super-Rare".
   const match = TRAILING_RARITY_PATTERN.exec(value);
 
-  if (match && match[1].trim()) {
-    return { setName: match[1].trim(), rarityName: match[2].trim() };
+  if (match) {
+    const setName = value.slice(0, match.index).trimEnd();
+
+    const separators = new Set(["-", "–", "—", ":", "|", "/"]);
+
+    let end = setName.length;
+
+    while (
+      end > 0 &&
+      (/\s/.test(setName[end - 1]) || separators.has(setName[end - 1]))
+    ) {
+      end--;
+    }
+
+    const cleanedSetName = setName.slice(0, end);
+
+    if (cleanedSetName) {
+      return { cleanedSetName, rarityName: match[1].trim() };
+    }
   }
 
   return {

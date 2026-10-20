@@ -95,6 +95,12 @@
   gap: 8px;
 }
 .deck-listing-card {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
   border: 1px solid #23272b;
   border-radius: 12px;
   transition:
@@ -110,6 +116,11 @@
     0 0 0 1px rgba(143, 227, 139, 0.35),
     0 0 18px rgba(143, 227, 139, 0.18),
     0 14px 32px rgba(0, 0, 0, 0.4);
+}
+
+.deck-listing-card:focus-visible {
+  outline: 2px solid #8fe38b;
+  outline-offset: 3px;
 }
 .deck-tutorial-link {
   display: inline-flex;
@@ -229,12 +240,12 @@
   gap: 0;
   position: relative;
   z-index: 20;
-  overflow: visible !important;
+  overflow: visible;
 }
 
 .select-wrapper {
   position: relative;
-  overflow: visible !important;
+  overflow: visible;
 }
 
 .clear-filter-btn {

@@ -65,7 +65,9 @@ const socialConnections = [
     path: "M19.5 5.2A16.7 16.7 0 0 0 15.3 4l-.5 1a15 15 0 0 0-5.6 0l-.5-1a16.7 16.7 0 0 0-4.2 1.2C1.8 9.1 1.1 13 1.4 16.9a16.9 16.9 0 0 0 5.2 2.6l1.3-1.8c-.7-.3-1.3-.7-1.9-1.1l.5-.4c3.7 1.7 7.7 1.7 11.4 0l.5.4c-.6.4-1.2.8-1.9 1.1l1.3 1.8a16.9 16.9 0 0 0 5.2-2.6c.4-4.5-.8-8.4-3.5-11.7ZM8.5 14.1c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Zm7 0c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Z",
   },
 ];
-
+const MarkdownLink = ({ node, ...props }) => (
+  <a {...props} target="_blank" rel="noopener noreferrer" />
+);
 function DeckbuilderDecks() {
   const { deckbuilder_name } = useParams();
 
@@ -631,11 +633,7 @@ function DeckbuilderDecks() {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   skipHtml
-                  components={{
-                    a: ({ node, ...props }) => (
-                      <a {...props} target="_blank" rel="noopener noreferrer" />
-                    ),
-                  }}
+                  components={{ a: MarkdownLink }}
                 >
                   {deckbuilder.bio}
                 </ReactMarkdown>

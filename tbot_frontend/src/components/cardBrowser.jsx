@@ -368,8 +368,7 @@ function CardBrowser({
         const normalizedName = normalizeText(card.card_name);
 
         const byName = modalCards.find(
-          (candidate) =>
-            normalizeText(candidate?.card_name) === normalizedName,
+          (candidate) => normalizeText(candidate?.card_name) === normalizedName,
         );
 
         if (byName) {
@@ -452,7 +451,7 @@ function CardBrowser({
       }
     };
 
-    fetchCardCount();
+    void fetchCardCount();
 
     return () => {
       controller.abort();
@@ -491,9 +490,7 @@ function CardBrowser({
 
         if (!contentType.includes("application/json")) {
           if (responseText.trim().startsWith("<")) {
-            throw new Error(
-              `Received HTML instead of JSON from ${endpoint}.`,
-            );
+            throw new Error(`Received HTML instead of JSON from ${endpoint}.`);
           }
 
           throw new Error(
@@ -509,10 +506,7 @@ function CardBrowser({
         setCardInfoMemoryCache(loadedCards);
 
         try {
-          sessionStorage.setItem(
-            CARD_CACHE_KEY,
-            JSON.stringify(loadedCards),
-          );
+          sessionStorage.setItem(CARD_CACHE_KEY, JSON.stringify(loadedCards));
         } catch (cacheError) {
           console.error("Unable to cache card data:", cacheError);
         }
@@ -527,16 +521,14 @@ function CardBrowser({
         console.error(fetchError);
 
         setError(
-          `Unable to load cards right now. ${
-            fetchError.message || ""
-          }`.trim(),
+          `Unable to load cards right now. ${fetchError.message || ""}`.trim(),
         );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCards();
+    void fetchCards();
 
     return () => {
       controller.abort();
@@ -585,10 +577,7 @@ function CardBrowser({
     });
   }, [cards, side]);
 
-  const filterData = useMemo(
-    () => buildFilterData(normalCards),
-    [normalCards],
-  );
+  const filterData = useMemo(() => buildFilterData(normalCards), [normalCards]);
 
   const typeOptions = filterData.types.map((value) => ({
     value,
@@ -602,17 +591,17 @@ function CardBrowser({
 
   const costOptions = filterData.costs.map((value) => ({
     value,
-    label: renderFilterLabel(`${value}`, "cost", side),
+    label: renderFilterLabel(`${value}`, side, "cost"),
   }));
 
   const attackOptions = filterData.attacks.map((value) => ({
     value,
-    label: renderFilterLabel(`${value}`, "attack", side),
+    label: renderFilterLabel(`${value}`, side, "attack"),
   }));
 
   const healthOptions = filterData.healths.map((value) => ({
     value,
-    label: renderFilterLabel(`${value}`, "health", side),
+    label: renderFilterLabel(`${value}`, side, "health"),
   }));
 
   const keywordOptions = filterData.keywords.map((value) => ({
@@ -709,32 +698,30 @@ function CardBrowser({
       </h1>
 
       {userCollection && (
-  <div className="collection-layout-toggle">
-    <span className="collection-layout-toggle-label">
-      {showCollectionLayout ? "Collection View" : "Info View"}
-    </span>
+        <div className="collection-layout-toggle">
+          <span className="collection-layout-toggle-label">
+            {showCollectionLayout ? "Collection View" : "Info View"}
+          </span>
 
-    <button
-      type="button"
-      className={`collection-layout-switch ${
-        showCollectionLayout ? "active" : ""
-      }`}
-      onClick={() =>
-        setShowCollectionLayout((current) => !current)
-      }
-      aria-label={
-        showCollectionLayout
-          ? "Switch to info view"
-          : "Switch to collection view"
-      }
-      aria-pressed={showCollectionLayout}
-    >
-      <span className="collection-layout-switch-track">
-        <span className="collection-layout-switch-thumb" />
-      </span>
-    </button>
-  </div>
-)}
+          <button
+            type="button"
+            className={`collection-layout-switch ${
+              showCollectionLayout ? "active" : ""
+            }`}
+            onClick={() => setShowCollectionLayout((current) => !current)}
+            aria-label={
+              showCollectionLayout
+                ? "Switch to info view"
+                : "Switch to collection view"
+            }
+            aria-pressed={showCollectionLayout}
+          >
+            <span className="collection-layout-switch-track">
+              <span className="collection-layout-switch-thumb" />
+            </span>
+          </button>
+        </div>
+      )}
 
       <Filters
         side={side}
@@ -793,11 +780,7 @@ function CardBrowser({
                   type="button"
                   className="profile-collection-card"
                   data-rarity={getRarityName(card.set_rarity)}
-                  key={
-                    card.collection_id ??
-                    card.cardid ??
-                    card.card_name
-                  }
+                  key={card.collection_id ?? card.cardid ?? card.card_name}
                   onClick={() => openCardModal(card)}
                   aria-label={`View ${card.card_name}`}
                 >

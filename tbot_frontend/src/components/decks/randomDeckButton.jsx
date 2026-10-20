@@ -19,7 +19,12 @@ export default function RandomDeckButton({
       candidates = decks.filter(
         (deck) =>
           `${String(deck.side ?? "")}-${String(
-            deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? deck.name ?? "",
+            deck.deckid ??
+              deck.deckID ??
+              deck.deckId ??
+              deck.id ??
+              deck.name ??
+              "",
           )}` !== previousKey,
       );
 
@@ -28,7 +33,11 @@ export default function RandomDeckButton({
       }
     }
 
-    const deck = candidates[Math.floor(Math.random() * candidates.length)];
+    const randomValues = new Uint32Array(1);
+    crypto.getRandomValues(randomValues);
+
+    const deck =
+      candidates[Math.floor((randomValues[0] / 2 ** 32) * candidates.length)];
     const key = `${String(deck.side ?? "")}-${String(
       deck.deckid ?? deck.deckID ?? deck.deckId ?? deck.id ?? deck.name ?? "",
     )}`;

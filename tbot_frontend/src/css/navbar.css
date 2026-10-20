@@ -85,8 +85,8 @@ background 0.2s ease;
 
 .navbar-dropdown:hover .navbar-dropdown-button,
 .navbar-dropdown.open .navbar-dropdown-button {
-color: #8fe38b;
-background: rgba(143, 227, 139, 0.035);
+  color: #b5f5b0;
+  background: #203b20;
 }
 
 .navbar-arrow {
@@ -153,9 +153,9 @@ padding-left 0.15s ease;
 }
 
 .navbar-dropdown-menu a:hover {
-color: #8fe38b;
-background: rgba(143, 227, 139, 0.08);
-padding-left: 17px;
+  color: #b5f5b0;
+  background: #203b20;
+  padding-left: 17px;
 }
 
 .navbar-dropdown-link-button {
@@ -180,9 +180,9 @@ padding-left 0.15s ease;
 }
 
 .navbar-dropdown-link-button:hover {
-color: #8fe38b;
-background: rgba(143, 227, 139, 0.08);
-padding-left: 17px;
+  color: #b5f5b0;
+  background: #203b20;
+  padding-left: 17px;
 }
 
 .navbar-account {
@@ -220,8 +220,8 @@ background 0.2s ease;
 .navbar-profile-button:hover,
 .navbar-profile-dropdown:hover .navbar-profile-button,
 .navbar-profile-dropdown.open .navbar-profile-button {
-color: #8fe38b;
-background: rgba(143, 227, 139, 0.035);
+  color: #b5f5b0;
+  background: #203b20;
 }
 
 .navbar-profile-menu {
@@ -247,11 +247,10 @@ padding-left 0.15s ease;
 }
 
 .navbar-profile-menu a:hover {
-color: #8fe38b;
-background: rgba(143, 227, 139, 0.08);
-padding-left: 17px;
+  color: #b5f5b0;
+  background: #203b20;
+  padding-left: 17px;
 }
-
 .navbar-profile-logout {
 width: 100%;
 margin-top: 6px;
@@ -548,9 +547,9 @@ padding-left 0.15s ease;
 }
 
 .navbar-mobile-section-menu a:hover {
-color: #8fe38b;
-background: rgba(143, 227, 139, 0.08);
-padding-left: 19px;
+  color: #b5f5b0;
+  background: #203b20;
+  padding-left: 19px;
 }
 
 .navbar-mobile-link-button {
@@ -575,9 +574,9 @@ padding-left 0.15s ease;
 }
 
 .navbar-mobile-link-button:hover {
-color: #8fe38b;
-background: rgba(143, 227, 139, 0.08);
-padding-left: 19px;
+  color: #b5f5b0;
+  background: #203b20;
+  padding-left: 19px;
 }
 
 .navbar-mobile-close {

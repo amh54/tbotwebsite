@@ -15,14 +15,14 @@ export const replaceDiscordEmojisWithNames = (value) =>
 
 export const cleanTraitValue = (value) =>
   removeDiscordEmojis(value)
-    .replace(/\*\*/g, "")
-    .replace(/\_\_/g, "")
-    .replace(/\~\~/g, "")
-    .replace(/\`/g, "")
+    .replaceAll("**", "")
+    .replaceAll("__", "")
+    .replaceAll("~~", "")
+    .replaceAll("`", "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/\s+\d+$/, "")
+    .replace(/ \d+$/, "")
     .trim();
 
 export const simplifyForMatch = (value) =>

@@ -72,6 +72,7 @@ function TutorialIcon({ type }) {
     </svg>
   );
 }
+
 function DeckCardPreview({
   deck,
   deckImage,
@@ -84,21 +85,22 @@ function DeckCardPreview({
   ownerName,
   onOpen,
 }) {
+  const sourceType = String(
+    deck.source_type || deck.sourceType || "",
+  ).toLowerCase();
+  let savedDeckSource = "Decklists";
+
+  if (sourceType === "user_deck") {
+    savedDeckSource = "User Decks";
+  } else if (sourceType === "legacy") {
+    savedDeckSource = "Legacy Decks";
+  }
   return (
-    <div
+    <button
+      type="button"
       className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}
       onClick={onOpen}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
-      style={{
-        cursor: "pointer",
-      }}
+      style={{ cursor: "pointer" }}
     >
       <div className="deck-card-image-only">
         {deckImage && !imgError ? (
@@ -113,25 +115,25 @@ function DeckCardPreview({
       </div>
 
       <div className="deck-listing-info">
-       <h3>
-  {deck.name || "Untitled Deck"}
+        <h3>
+          {deck.name || "Untitled Deck"}
 
-  {hasValue(deck.deck_doc) && (
-    <a
-      href={deck.deck_doc}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="deck-tutorial-link"
-      onClick={(event) => {
-        event.stopPropagation();
-      }}
-      title="Open deck tutorial"
-      aria-label="Open deck tutorial"
-    >
-      <TutorialIcon type={getTutorialType(deck.deck_doc)} />
-    </a>
-  )}
-</h3>
+          {hasValue(deck.deck_doc) && (
+            <a
+              href={deck.deck_doc}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="deck-tutorial-link"
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+              title="Open deck tutorial"
+              aria-label="Open deck tutorial"
+            >
+              <TutorialIcon type={getTutorialType(deck.deck_doc)} />
+            </a>
+          )}
+        </h3>
 
         <p>
           <span>Hero:</span> {deck.hero || "-"}
@@ -169,15 +171,11 @@ function DeckCardPreview({
 
         {isSavedDeck && (
           <div className="saved-deck-source">
-            Saved from:{" "}
-            {String(deck.source_type || deck.sourceType || "").toLowerCase() ===
-            "user_deck"
-              ? "User Decks"
-              : String(
-                    deck.source_type || deck.sourceType || "",
-                  ).toLowerCase() === "legacy"
-                ? "Legacy Decks"
-                : "Decklists"}
+            {isSavedDeck && (
+              <div className="saved-deck-source">
+                Saved from: {savedDeckSource}
+              </div>
+            )}
           </div>
         )}
 
@@ -187,7 +185,7 @@ function DeckCardPreview({
           </p>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 

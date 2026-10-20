@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Footer from "../../components/footer.jsx";
 
@@ -36,27 +32,19 @@ import {
 function AdminBugReports() {
   const [reports, setReports] = useState([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [actionError, setActionError] =
-    useState("");
+  const [actionError, setActionError] = useState("");
 
-  const [selectedReport, setSelectedReport] =
-    useState(null);
+  const [selectedReport, setSelectedReport] = useState(null);
 
-  const [
-    selectedScreenshot,
-    setSelectedScreenshot,
-  ] = useState(null);
+  const [selectedScreenshot, setSelectedScreenshot] = useState(null);
 
-  const [updatingId, setUpdatingId] =
-    useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
 
-  const [deletingId, setDeletingId] =
-    useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     document.title = "Admin - Bug Reports";
@@ -68,10 +56,7 @@ function AdminBugReports() {
 
   useEffect(() => {
     ensureCsrfToken().catch((err) => {
-      console.error(
-        "Unable to initialize CSRF:",
-        err,
-      );
+      console.error("Unable to initialize CSRF:", err);
     });
   }, []);
 
@@ -80,23 +65,19 @@ function AdminBugReports() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        `${API_BASE_URL}/tbotapp/admin/bugs/`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
+      const response = await fetch(`${API_BASE_URL}/tbotapp/admin/bugs/`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
         },
-      );
+      });
 
       if (!response.ok) {
-        const message =
-          await getApiErrorMessage(
-            response,
-            `Request failed with status ${response.status}`,
-          );
+        const message = await getApiErrorMessage(
+          response,
+          `Request failed with status ${response.status}`,
+        );
 
         if (response.status === 401) {
           throw new Error(
@@ -115,41 +96,35 @@ function AdminBugReports() {
 
       const data = await response.json();
 
-      const results = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-          ? data.results
-          : Array.isArray(data?.reports)
-            ? data.reports
-            : [];
+      let results = [];
+
+      if (Array.isArray(data)) {
+        results = data;
+      } else if (Array.isArray(data?.results)) {
+        results = data.results;
+      } else if (Array.isArray(data?.reports)) {
+        results = data.reports;
+      }
 
       setReports(results);
     } catch (err) {
-      console.error(
-        "Unable to load bug reports:",
-        err,
-      );
+      console.error("Unable to load bug reports:", err);
 
-      setError(
-        err.message ||
-          "Unable to load bug reports right now.",
-      );
+      setError(err.message || "Unable to load bug reports right now.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchReports();
+    void fetchReports();
   }, []);
 
   const filteredReports = useMemo(() => {
     const query = normalizeText(search);
 
     return reports.filter((report) => {
-      const status = normalizeStatus(
-        getReportStatus(report),
-      );
+      const status = normalizeStatus(getReportStatus(report));
 
       const searchText = [
         getReportTitle(report),
@@ -169,24 +144,13 @@ function AdminBugReports() {
         .map(normalizeText)
         .join(" ");
 
-      const matchesSearch =
-        !query ||
-        searchText.includes(query);
+      const matchesSearch = !query || searchText.includes(query);
 
-      const matchesStatus =
-        statusFilter === "all" ||
-        status === statusFilter;
+      const matchesStatus = statusFilter === "all" || status === statusFilter;
 
-      return (
-        matchesSearch &&
-        matchesStatus
-      );
+      return matchesSearch && matchesStatus;
     });
-  }, [
-    reports,
-    search,
-    statusFilter,
-  ]);
+  }, [reports, search, statusFilter]);
 
   const counts = useMemo(() => {
     const result = {
@@ -198,13 +162,9 @@ function AdminBugReports() {
     };
 
     reports.forEach((report) => {
-      const status = normalizeStatus(
-        getReportStatus(report),
-      );
+      const status = normalizeStatus(getReportStatus(report));
 
-      if (
-        result[status] !== undefined
-      ) {
+      if (result[status] !== undefined) {
         result[status] += 1;
       }
     });
@@ -212,32 +172,22 @@ function AdminBugReports() {
     return result;
   }, [reports]);
 
-  const handleStatusChange = async (
-    report,
-    newStatus,
-  ) => {
+  const handleStatusChange = async (report, newStatus) => {
     const reportId = getReportId(report);
 
-    if (
-      reportId === undefined ||
-      reportId === null
-    ) {
-      setActionError(
-        "This bug report does not have a valid ID.",
-      );
+    if (reportId === undefined || reportId === null) {
+      setActionError("This bug report does not have a valid ID.");
 
       return;
     }
 
-    const normalizedStatus =
-      normalizeStatus(newStatus);
+    const normalizedStatus = normalizeStatus(newStatus);
 
     try {
       setUpdatingId(reportId);
       setActionError("");
 
-      let token =
-        await ensureCsrfToken();
+      let token = await ensureCsrfToken();
 
       let response = await fetch(
         `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
@@ -246,8 +196,7 @@ function AdminBugReports() {
           credentials: "include",
           headers: {
             Accept: "application/json",
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
             "X-CSRFToken": token,
           },
           body: JSON.stringify({
@@ -257,8 +206,7 @@ function AdminBugReports() {
       );
 
       if (response.status === 403) {
-        token =
-          await ensureCsrfToken(true);
+        token = await ensureCsrfToken(true);
 
         response = await fetch(
           `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
@@ -267,8 +215,7 @@ function AdminBugReports() {
             credentials: "include",
             headers: {
               Accept: "application/json",
-              "Content-Type":
-                "application/json",
+              "Content-Type": "application/json",
               "X-CSRFToken": token,
             },
             body: JSON.stringify({
@@ -279,11 +226,10 @@ function AdminBugReports() {
       }
 
       if (!response.ok) {
-        const message =
-          await getApiErrorMessage(
-            response,
-            `Unable to update bug report. Status ${response.status}`,
-          );
+        const message = await getApiErrorMessage(
+          response,
+          `Unable to update bug report. Status ${response.status}`,
+        );
 
         throw new Error(message);
       }
@@ -291,56 +237,39 @@ function AdminBugReports() {
       let updatedReport = null;
 
       try {
-        updatedReport =
-          await response.json();
+        updatedReport = await response.json();
       } catch {
         updatedReport = null;
       }
 
       setReports((currentReports) =>
-        currentReports.map(
-          (currentReport) =>
-            String(
-              getReportId(
-                currentReport,
-              ),
-            ) === String(reportId)
-              ? updatedReport || {
-                  ...currentReport,
-                  status:
-                    normalizedStatus,
-                }
-              : currentReport,
+        currentReports.map((currentReport) =>
+          String(getReportId(currentReport)) === String(reportId)
+            ? updatedReport || {
+                ...currentReport,
+                status: normalizedStatus,
+              }
+            : currentReport,
         ),
       );
 
-      setSelectedReport(
-        (current) => {
-          if (
-            !current ||
-            String(
-              getReportId(current),
-            ) !== String(reportId)
-          ) {
-            return current;
-          }
+      setSelectedReport((current) => {
+        if (!current || String(getReportId(current)) !== String(reportId)) {
+          return current;
+        }
 
-          return updatedReport || {
+        return (
+          updatedReport || {
             ...current,
             status: normalizedStatus,
-          };
-        },
-      );
+          }
+        );
+      });
     } catch (err) {
-      console.error(
-        "Unable to update bug report:",
-        err,
-      );
+      console.error("Unable to update bug report:", err);
 
       setActionError(
-        err instanceof Error
-          ? err.message
-          : "Unable to update bug report.",
+        err instanceof Error ? err.message : "Unable to update bug report.",
       );
     } finally {
       setUpdatingId(null);
@@ -350,19 +279,13 @@ function AdminBugReports() {
   const handleDelete = async (report) => {
     const reportId = getReportId(report);
 
-    if (
-      reportId === undefined ||
-      reportId === null
-    ) {
-      setActionError(
-        "This bug report does not have a valid ID.",
-      );
+    if (reportId === undefined || reportId === null) {
+      setActionError("This bug report does not have a valid ID.");
 
       return;
     }
 
-    const title =
-      getReportTitle(report);
+    const title = getReportTitle(report);
 
     const confirmed = window.confirm(
       `Delete "${title}"?\n\nThis cannot be undone.`,
@@ -376,8 +299,7 @@ function AdminBugReports() {
       setDeletingId(reportId);
       setActionError("");
 
-      let token =
-        await ensureCsrfToken();
+      let token = await ensureCsrfToken();
 
       let response = await fetch(
         `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
@@ -392,8 +314,7 @@ function AdminBugReports() {
       );
 
       if (response.status === 403) {
-        token =
-          await ensureCsrfToken(true);
+        token = await ensureCsrfToken(true);
 
         response = await fetch(
           `${API_BASE_URL}/tbotapp/admin/bugs/${reportId}/`,
@@ -409,50 +330,34 @@ function AdminBugReports() {
       }
 
       if (!response.ok) {
-        const message =
-          await getApiErrorMessage(
-            response,
-            `Unable to delete bug report. Status ${response.status}`,
-          );
+        const message = await getApiErrorMessage(
+          response,
+          `Unable to delete bug report. Status ${response.status}`,
+        );
 
         throw new Error(message);
       }
 
-      setReports(
-        (currentReports) =>
-          currentReports.filter(
-            (currentReport) =>
-              String(
-                getReportId(
-                  currentReport,
-                ),
-              ) !== String(reportId),
-          ),
+      setReports((currentReports) =>
+        currentReports.filter(
+          (currentReport) =>
+            String(getReportId(currentReport)) !== String(reportId),
+        ),
       );
 
-      setSelectedReport(
-        (current) => {
-          if (!current) {
-            return null;
-          }
+      setSelectedReport((current) => {
+        if (!current) {
+          return null;
+        }
 
-          return String(
-            getReportId(current),
-          ) === String(reportId)
-            ? null
-            : current;
-        },
-      );
+        return String(getReportId(current)) === String(reportId)
+          ? null
+          : current;
+      });
     } catch (err) {
-      console.error(
-        "Unable to delete bug report:",
-        err,
-      );
+      console.error("Unable to delete bug report:", err);
 
-      setActionError(
-        err.message ||
-          "Unable to delete bug report.",
-      );
+      setActionError(err.message || "Unable to delete bug report.");
     } finally {
       setDeletingId(null);
     }
@@ -469,24 +374,16 @@ function AdminBugReports() {
         <div className="loading-card">
           <div className="loading-spinner" />
 
-          <h2>
-            Loading bug reports
-          </h2>
+          <h2>Loading bug reports</h2>
 
           <p>
-            Preparing the bug report
-            dashboard and loading
-            submitted reports.
+            Preparing the bug report dashboard and loading submitted reports.
           </p>
 
           <div className="loading-status">
-            <span>
-              Loading report data
-            </span>
+            <span>Loading report data</span>
 
-            <strong>
-              Loading...
-            </strong>
+            <strong>Loading...</strong>
           </div>
         </div>
       </div>
@@ -498,16 +395,13 @@ function AdminBugReports() {
       <main className="admin-bugreports-content">
         <div className="admin-bugreports-topbar">
           <div>
-            <span className="admin-bugreports-eyebrow">
-              ADMINISTRATION
-            </span>
+            <span className="admin-bugreports-eyebrow">ADMINISTRATION</span>
 
             <h1>Bug Reports</h1>
 
             <p>
-              Review, manage, and resolve
-              bug reports submitted by the
-              Tbot community.
+              Review, manage, and resolve bug reports submitted by the Tbot
+              community.
             </p>
           </div>
 
@@ -516,8 +410,7 @@ function AdminBugReports() {
               type="button"
               className="admin-bugreports-back"
               onClick={() => {
-                window.location.href =
-                  "/admin";
+                window.location.href = "/admin";
               }}
             >
               ← Admin
@@ -535,9 +428,7 @@ function AdminBugReports() {
 
         {error && (
           <div className="admin-bugreports-error">
-            <strong>
-              Unable to load reports
-            </strong>
+            <strong>Unable to load reports</strong>
 
             <span>{error}</span>
           </div>
@@ -545,18 +436,11 @@ function AdminBugReports() {
 
         {actionError && (
           <div className="admin-bugreports-error">
-            <strong>
-              Action failed
-            </strong>
+            <strong>Action failed</strong>
 
             <span>{actionError}</span>
 
-            <button
-              type="button"
-              onClick={() =>
-                setActionError("")
-              }
-            >
+            <button type="button" onClick={() => setActionError("")}>
               ×
             </button>
           </div>
@@ -567,94 +451,56 @@ function AdminBugReports() {
             <AdminBugReportStats
               counts={counts}
               statusFilter={statusFilter}
-              onStatusChange={
-                setStatusFilter
-              }
+              onStatusChange={setStatusFilter}
             />
 
             <AdminBugReportsToolbar
               search={search}
               setSearch={setSearch}
               statusFilter={statusFilter}
-              setStatusFilter={
-                setStatusFilter
-              }
+              setStatusFilter={setStatusFilter}
             />
 
             <div className="admin-bugreports-results">
               <span>
-                Showing{" "}
-                <strong>
-                  {filteredReports.length}
-                </strong>{" "}
-                of{" "}
-                <strong>
-                  {reports.length}
-                </strong>{" "}
-                reports
+                Showing <strong>{filteredReports.length}</strong> of{" "}
+                <strong>{reports.length}</strong> reports
               </span>
             </div>
 
             {filteredReports.length === 0 ? (
               <section className="admin-bugreports-empty">
-                <div className="admin-bugreports-empty-icon">
-                  ✓
-                </div>
+                <div className="admin-bugreports-empty-icon">✓</div>
 
-                <h2>
-                  No bug reports found
-                </h2>
+                <h2>No bug reports found</h2>
 
                 <p>
-                  There are no reports
-                  matching your current
-                  search and filters.
+                  There are no reports matching your current search and filters.
                 </p>
 
-                {(search ||
-                  statusFilter !==
-                    "all") && (
-                  <button
-                    type="button"
-                    onClick={clearFilters}
-                  >
+                {(search || statusFilter !== "all") && (
+                  <button type="button" onClick={clearFilters}>
                     Clear Filters
                   </button>
                 )}
               </section>
             ) : (
               <section className="admin-bugreports-list">
-                {filteredReports.map(
-                  (report) => (
-                    <AdminBugReportCard
-                      key={
-                        getReportId(
-                          report,
-                        ) ??
-                        `${getReportTitle(
-                          report,
-                        )}-${getCreatedDate(
-                          report,
-                        )}`
-                      }
-                      report={report}
-                      updatingId={updatingId}
-                      deletingId={deletingId}
-                      onStatusChange={
-                        handleStatusChange
-                      }
-                      onDelete={
-                        handleDelete
-                      }
-                      onViewDetails={
-                        setSelectedReport
-                      }
-                      onViewScreenshot={
-                        setSelectedScreenshot
-                      }
-                    />
-                  ),
-                )}
+                {filteredReports.map((report) => (
+                  <AdminBugReportCard
+                    key={
+                      getReportId(report) ??
+                      `${getReportTitle(report)}-${getCreatedDate(report)}`
+                    }
+                    report={report}
+                    updatingId={updatingId}
+                    deletingId={deletingId}
+                    onStatusChange={handleStatusChange}
+                    onDelete={handleDelete}
+                    onViewDetails={setSelectedReport}
+                    onViewScreenshot={setSelectedScreenshot}
+                  />
+                ))}
               </section>
             )}
           </>
@@ -667,24 +513,16 @@ function AdminBugReports() {
         <AdminBugReportDetails
           report={selectedReport}
           updatingId={updatingId}
-          onStatusChange={
-            handleStatusChange
-          }
+          onStatusChange={handleStatusChange}
           onDelete={handleDelete}
-          onClose={() =>
-            setSelectedReport(null)
-          }
-          onViewScreenshot={
-            setSelectedScreenshot
-          }
+          onClose={() => setSelectedReport(null)}
+          onViewScreenshot={setSelectedScreenshot}
         />
       )}
 
       <AdminBugReportImageModal
         screenshot={selectedScreenshot}
-        onClose={() =>
-          setSelectedScreenshot(null)
-        }
+        onClose={() => setSelectedScreenshot(null)}
       />
     </div>
   );

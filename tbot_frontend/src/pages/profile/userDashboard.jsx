@@ -27,14 +27,14 @@ function UserDashboard() {
         );
 
         if (!response.ok) {
-          navigate("/");
+          void navigate("/");
           return;
         }
 
         const data = await response.json();
 
         if (!data.authenticated) {
-          navigate("/");
+          void navigate("/");
           return;
         }
 
@@ -42,13 +42,13 @@ function UserDashboard() {
         setUser(data.user || data);
       } catch (error) {
         console.error("Unable to verify user authentication:", error);
-        navigate("/");
+        void navigate("/");
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuthentication();
+    void checkAuthentication();
   }, [navigate]);
 
   if (loading) {

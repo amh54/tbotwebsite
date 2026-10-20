@@ -118,13 +118,15 @@ function AdminUserDecks() {
 
         const data = await response.json();
 
-        const results = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.decks)
-            ? data.decks
-            : Array.isArray(data?.results)
-              ? data.results
-              : [];
+        let results = [];
+
+        if (Array.isArray(data)) {
+          results = data;
+        } else if (Array.isArray(data?.decks)) {
+          results = data.decks;
+        } else if (Array.isArray(data?.results)) {
+          results = data.results;
+        }
 
         setDecks(results);
       } catch (err) {
@@ -142,7 +144,7 @@ function AdminUserDecks() {
       }
     };
 
-    fetchUserDecks();
+    void fetchUserDecks();
 
     return () => controller.abort();
   }, []);
@@ -174,13 +176,15 @@ function AdminUserDecks() {
 
         const data = await response.json();
 
-        setAllCards(
-          Array.isArray(data)
-            ? data
-            : Array.isArray(data?.results)
-              ? data.results
-              : [],
-        );
+        let cards = [];
+
+        if (Array.isArray(data)) {
+          cards = data;
+        } else if (Array.isArray(data?.results)) {
+          cards = data.results;
+        }
+
+        setAllCards(cards);
       } catch (err) {
         if (err.name === "AbortError") {
           return;
@@ -194,7 +198,7 @@ function AdminUserDecks() {
       }
     };
 
-    fetchCards();
+    void fetchCards();
 
     return () => controller.abort();
   }, []);
@@ -368,7 +372,7 @@ function AdminUserDecks() {
 
           return {
             ...existingDeck,
-            ...(updatedDeck || {}),
+            ...updatedDeck,
           };
         }),
       );
@@ -531,7 +535,7 @@ function AdminUserDecks() {
                 alt="Plants"
                 className="tab-icon"
               />
-              Plants
+              <span>Plants</span>
             </button>
 
             <button
@@ -544,7 +548,7 @@ function AdminUserDecks() {
                 alt="Zombies"
                 className="tab-icon"
               />
-              Zombies
+              <span>Zombies</span>
             </button>
           </div>
 

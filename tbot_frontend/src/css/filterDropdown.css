@@ -1,7 +1,3 @@
-/* ============================================================
-   FILTER DROPDOWN
-   ============================================================ */
-
 .filter-dropdown {
   position: relative;
   width: 100%;
@@ -12,10 +8,6 @@
 .filter-dropdown.is-open {
   z-index: 999999;
 }
-
-/* ============================================================
-   TRIGGER
-   ============================================================ */
 
 .filter-dropdown-trigger {
   width: 100%;
@@ -29,19 +21,15 @@
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   transition:
     color 0.15s ease,
     background 0.15s ease;
-
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-
   position: relative;
   z-index: 2;
 }
@@ -51,10 +39,6 @@
   color: #8fe38b;
   background: #242424;
 }
-
-/* ============================================================
-   TRIGGER TEXT
-   ============================================================ */
 
 .filter-dropdown-trigger-label {
   flex: 1;
@@ -67,30 +51,19 @@
   text-align: left;
 }
 
-/* ============================================================
-   CLEAR X
-   ============================================================ */
-
 .filter-dropdown-clear {
   flex-shrink: 0;
-
   margin-left: 8px;
-
   width: 20px;
   height: 20px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 50%;
-
   color: #aaa;
   font-size: 15px;
   line-height: 1;
-
   cursor: pointer;
-
   transition:
     background 0.15s ease,
     color 0.15s ease;
@@ -101,18 +74,11 @@
   color: #8fe38b;
 }
 
-/* ============================================================
-   ARROW
-   ============================================================ */
-
 .filter-dropdown-arrow {
   flex-shrink: 0;
-
   font-size: 12px;
   margin-left: 8px;
-
   color: #888;
-
   transition:
     color 0.15s ease,
     transform 0.15s ease;
@@ -123,38 +89,23 @@
   color: #8fe38b;
 }
 
-/* ============================================================
-   DROPDOWN MENU
-   ============================================================ */
-
 .filter-dropdown-menu {
   position: absolute;
-
   top: calc(100% + 6px);
   left: 0;
-
   width: max-content;
   min-width: 100%;
   max-width: 450px;
-
   max-height: 420px;
-
   overflow-y: auto;
   overflow-x: hidden;
-
   background: #1a1d1f;
-
   border: 1px solid #2a2e33;
   border-radius: 10px;
-
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-
   z-index: 999999;
-
   padding: 6px 0;
-
   box-sizing: border-box;
-
   scrollbar-width: none;
 }
 
@@ -162,37 +113,23 @@
   display: none;
 }
 
-/* ============================================================
-   ITEMS
-   ============================================================ */
-
 .filter-dropdown-item {
   width: 100%;
-
   display: flex;
   align-items: flex-start;
-
   gap: 14px;
-
   padding: 14px 18px;
-
   cursor: pointer;
-
   border: none;
   border-bottom: 1px solid #26292d;
-
   background: transparent;
   color: white;
-
   font-family: inherit;
   font-size: inherit;
-
   text-align: left;
-
   box-sizing: border-box;
   appearance: none;
   -webkit-appearance: none;
-
   transition: background 0.12s ease;
 }
 
@@ -212,43 +149,25 @@
   color: #8fe38b;
 }
 
-/* ============================================================
-   ICON
-   ============================================================ */
-
 .filter-item-icon {
   width: 24px;
   min-width: 24px;
   height: 24px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   flex-shrink: 0;
-
   font-size: 18px;
   line-height: 1;
 }
 
-/* ============================================================
-   IMAGE
-   ============================================================ */
-
 .filter-item-image {
   width: 44px;
   height: 44px;
-
   object-fit: contain;
-
   border-radius: 6px;
-
   flex-shrink: 0;
 }
-
-/* ============================================================
-   TEXT
-   ============================================================ */
 
 .filter-item-text {
   min-width: 0;
@@ -258,76 +177,42 @@
 .filter-item-title {
   font-size: 16px;
   font-weight: 600;
-
   color: white;
-
   margin-bottom: 4px;
-
   line-height: 1.3;
 }
 
 .filter-item-description {
   font-size: 13px;
-
   color: #999;
-
   line-height: 1.4;
 }
 
-/* ============================================================
-   EMPTY STATE
-   ============================================================ */
-
 .filter-dropdown-empty {
   padding: 14px 18px;
-
   color: #999;
-
   font-size: 14px;
-
   text-align: center;
 }
-
-/* ============================================================
-   FILTER CONTAINER
-   ============================================================ */
 
 .filters {
   position: relative;
   z-index: 100;
-
-  overflow: visible !important;
-
-  /*
-     Four filters + Clear button.
-
-     The filters themselves will share the available width
-     instead of forcing the Collection dropdown onto a
-     second line on normal desktop widths.
-  */
+  overflow: visible;
   display: grid;
-
   grid-template-columns:
     minmax(0, 1fr)
     minmax(0, 1fr)
     minmax(0, 1fr)
     minmax(0, 1fr)
     auto;
-
   width: 100%;
 }
 
-/* ============================================================
-   SELECT WRAPPER
-   ============================================================ */
-
 .select-wrapper {
   position: relative;
-
   z-index: 100;
-
-  overflow: visible !important;
-
+  overflow: visible;
   min-width: 0;
 }
 
@@ -335,45 +220,26 @@
   z-index: 999999;
 }
 
-/*
-   Make the last dropdown play nicely with the Clear button.
-*/
-
 .select-wrapper:last-of-type {
   min-width: 0;
 }
 
-/* ============================================================
-   DECK BROWSER
-   ============================================================ */
-
 .admin-deck-browser,
 .deck-browser {
-  overflow: visible !important;
+  overflow: visible;
 }
-
-/* ============================================================
-   CLEAR FILTER BUTTON
-   ============================================================ */
 
 .clear-filter-btn {
   height: 45px;
-
   padding: 0 16px;
-
   border: none;
-
   background: #202020;
   color: #aaa;
-
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
-
   cursor: pointer;
-
   white-space: nowrap;
-
   transition:
     background 0.15s ease,
     color 0.15s ease;
@@ -384,17 +250,6 @@
   color: #8fe38b;
 }
 
-/* ============================================================
-   COLLECTION DROPDOWN
-   ============================================================ */
-
-/*
-   Collection uses the same FilterDropdown component, but its
-   options are simple text/icon options instead of hero images.
-
-   These rules make sure the Collection menu doesn't become
-   unnecessarily wide.
-*/
 
 .filters .select-wrapper:nth-child(4) .filter-dropdown-menu {
   min-width: 280px;
@@ -404,10 +259,6 @@
 .filters .select-wrapper:nth-child(4) .filter-dropdown-item {
   min-height: 58px;
 }
-
-/* ============================================================
-   TABLET
-   ============================================================ */
 
 @media (max-width: 1100px) {
   .filters {
@@ -424,10 +275,6 @@
     align-self: stretch;
   }
 }
-
-/* ============================================================
-   MOBILE
-   ============================================================ */
 
 @media (max-width: 900px) {
   .filter-dropdown {
@@ -450,33 +297,23 @@
 
   .filter-dropdown-menu {
     position: absolute;
-
     top: calc(100% + 5px);
     left: 0;
     right: 0;
-
     width: 100%;
-
     min-width: 0;
     max-width: none;
-
     max-height: min(60vh, 420px);
-
     border-radius: 8px;
-
     padding: 4px 0;
-
     overflow-x: hidden;
     overflow-y: auto;
-
     box-sizing: border-box;
   }
 
   .filter-dropdown-item {
     gap: 10px;
-
     padding: 11px 13px;
-
     min-height: 58px;
   }
 
@@ -484,25 +321,19 @@
     width: 24px;
     min-width: 24px;
     height: 24px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     font-size: 18px;
     line-height: 1;
-
     margin-top: 1px;
-
     flex-shrink: 0;
   }
 
   .filter-item-image {
     width: 38px;
     height: 38px;
-
     border-radius: 5px;
-
     flex-shrink: 0;
   }
 
@@ -513,9 +344,7 @@
 
   .filter-item-title {
     font-size: 14px;
-
     margin-bottom: 2px;
-
     line-height: 1.25;
   }
 
@@ -528,7 +357,6 @@
   .filter-dropdown-clear {
     width: 22px;
     height: 22px;
-
     margin-left: 5px;
   }
 
@@ -544,17 +372,10 @@
     font-size: 13px;
   }
 
-  /*
-     Four dropdowns become a vertical list on mobile.
-  */
-
   .filters {
     display: grid;
-
     grid-template-columns: 1fr;
-
     width: 100%;
-
     gap: 0;
   }
 
@@ -570,38 +391,26 @@
     margin-top: 8px;
   }
 
-  /*
-     Reset Collection-specific desktop sizing.
-  */
-
   .filters .select-wrapper:nth-child(4) .filter-dropdown-menu {
     min-width: 0;
     max-width: none;
   }
 }
 
-/* ============================================================
-   SMALL PHONES
-   ============================================================ */
-
 @media (max-width: 600px) {
   .filter-dropdown-trigger {
     min-height: 48px;
-
     padding: 11px 12px;
-
     font-size: 14px;
   }
 
   .filter-dropdown-menu {
     max-height: 55vh;
-
     border-radius: 7px;
   }
 
   .filter-dropdown-item {
     gap: 9px;
-
     padding: 10px 12px;
   }
 
@@ -626,10 +435,6 @@
     font-size: 14px;
   }
 }
-
-/* ============================================================
-   VERY SMALL PHONES
-   ============================================================ */
 
 @media (max-width: 400px) {
   .filter-dropdown-trigger {

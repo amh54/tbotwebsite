@@ -13,11 +13,11 @@ const CLASS_EMOJI_NAMES = new Set([
 
 const normalizeCardName = (value) =>
   String(value ?? "")
-    .replace(/[’‘]/g, "'")
-    .replace(/[“”]/g, '"')
+    .replaceAll(/[’‘]/g, "'")
+    .replaceAll(/[“”]/g, '"')
     .replace(/<:[^:>]+:\d+>/gi, "")
-    .replace(/\*\*/g, "")
-    .replace(/__/g, "")
+    .replaceAll("**", "")
+    .replaceAll("__", "")
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
@@ -80,71 +80,54 @@ const findMatchingCard = (
   });
 };
 
-export const getSuperpowerCards = (
-  hero,
-  allCards,
-) => {
+const getMatchingSuperpowerCard = (line, emojiMatch, sortedCards, result) => {
+  const emojiIndex = emojiMatch.index;
+
+  if (typeof emojiIndex !== "number") {
+    return null;
+  }
+
+  const textBeforeEmoji = line.slice(0, emojiIndex);
+  const matchingCard = findMatchingCard(sortedCards, textBeforeEmoji);
+
   if (
-    !hero?.ability ||
-    !Array.isArray(allCards) ||
-    allCards.length === 0
+    !matchingCard ||
+    result.some((card) => card.cardid === matchingCard.cardid)
   ) {
+    return null;
+  }
+
+  return matchingCard;
+};
+
+export const getSuperpowerCards = (hero, allCards) => {
+  if (!hero?.ability || !Array.isArray(allCards) || allCards.length === 0) {
     return [];
   }
 
-  const sortedCards =
-    getSortedCards(allCards);
-
+  const sortedCards = getSortedCards(allCards);
   const result = [];
-  const ability = String(hero.ability);
-  const lines = ability.split(/\r?\n/);
+  const lines = String(hero.ability).split(/\r?\n/);
 
   for (const line of lines) {
     if (!line.trim()) {
       continue;
     }
 
-    const emojiMatches = [
-      ...line.matchAll(
-        /<:([^:>]+):\d+>/gi,
-      ),
-    ];
-
-    const classEmojiMatches =
-      emojiMatches.filter((match) =>
-        isClassEmoji(match[1]),
-      );
-
-    if (classEmojiMatches.length === 0) {
-      continue;
-    }
+    const emojiMatches = [...line.matchAll(/<:([^:>]+):\d+>/gi)];
+    const classEmojiMatches = emojiMatches.filter((match) =>
+      isClassEmoji(match[1]),
+    );
 
     for (const emojiMatch of classEmojiMatches) {
-      const emojiIndex = emojiMatch.index;
-
-      if (typeof emojiIndex !== "number") {
-        continue;
-      }
-
-      const textBeforeEmoji = line.slice(
-        0,
-        emojiIndex,
+      const matchingCard = getMatchingSuperpowerCard(
+        line,
+        emojiMatch,
+        sortedCards,
+        result,
       );
 
-      const matchingCard =
-        findMatchingCard(
-          sortedCards,
-          textBeforeEmoji,
-        );
-
-      if (
-        matchingCard &&
-        !result.some(
-          (card) =>
-            card.cardid ===
-            matchingCard.cardid,
-        )
-      ) {
+      if (matchingCard) {
         result.push(matchingCard);
       }
 

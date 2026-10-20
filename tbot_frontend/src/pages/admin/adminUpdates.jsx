@@ -39,7 +39,7 @@ const getCategoryLabel = (category) => {
   }
 
   return String(category)
-    .replace(/[\_\-]+/g, " ")
+    .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 
@@ -66,12 +66,37 @@ const normalizeCategoryClass = (category) => {
     return "unknown";
   }
 
-  return String(category)
-    .toLowerCase()
-    .replace(/[^a-z0-9\_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-};
+  const value = String(category).toLowerCase();
+  let slug = "";
+  let previousWasDash = false;
 
+  for (const char of value) {
+    const isAllowed =
+      (char >= "a" && char <= "z") ||
+      (char >= "0" && char <= "9") ||
+      char === "_" ||
+      char === "-";
+
+    if (isAllowed) {
+      slug += char;
+      previousWasDash = false;
+    } else if (!previousWasDash) {
+      slug += "-";
+      previousWasDash = true;
+    }
+  }
+
+  let start = 0;
+  let end = slug.length;
+
+  while (start < end && slug[start] === "-") start++;
+  while (end > start && slug[end - 1] === "-") end--;
+
+  return slug.slice(start, end);
+};
+const MarkdownLink = ({ node, ...props }) => (
+  <a {...props} target="_blank" rel="noopener noreferrer" />
+);
 function AdminUpdates() {
   const [updates, setUpdates] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -87,16 +112,13 @@ function AdminUpdates() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        `${API_BASE_URL}/tbotapp/admin/updates/`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
+      const response = await fetch(`${API_BASE_URL}/tbotapp/admin/updates/`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
         },
-      );
+      });
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -111,9 +133,7 @@ function AdminUpdates() {
           );
         }
 
-        throw new Error(
-          `Unable to load site updates: ${response.status}`,
-        );
+        throw new Error(`Unable to load site updates: ${response.status}`);
       }
 
       const data = await response.json();
@@ -134,7 +154,7 @@ function AdminUpdates() {
   useEffect(() => {
     document.title = "Admin - Site Updates";
 
-    loadUpdates();
+    void loadUpdates();
 
     return () => {
       document.title = "Tbot";
@@ -168,8 +188,7 @@ function AdminUpdates() {
         return;
       }
 
-      counts[update.category] =
-        (counts[update.category] || 0) + 1;
+      counts[update.category] = (counts[update.category] || 0) + 1;
     });
 
     return counts;
@@ -180,9 +199,7 @@ function AdminUpdates() {
       return updates;
     }
 
-    return updates.filter(
-      (update) => update.category === selectedCategory,
-    );
+    return updates.filter((update) => update.category === selectedCategory);
   }, [updates, selectedCategory]);
 
   const openCreateModal = () => {
@@ -202,9 +219,7 @@ function AdminUpdates() {
 
   const handleUpdateComplete = (savedUpdate) => {
     setUpdates((current) => {
-      const exists = current.some(
-        (update) => update.id === savedUpdate.id,
-      );
+      const exists = current.some((update) => update.id === savedUpdate.id);
 
       if (exists) {
         return current
@@ -282,9 +297,7 @@ function AdminUpdates() {
             </div>
           </div>
 
-          <div className="admin-updates-loading">
-            Loading site updates...
-          </div>
+          <div className="admin-updates-loading">Loading site updates...</div>
         </main>
 
         <Footer credits />
@@ -335,10 +348,7 @@ function AdminUpdates() {
           <div className="admin-error">
             {error}
 
-            <button
-              type="button"
-              onClick={loadUpdates}
-            >
+            <button type="button" onClick={loadUpdates}>
               Try Again
             </button>
           </div>
@@ -350,9 +360,7 @@ function AdminUpdates() {
 
             <h2>No updates yet</h2>
 
-            <p>
-              Create your first site update using the button above.
-            </p>
+            <p>Create your first site update using the button above.</p>
 
             <button
               type="button"
@@ -378,9 +386,7 @@ function AdminUpdates() {
 
                 <span className="site-updates-result-count">
                   {filteredUpdates.length}{" "}
-                  {filteredUpdates.length === 1
-                    ? "update"
-                    : "updates"}
+                  {filteredUpdates.length === 1 ? "update" : "updates"}
                 </span>
               </div>
 
@@ -406,9 +412,7 @@ function AdminUpdates() {
                     className={`site-updates-filter ${
                       selectedCategory === category ? "active" : ""
                     }`}
-                    onClick={() =>
-                      setSelectedCategory(category)
-                    }
+                    onClick={() => setSelectedCategory(category)}
                   >
                     <span>{getCategoryLabel(category)}</span>
 
@@ -428,10 +432,7 @@ function AdminUpdates() {
 
                 <p>
                   There aren't any updates currently available for{" "}
-                  <strong>
-                    {getCategoryLabel(selectedCategory)}
-                  </strong>
-                  .
+                  <strong>{getCategoryLabel(selectedCategory)}.</strong>
                 </p>
 
                 <button
@@ -445,8 +446,7 @@ function AdminUpdates() {
             ) : (
               <div className="site-updates-list">
                 {filteredUpdates.map((update) => {
-                  const categoryClass =
-                    normalizeCategoryClass(update.category);
+                  const categoryClass = normalizeCategoryClass(update.category);
 
                   return (
                     <article
@@ -469,14 +469,10 @@ function AdminUpdates() {
                         <div className="admin-site-update-card-actions">
                           <span
                             className={`admin-site-update-status ${
-                              update.published
-                                ? "published"
-                                : "draft"
+                              update.published ? "published" : "draft"
                             }`}
                           >
-                            {update.published
-                              ? "Published"
-                              : "Draft"}
+                            {update.published ? "Published" : "Draft"}
                           </span>
 
                           <span className="site-update-number">
@@ -489,17 +485,7 @@ function AdminUpdates() {
                         <h2>{update.title}</h2>
 
                         <div className="site-update-content">
-                          <ReactMarkdown
-                            components={{
-                              a: ({ node, ...props }) => (
-                                <a
-                                  {...props}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                />
-                              ),
-                            }}
-                          >
+                          <ReactMarkdown components={{ a: MarkdownLink }}>
                             {update.content || ""}
                           </ReactMarkdown>
                         </div>
@@ -518,9 +504,7 @@ function AdminUpdates() {
                         <div className="admin-site-update-actions">
                           <button
                             type="button"
-                            onClick={() =>
-                              openEditModal(update)
-                            }
+                            onClick={() => openEditModal(update)}
                           >
                             Edit
                           </button>
@@ -528,9 +512,7 @@ function AdminUpdates() {
                           <button
                             type="button"
                             className="delete"
-                            onClick={() =>
-                              openDeleteModal(update)
-                            }
+                            onClick={() => openDeleteModal(update)}
                           >
                             Delete
                           </button>

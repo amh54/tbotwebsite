@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import "../css/navbar.css";
 
@@ -15,8 +15,9 @@ import { API_BASE_URL, ensureCsrfToken } from "../utils/api";
 import NAVIGATION from "../utils/navigation";
 
 function Navbar() {
-  const navigate = useNavigate();
+  const location = useLocation();
 
+  const currentPageUrl = `${window.location.origin}${location.pathname}${location.search}${location.hash}`;
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileOpenSection, setMobileOpenSection] = useState(null);
@@ -27,6 +28,28 @@ function Navbar() {
 
   useEffect(() => {
     let cancelled = false;
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tbotapp/profile/me/`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          console.error("Profile request failed:", response.status);
+          if (!cancelled) setProfile(null);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!cancelled) setProfile(data.profile || null);
+      } catch (error) {
+        console.error("Unable to load user profile:", error);
+        if (!cancelled) setProfile(null);
+      }
+    };
 
     const loadUser = async () => {
       try {
@@ -44,51 +67,16 @@ function Navbar() {
 
         const data = await response.json();
 
-        if (cancelled) {
+        if (cancelled) return;
+
+        if (!data.authenticated || !data.user) {
+          setUser(null);
+          setProfile(null);
           return;
         }
 
-        if (data.authenticated && data.user) {
-          setUser(data.user);
-
-          try {
-            const profileResponse = await fetch(
-              `${API_BASE_URL}/tbotapp/profile/me/`,
-              {
-                method: "GET",
-                credentials: "include",
-              },
-            );
-
-            if (!profileResponse.ok) {
-              console.error(
-                "Profile request failed:",
-                profileResponse.status,
-              );
-
-              if (!cancelled) {
-                setProfile(null);
-              }
-
-              return;
-            }
-
-            const profileData = await profileResponse.json();
-
-            if (!cancelled) {
-              setProfile(profileData.profile || null);
-            }
-          } catch (profileError) {
-            console.error("Unable to load user profile:", profileError);
-
-            if (!cancelled) {
-              setProfile(null);
-            }
-          }
-        } else {
-          setUser(null);
-          setProfile(null);
-        }
+        setUser(data.user);
+        await loadProfile();
       } catch (error) {
         console.error("Unable to load Discord user:", error);
 
@@ -97,13 +85,11 @@ function Navbar() {
           setProfile(null);
         }
       } finally {
-        if (!cancelled) {
-          setLoadingUser(false);
-        }
+        if (!cancelled) setLoadingUser(false);
       }
     };
 
-    loadUser();
+    void loadUser();
 
     return () => {
       cancelled = true;
@@ -115,9 +101,7 @@ function Navbar() {
   };
 
   const toggleMobileSection = (label) => {
-    setMobileOpenSection((current) =>
-      current === label ? null : label,
-    );
+    setMobileOpenSection((current) => (current === label ? null : label));
   };
 
   const closeMenus = () => {
@@ -134,27 +118,6 @@ function Navbar() {
     setMobileOpen(false);
     setMobileOpenSection(null);
   };
-
-  const openBugReport = () => {
-    closeMenus();
-
-    navigate("/bugreport", {
-      state: {
-        from: window.location.href,
-      },
-    });
-  };
-
-  const openSuggestion = () => {
-    closeMenus();
-
-    navigate("/suggestions", {
-      state: {
-        from: window.location.href,
-      },
-    });
-  };
-
   const logoutFromDiscord = async () => {
     if (loggingOut) {
       return;
@@ -186,9 +149,7 @@ function Navbar() {
 
       if (!response.ok) {
         throw new Error(
-          data.error ||
-            data.detail ||
-            `Logout failed: ${response.status}`,
+          data.error || data.detail || `Logout failed: ${response.status}`,
         );
       }
 
@@ -221,70 +182,44 @@ function Navbar() {
     : null;
 
   return (
-    <>
-      <header className="site-navbar">
-        <div className="navbar-inner">
-          <Link to="/" className="navbar-logo" onClick={closeMenus}>
-            <img
-              src="https://cdn.pvzhtbot.com/art/halloween.webp"
-              alt="Tbot"
-              className="navbar-logo-image"
-            />
-
-            <span className="navbar-logo-main">TBOT</span>
-          </Link>
-
-          <button
-            type="button"
-            className="navbar-mobile-toggle"
-            onClick={openMobileMenu}
-            aria-label="Open navigation"
-            aria-expanded={mobileOpen}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-
-          <NavbarDesktop
-            navigation={NAVIGATION}
-            openMenu={openMenu}
-            toggleMenu={toggleMenu}
-            closeMenus={closeMenus}
-            openBugReport={openBugReport}
-            openSuggestion={openSuggestion}
-            account={
-              <NavbarAccount
-                user={user}
-                profilePath={profilePath}
-                loadingUser={loadingUser}
-                loggingOut={loggingOut}
-                toggleMenu={toggleMenu}
-                openMenu={openMenu}
-                closeMenus={closeMenus}
-                logoutFromDiscord={logoutFromDiscord}
-                getUserName={getUserName}
-                getUserInitial={getUserInitial}
-              />
-            }
+    <header className="site-navbar">
+      <div className="navbar-inner">
+        <Link to="/" className="navbar-logo" onClick={closeMenus}>
+          <img
+            src="https://cdn.pvzhtbot.com/art/halloween.webp"
+            alt="Tbot"
+            className="navbar-logo-image"
           />
-        </div>
 
-        <NavbarMobile
+          <span className="navbar-logo-main">TBOT</span>
+        </Link>
+
+        <button
+          type="button"
+          className="navbar-mobile-toggle"
+          onClick={openMobileMenu}
+          aria-label="Open navigation"
+          aria-expanded={mobileOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+
+        <NavbarDesktop
           navigation={NAVIGATION}
-          mobileOpen={mobileOpen}
-          mobileOpenSection={mobileOpenSection}
-          toggleMobileSection={toggleMobileSection}
+          openMenu={openMenu}
+          toggleMenu={toggleMenu}
           closeMenus={closeMenus}
-          closeMobileMenu={closeMobileMenu}
-          openBugReport={openBugReport}
-          openSuggestion={openSuggestion}
+          currentPageUrl={currentPageUrl}
           account={
-            <MobileAccount
+            <NavbarAccount
               user={user}
               profilePath={profilePath}
               loadingUser={loadingUser}
               loggingOut={loggingOut}
+              toggleMenu={toggleMenu}
+              openMenu={openMenu}
               closeMenus={closeMenus}
               logoutFromDiscord={logoutFromDiscord}
               getUserName={getUserName}
@@ -292,8 +227,30 @@ function Navbar() {
             />
           }
         />
-      </header>
-    </>
+      </div>
+
+      <NavbarMobile
+        navigation={NAVIGATION}
+        mobileOpen={mobileOpen}
+        mobileOpenSection={mobileOpenSection}
+        toggleMobileSection={toggleMobileSection}
+        closeMenus={closeMenus}
+        closeMobileMenu={closeMobileMenu}
+        currentPageUrl={currentPageUrl}
+        account={
+          <MobileAccount
+            user={user}
+            profilePath={profilePath}
+            loadingUser={loadingUser}
+            loggingOut={loggingOut}
+            closeMenus={closeMenus}
+            logoutFromDiscord={logoutFromDiscord}
+            getUserName={getUserName}
+            getUserInitial={getUserInitial}
+          />
+        }
+      />
+    </header>
   );
 }
 

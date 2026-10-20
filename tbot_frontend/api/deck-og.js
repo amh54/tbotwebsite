@@ -1,4 +1,4 @@
-const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
+const API = String(process.env.DJANGO_API_URL || "").replace(/\/$/, "");
 
 const SITE_URL = "https://pvzhtbot.com";
 
@@ -120,8 +120,8 @@ function normalizeText(value) {
 function stripDiscordFormatting(value) {
   return String(value ?? "")
     .replace(/<a?:([^:>]+):\d+>/gi, " $1 ")
-    .replace(/\*\*/g, "")
-    .replace(/__/g, "")
+    .replaceAll("**", "")
+    .replaceAll("__", "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -215,7 +215,8 @@ function findDeckInList(payload, deckKey) {
         .trim()
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+        .replace(/^-/, "")
+        .replace(/-$/, "");
 
       const key = name ? `${name}-${id}` : id;
 
@@ -599,113 +600,131 @@ async function fetchProfileDecks(slug) {
   return fetchJson(`${API}/tbotapp/profile/${encodedSlug}/decks/`);
 }
 
+async function resolveProfileMetadata(pathname, query) {
+  const slug = query.slug || pathname.replace(/^\/profile\//, "");
+  const deckKey = query.deck;
+
+  if (deckKey) {
+    const data = await fetchProfileDecks(slug);
+    const deck = findDeckInList(data, deckKey);
+
+    if (deck) return deckToOg(deck);
+  }
+
+  const profile = await fetchProfile(slug);
+  const decksPayload = profile ? await fetchProfileDecks(slug) : null;
+
+  return profileToOg(profile, slug, decksPayload);
+}
+
+function extractDeckId(key) {
+  const value = String(key);
+  return /^(\d+)$/.exec(value)?.[1] || /-(\d+)$/.exec(value)?.[1] || null;
+}
+
+async function resolveSharedDeckMetadata(pathname, query) {
+  const parts = pathname.split("/").filter(Boolean);
+  const slug = query.slug || parts[1] || "";
+  const sourceType = String(parts[2] || "")
+    .trim()
+    .toLowerCase();
+  const key = query.key || parts[3] || "";
+
+  if (!slug || !key || !["user", "deck", "legacy"].includes(sourceType)) {
+    return null;
+  }
+
+  const deckId = extractDeckId(key);
+  if (!deckId) return null;
+
+  const url = [
+    API,
+    "tbotapp/user-decks/shared",
+    encodeURIComponent(slug),
+    encodeURIComponent(sourceType),
+    encodeURIComponent(deckId),
+  ].join("/");
+
+  const data = await fetchJson(`${url}/`);
+  return data ? deckToOg(data.deck || null) : null;
+}
+
+async function resolvePublicDeckMetadata(query) {
+  const deckKey = query.deck;
+
+  if (!deckKey) return getStaticMetadata("/publicdecks");
+
+  const data = await fetchJson(`${API}/tbotapp/public-decks/`);
+  const candidates = [data, data?.decks, data?.results];
+
+  for (const candidate of candidates) {
+    const deck = findDeckInList(candidate, deckKey);
+    if (deck) return deckToOg(deck);
+  }
+
+  console.error("Public deck not found for OG metadata:", deckKey);
+  return getStaticMetadata("/publicdecks");
+}
+
+async function resolveDeckListMetadata(pathname, query) {
+  const deckKey = query.deck;
+
+  if (!deckKey) return getStaticMetadata(pathname);
+
+  const endpoint = pathname === "/decklists" ? "decklists" : "legacy-decklists";
+
+  const data = await fetchJson(`${API}/tbotapp/${endpoint}/`);
+  return deckToOg(findDeckInList(data, deckKey));
+}
+
+async function resolveDeckbuilderMetadata(pathname, query) {
+  const parts = pathname.split("/").filter(Boolean);
+  const name = query.name || parts[1] || "";
+  const deckKey = query.deck;
+
+  if (!name) return getStaticMetadata(pathname);
+
+  if (deckKey) {
+    const url =
+      `${API}/tbotapp/deckbuilders/` + `${encodeURIComponent(name)}/decks/`;
+
+    const data = await fetchJson(url);
+    const deck = findDeckInList(data, deckKey);
+
+    if (deck) return deckToOg(deck);
+  }
+
+  const profile = await fetchProfile(name);
+
+  if (!profile) return buildDeckbuilderOg(name);
+
+  const profileName = getProfileName(profile, name);
+
+  return {
+    title: `${profileName} - Tbot Deckbuilder`,
+    description: `Explore ${profileName}'s Plants vs. Zombies Heroes decks on Tbot.`,
+    image: resolveProfileImage(getProfileObject(profile)),
+  };
+}
+
+async function resolveCardMetadata(query) {
+  if (!query.card) return null;
+
+  const data = await fetchJson(`${API}/tbotapp/cardinfo/`);
+  return cardToOg(findCardInList(data, query.card));
+}
+
 async function resolveMetadata(pathname, query) {
   if (pathname === "/profile" || pathname.startsWith("/profile/")) {
-    const slug = query.slug || pathname.replace(/^\/profile\//, "");
-    const deckKey = query.deck;
-
-    if (deckKey) {
-      const data = await fetchProfileDecks(slug);
-      const deck = findDeckInList(data, deckKey);
-
-      if (deck) {
-        return deckToOg(deck);
-      }
-    }
-
-    const profile = await fetchProfile(slug);
-
-    let decksPayload = null;
-
-    if (profile) {
-      decksPayload = await fetchProfileDecks(slug);
-    }
-
-    return profileToOg(profile, slug, decksPayload);
+    return resolveProfileMetadata(pathname, query);
   }
 
   if (pathname === "/deck" || pathname.startsWith("/deck/")) {
-    const parts = pathname.split("/").filter(Boolean);
-
-    const slug = query.slug || parts[1] || "";
-    const sourceType = String(parts[2] || "")
-      .trim()
-      .toLowerCase();
-
-    const key = query.key || parts[3] || "";
-
-    if (!slug || !sourceType || !key) {
-      return null;
-    }
-
-    const validSourceTypes = new Set(["user", "deck", "legacy"]);
-
-    if (!validSourceTypes.has(sourceType)) {
-      return null;
-    }
-
-    let deckId = null;
-
-    const numericMatch = /^(\d+)$/.exec(String(key));
-
-    if (numericMatch) {
-      deckId = numericMatch[1];
-    } else {
-      const slugIdMatch = /-(\d+)$/.exec(String(key));
-
-      if (slugIdMatch) {
-        deckId = slugIdMatch[1];
-      }
-    }
-
-    if (!deckId) {
-      return null;
-    }
-
-    const data = await fetchJson(
-      `${API}/tbotapp/user-decks/shared/` +
-        `${encodeURIComponent(slug)}/` +
-        `${encodeURIComponent(sourceType)}/` +
-        `${encodeURIComponent(deckId)}/`,
-    );
-
-    if (!data) {
-      return null;
-    }
-
-    return deckToOg(data.deck || null);
+    return resolveSharedDeckMetadata(pathname, query);
   }
- 
+
   if (pathname === "/publicdecks") {
-    const deckKey = query.deck;
-
-    if (!deckKey) {
-      return getStaticMetadata("/publicdecks");
-    }
-
-    const data = await fetchJson(`${API}/tbotapp/public-decks/`);
-
-    const deck = findDeckInList(data, deckKey);
-
-    if (deck) {
-      return deckToOg(deck);
-    }
-
-    const nestedDeck = findDeckInList(data?.decks, deckKey);
-
-    if (nestedDeck) {
-      return deckToOg(nestedDeck);
-    }
-
-    const resultsDeck = findDeckInList(data?.results, deckKey);
-
-    if (resultsDeck) {
-      return deckToOg(resultsDeck);
-    }
-
-    console.error("Public deck not found for OG metadata:", deckKey);
-
-    return getStaticMetadata("/publicdecks");
+    return resolvePublicDeckMetadata(query);
   }
 
   if (
@@ -713,70 +732,15 @@ async function resolveMetadata(pathname, query) {
     pathname === "/legacydecks" ||
     pathname === "/legacy-decklists"
   ) {
-    const deckKey = query.deck;
-
-    if (!deckKey) {
-      return getStaticMetadata(pathname);
-    }
-
-    const listUrl =
-      pathname === "/decklists"
-        ? `${API}/tbotapp/decklists/`
-        : `${API}/tbotapp/legacy-decklists/`;
-
-    const data = await fetchJson(listUrl);
-
-    return deckToOg(findDeckInList(data, deckKey));
+    return resolveDeckListMetadata(pathname, query);
   }
 
   if (pathname === "/deckbuilders" || pathname.startsWith("/deckbuilders/")) {
-    const parts = pathname.split("/").filter(Boolean);
-
-    const name = query.name || parts[1] || "";
-    const deckKey = query.deck;
-
-    if (deckKey && name) {
-      const data = await fetchJson(
-        `${API}/tbotapp/deckbuilders/` + `${encodeURIComponent(name)}/decks/`,
-      );
-
-      const deck = findDeckInList(data, deckKey);
-
-      if (deck) {
-        return deckToOg(deck);
-      }
-    }
-
-    if (name) {
-      const profile = await fetchProfile(name);
-
-      if (profile) {
-        const profileName = getProfileName(profile, name);
-
-        return {
-          title: `${profileName} - Tbot Deckbuilder`,
-          description: `Explore ${profileName}'s Plants vs. Zombies Heroes decks on Tbot.`,
-          image: resolveProfileImage(getProfileObject(profile)),
-        };
-      }
-
-      return buildDeckbuilderOg(name);
-    }
-
-    return getStaticMetadata(pathname);
+    return resolveDeckbuilderMetadata(pathname, query);
   }
-  if (pathname === "/") {
-    return getStaticMetadata("/");
-  }
+
   if (pathname === "/cardinfo") {
-    const cardQuery = query.card;
-
-    if (cardQuery) {
-      const data = await fetchJson(`${API}/tbotapp/cardinfo/`);
-      const card = findCardInList(data, cardQuery);
-
-      return cardToOg(card);
-    }
+    return resolveCardMetadata(query);
   }
 
   return getStaticMetadata(pathname);
@@ -812,12 +776,14 @@ function getPublicSearchParams(searchParams, pathname) {
   return params;
 }
 
+
 function buildPublicUrl(pathname, searchParams) {
   const params = getPublicSearchParams(searchParams, pathname);
   const search = params.toString();
 
-  return `${SITE_URL}${pathname}${search ? `?${search}` : ""}`;
+  return SITE_URL + pathname + (search ? "?" + search : "");
 }
+
 
 function buildHtml({ title, description, image, url, noindex = false }) {
   const safeTitle = escapeHtml(title);
@@ -909,7 +875,7 @@ export default async function handler(req, res) {
     ...(originalUrl.searchParams
       ? Object.fromEntries(originalUrl.searchParams.entries())
       : {}),
-    ...(req.query || {}),
+    ...req.query,
   };
 
   if (query.path && typeof query.path === "string") {
@@ -973,39 +939,46 @@ export default async function handler(req, res) {
   return res.end(html);
 }
 
+function getQueryValue(value) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function normalizePath(path) {
+  if (path !== "/" && path.endsWith("/")) {
+    return path.slice(0, -1);
+  }
+
+  return path;
+}
+
+function buildProfilePath(slug, deck) {
+  const profilePath = "/profile/" + encodeURIComponent(String(slug));
+
+  if (!deck) {
+    return profilePath;
+  }
+
+  return (
+    profilePath +
+    "?deck=" +
+    encodeURIComponent(String(getQueryValue(deck)))
+  );
+}
+
 function getOriginalPath(pathname, query) {
-  if (pathname === "/api/deck-og") {
-    if (query.path && typeof query.path === "string") {
-      let path = query.path;
+  if (pathname !== "/api/deck-og") {
+    return pathname;
+  }
 
-      if (path !== "/" && path.endsWith("/")) {
-        path = path.slice(0, -1);
-      }
+  if (query.path && typeof query.path === "string") {
+    return normalizePath(query.path);
+  }
 
-      return path;
-    }
-
-    if (query.slug) {
-      const slug = String(
-        Array.isArray(query.slug) ? query.slug[0] : query.slug,
-      );
-
-      if (query.deck) {
-        return (
-          `/profile/${encodeURIComponent(slug)}` +
-          `?deck=${encodeURIComponent(
-            String(Array.isArray(query.deck) ? query.deck[0] : query.deck),
-          )}`
-        );
-      }
-
-      return `/profile/${encodeURIComponent(slug)}`;
-    }
-
+  if (!query.slug) {
     return "/";
   }
 
-  return pathname;
+  return buildProfilePath(getQueryValue(query.slug), query.deck);
 }
 
 function notFound(res) {

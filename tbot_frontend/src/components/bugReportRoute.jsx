@@ -20,11 +20,11 @@ export default function BugReportRoute() {
     `${window.location.origin}/`;
   const handleClose = () => {
     if (location.state?.from) {
-      navigate(-1);
+      void navigate(-1);
       return;
     }
 
-    navigate("/", { replace: true });
+    void navigate("/", { replace: true });
   };
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +67,7 @@ export default function BugReportRoute() {
       }
     };
 
-    loadData();
+    void loadData();
 
     return () => {
       cancelled = true;

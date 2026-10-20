@@ -77,9 +77,9 @@ def profile_me(request):
 @api_view(["GET"])
 def profile_detail(request, profile_slug):
     profile = get_object_or_404(
-        UserProfile,
-        profile_slug=profile_slug,
-    )
+    UserProfile,
+    profile_slug__iexact=profile_slug.strip(),
+)
 
     discord_user = get_discord_user(request)
 
@@ -168,9 +168,9 @@ def public_profile_count(request):
 @api_view(["GET"])
 def public_profile_decks(request, profile_slug):
     profile = get_object_or_404(
-        UserProfile,
-        profile_slug=profile_slug,
-    )
+    UserProfile,
+    profile_slug__iexact=profile_slug.strip(),
+)
 
     discord_user = get_discord_user(request)
 

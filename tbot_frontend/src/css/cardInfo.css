@@ -284,8 +284,8 @@
 
 .profile-collection-stat .card-stat-icon {
   display: block;
-  width: 18px !important;
-  height: 18px !important;
+  width: 18px;
+  height: 18px;
   min-width: 18px;
   min-height: 18px;
   max-width: 18px;
@@ -413,6 +413,10 @@
   align-items: start;
   padding: 18px;
   background: #15181b;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   border: 1px solid #2a2f34;
   border-radius: 12px;
   overflow: hidden;
@@ -421,6 +425,7 @@
     border-color 0.22s ease,
     box-shadow 0.22s ease;
 }
+
 .card-item:hover {
   transform: translateY(-5px);
   border-color: #8fe38b;
@@ -430,6 +435,11 @@
     0 0 24px 5px rgba(143, 227, 139, 0.4),
     0 16px 32px rgba(0, 0, 0, 0.55);
   z-index: 5;
+}
+
+.card-item:focus-visible {
+  outline: 2px solid #8fe38b;
+  outline-offset: 3px;
 }
 
 .card-item-media {
@@ -495,57 +505,42 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 3px;
-
   min-width: 0;
   max-width: 100%;
-
   overflow-wrap: break-word;
   word-break: normal;
 }
 
 .card-title-icon {
   display: inline-block;
-
-  width: 18px !important;
-  height: 18px !important;
-
+  width: 18px;
+  height: 18px;
   min-width: 18px;
   min-height: 18px;
   max-width: 18px;
   max-height: 18px;
-
   object-fit: contain;
   object-position: center;
-
   vertical-align: middle;
   flex: 0 0 18px;
-
   margin: 0;
   padding: 0;
-
   border: none;
   outline: none;
-
   background: transparent;
 }
 
 .card-title-class-icon {
   width: 18px;
   height: 18px;
-
   max-width: 18px;
   max-height: 18px;
-
   min-width: 18px;
   min-height: 18px;
-
   object-fit: contain;
-
   display: inline-block;
   vertical-align: middle;
-
   margin-right: 4px;
-
   flex: 0 0 18px;
 }
 
@@ -609,41 +604,30 @@
 
 .card-trait-icon {
   display: inline-block;
-
-  width: 18px !important;
-  height: 18px !important;
-
+  width: 18px;
+  height: 18px;
   min-width: 18px;
   min-height: 18px;
   max-width: 18px;
   max-height: 18px;
-
   object-fit: contain;
   object-position: center;
-
   vertical-align: middle;
-
   flex: 0 0 18px;
-
   margin: 0;
   padding: 0;
-
   border: none;
   outline: none;
-
   background: transparent;
 }
 
 .trait-icon {
-  width: 18px !important;
-  height: 18px !important;
-
+  width: 18px;
+  height: 18px;
   max-width: 18px;
   max-height: 18px;
-
   object-fit: contain;
   vertical-align: middle;
-
   flex: 0 0 18px;
 }
 
@@ -687,28 +671,20 @@
 
 .card-stat-icon {
   display: inline-block;
-
-  width: 18px !important;
-  height: 18px !important;
-
+  width: 18px;
+  height: 18px;
   min-width: 18px;
   min-height: 18px;
   max-width: 18px;
   max-height: 18px;
-
   object-fit: contain;
   object-position: center;
-
   vertical-align: middle;
-
   flex: 0 0 18px;
-
   margin: 0;
   padding: 0;
-
   border: none;
   outline: none;
-
   background: transparent;
 }
 
@@ -935,16 +911,13 @@
 }
 
 .card-ability-icon {
-  width: 18px !important;
-  height: 18px !important;
-
-  max-width: 18px !important;
-  max-height: 18px !important;
-
+  width: 18px;
+  height: 18px;
+  max-width: 18px;
+  max-height: 18px;
   object-fit: contain;
   vertical-align: middle;
 }
-
 @media (max-width: 1100px) {
   .card-information-page {
     padding: 30px;

@@ -312,10 +312,10 @@
   align-items: center;
   gap: 7px;
   padding: 7px 10px;
-  border: 1px solid rgba(143, 227, 139, 0.2);
+  border: 1px solid #386b35;
   border-radius: 8px;
-  color: #8fe38b;
-  background: rgba(143, 227, 139, 0.05);
+  color: #b5f5b0;
+  background: #142414;
   text-decoration: none;
   transition:
     background-color 0.2s ease,
@@ -775,10 +775,10 @@
 
 .profile-edit-error {
   padding: 11px 13px;
-  border: 1px solid #713d3d;
+  border: 1px solid #8b3030;
   border-radius: 8px;
-  background: rgba(113, 61, 61, 0.15);
-  color: #ff9d9d;
+  background: #2a1212;
+  color: #ffb3b3;
   font-size: 13px;
   line-height: 1.45;
 }

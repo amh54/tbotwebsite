@@ -88,11 +88,14 @@ function FilterDropdown({
     setOpen((current) => !current);
   };
 
-  const triggerLabel = multi
-    ? selectedValues.length > 0
-      ? selectedValues.map((item) => item.label).join(", ")
-      : label
-    : value?.label || label;
+  let triggerLabel = value?.label || label;
+
+  if (multi) {
+    triggerLabel =
+      selectedValues.length > 0
+        ? selectedValues.map((item) => item.label).join(", ")
+        : label;
+  }
 
   return (
     <div className={`filter-dropdown ${open ? "is-open" : ""}`} ref={ref}>
@@ -105,20 +108,14 @@ function FilterDropdown({
         <span className="filter-dropdown-trigger-label">{triggerLabel}</span>
 
         {hasSelection ? (
-          <span
+          <button
+            type="button"
             className="filter-dropdown-clear"
             onClick={handleClear}
-            role="button"
-            tabIndex={0}
             aria-label={`Clear ${label} filter`}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                handleClear(event);
-              }
-            }}
           >
             ×
-          </span>
+          </button>
         ) : (
           <span className="filter-dropdown-arrow" aria-hidden="true">
             ▾
@@ -127,10 +124,7 @@ function FilterDropdown({
       </button>
 
       {open && (
-        <div
-          className="filter-dropdown-menu"
-          onClick={(event) => event.stopPropagation()}
-        >
+        <div className="filter-dropdown-menu">
           {options.length === 0 ? (
             <div className="filter-dropdown-empty">No options available</div>
           ) : (

@@ -53,20 +53,15 @@ export default function SuggestionsRoute() {
       }
     };
 
-    loadData();
+   void loadData();
 
     return () => {
       cancelled = true;
     };
   }, []);
-  const handleClose = () => {
-    if (location.state?.from) {
-      navigate(-1);
-      return;
-    }
-
-    navigate("/", { replace: true });
-  };
+const handleClose = () => {
+  void navigate(-1);
+};
   return (
     <>
       <Seo

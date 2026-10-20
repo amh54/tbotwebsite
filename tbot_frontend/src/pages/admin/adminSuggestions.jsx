@@ -32,7 +32,6 @@ import SuggestionEmptyState from "../../components/admin/suggestionEmptyState.js
 import SuggestionError from "../../components/admin/suggestionError.jsx";
 import SuggestionList from "../../components/admin/suggestionList.jsx";
 import SuggestionLoading from "../../components/admin/suggestionLoading.jsx";
-import SuggestionStats from "../../components/admin/suggestionStats.jsx";
 import SuggestionToolbar from "../../components/admin/suggestionToolbar.jsx";
 import UserDeckSuggestionCard from "../../components/decks/userDeckSuggestionCard.jsx";
 

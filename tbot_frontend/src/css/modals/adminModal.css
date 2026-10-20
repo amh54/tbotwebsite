@@ -256,7 +256,7 @@
 }
 .admin-modal-ratio-name {
   min-width: 0;
-  color: #b8c7d9 !important;
+  color: #b8c7d9;
   font-size: 0.9rem;
   font-weight: 500;
   overflow-wrap: anywhere;
@@ -313,8 +313,8 @@
 }
 
 .admin-modal-cards-field .deck-cards-select__multi-value {
-  background: #303740 !important;
-  border: 1px solid #505a65 !important;
+  background: #303740;
+  border: 1px solid #505a65;
   border-radius: 8px;
   overflow: hidden;
   margin: 0;
@@ -322,8 +322,8 @@
   flex-shrink: 0;
 }
 
-.admin-modal-cards-field .deck-cards-select__multi-value__label {
-  color: #b8c7d9 !important;
+.admin-modal-cards-field .deck-cards-select__multi-value .deck-cards-select__multi-value__label {
+  color: #b8c7d9;
   font-size: 0.88rem;
   font-weight: 600;
   line-height: 1.35;
@@ -335,15 +335,15 @@
   padding: 5px 6px 5px 10px;
 }
 
-.admin-modal-cards-field .deck-cards-select__multi-value__remove {
-  color: #9caab8 !important;
+.admin-modal-cards-field .deck-cards-select__multi-value .deck-cards-select__multi-value__remove {
+  color: #9caab8;
   padding: 0 8px;
   border-radius: 0 7px 7px 0;
 }
 
-.admin-modal-cards-field .deck-cards-select__multi-value__remove:hover {
-  background: #454d56 !important;
-  color: #ffffff !important;
+.admin-modal-cards-field .deck-cards-select__multi-value .deck-cards-select__multi-value__remove:hover {
+  background: #454d56;
+  color: #ffffff;
 }
 
 .admin-modal-cards-field .deck-cards-select__menu {
@@ -387,10 +387,10 @@
 .admin-modal-error {
   grid-column: 1 / -1;
   padding: 10px 12px;
-  background: rgba(255, 80, 80, 0.08);
-  border: 1px solid rgba(255, 120, 120, 0.35);
+  background: #2a1212;
+  border: 1px solid #8b3030;
   border-radius: 8px;
-  color: #ff8c8c;
+  color: #ffb3b3;
   font-size: 0.85rem;
   line-height: 1.4;
 }

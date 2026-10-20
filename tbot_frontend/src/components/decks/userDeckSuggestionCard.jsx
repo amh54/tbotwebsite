@@ -35,6 +35,27 @@ const STATUS_OPTIONS = [
   { value: "declined", label: "Declined" },
 ];
 
+function getYouTubeVideoId(parsed) {
+  const { hostname, pathname, searchParams } = parsed;
+  const host = hostname.toLowerCase();
+
+  if (["www.youtube.com", "youtube.com", "m.youtube.com"].includes(host)) {
+    if (pathname === "/watch") {
+      return searchParams.get("v") || "";
+    }
+
+    if (pathname.startsWith("/shorts/") || pathname.startsWith("/embed/")) {
+      return pathname.split("/")[2] || "";
+    }
+  }
+
+  if (host === "youtu.be") {
+    return pathname.split("/")[1] || "";
+  }
+
+  return "";
+}
+
 function getYouTubeEmbedUrl(url) {
   const value = String(url || "").trim();
 
@@ -44,44 +65,30 @@ function getYouTubeEmbedUrl(url) {
 
   try {
     const parsed = new URL(value);
-    const hostname = parsed.hostname.toLowerCase();
+    const videoId = getYouTubeVideoId(parsed);
 
-    if (
-      ["www.youtube.com", "youtube.com", "m.youtube.com"].includes(hostname)
-    ) {
-      if (parsed.pathname === "/watch") {
-        const videoId = parsed.searchParams.get("v");
-
-        if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}`;
-        }
-      }
-
-      if (parsed.pathname.startsWith("/shorts/")) {
-        const videoId = parsed.pathname.split("/")[2];
-
-        if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}`;
-        }
-      }
-
-      if (parsed.pathname.startsWith("/embed/")) {
-        return value;
-      }
-    }
-
-    if (hostname === "youtu.be") {
-      const videoId = parsed.pathname.split("/")[1];
-
-      if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}`;
-      }
-    }
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
   } catch {
     return "";
   }
+}
 
-  return "";
+function hasImageMeta(suggestion) {
+  return [
+    suggestion?.creator,
+    suggestion?.optimization,
+    suggestion?.inspiration,
+    suggestion?.suggested_date,
+    suggestion?.updated_date,
+  ].some(hasValue);
+}
+
+function hasCreatorMeta(suggestion) {
+  return [
+    suggestion?.creator,
+    suggestion?.optimization,
+    suggestion?.inspiration,
+  ].some(hasValue);
 }
 
 function UserDeckSuggestionCard({
@@ -208,20 +215,10 @@ function UserDeckSuggestionCard({
 
   return (
     <>
-      <div
+      <button
+        type="button"
         className={`deck-listing-card hero-${heroColor1}-${heroColor2}`}
         onClick={() => setOpen(true)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            setOpen(true);
-          }
-        }}
-        style={{
-          cursor: "pointer",
-        }}
       >
         <div className="deck-card-image-only">
           {deckImage && !imgError ? (
@@ -289,17 +286,10 @@ function UserDeckSuggestionCard({
             </span>
           </p>
         </div>
-      </div>
+      </button>
 
       {open && (
-        <div
-          className="modal-overlay"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setOpen(false);
-            }
-          }}
-        >
+        <div className="modal-overlay">
           <dialog open className="modal" aria-label={`Details for ${deckName}`}>
             <button
               type="button"
@@ -323,15 +313,9 @@ function UserDeckSuggestionCard({
                     <div className="deck-image-placeholder">No image</div>
                   )}
 
-                  {(hasValue(suggestion?.creator) ||
-                    hasValue(suggestion?.optimization) ||
-                    hasValue(suggestion?.inspiration) ||
-                    hasValue(suggestion?.suggested_date) ||
-                    hasValue(suggestion?.updated_date)) && (
+                  {hasImageMeta(suggestion) && (
                     <div className="image-meta">
-                      {(hasValue(suggestion?.creator) ||
-                        hasValue(suggestion?.optimization) ||
-                        hasValue(suggestion?.inspiration)) && (
+                      {hasCreatorMeta(suggestion) && (
                         <p>
                           {hasValue(suggestion?.creator) && (
                             <>
@@ -349,8 +333,10 @@ function UserDeckSuggestionCard({
 
                           {hasValue(suggestion?.inspiration) && (
                             <>
-                              {hasValue(suggestion?.creator) ||
-                              hasValue(suggestion?.optimization)
+                              {hasCreatorMeta({
+                                creator: suggestion?.creator,
+                                optimization: suggestion?.optimization,
+                              })
                                 ? ", "
                                 : ""}
                               Inspired by <span>{suggestion.inspiration}</span>
@@ -411,7 +397,7 @@ function UserDeckSuggestionCard({
                             aria-label="Suggestion status"
                           >
                             {STATUS_OPTIONS.map((option) => (
-                              <li key={option.value} role="presentation">
+                              <li key={option.value}>
                                 <button
                                   type="button"
                                   role="option"

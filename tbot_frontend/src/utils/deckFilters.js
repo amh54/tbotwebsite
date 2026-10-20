@@ -101,7 +101,9 @@ export function normalizeCardName(value) {
   return normalizeKey(value)
     .replace(/[’‘`´]/g, "'")
     .replace(/[‐-‒–—―]/g, "-")
-    .replace(/\s*-\s*/g, "-")
+    .split("-")
+    .map((part) => part.trim())
+    .join("-")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -143,9 +145,9 @@ export function parseDeckCards(value) {
   }
 
   return String(value ?? "")
-    .replace(/\\\r\n/g, "\n")
-    .replace(/\\\n/g, "\n")
-    .replace(/\\\r/g, "\r")
+    .replaceAll("\\\r\n", "\n")
+    .replaceAll("\\\n", "\n")
+    .replaceAll("\\\r", "\r")
     .split(/\r?\n|,/)
     .map((card) => normalizeText(card))
     .filter(Boolean);
@@ -201,31 +203,56 @@ export function parseDeckCardRequirements(value) {
   }
 
   const cards = String(value ?? "")
-    .replace(/\\\r\n/g, "\n")
-    .replace(/\\\n/g, "\n")
-    .replace(/\\\r/g, "\r")
+    .replaceAll("\\\r\n", "\n")
+    .replaceAll("\\\n", "\n")
+    .replaceAll("\\\r", "\r")
     .split(/\r?\n|,/)
     .map((card) => card.trim())
     .filter(Boolean);
+  const parseCardRequirement = (rawCard) => {
+    const pipeIndex = rawCard.lastIndexOf("|");
 
-  cards.forEach((rawCard) => {
-    let cardName = rawCard;
-    let quantity = 1;
-
-    const pipeMatch = rawCard.match(/^(.+?)\s*\|\s*(\d+)\s*$/);
-
-    if (pipeMatch) {
-      cardName = pipeMatch[1].trim();
-      quantity = Math.max(1, Number(pipeMatch[2]) || 1);
-    } else {
-      const xMatch = rawCard.match(/^(.+?)\s*[xX]\s*(\d+)\s*$/);
-
-      if (xMatch) {
-        cardName = xMatch[1].trim();
-        quantity = Math.max(1, Number(xMatch[2]) || 1);
-      }
+    if (pipeIndex !== -1) {
+      return {
+        cardName: rawCard.slice(0, pipeIndex).trim(),
+        quantity: Math.max(1, Number(rawCard.slice(pipeIndex + 1).trim()) || 1),
+      };
     }
 
+    const trimmed = rawCard.trimEnd();
+    const lastSpace = trimmed.lastIndexOf(" ");
+
+    if (lastSpace === -1) {
+      return { cardName: rawCard, quantity: 1 };
+    }
+
+    let digitStart = trimmed.length;
+
+    while (
+      digitStart > lastSpace + 1 &&
+      trimmed[digitStart - 1] >= "0" &&
+      trimmed[digitStart - 1] <= "9"
+    ) {
+      digitStart--;
+    }
+
+    const markerIndex = digitStart - 1;
+
+    if (
+      digitStart === trimmed.length ||
+      markerIndex <= lastSpace + 1 ||
+      (trimmed[markerIndex] !== "x" && trimmed[markerIndex] !== "X")
+    ) {
+      return { cardName: rawCard, quantity: 1 };
+    }
+
+    return {
+      cardName: trimmed.slice(0, markerIndex).trim(),
+      quantity: Math.max(1, Number(trimmed.slice(digitStart)) || 1),
+    };
+  };
+  cards.forEach((rawCard) => {
+    const { cardName, quantity } = parseCardRequirement(rawCard);
     const key = normalizeCardName(cardName);
 
     if (!key) {
@@ -237,35 +264,72 @@ export function parseDeckCardRequirements(value) {
 
   return requirements;
 }
+function getCardNameFromString(item) {
+  const pipeIndex = item.lastIndexOf("|");
 
-export function getCollectionCardName(item) {
-  if (typeof item === "string") {
-    const pipeMatch = item.match(/^(.+?)\s*\|\s*(\d+)\s*$/);
+  if (pipeIndex !== -1) {
+    const quantity = item.slice(pipeIndex + 1).trim();
 
-    if (pipeMatch) {
-      return normalizeText(pipeMatch[1]);
+    if (
+      quantity &&
+      [...quantity].every((char) => char >= "0" && char <= "9")
+    ) {
+      return normalizeText(item.slice(0, pipeIndex));
     }
+  }
 
-    const xMatch = item.match(/^(.+?)\s*[xX]\s*(\d+)\s*$/);
+  const trimmed = item.trimEnd();
+  let digitStart = trimmed.length;
 
-    if (xMatch) {
-      return normalizeText(xMatch[1]);
-    }
+  while (
+    digitStart > 0 &&
+    trimmed[digitStart - 1] >= "0" &&
+    trimmed[digitStart - 1] <= "9"
+  ) {
+    digitStart--;
+  }
 
+  if (digitStart === trimmed.length) {
     return normalizeText(item);
   }
 
-  if (!item || typeof item !== "object") {
-    return "";
+  let markerIndex = digitStart;
+
+  while (markerIndex > 0 && trimmed[markerIndex - 1] === " ") {
+    markerIndex--;
   }
 
-  const nestedCard =
+  if (markerIndex === 0) {
+    return normalizeText(item);
+  }
+
+  const marker = trimmed[markerIndex - 1];
+  const nameEnd = markerIndex - 1;
+
+  if (
+    (marker === "x" || marker === "X") &&
+    nameEnd > 0 &&
+    trimmed[nameEnd - 1] === " "
+  ) {
+    return normalizeText(trimmed.slice(0, nameEnd));
+  }
+
+  return normalizeText(item);
+}
+
+function getNestedCollectionCard(item) {
+  return (
     item.card ??
     item.card_data ??
     item.cardData ??
     item.web_card ??
     item.webCard ??
-    null;
+    null
+  );
+}
+
+function getCollectionCardNameFromObject(item) {
+  const nestedCard = getNestedCollectionCard(item);
 
   return normalizeText(
     item.card_name ??
@@ -280,34 +344,87 @@ export function getCollectionCardName(item) {
   );
 }
 
-export function getCollectionCardQuantity(item) {
+export function getCollectionCardName(item) {
   if (typeof item === "string") {
-    const pipeMatch = item.match(/^(.+?)\s*\|\s*(\d+)\s*$/);
-
-    if (pipeMatch) {
-      return Math.max(0, Number(pipeMatch[2]) || 0);
-    }
-
-    const xMatch = item.match(/^(.+?)\s*[xX]\s*(\d+)\s*$/);
-
-    if (xMatch) {
-      return Math.max(0, Number(xMatch[2]) || 0);
-    }
-
-    return 1;
+    return getCardNameFromString(item);
   }
 
   if (!item || typeof item !== "object") {
-    return 0;
+    return "";
   }
 
-  const nestedCard =
-    item.card ??
-    item.card_data ??
-    item.cardData ??
-    item.web_card ??
-    item.webCard ??
-    null;
+  return getCollectionCardNameFromObject(item);
+}
+
+function getQuantityAfterSeparator(value, separator) {
+  const separatorIndex = value.lastIndexOf(separator);
+
+  if (separatorIndex === -1) {
+    return null;
+  }
+
+  const quantityText = value.slice(separatorIndex + 1).trim();
+
+  if (
+    !quantityText ||
+    ![...quantityText].every((char) => char >= "0" && char <= "9")
+  ) {
+    return null;
+  }
+
+  return Math.max(0, Number(quantityText) || 0);
+}
+
+function getXQuantity(value) {
+  const trimmed = value.trimEnd();
+  let digitStart = trimmed.length;
+
+  while (
+    digitStart > 0 &&
+    trimmed[digitStart - 1] >= "0" &&
+    trimmed[digitStart - 1] <= "9"
+  ) {
+    digitStart--;
+  }
+
+  if (digitStart === trimmed.length) {
+    return null;
+  }
+
+  let markerIndex = digitStart;
+
+  while (markerIndex > 0 && trimmed[markerIndex - 1] === " ") {
+    markerIndex--;
+  }
+
+  if (
+    markerIndex > 0 &&
+    (trimmed[markerIndex - 1] === "x" ||
+      trimmed[markerIndex - 1] === "X")
+  ) {
+    const nameEnd = markerIndex - 1;
+
+    if (nameEnd > 0 && trimmed[nameEnd - 1] === " ") {
+      return Math.max(0, Number(trimmed.slice(digitStart)) || 0);
+    }
+  }
+
+  return null;
+}
+
+function getStringCollectionQuantity(item) {
+  const pipeQuantity = getQuantityAfterSeparator(item, "|");
+
+  if (pipeQuantity !== null) {
+    return pipeQuantity;
+  }
+
+  return getXQuantity(item) ?? 1;
+}
+
+
+function getObjectCollectionQuantity(item) {
+  const nestedCard = getNestedCollectionCard(item);
 
   const quantity =
     item.quantity ??
@@ -323,6 +440,18 @@ export function getCollectionCardQuantity(item) {
     0;
 
   return Math.max(0, Number(quantity) || 0);
+}
+
+export function getCollectionCardQuantity(item) {
+  if (typeof item === "string") {
+    return getStringCollectionQuantity(item);
+  }
+
+  if (!item || typeof item !== "object") {
+    return 0;
+  }
+
+  return getObjectCollectionQuantity(item);
 }
 
 export function buildCollectionMap(collectionCards) {
@@ -452,6 +581,113 @@ export function getCollectionValues(value) {
   return [];
 }
 
+function matchesSearchFilter(deck, searchValue) {
+  if (!searchValue) {
+    return true;
+  }
+
+  const alias = HERO_ALIAS[searchValue]
+    ? normalizeKey(HERO_ALIAS[searchValue])
+    : "";
+
+  if (alias) {
+    return normalizeKey(deck?.hero).includes(alias);
+  }
+
+  const searchableValues = [
+    deck?.name,
+    deck?.creator,
+    deck?.optimization,
+    deck?.hero,
+    deck?.archetype,
+    deck?.category,
+    deck?.aliases,
+  ]
+    .filter(Boolean)
+    .map((value) => normalizeKey(value));
+
+  const normalFieldMatch = searchableValues.some((value) =>
+    value.includes(searchValue),
+  );
+
+  if (normalFieldMatch) {
+    return true;
+  }
+
+  return parseDeckCards(deck?.cards).some((card) =>
+    normalizeKey(card).includes(searchValue),
+  );
+}
+
+function matchesSideFilter(deck, side, exclude) {
+  return (
+    exclude === "side" ||
+    side === "All" ||
+    normalizeSide(deck?.side) === normalizeSide(side)
+  );
+}
+
+function matchesHeroFilter(deck, hero, heroOption, exclude) {
+  if (exclude === "hero") {
+    return true;
+  }
+
+  const selectedHeroes = heroOption !== null ? [heroOption] : hero;
+
+  return (
+    selectedHeroes.length === 0 ||
+    selectedHeroes.some(
+      (selectedHero) =>
+        normalizeKey(deck?.hero) === normalizeKey(selectedHero?.value),
+    )
+  );
+}
+
+function matchesCategoryFilter(deck, category, categoryOption, exclude) {
+  if (exclude === "category") {
+    return true;
+  }
+
+  const selectedCategories =
+    categoryOption !== null ? [categoryOption] : category;
+
+  if (selectedCategories.length === 0) {
+    return true;
+  }
+
+  const deckCategories = parseCategories(deck?.category);
+
+  return selectedCategories.some((selectedCategory) =>
+    deckCategories.includes(normalizeKey(selectedCategory?.value)),
+  );
+}
+
+function matchesArchetypeFilter(
+  deck,
+  archetype,
+  archetypeOption,
+  exclude,
+) {
+  if (exclude === "archetype") {
+    return true;
+  }
+
+  const selectedArchetypes =
+    archetypeOption !== null
+      ? [...archetype, archetypeOption]
+      : archetype;
+
+  if (selectedArchetypes.length === 0) {
+    return true;
+  }
+
+  const deckArchetype = normalizeKey(deck?.archetype);
+
+  return selectedArchetypes.some((selectedArchetype) =>
+    deckArchetype.includes(normalizeKey(selectedArchetype?.value)),
+  );
+}
+
 export function matchesNonCollectionFilters(
   deck,
   {
@@ -468,108 +704,14 @@ export function matchesNonCollectionFilters(
 ) {
   const searchValue = normalizeKey(search);
 
-  if (searchValue) {
-    const alias = HERO_ALIAS[searchValue]
-      ? normalizeKey(HERO_ALIAS[searchValue])
-      : "";
-
-    const deckCards = parseDeckCards(deck?.cards);
-
-    const searchableCardValues = deckCards.map((card) => normalizeKey(card));
-
-    const searchableValues = [
-      deck?.name,
-      deck?.creator,
-      deck?.optimization,
-      deck?.hero,
-      deck?.archetype,
-      deck?.category,
-      deck?.aliases,
-    ]
-      .filter(Boolean)
-      .map((value) => normalizeKey(value));
-
-    let searchMatch = false;
-
-    if (alias) {
-      searchMatch = normalizeKey(deck?.hero).includes(alias);
-    } else {
-      const normalFieldMatch = searchableValues.some((value) =>
-        value.includes(searchValue),
-      );
-
-      const cardMatch = searchableCardValues.some((card) =>
-        card.includes(searchValue),
-      );
-
-      searchMatch = normalFieldMatch || cardMatch;
-    }
-
-    if (!searchMatch) {
-      return false;
-    }
-  }
-
-  if (exclude !== "side" && side !== "All") {
-    if (normalizeSide(deck?.side) !== normalizeSide(side)) {
-      return false;
-    }
-  }
-
-  if (exclude !== "hero") {
-    const selectedHeroes = heroOption !== null ? [heroOption] : hero;
-
-    if (selectedHeroes.length > 0) {
-      const heroMatch = selectedHeroes.some(
-        (selectedHero) =>
-          normalizeKey(deck?.hero) === normalizeKey(selectedHero?.value),
-      );
-
-      if (!heroMatch) {
-        return false;
-      }
-    }
-  }
-
- if (exclude !== "category") {
-  const selectedCategories =
-    categoryOption !== null ? [categoryOption] : category;
-
-  if (selectedCategories.length > 0) {
-    const deckCategories = parseCategories(deck?.category);
-
-    const categoryMatch = selectedCategories.some((selectedCategory) =>
-      deckCategories.includes(
-        normalizeKey(selectedCategory?.value),
-      ),
-    );
-
-    if (!categoryMatch) {
-      return false;
-    }
-  }
+  return (
+    matchesSearchFilter(deck, searchValue) &&
+    matchesSideFilter(deck, side, exclude) &&
+    matchesHeroFilter(deck, hero, heroOption, exclude) &&
+    matchesCategoryFilter(deck, category, categoryOption, exclude) &&
+    matchesArchetypeFilter(deck, archetype, archetypeOption, exclude)
+  );
 }
-
-  if (exclude !== "archetype") {
-    const selectedArchetypes =
-      archetypeOption !== null ? [...archetype, archetypeOption] : archetype;
-
-    if (selectedArchetypes.length > 0) {
-      const deckArchetype = normalizeKey(deck?.archetype);
-
-      const archetypeMatch = selectedArchetypes.some((selectedArchetype) =>
-        deckArchetype.includes(normalizeKey(selectedArchetype?.value)),
-      );
-
-      if (!archetypeMatch) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-
 export function matchesDeckFilters(
   deck,
   {
@@ -760,11 +902,9 @@ export function getCategoryOptions(decks = [], filterOptions = {}) {
       if (!categoryMap.has(key)) {
         categoryMap.set(key, {
           value: key,
-          label:
-            key.charAt(0).toUpperCase() +
-            key.slice(1),
+          label: key.charAt(0).toUpperCase() + key.slice(1),
           count: 0,
-          ...(CATEGORY_META[key] || {}),
+          ...(CATEGORY_META[key]),
         });
       }
 

@@ -6,14 +6,13 @@
 .user-decklists-card-browser .card-browser {
   width: 100%;
 }
-
-.profile-tab-content {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
+.profile-page .profile-tab-content {
+  margin-top: 0;
+  padding-top: 0;
 }
 
-.profile-tab-content .card-browser {
-  margin-top: 0 !important;
+.profile-page .profile-tab-content .card-browser {
+  margin-top: 0;
 }
 
 .profile-tab-content .card-information-page {

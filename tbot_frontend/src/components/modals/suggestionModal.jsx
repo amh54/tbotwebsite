@@ -75,9 +75,7 @@ const SUGGESTION_PAGES = [
     value: "/users",
     label: "Users",
   },
-  {value: "/servers",
-    label: "Discord Servers"
-  },
+  { value: "/servers", label: "Discord Servers" },
   {
     value: "/updates",
     label: "Site Updates",
@@ -151,12 +149,20 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
       (item) => item.value === initialPath,
     );
 
-    const isKnownPage = Boolean(matchingPage && matchingPage.value !== "__other__");
+    const isKnownPage = Boolean(
+      matchingPage && matchingPage.value !== "__other__",
+    );
+    let nextPage = "";
 
+    if (isKnownPage) {
+      nextPage = matchingPage.value;
+    } else if (initialPath) {
+      nextPage = "__other__";
+    }
     setTitle("");
     setDescription("");
     setCategory("improvement");
-    setPage(isKnownPage ? matchingPage.value : initialPath ? "__other__" : "");
+    setPage(nextPage);
     setCustomPageUrl(isKnownPage ? "" : initialPath);
     setPageDropdownOpen(false);
     setSubmitting(false);
@@ -234,6 +240,82 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
     }
   };
 
+  const validateSuggestion = () => {
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
+    const trimmedCustomPageUrl = customPageUrl.trim();
+
+    if (!trimmedTitle) {
+      return { error: "Please enter a title." };
+    }
+
+    if (!trimmedDescription) {
+      return { error: "Please describe your suggestion." };
+    }
+
+    if (!user?.id) {
+      return {
+        error: "You must be logged in with Discord to submit a suggestion.",
+      };
+    }
+
+    if (requiresPage && !page) {
+      return { error: "Please select the page your suggestion is about." };
+    }
+
+    if (requiresPage && isOtherPage && !trimmedCustomPageUrl) {
+      return {
+        error: "Please enter the URL of the page your suggestion is about.",
+      };
+    }
+
+    return {
+      trimmedTitle,
+      trimmedDescription,
+      trimmedCustomPageUrl,
+    };
+  };
+
+  const getSelectedPageUrl = (trimmedCustomPageUrl) => {
+    if (!requiresPage) {
+      return "";
+    }
+
+    if (!isOtherPage) {
+      return `${window.location.origin}${page}`;
+    }
+
+    try {
+      return new URL(trimmedCustomPageUrl, window.location.origin).href;
+    } catch {
+      return null;
+    }
+  };
+
+  const getResponseData = async (response) => {
+    try {
+      return await response.json();
+    } catch {
+      return {};
+    }
+  };
+
+  const getValidationError = (data) => {
+    if (!data || typeof data !== "object") {
+      return "";
+    }
+
+    return Object.entries(data)
+      .map(([field, errors]) => {
+        const messages = Array.isArray(errors)
+          ? errors.join(", ")
+          : String(errors);
+
+        return `${field}: ${messages}`;
+      })
+      .join(" | ");
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -241,53 +323,21 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
       return;
     }
 
-    const trimmedTitle = title.trim();
-    const trimmedDescription = description.trim();
-    const trimmedCustomPageUrl = customPageUrl.trim();
+    const validation = validateSuggestion();
 
-    if (!trimmedTitle) {
-      setMessage("Please enter a title.");
+    if (validation.error) {
+      setMessage(validation.error);
       return;
     }
 
-    if (!trimmedDescription) {
-      setMessage("Please describe your suggestion.");
+    const { trimmedTitle, trimmedDescription, trimmedCustomPageUrl } =
+      validation;
+
+    const selectedPageUrl = getSelectedPageUrl(trimmedCustomPageUrl);
+
+    if (selectedPageUrl === null) {
+      setMessage("Please enter a valid page URL.");
       return;
-    }
-
-    if (!user?.id) {
-      setMessage("You must be logged in with Discord to submit a suggestion.");
-      return;
-    }
-
-    if (requiresPage && !page) {
-      setMessage("Please select the page your suggestion is about.");
-      return;
-    }
-
-    if (requiresPage && isOtherPage && !trimmedCustomPageUrl) {
-      setMessage("Please enter the URL of the page your suggestion is about.");
-      return;
-    }
-
-    let selectedPageUrl = "";
-
-    if (requiresPage) {
-      if (isOtherPage) {
-        try {
-          const customUrl = new URL(
-            trimmedCustomPageUrl,
-            window.location.origin,
-          );
-
-          selectedPageUrl = customUrl.href;
-        } catch {
-          setMessage("Please enter a valid page URL.");
-          return;
-        }
-      } else {
-        selectedPageUrl = `${window.location.origin}${page}`;
-      }
     }
 
     setSubmitting(true);
@@ -315,27 +365,10 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
         },
       );
 
-      let data = {};
-
-      try {
-        data = await response.json();
-      } catch {
-        data = {};
-      }
+      const data = await getResponseData(response);
 
       if (!response.ok) {
-        const validationError =
-          typeof data === "object"
-            ? Object.entries(data)
-                .map(([field, errors]) => {
-                  const messages = Array.isArray(errors)
-                    ? errors.join(", ")
-                    : String(errors);
-
-                  return `${field}: ${messages}`;
-                })
-                .join(" | ")
-            : "";
+        const validationError = getValidationError(data);
 
         throw new Error(
           validationError ||
@@ -359,7 +392,6 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
       }, 2500);
     } catch (error) {
       console.error("Unable to submit suggestion:", error);
-
       setMessage(error.message || "Unable to submit suggestion.");
     } finally {
       setSubmitting(false);
@@ -425,9 +457,7 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
               <div>
                 <h3>What would you like to see?</h3>
 
-                <p>
-                  Give your suggestion a clear title and explain your idea.
-                </p>
+                <p>Give your suggestion a clear title and explain your idea.</p>
               </div>
             </div>
 
@@ -506,15 +536,12 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
 
             {requiresPage && (
               <div className="bug-report-field">
-                <label id="suggestion-page-label">
+                <label htmlFor="suggestion-page" id="suggestion-page-label">
                   <span>Page</span>
                   <span className="bug-report-required">*</span>
                 </label>
 
-                <div
-                  className="suggestion-page-dropdown"
-                  ref={pageDropdownRef}
-                >
+                <div className="suggestion-page-dropdown" ref={pageDropdownRef}>
                   <button
                     type="button"
                     id="suggestion-page"
@@ -522,8 +549,7 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
                       pageDropdownOpen ? "open" : ""
                     }`}
                     onClick={() =>
-                      !submitting &&
-                      setPageDropdownOpen((current) => !current)
+                      !submitting && setPageDropdownOpen((current) => !current)
                     }
                     onKeyDown={handlePageKeyDown}
                     disabled={submitting}
@@ -533,9 +559,7 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
                   >
                     <span
                       className={
-                        selectedPage
-                          ? ""
-                          : "suggestion-page-placeholder"
+                        selectedPage ? "" : "suggestion-page-placeholder"
                       }
                     >
                       {selectedPage?.label || "Select a page"}
@@ -575,9 +599,7 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
                   <input
                     type="url"
                     value={customPageUrl}
-                    onChange={(event) =>
-                      setCustomPageUrl(event.target.value)
-                    }
+                    onChange={(event) => setCustomPageUrl(event.target.value)}
                     placeholder="https://pvzhtbot.com/your-page"
                     disabled={submitting}
                     required
@@ -597,10 +619,7 @@ function SuggestionModal({ open, user, profile, onClose, initialPageUrl }) {
           <div className="bug-report-user-info">
             <div className="bug-report-user-avatar">
               {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={`${userName}'s Discord avatar`}
-                />
+                <img src={user.avatar} alt={`${userName}'s Discord avatar`} />
               ) : (
                 userInitial
               )}

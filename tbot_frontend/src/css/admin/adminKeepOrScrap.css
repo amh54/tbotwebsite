@@ -12,10 +12,6 @@
   box-sizing: border-box;
 }
 
-/* =========================================================
-   PAGE
-   ========================================================= */
-
 .admin-kos-content {
   width: min(1500px, calc(100% - 70px));
   margin: 0 auto;
@@ -58,9 +54,6 @@
   flex-shrink: 0;
 }
 
-/* =========================================================
-   BUTTONS
-   ========================================================= */
 
 .admin-kos-primary-button,
 .admin-kos-secondary-button,
@@ -144,10 +137,6 @@
   transform: none;
 }
 
-/* =========================================================
-   ALERTS
-   ========================================================= */
-
 .admin-kos-alert {
   margin-bottom: 24px;
   padding: 14px 17px;
@@ -157,20 +146,16 @@
 }
 
 .admin-kos-alert.error {
-  background: rgba(185, 60, 60, 0.12);
-  border: 1px solid rgba(210, 75, 75, 0.35);
-  color: #ffaaaa;
+  background: #2a1212;
+  border: 1px solid #8b3030;
+  color: #ffb3b3;
 }
 
 .admin-kos-alert.success {
-  background: rgba(143, 227, 139, 0.1);
-  border: 1px solid rgba(143, 227, 139, 0.3);
-  color: #a9f2a5;
+  background: #142414;
+  border: 1px solid #386b35;
+  color: #b5f5b0;
 }
-
-/* =========================================================
-   TABS
-   ========================================================= */
 
 .admin-kos-browser {
   display: flex;
@@ -219,10 +204,6 @@
   flex-shrink: 0;
 }
 
-/* =========================================================
-   SECTION HEADINGS
-   ========================================================= */
-
 .admin-kos-section-heading {
   display: flex;
   align-items: center;
@@ -253,9 +234,6 @@
   font-weight: 700;
 }
 
-/* =========================================================
-   EMPTY STATE
-   ========================================================= */
 
 .admin-kos-empty {
   padding: 65px 30px;
@@ -277,9 +255,6 @@
   font-size: 14px;
 }
 
-/* =========================================================
-   INTRODUCTION
-   ========================================================= */
 
 .admin-kos-intro {
   width: 100%;
@@ -327,14 +302,13 @@
   width: 100%;
   height: 100%;
   min-height: 200px;
-  color: #606a6f;
+  color: #aeb8bd;
   background: #111517;
-  border: 1px dashed #343c40;
+  border: 1px dashed #59656b;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
 }
-
 .admin-kos-intro-content {
   min-width: 0;
   padding: 34px 38px;
@@ -450,10 +424,6 @@
   background: rgba(185, 60, 60, 0.1);
   border-color: #b94b4b;
 }
-
-/* =========================================================
-   RECOMMENDATION CLASS GRID
-   ========================================================= */
 
 .admin-kos-class-grid {
   display: grid;
@@ -617,11 +587,7 @@
 .admin-kos-delete-small:hover {
   background: rgba(185, 60, 60, 0.1);
   border-color: #b94b4b;
-}a
-
-/* =========================================================
-   MODALS
-   ========================================================= */
+}
 
 .admin-kos-modal-overlay {
   position: fixed;
@@ -915,8 +881,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(143, 227, 139, 0.1);
-  color: #8fe38b;
+  background: #142414;
+  color: #b5f5b0;
   font-size: 22px;
   font-weight: 800;
 }
@@ -933,10 +899,6 @@
   text-align: center;
 }
 
-/* =========================================================
-   MODAL FOOTER
-   ========================================================= */
-
 .admin-kos-editor-footer {
   flex-shrink: 0;
   min-height: 70px;
@@ -948,10 +910,6 @@
   background: #1b2023;
   border-top: 1px solid #2d3438;
 }
-
-/* =========================================================
-   DELETE MODAL
-   ========================================================= */
 
 .admin-kos-delete-modal {
   width: min(440px, 100%);
@@ -971,9 +929,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(185, 60, 60, 0.13);
-  border: 1px solid rgba(185, 60, 60, 0.3);
-  color: #e37b7b;
+  background: #2a1212;
+  border: 1px solid #8b3030;
+  color: #ffb3b3;
   font-size: 22px;
   font-weight: 800;
 }

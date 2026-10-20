@@ -620,7 +620,15 @@ const EditDeckModal = forwardRef(function EditDeckModal(
   if (!deck) {
     return null;
   }
+  let cardsPlaceholder;
 
+  if (!normalizedFormSide) {
+    cardsPlaceholder = "Select side first...";
+  } else if (!form.hero) {
+    cardsPlaceholder = "Select hero first...";
+  } else {
+    cardsPlaceholder = "Search cards...";
+  }
   return (
     <div className="edit-deck-fields">
       <div className="modal-info">
@@ -756,20 +764,13 @@ const EditDeckModal = forwardRef(function EditDeckModal(
                 ? ` — ${selectedHeroClasses.join(" / ")}`
                 : ""}
             </span>
-
             <Select
               classNamePrefix="deck-cards-select"
               isMulti
               options={cardOptions}
               value={form.cardsSelected}
               onChange={handleCardsChange}
-              placeholder={
-                !normalizedFormSide
-                  ? "Select side first..."
-                  : !form.hero
-                    ? "Select hero first..."
-                    : "Search cards..."
-              }
+              placeholder={cardsPlaceholder}
               styles={selectStyles}
               closeMenuOnSelect={false}
               isSearchable

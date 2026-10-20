@@ -88,11 +88,13 @@ function AdminDecklists() {
 
       const data = await response.json();
 
-      const results = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-          ? data.results
-          : [];
+      let results = [];
+
+      if (Array.isArray(data)) {
+        results = data;
+      } else if (Array.isArray(data?.results)) {
+        results = data.results;
+      }
 
       setDecks(results);
     } catch (err) {
@@ -104,7 +106,7 @@ function AdminDecklists() {
   };
 
   useEffect(() => {
-    fetchDecks();
+    void fetchDecks();
   }, []);
 
   useEffect(() => {
@@ -134,13 +136,15 @@ function AdminDecklists() {
 
         const data = await response.json();
 
-        setAllCards(
-          Array.isArray(data)
-            ? data
-            : Array.isArray(data?.results)
-              ? data.results
-              : [],
-        );
+        let cards = [];
+
+        if (Array.isArray(data)) {
+          cards = data;
+        } else if (Array.isArray(data?.results)) {
+          cards = data.results;
+        }
+
+        setAllCards(cards);
       } catch (err) {
         if (err.name === "AbortError") {
           return;
@@ -154,7 +158,7 @@ function AdminDecklists() {
       }
     };
 
-    fetchCards();
+    void fetchCards();
 
     return () => {
       controller.abort();
@@ -322,7 +326,7 @@ function AdminDecklists() {
 
           return {
             ...existingDeck,
-            ...(updatedDeck || {}),
+            ...(updatedDeck),
           };
         }),
       );
@@ -611,7 +615,7 @@ function AdminDecklists() {
                 alt="Plants"
                 className="tab-icon"
               />
-              Plants
+              <span>Plants</span>
             </button>
 
             <button
@@ -624,7 +628,7 @@ function AdminDecklists() {
                 alt="Zombies"
                 className="tab-icon"
               />
-              Zombies
+              <span>Zombies</span>
             </button>
           </div>
 

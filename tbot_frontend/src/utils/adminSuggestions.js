@@ -2,7 +2,7 @@ export const normalizeText = (value) =>
   String(value ?? "")
     .trim()
     .toLowerCase()
-    .replace(/[\s\_-]+/g, " ");
+    .replace(/[\s_-]+/g, " ");
 
 export const getSuggestionId = (suggestion) =>
   suggestion?.id ?? suggestion?.suggestion_id ?? suggestion?.suggestionId;

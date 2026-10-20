@@ -451,7 +451,7 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
       }
     };
 
-    loadClasses();
+    void loadClasses();
 
     return () => {
       cancelled = true;
@@ -505,7 +505,7 @@ export default function AddCardsModal({ isOpen, onClose, onCardsAdded }) {
         }
       };
 
-      loadAvailableCards();
+      void loadAvailableCards();
     }, 200);
 
     return () => {
