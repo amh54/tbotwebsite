@@ -272,7 +272,7 @@ function HomePage() {
               <h3>Suggest a Community Deck</h3>
               <p>
                 Found a great deck on the public decks page? Suggest it for
-                inclusion in Tbot's community decklists.
+                consideration in Tbot's community decklists.
               </p>
 
               <div className="grave-links">
