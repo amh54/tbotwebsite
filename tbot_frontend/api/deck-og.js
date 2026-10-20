@@ -683,7 +683,7 @@ async function resolveMetadata(pathname, query) {
       return getStaticMetadata("/publicdecks");
     }
 
-    const data = await fetchJson(`${API}/tbotapp/public-user-decks/`);
+    const data = await fetchJson(`${API}/tbotapp/public-decks/`);
 
     const deck = findDeckInList(data, deckKey);
 
