@@ -6,17 +6,13 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from ..models import KeepOrScrap
-from ..serializers import KeepOrScrapSerializer
-from .helpers import include_error_detail
+from ...models import KeepOrScrap
+from ...serializers import KeepOrScrapSerializer
+from ..helpers import include_error_detail
 
 
 logger = logging.getLogger(__name__)
 
-
-# ============================================================
-# KEEP OR SCRAP
-# ============================================================
 
 @api_view(["GET"])
 def keep_or_scrap(request):
@@ -75,10 +71,6 @@ def keep_or_scrap(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-
-# ============================================================
-# KEEP OR SCRAP COUNT
-# ============================================================
 
 @api_view(["GET"])
 def keep_or_scrap_count(request):

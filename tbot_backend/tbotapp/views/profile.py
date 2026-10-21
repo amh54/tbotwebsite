@@ -206,6 +206,218 @@ def public_profile_decks(request, profile_slug):
     )
 
 
+
+def _profile_validation_error(
+    message,
+    status_code=status.HTTP_400_BAD_REQUEST,
+):
+    return Response(
+        {"error": message},
+        status=status_code,
+    )
+
+
+def _validate_display_name(value):
+    display_name = str(value).strip()
+
+    if not display_name:
+        return None, "Display name cannot be empty."
+
+    if len(display_name) > 100:
+        return None, "Display name cannot exceed 100 characters."
+
+    return display_name, None
+
+
+def _validate_profile_slug(value, profile_id):
+    profile_slug = str(value).strip().lower()
+
+    if not profile_slug:
+        return (
+            None,
+            "Profile slug cannot be empty.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    if len(profile_slug) > 100:
+        return (
+            None,
+            "Profile slug cannot exceed 100 characters.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    existing_profile = (
+        UserProfile.objects
+        .filter(profile_slug=profile_slug)
+        .exclude(id=profile_id)
+        .exists()
+    )
+
+    if existing_profile:
+        return (
+            None,
+            "That profile URL is already being used.",
+            status.HTTP_409_CONFLICT,
+        )
+
+    return profile_slug, None, None
+
+
+def _validate_avatar(value):
+    avatar = "" if value is None else str(value).strip()
+
+    if len(avatar) > 500:
+        return None, "Avatar URL cannot exceed 500 characters."
+
+    return avatar, None
+
+
+def _validate_bio(value):
+    bio = "" if value is None else str(value).strip()
+
+    if len(bio) > 2000:
+        return None, "Bio cannot exceed 2000 characters."
+
+    return bio, None
+
+
+def _validate_social_url(value, field):
+    value = "" if value is None else str(value).strip()
+
+    if len(value) > 500:
+        return None, f"{field} cannot exceed 500 characters."
+
+    if value and not value.startswith(("https://", "http://")):
+        return (
+            None,
+            f"{field} must be a valid HTTP or HTTPS URL.",
+        )
+
+    return value, None
+
+
+def _normalize_is_public(value):
+    if isinstance(value, bool):
+        return value, None
+
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+
+        if normalized in {"true", "1", "yes", "public"}:
+            return True, None
+
+        if normalized in {"false", "0", "no", "private"}:
+            return False, None
+
+    return None, "is_public must be true or false."
+
+
+def _validate_basic_profile_fields(update_data):
+    validators = {
+        "display_name": _validate_display_name,
+        "avatar": _validate_avatar,
+        "bio": _validate_bio,
+    }
+
+    for field, validator in validators.items():
+        if field not in update_data:
+            continue
+
+        value, error = validator(update_data[field])
+
+        if error:
+            return error
+
+        update_data[field] = value
+
+        if field == "display_name":
+            update_data["display_name_is_custom"] = True
+
+    return None
+
+
+def _validate_profile_slug_field(update_data, profile):
+    if "profile_slug" not in update_data:
+        return None, None
+
+    value, error, error_status = _validate_profile_slug(
+        update_data["profile_slug"],
+        profile.id,
+    )
+
+    if error:
+        return error, error_status
+
+    update_data["profile_slug"] = value
+
+    return None, None
+
+
+def _validate_social_fields(update_data):
+    social_fields = {
+        "youtube_url",
+        "twitch_url",
+        "tiktok_url",
+        "instagram_url",
+        "twitter_url",
+        "discord_server_url",
+    }
+
+    for field in social_fields.intersection(update_data):
+        value, error = _validate_social_url(
+            update_data[field],
+            field,
+        )
+
+        if error:
+            return error
+
+        update_data[field] = value
+
+    return None
+
+
+def _validate_visibility_field(update_data):
+    if "is_public" not in update_data:
+        return None
+
+    value, error = _normalize_is_public(update_data["is_public"])
+
+    if error:
+        return error
+
+    update_data["is_public"] = value
+
+    return None
+
+
+def _validate_profile_update_data(update_data, profile):
+    error = _validate_basic_profile_fields(update_data)
+
+    if error:
+        return error, None
+
+    error, error_status = _validate_profile_slug_field(
+        update_data,
+        profile,
+    )
+
+    if error:
+        return error, error_status
+
+    error = _validate_social_fields(update_data)
+
+    if error:
+        return error, None
+
+    error = _validate_visibility_field(update_data)
+
+    if error:
+        return error, None
+
+    return None, None
+
+
 @api_view(["PATCH"])
 @authentication_classes([])
 @permission_classes([])
@@ -229,253 +441,37 @@ def profile_update(request):
         "discord_server_url",
     }
 
-    update_data = {}
-
-    for field in allowed_fields:
-        if field in request.data:
-            update_data[field] = request.data[field]
-
-    if not update_data:
-        return Response(
-            {
-                "error": (
-                    "No valid profile fields were provided."
-                ),
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    if "display_name" in update_data:
-        display_name = str(
-            update_data["display_name"]
-        ).strip()
-
-        if not display_name:
-            return Response(
-                {
-                    "error": "Display name cannot be empty.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if len(display_name) > 100:
-            return Response(
-                {
-                    "error": (
-                        "Display name cannot exceed "
-                        "100 characters."
-                    ),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        update_data["display_name"] = display_name
-        update_data["display_name_is_custom"] = True
-
-    if "profile_slug" in update_data:
-        profile_slug = str(
-            update_data["profile_slug"]
-        ).strip().lower()
-
-        if not profile_slug:
-            return Response(
-                {
-                    "error": "Profile slug cannot be empty.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if len(profile_slug) > 100:
-            return Response(
-                {
-                    "error": (
-                        "Profile slug cannot exceed "
-                        "100 characters."
-                    ),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        existing_profile = (
-            UserProfile.objects
-            .filter(
-                profile_slug=profile_slug,
-            )
-            .exclude(
-                id=profile.id,
-            )
-            .exists()
-        )
-
-        if existing_profile:
-            return Response(
-                {
-                    "error": (
-                        "That profile URL is already "
-                        "being used."
-                    ),
-                },
-                status=status.HTTP_409_CONFLICT,
-            )
-
-        update_data["profile_slug"] = profile_slug
-
-    if "avatar" in update_data:
-        avatar = update_data["avatar"]
-
-        if avatar is None:
-            update_data["avatar"] = ""
-        else:
-            avatar = str(avatar).strip()
-
-            if len(avatar) > 500:
-                return Response(
-                    {
-                        "error": (
-                            "Avatar URL cannot exceed "
-                            "500 characters."
-                        ),
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            update_data["avatar"] = avatar
-
-    if "bio" in update_data:
-        bio = update_data["bio"]
-
-        if bio is None:
-            bio = ""
-
-        bio = str(bio).strip()
-
-        if len(bio) > 2000:
-            return Response(
-                {
-                    "error": (
-                        "Bio cannot exceed "
-                        "2000 characters."
-                    ),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        update_data["bio"] = bio
-
-    social_fields = {
-        "youtube_url",
-        "twitch_url",
-        "tiktok_url",
-        "instagram_url",
-        "twitter_url",
-        "discord_server_url",
+    update_data = {
+        field: request.data[field]
+        for field in allowed_fields
+        if field in request.data
     }
 
-    for field in social_fields:
-        if field not in update_data:
-            continue
+    if not update_data:
+        return _profile_validation_error(
+            "No valid profile fields were provided."
+        )
 
-        value = update_data[field]
+    validation_error, error_status = _validate_profile_update_data(
+        update_data,
+        profile,
+    )
 
-        if value is None:
-            value = ""
-
-        value = str(value).strip()
-
-        if len(value) > 500:
-            return Response(
-                {
-                    "error": (
-                        f"{field} cannot exceed "
-                        "500 characters."
-                    ),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if value and not (
-            value.startswith("https://")
-            or value.startswith("http://")
-        ):
-            return Response(
-                {
-                    "error": (
-                        f"{field} must be a valid "
-                        "HTTP or HTTPS URL."
-                    ),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        update_data[field] = value
-
-    if "is_public" in update_data:
-        value = update_data["is_public"]
-
-        if isinstance(value, bool):
-            pass
-
-        elif isinstance(value, str):
-            normalized = value.strip().lower()
-
-            if normalized in {
-                "true",
-                "1",
-                "yes",
-                "public",
-            }:
-                update_data["is_public"] = True
-
-            elif normalized in {
-                "false",
-                "0",
-                "no",
-                "private",
-            }:
-                update_data["is_public"] = False
-
-            else:
-                return Response(
-                    {
-                        "error": (
-                            "is_public must be "
-                            "true or false."
-                        ),
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        else:
-            return Response(
-                {
-                    "error": (
-                        "is_public must be "
-                        "true or false."
-                    ),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+    if validation_error:
+        return _profile_validation_error(
+            validation_error,
+            error_status or status.HTTP_400_BAD_REQUEST,
+        )
 
     for field, value in update_data.items():
-        setattr(
-            profile,
-            field,
-            value,
-        )
+        setattr(profile, field, value)
 
     try:
         profile.save()
-
     except IntegrityError:
-        return Response(
-            {
-                "error": (
-                    "Unable to update profile because "
-                    "one of the unique fields is already "
-                    "in use."
-                ),
-            },
-            status=status.HTTP_409_CONFLICT,
+        return _profile_validation_error(
+            "Unable to update profile because one of the unique fields is already in use.",
+            status.HTTP_409_CONFLICT,
         )
 
     serializer = UserProfileSerializer(profile)

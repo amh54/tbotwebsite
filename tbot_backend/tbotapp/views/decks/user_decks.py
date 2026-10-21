@@ -8,21 +8,23 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from ..models import (
+from ...models import (
     UserDeck,
     UserProfile,
     Decklist,
     LegacyDecklist,
 )
-from ..serializers import UserDeckSerializer
-from .helpers import (
+from ...serializers import UserDeckSerializer
+from ..helpers import (
     get_discord_user,
     include_error_detail,
     save_deck_image,
 )
 
 logger = logging.getLogger(__name__)
-
+R2_IMAGE_ERROR = "R2 did not return an image URL."
+UPLOAD_ERROR = "Unable to upload deck image."
+DECK_ERROR = "Deck not found."
 def get_current_profile(request):
     discord_user = get_discord_user(request)
 
@@ -148,29 +150,23 @@ def public_profile_decks_count(
     )
 
 
-@api_view(["POST"])
-@parser_classes([
-    JSONParser,
-    FormParser,
-    MultiPartParser,
-])
-def user_deck_create(request):
-    profile, error = get_current_profile(request)
+def _user_deck_error(message, status_code, fields=None):
+    payload = {"error": message}
 
-    if error:
-        return error
+    if fields is not None:
+        payload["fields"] = fields
 
-    creator = str(
-        request.data.get("creator", "")
-    ).strip()
+    return Response(payload, status=status_code)
+
+
+def _prepare_user_deck_data(request):
+    creator = str(request.data.get("creator", "")).strip()
 
     if not creator:
-        return Response(
-            {
-                "error": "Creator is required.",
-                "fields": ["creator"],
-            },
-            status=status.HTTP_400_BAD_REQUEST,
+        return None, _user_deck_error(
+            "Creator is required.",
+            status.HTTP_400_BAD_REQUEST,
+            fields=["creator"],
         )
 
     allowed_fields = {
@@ -189,11 +185,11 @@ def user_deck_create(request):
         "deck_doc",
     }
 
-    deck_data = {}
-
-    for field in allowed_fields:
-        if field in request.data:
-            deck_data[field] = request.data[field]
+    deck_data = {
+        field: request.data[field]
+        for field in allowed_fields
+        if field in request.data
+    }
 
     required_fields = {
         "name",
@@ -206,18 +202,14 @@ def user_deck_create(request):
     missing_fields = [
         field
         for field in required_fields
-        if not str(
-            deck_data.get(field, "")
-        ).strip()
+        if not str(deck_data.get(field, "")).strip()
     ]
 
     if missing_fields:
-        return Response(
-            {
-                "error": "Missing required deck fields.",
-                "fields": missing_fields,
-            },
-            status=status.HTTP_400_BAD_REQUEST,
+        return None, _user_deck_error(
+            "Missing required deck fields.",
+            status.HTTP_400_BAD_REQUEST,
+            fields=missing_fields,
         )
 
     deck_data["suggested_date"] = timezone.now()
@@ -227,17 +219,22 @@ def user_deck_create(request):
     if image_file:
         deck_data.pop("image", None)
 
+    return {
+        "creator": creator,
+        "deck_data": deck_data,
+        "image_file": image_file,
+    }, None
+
+
+def _create_user_deck(profile, creator, deck_data):
     try:
-        deck = UserDeck.objects.create(
+        return UserDeck.objects.create(
             profile_id=profile.id,
             creator=creator,
             **deck_data,
-        )
-
+        ), None
     except DatabaseError as exc:
-        logger.exception(
-            "User deck creation failed"
-        )
+        logger.exception("User deck creation failed")
 
         payload = {
             "error": (
@@ -250,68 +247,95 @@ def user_deck_create(request):
         if include_error_detail():
             payload["detail"] = str(exc)
 
+        return None, Response(
+            payload,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+def _delete_user_deck_after_upload_failure(deck):
+    try:
+        deck.delete()
+    except Exception:
+        logger.exception(
+            "Unable to remove deck after R2 upload failure"
+        )
+
+
+def _upload_user_deck_image(deck, image_file):
+    try:
+        image_url = save_deck_image(
+            image_file,
+            deck.id,
+            deck_name=deck.name,
+            side=deck.side,
+            hero=deck.hero,
+            user_deck=True,
+        )
+
+        if not image_url:
+            deck.delete()
+            return _user_deck_error(
+                R2_IMAGE_ERROR,
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        deck.image = image_url
+        deck.save(update_fields=["image"])
+
+    except Exception as exc:
+        logger.exception("R2 user deck image upload failed")
+        _delete_user_deck_after_upload_failure(deck)
+
+        payload = {
+            "error": UPLOAD_ERROR,
+            "error_type": exc.__class__.__name__,
+        }
+
+        if include_error_detail():
+            payload["detail"] = str(exc)
+
         return Response(
             payload,
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+    return None
+
+
+@api_view(["POST"])
+@parser_classes([
+    JSONParser,
+    FormParser,
+    MultiPartParser,
+])
+def user_deck_create(request):
+    profile, error = get_current_profile(request)
+
+    if error:
+        return error
+
+    prepared_data, error = _prepare_user_deck_data(request)
+
+    if error:
+        return error
+
+    deck, error = _create_user_deck(
+        profile,
+        prepared_data["creator"],
+        prepared_data["deck_data"],
+    )
+
+    if error:
+        return error
+
+    image_file = prepared_data["image_file"]
+
     if image_file:
-        try:
-            image_url = save_deck_image(
-    image_file,
-    deck.id,
-    deck_name=deck.name,
-    side=deck.side,
-    hero=deck.hero,
-    user_deck=True,
-)
+        error = _upload_user_deck_image(deck, image_file)
 
-            if not image_url:
-                deck.delete()
-
-                return Response(
-                    {
-                        "error": (
-                            "R2 did not return "
-                            "an image URL."
-                        ),
-                    },
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-
-            deck.image = image_url
-
-            deck.save(
-                update_fields=["image"]
-            )
-
-        except Exception as exc:
-            logger.exception(
-                "R2 user deck image upload failed"
-            )
-
-            try:
-                deck.delete()
-            except Exception:
-                logger.exception(
-                    "Unable to remove deck after "
-                    "R2 upload failure"
-                )
-
-            payload = {
-                "error": (
-                    "Unable to upload deck image."
-                ),
-                "error_type": exc.__class__.__name__,
-            }
-
-            if include_error_detail():
-                payload["detail"] = str(exc)
-
-            return Response(
-                payload,
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        if error:
+            return error
 
     serializer = UserDeckSerializer(deck)
 
@@ -324,6 +348,102 @@ def user_deck_create(request):
     )
 
 
+def _user_deck_update_error(
+    message,
+    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    error_type=None,
+    fields=None,
+    exc=None,
+):
+    payload = {"error": message}
+
+    if error_type:
+        payload["error_type"] = error_type
+
+    if fields is not None:
+        payload["fields"] = fields
+
+    if exc is not None and include_error_detail():
+        payload["detail"] = str(exc)
+
+    return Response(payload, status=status_code)
+
+
+def _upload_user_deck_update_image(deck, update_data, image_file):
+    try:
+        image_url = save_deck_image(
+            image_file,
+            deck.id,
+            deck_name=update_data.get("name", deck.name),
+            side=update_data.get("side", deck.side),
+            hero=update_data.get("hero", deck.hero),
+            user_deck=True,
+        )
+    except Exception as exc:
+        logger.exception("R2 user deck image replacement failed")
+        return _user_deck_update_error(
+            UPLOAD_ERROR,
+            error_type=exc.__class__.__name__,
+            exc=exc,
+        )
+
+    if not image_url:
+        return _user_deck_update_error(
+            R2_IMAGE_ERROR
+        )
+
+    update_data["image"] = image_url
+    return None
+
+
+def _save_user_deck_update(deck, update_data):
+    serializer = UserDeckSerializer(
+        deck,
+        data=update_data,
+        partial=True,
+    )
+
+    if not serializer.is_valid():
+        logger.error(
+            "User deck serializer validation failed: %s",
+            serializer.errors,
+        )
+        return _user_deck_update_error(
+            "Unable to update deck.",
+            status.HTTP_400_BAD_REQUEST,
+            fields=serializer.errors,
+        )
+
+    now = timezone.now()
+    updated_deck = serializer.save(
+        modified_at=now,
+        updated_date=now,
+    )
+
+    return Response(
+        {
+            "success": True,
+            "deck": UserDeckSerializer(updated_deck).data,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+def _handle_user_deck_update_exception(exc, database_error=False):
+    if database_error:
+        logger.exception("User deck update failed")
+        message = "Database query failed while updating user deck."
+    else:
+        logger.exception("Unexpected user deck update failure")
+        message = "Unable to update user deck."
+
+    return _user_deck_update_error(
+        message,
+        error_type=exc.__class__.__name__,
+        exc=exc,
+    )
+
+
 @api_view(["PATCH"])
 @parser_classes([
     JSONParser,
@@ -332,29 +452,168 @@ def user_deck_create(request):
 ])
 def user_deck_update(request, deck_id):
     profile, error = get_current_profile(request)
+
     if error:
         return error
 
     try:
-        deck = (
-            UserDeck.objects
-            .filter(
-                id=deck_id,
-                profile_id=profile.id,
-            )
-            .first()
-        )
+        deck = UserDeck.objects.filter(
+            id=deck_id,
+            profile_id=profile.id,
+        ).first()
 
         if not deck:
             return Response(
-                {
-                    "error": "Deck not found.",
-                },
+                {"error": DECK_ERROR},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         update_data = request.data.copy()
+        image_file = request.FILES.get("image_file")
 
+        for field in ("image_file", "suggested_date", "updated_date"):
+            update_data.pop(field, None)
+
+        if image_file:
+            error = _upload_user_deck_update_image(
+                deck,
+                update_data,
+                image_file,
+            )
+            if error:
+                return error
+
+        return _save_user_deck_update(deck, update_data)
+
+    except DatabaseError as exc:
+        return _handle_user_deck_update_exception(
+            exc,
+            database_error=True,
+        )
+
+    except Exception as exc:
+        return _handle_user_deck_update_exception(exc)
+
+@api_view(["PATCH"])
+def _user_deck_update_error(
+    message,
+    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    error_type=None,
+    fields=None,
+    exc=None,
+):
+    payload = {"error": message}
+
+    if error_type:
+        payload["error_type"] = error_type
+
+    if fields is not None:
+        payload["fields"] = fields
+
+    if exc is not None and include_error_detail():
+        payload["detail"] = str(exc)
+
+    return Response(payload, status=status_code)
+
+
+def _upload_user_deck_replacement_image(deck, image_file, update_data):
+    side = update_data.get("side", deck.side)
+    hero = update_data.get("hero", deck.hero)
+    deck_name = update_data.get("name", deck.name)
+
+    try:
+        image_url = save_deck_image(
+            image_file,
+            deck.id,
+            deck_name=deck_name,
+            side=side,
+            hero=hero,
+            user_deck=True,
+        )
+    except Exception as exc:
+        logger.exception("R2 user deck image replacement failed")
+        return None, _user_deck_update_error(
+            UPLOAD_ERROR,
+            error_type=exc.__class__.__name__,
+            exc=exc,
+        )
+
+    if not image_url:
+        return None, _user_deck_update_error(
+            R2_IMAGE_ERROR
+        )
+
+    update_data["image"] = image_url
+    return update_data, None
+
+
+def _validate_user_deck_update(deck, update_data):
+    serializer = UserDeckSerializer(
+        deck,
+        data=update_data,
+        partial=True,
+    )
+
+    if not serializer.is_valid():
+        logger.error(
+            "User deck serializer validation failed: %s",
+            serializer.errors,
+        )
+        return None, _user_deck_update_error(
+            "Unable to update deck.",
+            status.HTTP_400_BAD_REQUEST,
+            fields=serializer.errors,
+        )
+
+    now = timezone.now()
+    updated_deck = serializer.save(
+        modified_at=now,
+        updated_date=now,
+    )
+
+    return updated_deck, None
+
+
+def _user_deck_update_exception(exc, database_error=False):
+    if database_error:
+        logger.exception("User deck update failed")
+        message = "Database query failed while updating user deck."
+    else:
+        logger.exception("Unexpected user deck update failure")
+        message = "Unable to update user deck."
+
+    return _user_deck_update_error(
+        message,
+        error_type=exc.__class__.__name__,
+        exc=exc,
+    )
+
+
+@api_view(["PATCH"])
+@parser_classes([
+    JSONParser,
+    FormParser,
+    MultiPartParser,
+])
+def user_deck_update(request, deck_id):
+    profile, error = get_current_profile(request)
+
+    if error:
+        return error
+
+    try:
+        deck = UserDeck.objects.filter(
+            id=deck_id,
+            profile_id=profile.id,
+        ).first()
+
+        if not deck:
+            return Response(
+                {"error": DECK_ERROR},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        update_data = request.data.copy()
         image_file = request.FILES.get("image_file")
 
         update_data.pop("image_file", None)
@@ -362,140 +621,38 @@ def user_deck_update(request, deck_id):
         update_data.pop("updated_date", None)
 
         if image_file:
-            side = update_data.get(
-                "side",
-                deck.side,
+            update_data, error = _upload_user_deck_replacement_image(
+                deck,
+                image_file,
+                update_data,
             )
+            if error:
+                return error
 
-            hero = update_data.get(
-                "hero",
-                deck.hero,
-            )
-
-            deck_name = update_data.get(
-                "name",
-                deck.name,
-            )
-
-            try:
-                image_url = save_deck_image(
-                    image_file,
-                    deck.id,
-                    deck_name=deck_name,
-                    side=side,
-                    hero=hero,
-                    user_deck=True,
-                )
-
-                if not image_url:
-                    return Response(
-                        {
-                            "error": (
-                                "R2 did not return "
-                                "an image URL."
-                            ),
-                        },
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
-
-                update_data["image"] = image_url
-
-            except Exception as exc:
-                logger.exception(
-                    "R2 user deck image replacement failed"
-                )
-
-                payload = {
-                    "error": (
-                        "Unable to upload deck image."
-                    ),
-                    "error_type": (
-                        exc.__class__.__name__
-                    ),
-                }
-
-                if include_error_detail():
-                    payload["detail"] = str(exc)
-
-                return Response(
-                    payload,
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-
-        serializer = UserDeckSerializer(
+        updated_deck, error = _validate_user_deck_update(
             deck,
-            data=update_data,
-            partial=True,
+            update_data,
         )
 
-        if not serializer.is_valid():
-            logger.error(
-                "User deck serializer validation failed: %s",
-                serializer.errors,
-            )
+        if error:
+            return error
 
-            return Response(
-                {
-                    "error": "Unable to update deck.",
-                    "fields": serializer.errors,
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        now = timezone.now()
-
-        updated_deck = serializer.save(
-        modified_at=now,
-        updated_date=now,
-    )
         return Response(
             {
                 "success": True,
-                "deck": UserDeckSerializer(
-                    updated_deck
-                ).data,
+                "deck": UserDeckSerializer(updated_deck).data,
             },
             status=status.HTTP_200_OK,
         )
 
     except DatabaseError as exc:
-        logger.exception(
-            "User deck update failed"
-        )
-
-        payload = {
-            "error": (
-                "Database query failed while "
-                "updating user deck."
-            ),
-            "error_type": exc.__class__.__name__,
-        }
-
-        if include_error_detail():
-            payload["detail"] = str(exc)
-
-        return Response(
-            payload,
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        return _user_deck_update_exception(
+            exc,
+            database_error=True,
         )
 
     except Exception as exc:
-        logger.exception(
-            "Unexpected user deck update failure"
-        )
-
-        payload = {
-            "error": "Unable to update user deck.",
-            "error_type": exc.__class__.__name__,
-        }
-
-        if include_error_detail():
-            payload["detail"] = str(exc)
-
-        return Response(
-            payload,
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        return _user_deck_update_exception(exc)
 
 
 @api_view(["DELETE"])
@@ -518,7 +675,7 @@ def user_deck_delete(request, deck_id):
         if not deck:
             return Response(
                 {
-                    "error": "Deck not found.",
+                    "error": DECK_ERROR,
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )

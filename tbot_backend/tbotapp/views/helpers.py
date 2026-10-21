@@ -28,7 +28,7 @@ R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "").strip()
 R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "").strip()
 R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "").strip()
 R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "").strip().rstrip("/")
-
+R2_REGION = os.getenv("R2_REGION", "auto").strip()
 IMAGE_CONTENT_TYPES = {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
@@ -70,7 +70,7 @@ def _get_r2_client():
         ),
         aws_access_key_id=R2_ACCESS_KEY_ID,
         aws_secret_access_key=R2_SECRET_ACCESS_KEY,
-        region_name="auto",
+        region_name=R2_REGION,
     )
 
 
@@ -118,220 +118,193 @@ def _slugify(value):
     return value or "deck"
 
 
-def get_discord_user(request):
+def _get_discord_id_from_request(request):
     discord_id = request.session.get("discord_id")
 
-    if not discord_id:
-        username = str(
-            getattr(request.user, "username", "") or ""
-        ).strip()
+    if discord_id:
+        return str(discord_id)
 
-        if username.startswith("discord_"):
-            discord_id = username[len("discord_"):]
+    username = str(
+        getattr(request.user, "username", "") or ""
+    ).strip()
 
-    if not discord_id:
+    if username.startswith("discord_"):
+        return username[len("discord_"):]
+
+    return None
+
+
+def _sync_discord_user_profile(
+    profile,
+    username,
+    global_name,
+    avatar,
+):
+    if not profile:
+        return
+
+    changed_fields = []
+
+    if profile.username != username:
+        profile.username = username
+        changed_fields.append("username")
+
+    if (
+        not profile.display_name_is_custom
+        and profile.display_name != global_name
+    ):
+        profile.display_name = global_name
+        changed_fields.append("display_name")
+
+    if profile.avatar != avatar:
+        profile.avatar = avatar
+        changed_fields.append("avatar")
+
+    if changed_fields:
+        profile.updated_at = timezone.now()
+        changed_fields.append("updated_at")
+        profile.save(update_fields=changed_fields)
+
+
+def _refresh_discord_user(request, discord_id, profile):
+    access_token = request.session.get("discord_access_token")
+
+    if not access_token:
         return None
 
-    discord_id = str(discord_id)
-
-    profile = (
-        UserProfile.objects
-        .filter(discord_id=discord_id)
-        .first()
-    )
-
-    access_token = request.session.get(
-        "discord_access_token"
-    )
-
-    if access_token:
-        try:
-            response = requests.get(
-                "https://discord.com/api/v10/users/@me",
-                headers={
-                    "Authorization": (
-                        f"Bearer {access_token}"
-                    ),
-                },
-                timeout=5,
-            )
-
-            if response.ok:
-                discord_data = response.json()
-                current_discord_id = discord_data.get("id")
-
-                if (
-                    current_discord_id
-                    and str(current_discord_id) == discord_id
-                ):
-                    discord_username = str(
-                        discord_data.get(
-                            "username",
-                            "",
-                        )
-                    ).strip()
-
-                    discord_global_name = (
-                        discord_data.get(
-                            "global_name"
-                        )
-                        or discord_username
-                        or f"discord_{discord_id}"
-                    )
-
-                    discord_avatar = (
-                        discord_data.get("avatar")
-                        or None
-                    )
-
-                    request.session["discord_id"] = (
-                        discord_id
-                    )
-
-                    request.session["discord_username"] = (
-                        discord_username
-                    )
-
-                    request.session["discord_global_name"] = (
-                        discord_global_name
-                    )
-
-                    request.session["discord_avatar"] = (
-                        discord_avatar
-                    )
-
-                    if profile:
-                        changed = False
-
-                        if (
-                            profile.username
-                            != discord_username
-                        ):
-                            profile.username = (
-                                discord_username
-                            )
-                            changed = True
-
-                        if (
-                            not profile.display_name_is_custom
-                            and profile.display_name
-                            != discord_global_name
-                        ):
-                            profile.display_name = (
-                                discord_global_name
-                            )
-                            changed = True
-
-                        if profile.avatar != discord_avatar:
-                            profile.avatar = (
-                                discord_avatar
-                            )
-                            changed = True
-
-                        if changed:
-                            profile.updated_at = (
-                                timezone.now()
-                            )
-
-                            profile.save(
-                                update_fields=[
-                                    "username",
-                                    "display_name",
-                                    "avatar",
-                                    "updated_at",
-                                ]
-                            )
-
-                    return {
-                        "id": discord_id,
-                        "username": discord_username,
-                        "global_name": (
-                            discord_global_name
-                        ),
-                        "avatar": (
-                            discord_avatar
-                            or (
-                                profile.avatar
-                                if profile
-                                else ""
-                            )
-                            or ""
-                        ),
-                    }
-
-        except requests.RequestException:
-            logger.exception(
-                "Failed to refresh Discord user %s.",
-                discord_id,
-            )
-        except ValueError:
-            logger.exception(
-                "Invalid Discord response while refreshing "
-                "user %s.",
-                discord_id,
-            )
-
-    discord_username = request.session.get(
-        "discord_username"
-    )
-
-    if not discord_username and profile and profile.username:
-        discord_username = profile.username
-
-    if not discord_username and request.user.is_authenticated:
-        discord_username = str(
-            request.user.username or ""
-        ).strip()
-
-        if discord_username.startswith("discord_"):
-            discord_username = discord_username[
-                len("discord_"):
-            ]
-
-    discord_global_name = request.session.get(
-        "discord_global_name"
-    )
-
-    if not discord_global_name and profile and profile.display_name:
-        discord_global_name = profile.display_name
-
-    if not discord_global_name and request.user.is_authenticated:
-        discord_global_name = (
-            request.user.first_name
-            or discord_username
+    try:
+        response = requests.get(
+            "https://discord.com/api/v10/users/@me",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=5,
         )
 
-    if not discord_global_name:
-        discord_global_name = (
-            discord_username
-            or f"discord_{discord_id}"
-        )
+        if not response.ok:
+            return None
 
-    avatar = ""
+        data = response.json()
 
-    if profile and profile.avatar:
-        avatar = profile.avatar
-    else:
-        avatar = (
-            request.session.get(
-                "discord_avatar"
-            )
-            or ""
+    except requests.RequestException:
+        logger.exception(
+            "Failed to refresh Discord user %s.",
+            discord_id,
         )
+        return None
+    except ValueError:
+        logger.exception(
+            "Invalid Discord response while refreshing user %s.",
+            discord_id,
+        )
+        return None
+
+    if str(data.get("id") or "") != discord_id:
+        return None
+
+    username = str(data.get("username") or "").strip()
+    global_name = (
+        data.get("global_name")
+        or username
+        or f"discord_{discord_id}"
+    )
+    avatar = data.get("avatar") or None
+
+    request.session.update({
+        "discord_id": discord_id,
+        "discord_username": username,
+        "discord_global_name": global_name,
+        "discord_avatar": avatar,
+    })
+
+    _sync_discord_user_profile(
+        profile,
+        username,
+        global_name,
+        avatar,
+    )
 
     return {
         "id": discord_id,
-        "username": str(
-            discord_username or ""
+        "username": username,
+        "global_name": global_name,
+        "avatar": (
+            avatar
+            or (profile.avatar if profile else "")
+            or ""
         ),
-        "global_name": str(
-            discord_global_name or ""
-        ),
+    }
+
+
+def _get_session_discord_username(request, profile):
+    username = (
+        request.session.get("discord_username")
+        or (profile.username if profile else "")
+    )
+
+    if username or not request.user.is_authenticated:
+        return str(username or "")
+
+    username = str(request.user.username or "").strip()
+
+    if username.startswith("discord_"):
+        username = username[len("discord_"):]
+
+    return username
+
+
+def _get_session_discord_user(request, discord_id, profile):
+    username = _get_session_discord_username(request, profile)
+
+    global_name = (
+        request.session.get("discord_global_name")
+        or (profile.display_name if profile else "")
+    )
+
+    if not global_name and request.user.is_authenticated:
+        global_name = request.user.first_name or username
+
+    global_name = global_name or username or f"discord_{discord_id}"
+
+    avatar = (
+        (profile.avatar if profile else "")
+        or request.session.get("discord_avatar")
+        or ""
+    )
+
+    return {
+        "id": discord_id,
+        "username": username,
+        "global_name": str(global_name or ""),
         "avatar": avatar,
     }
 
 
-def normalize_card_ratio_list(value):
+def get_discord_user(request):
+    discord_id = _get_discord_id_from_request(request)
+
+    if not discord_id:
+        return None
+
+    profile = UserProfile.objects.filter(
+        discord_id=discord_id
+    ).first()
+
+    refreshed_user = _refresh_discord_user(
+        request,
+        discord_id,
+        profile,
+    )
+
+    if refreshed_user:
+        return refreshed_user
+
+    return _get_session_discord_user(
+        request,
+        discord_id,
+        profile,
+    )
+
+
+def _parse_card_ratio_input(value):
     if value is None:
         return []
 
@@ -343,89 +316,81 @@ def normalize_card_ratio_list(value):
 
         try:
             parsed = json.loads(value)
-
             if isinstance(parsed, list):
-                value = parsed
-
-        except (
-            json.JSONDecodeError,
-            TypeError,
-        ):
+                return parsed
+        except (json.JSONDecodeError, TypeError):
             pass
 
-    if isinstance(value, list):
-        raw_lines = []
+    return value
 
-        for item in value:
-            if isinstance(item, dict):
-                name = (
-                    item.get("card_name")
-                    or item.get("name")
-                    or ""
-                )
 
-                count = item.get("count")
+def _card_ratio_raw_lines(value):
+    if not isinstance(value, list):
+        return str(value).splitlines()
 
-                if count is not None:
-                    raw_lines.append(
-                        f"{name}|{count}"
-                    )
-                    continue
+    raw_lines = []
 
-                item = name
+    for item in value:
+        if isinstance(item, dict):
+            name = item.get("card_name") or item.get("name") or ""
+            count = item.get("count")
 
-            for line in str(item).splitlines():
-                raw_lines.append(line)
+            if count is not None:
+                raw_lines.append(f"{name}|{count}")
+                continue
 
-    else:
-        raw_lines = str(value).splitlines()
+            item = name
+
+        raw_lines.extend(str(item).splitlines())
+
+    return raw_lines
+
+
+def _parse_card_ratio_line(line):
+    line = line.strip()
+
+    if not line:
+        return None
+
+    name_part, _, count_part = line.partition("|")
+    name = name_part.strip()
+
+    if not name:
+        return None
+
+    try:
+        count = int(str(count_part).strip())
+    except (TypeError, ValueError):
+        count = 1
+
+    return {
+        "name": name,
+        "count": max(1, min(count, MAX_CARD_RATIO)),
+    }
+
+
+def normalize_card_ratio_list(value):
+    value = _parse_card_ratio_input(value)
+
+    if value is None:
+        return []
 
     parsed_cards = []
     seen = set()
 
-    for line in raw_lines:
-        line = line.strip()
+    for line in _card_ratio_raw_lines(value):
+        card = _parse_card_ratio_line(line)
 
-        if not line:
+        if not card:
             continue
 
-        name_part, _, count_part = line.partition("|")
-        name = name_part.strip()
-
-        if not name:
-            continue
-
-        try:
-            count = int(
-                str(count_part).strip()
-            )
-        except (
-            TypeError,
-            ValueError,
-        ):
-            count = 1
-
-        count = max(
-            1,
-            min(
-                count,
-                MAX_CARD_RATIO,
-            ),
-        )
-
-        key = name.lower()
+        key = card["name"].lower()
 
         if key in seen:
             continue
 
         seen.add(key)
-
-        parsed_cards.append(
-            {
-                "name": name,
-                "count": count,
-            }
-        )
+        parsed_cards.append(card)
 
     return parsed_cards
 
@@ -438,73 +403,67 @@ def cards_to_storage_string(parsed_cards):
     )
 
 
-def normalize_card_list(value):
+def _parse_card_list_input(value):
     if value is None:
         return []
 
-    if isinstance(value, str):
-        value = value.strip()
+    if not isinstance(value, str):
+        return value
 
-        if not value:
-            return []
+    value = value.strip()
+    if not value:
+        return []
 
-        try:
-            parsed = json.loads(value)
+    try:
+        parsed = json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return value
 
-            if isinstance(parsed, list):
-                value = parsed
+    return parsed if isinstance(parsed, list) else value
 
-        except (
-            json.JSONDecodeError,
-            TypeError,
-        ):
-            pass
 
-    if isinstance(value, list):
-        cleaned = []
+def _extract_card_name(card):
+    if isinstance(card, dict):
+        return str(
+            card.get("card_name")
+            or card.get("name")
+            or ""
+        ).strip()
 
-        for card in value:
-            if isinstance(card, dict):
-                card_name = (
-                    card.get("card_name")
-                    or card.get("name")
-                    or ""
-                )
-            else:
-                card_name = str(card)
+    return str(card).strip()
 
-            card_name = str(
-                card_name
-            ).strip()
 
-            if not card_name:
-                continue
-
-            for line in card_name.splitlines():
-                for item in line.split(","):
-                    item = item.strip()
-
-                    if (
-                        item
-                        and item not in cleaned
-                    ):
-                        cleaned.append(item)
-
-        return cleaned
-
-    cleaned = []
-
+def _split_card_names(value):
+    names = []
     for line in str(value).splitlines():
-        for item in line.split(","):
-            item = item.strip()
+        names.extend(
+            item.strip()
+            for item in line.split(",")
+            if item.strip()
+        )
+    return names
 
-            if (
-                item
-                and item not in cleaned
-            ):
-                cleaned.append(item)
+
+def _normalize_card_list_items(items):
+    cleaned = []
+    seen = set()
+
+    for card in items:
+        for name in _split_card_names(_extract_card_name(card)):
+            if name not in seen:
+                seen.add(name)
+                cleaned.append(name)
 
     return cleaned
+
+
+def normalize_card_list(value):
+    value = _parse_card_list_input(value)
+
+    if isinstance(value, list):
+        return _normalize_card_list_items(value)
+
+    return _normalize_card_list_items([value]) if value is not None else []
 
 
 def save_deck_image(

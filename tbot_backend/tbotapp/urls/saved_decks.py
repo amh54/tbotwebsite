@@ -1,6 +1,6 @@
 from django.urls import path
 
-from ..views.saved_decks import (
+from ..views.decks.saved_decks import (
     remove_saved_deck,
     save_deck,
     saved_decks_list,

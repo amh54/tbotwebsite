@@ -6,12 +6,12 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from ..models import UserSuggestion
-from ..serializers import (
+from ...models import UserSuggestion
+from ...serializers import (
     UserSuggestionSerializer,
     AdminUserSuggestionSerializer,
 )
-from .permissions import is_discord_owner
+from ..permissions import is_discord_owner
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def suggestion_create(request):
         profile = None
 
         try:
-            from ..models import UserProfile
+            from ...models import UserProfile
 
             profile = (
                 UserProfile.objects

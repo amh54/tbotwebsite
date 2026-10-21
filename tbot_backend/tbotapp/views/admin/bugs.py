@@ -10,9 +10,9 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 
-from ..models import BugReport
-from ..serializers import BugReportSerializer
-from .permissions import is_discord_owner
+from ...models import BugReport
+from ...serializers import BugReportSerializer
+from ..permissions import is_discord_owner
 
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "").strip()
 R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "").strip()
 R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "").strip()
 R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "").strip().rstrip("/")
-
+R2_REGION = os.getenv("R2_REGION", "auto")
 MAX_IMAGE_SIZE = 15 * 1024 * 1024
 
 CONTENT_TYPES = {
@@ -80,14 +80,14 @@ def _get_r2_client():
         raise RuntimeError("R2 storage is not configured correctly.")
 
     return boto3.client(
-        "s3",
-        endpoint_url=(
-            f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-        ),
-        aws_access_key_id=R2_ACCESS_KEY_ID,
-        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
-        region_name="auto",
-    )
+    "s3",
+    endpoint_url=(
+        f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+    ),
+    aws_access_key_id=R2_ACCESS_KEY_ID,
+    aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+    region_name=R2_REGION,
+)
 
 
 def _get_category(category):
@@ -349,6 +349,89 @@ def admin_bug_reports(request):
         JSONParser,
     ]
 )
+def _get_admin_bug_report(bug):
+    serializer = BugReportSerializer(bug)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+def _patch_admin_bug_report(request, bug, bug_id):
+    screenshot = request.FILES.get("screenshot")
+    data = request.data.copy()
+    data.pop("screenshot", None)
+
+    old_screenshot = bug.screenshot
+
+    serializer = BugReportSerializer(
+        bug,
+        data=data,
+        partial=True,
+    )
+
+    if not serializer.is_valid():
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    updated_bug = serializer.save()
+
+    if screenshot:
+        try:
+            new_screenshot_url, new_screenshot_key = _upload_screenshot(
+                screenshot,
+                updated_bug.category,
+                updated_bug.id,
+            )
+
+            BugReport.objects.filter(
+                id=updated_bug.id
+            ).update(screenshot=new_screenshot_url)
+
+            updated_bug.screenshot = new_screenshot_url
+
+        except Exception:
+            BugReport.objects.filter(
+                id=updated_bug.id
+            ).update(screenshot=old_screenshot)
+            raise
+
+        old_screenshot_key = _get_r2_key(old_screenshot)
+
+        if old_screenshot_key and old_screenshot_key != new_screenshot_key:
+            try:
+                _delete_r2_object(old_screenshot_key)
+            except Exception:
+                logger.warning(
+                    "Unable to delete old R2 screenshot "
+                    "for bug report %s.",
+                    bug_id,
+                    exc_info=True,
+                )
+
+    return Response(
+        BugReportSerializer(updated_bug).data,
+        status=status.HTTP_200_OK,
+    )
+
+
+def _delete_admin_bug_report(bug, bug_id):
+    screenshot_key = _get_r2_key(bug.screenshot)
+    bug.delete()
+
+    if screenshot_key:
+        try:
+            _delete_r2_object(screenshot_key)
+        except Exception:
+            logger.warning(
+                "Unable to delete R2 screenshot "
+                "for bug report %s.",
+                bug_id,
+                exc_info=True,
+            )
+
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 def admin_bug_report_detail(request, bug_id):
     permission_error = _require_owner(request)
 
@@ -356,130 +439,31 @@ def admin_bug_report_detail(request, bug_id):
         return permission_error
 
     try:
-        bug = (
-            BugReport.objects
-            .filter(id=bug_id)
-            .first()
-        )
+        bug = BugReport.objects.filter(id=bug_id).first()
 
         if not bug:
             return Response(
-                {
-                    "detail": "Bug report not found.",
-                },
+                {"detail": "Bug report not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if request.method == "GET":
-            serializer = BugReportSerializer(bug)
-
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK,
-            )
-
-        if request.method == "PATCH":
-            screenshot = request.FILES.get("screenshot")
-
-            data = request.data.copy()
-            data.pop("screenshot", None)
-
-            old_screenshot = bug.screenshot
-
-            serializer = BugReportSerializer(
+        handlers = {
+            "GET": lambda: _get_admin_bug_report(bug),
+            "PATCH": lambda: _patch_admin_bug_report(
+                request,
                 bug,
-                data=data,
-                partial=True,
-            )
+                bug_id,
+            ),
+            "DELETE": lambda: _delete_admin_bug_report(bug, bug_id),
+        }
 
-            if not serializer.is_valid():
-                return Response(
-                    serializer.errors,
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        handler = handlers.get(request.method)
 
-            updated_bug = serializer.save()
-
-            new_screenshot_url = None
-            new_screenshot_key = None
-
-            if screenshot:
-                try:
-                    new_screenshot_url, new_screenshot_key = (
-                        _upload_screenshot(
-                            screenshot,
-                            updated_bug.category,
-                            updated_bug.id,
-                        )
-                    )
-
-                    BugReport.objects.filter(
-                        id=updated_bug.id
-                    ).update(
-                        screenshot=new_screenshot_url
-                    )
-
-                    updated_bug.screenshot = new_screenshot_url
-
-                except Exception:
-                    BugReport.objects.filter(
-                        id=updated_bug.id
-                    ).update(
-                        screenshot=old_screenshot
-                    )
-
-                    raise
-
-                old_screenshot_key = _get_r2_key(
-                    old_screenshot
-                )
-
-                if (
-                    old_screenshot_key
-                    and old_screenshot_key != new_screenshot_key
-                ):
-                    try:
-                        _delete_r2_object(
-                            old_screenshot_key
-                        )
-                    except Exception:
-                        logger.warning(
-                            "Unable to delete old R2 screenshot "
-                            "for bug report %s.",
-                            bug_id,
-                            exc_info=True,
-                        )
-
-            return Response(
-                BugReportSerializer(updated_bug).data,
-                status=status.HTTP_200_OK,
-            )
-
-        if request.method == "DELETE":
-            screenshot = bug.screenshot
-            screenshot_key = _get_r2_key(screenshot)
-
-            bug.delete()
-
-            if screenshot_key:
-                try:
-                    _delete_r2_object(screenshot_key)
-                except Exception:
-                    logger.warning(
-                        "Unable to delete R2 screenshot "
-                        "for bug report %s.",
-                        bug_id,
-                        exc_info=True,
-                    )
-
-            return Response(
-                status=status.HTTP_204_NO_CONTENT,
-            )
+        if handler:
+            return handler()
 
         return Response(
-            {
-                "detail": "Unsupported request method.",
-            },
+            {"detail": "Unsupported request method."},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
 
@@ -491,9 +475,7 @@ def admin_bug_report_detail(request, bug_id):
         )
 
         return Response(
-            {
-                "detail": str(exc),
-            },
+            {"detail": str(exc)},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -504,9 +486,7 @@ def admin_bug_report_detail(request, bug_id):
         )
 
         return Response(
-            {
-                "detail": "Unable to process bug report.",
-            },
+            {"detail": "Unable to process bug report."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
@@ -517,8 +497,6 @@ def admin_bug_report_detail(request, bug_id):
         )
 
         return Response(
-            {
-                "detail": "Unable to process bug report.",
-            },
+            {"detail": "Unable to process bug report."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

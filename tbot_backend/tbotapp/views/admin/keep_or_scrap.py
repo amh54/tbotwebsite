@@ -11,11 +11,11 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from ..models import KeepOrScrap
-from ..serializers import KeepOrScrapSerializer
+from ...models import KeepOrScrap
+from ...serializers import KeepOrScrapSerializer
 
-from .helpers import include_error_detail
-from .permissions import is_discord_owner
+from ..helpers import include_error_detail
+from ..permissions import is_discord_owner
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,8 @@ R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "").strip()
 R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "").strip()
 R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "").strip()
 R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "").strip().rstrip("/")
-
+R2_REGION = os.getenv("R2_REGION", "auto").strip()
+UNAUTHORIZED_ERROR = "Unauthorized."
 MAX_IMAGE_SIZE = 15 * 1024 * 1024
 
 CONTENT_TYPES = {
@@ -51,12 +52,12 @@ def _get_r2_client():
         raise RuntimeError("R2 storage is not configured correctly.")
 
     return boto3.client(
-        "s3",
-        endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
-        aws_access_key_id=R2_ACCESS_KEY_ID,
-        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
-        region_name="auto",
-    )
+    "s3",
+    endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+    aws_access_key_id=R2_ACCESS_KEY_ID,
+    aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+    region_name=R2_REGION,
+)
 
 
 def _slugify(value):
@@ -138,7 +139,7 @@ def _upload_keep_or_scrap_image(image, card_class):
 def admin_keep_or_scrap(request):
     if not is_discord_owner(request):
         return Response(
-            {"error": "Unauthorized."},
+            {"error": UNAUTHORIZED_ERROR},
             status=status.HTTP_403_FORBIDDEN,
         )
 
@@ -226,7 +227,7 @@ def admin_keep_or_scrap(request):
 def admin_keep_or_scrap_detail(request, tierid):
     if not is_discord_owner(request):
         return Response(
-            {"error": "Unauthorized."},
+            {"error": UNAUTHORIZED_ERROR},
             status=status.HTTP_403_FORBIDDEN,
         )
 
@@ -290,7 +291,7 @@ def admin_keep_or_scrap_detail(request, tierid):
 def admin_keep_or_scrap_image_upload(request):
     if not is_discord_owner(request):
         return Response(
-            {"error": "Unauthorized."},
+            {"error": UNAUTHORIZED_ERROR},
             status=status.HTTP_403_FORBIDDEN,
         )
 

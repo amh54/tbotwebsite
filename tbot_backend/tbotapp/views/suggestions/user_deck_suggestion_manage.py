@@ -7,10 +7,10 @@ from rest_framework.decorators import (
     permission_classes,
 )
 from rest_framework.response import Response
-from ..models import UserDeckSuggestion, Decklist, UserDeck
-from .helpers import get_discord_user
-from .permissions import is_discord_owner
-
+from ...models import UserDeckSuggestion, Decklist, UserDeck
+from ..helpers import get_discord_user
+from ..permissions import is_discord_owner
+OWNER_REQUIRED = "Owner access required."
 
 VALID_STATUSES = {
     "pending",
@@ -103,7 +103,7 @@ def _owner_denied_response():
     return Response(
         {
             "authorized": False,
-            "error": "Owner access required.",
+            "error": OWNER_REQUIRED,
         },
         status=status.HTTP_403_FORBIDDEN,
     )
@@ -157,9 +157,9 @@ from rest_framework.decorators import (
     permission_classes,
 )
 from rest_framework.response import Response
-from ..models import UserDeckSuggestion, Decklist, UserDeck
-from .helpers import get_discord_user
-from .permissions import is_discord_owner
+from ...models import UserDeckSuggestion, Decklist, UserDeck
+from ..helpers import get_discord_user
+from ..permissions import is_discord_owner
 
 
 VALID_STATUSES = {
@@ -253,7 +253,7 @@ def _owner_denied_response():
     return Response(
         {
             "authorized": False,
-            "error": "Owner access required.",
+            "error": OWNER_REQUIRED,
         },
         status=status.HTTP_403_FORBIDDEN,
     )
@@ -304,7 +304,7 @@ def admin_user_deck_suggestion_detail(request, suggestion_id):
         return Response(
             {
                 "authorized": False,
-                "error": "Owner access required.",
+                "error": OWNER_REQUIRED,
             },
             status=status.HTTP_403_FORBIDDEN,
         )

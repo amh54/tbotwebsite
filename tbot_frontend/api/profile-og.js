@@ -4,7 +4,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const API = String(process.env.DJANGO_API_URL || "").replace(/\/+$/, "");
+let API = String(process.env.DJANGO_API_URL || "");
+
+while (API.endsWith("/")) {
+  API = API.slice(0, -1);
+}
 
 const DISCORD_CDN = "https://cdn.discordapp.com";
 
@@ -42,8 +46,8 @@ const FONT_FILES = [REGULAR_FONT, BOLD_FONT];
 
 function cleanText(value, fallback = "") {
   const text = String(value ?? "")
-    .replace(/\r/g, " ")
-    .replace(/\n/g, " ")
+    .replaceAll("\r", " ")
+    .replaceAll("\n", " ")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -52,11 +56,11 @@ function cleanText(value, fallback = "") {
 
 function escapeXml(value) {
   return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
 }
 
 function truncateText(value, maxLength) {
@@ -67,6 +71,23 @@ function truncateText(value, maxLength) {
   }
 
   return `${text.slice(0, maxLength - 1).trim()}…`;
+}
+
+function truncateLines(lines, words, maxCharsPerLine, maxLines) {
+  const truncatedLines = lines.slice(0, maxLines);
+  const wordsUsed = truncatedLines.join(" ").split(" ").length;
+
+  if (wordsUsed >= words.length || !truncatedLines.length) {
+    return truncatedLines;
+  }
+
+  const lastIndex = truncatedLines.length - 1;
+  const maxLength = maxCharsPerLine - 1;
+
+  truncatedLines[lastIndex] =
+    `${truncatedLines[lastIndex].slice(0, maxLength).trim()}…`;
+
+  return truncatedLines;
 }
 
 function wrapText(text, maxCharsPerLine, maxLines = Infinity) {
@@ -83,18 +104,19 @@ function wrapText(text, maxCharsPerLine, maxLines = Infinity) {
   for (const word of words) {
     const next = current ? `${current} ${word}` : word;
 
-    if (next.length > maxCharsPerLine) {
-      if (current) {
-        lines.push(current);
-      }
-
-      current = word;
-
-      if (lines.length === maxLines) {
-        break;
-      }
-    } else {
+    if (next.length <= maxCharsPerLine) {
       current = next;
+      continue;
+    }
+
+    if (current) {
+      lines.push(current);
+    }
+
+    current = word;
+
+    if (lines.length >= maxLines) {
+      break;
     }
   }
 
@@ -102,25 +124,7 @@ function wrapText(text, maxCharsPerLine, maxLines = Infinity) {
     lines.push(current);
   }
 
-  const truncatedLines = lines.slice(0, maxLines);
-
-  const wordsUsed = truncatedLines.join(" ").split(" ").length;
-
-  const hasMoreText = wordsUsed < words.length;
-
-  if (hasMoreText && truncatedLines.length) {
-    const lastIndex = truncatedLines.length - 1;
-
-    let lastLine = truncatedLines[lastIndex];
-
-    if (lastLine.length > maxCharsPerLine - 1) {
-      lastLine = lastLine.slice(0, maxCharsPerLine - 1).trim();
-    }
-
-    truncatedLines[lastIndex] = `${lastLine}…`;
-  }
-
-  return truncatedLines;
+  return truncateLines(lines, words, maxCharsPerLine, maxLines);
 }
 
 function getProfileObject(data) {
@@ -183,10 +187,9 @@ function getAvatarUrl(profile) {
   const discordId = cleanText(profile?.discord_id);
   const avatar = cleanText(profile?.avatar);
 
-  if (!/^\d{15,25}$/.test(discordId) || !/^[a-zA-Z0-9_]+$/.test(avatar)) {
+  if (!/^\d{15,25}$/.test(discordId) || !/^\w+$/.test(avatar)) {
     return "";
   }
-
   const extension = avatar.startsWith("a_") ? "gif" : "png";
 
   return (
@@ -302,8 +305,8 @@ function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
       .toUpperCase(),
   );
 
- const avatarMarkup = avatar
-  ? `
+  const avatarMarkup = avatar
+    ? `
       <circle
         cx="162"
         cy="132"
@@ -336,7 +339,7 @@ function createSvg({ name, username, bio, deckCount, cardCount, avatar }) {
         clip-path="url(#avatarClip)"
       />
     `
-  : `
+    : `
       <circle
         cx="162"
         cy="132"
@@ -548,7 +551,7 @@ export default async function handler(req, res) {
     res.setHeader("Content-Type", "image/png");
     res.setHeader("Content-Length", String(png.length));
 
-   res.setHeader("Cache-Control", "no-store, max-age=0");
+    res.setHeader("Cache-Control", "no-store, max-age=0");
 
     return res.end(png);
   } catch (error) {

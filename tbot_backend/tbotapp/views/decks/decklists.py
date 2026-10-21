@@ -6,25 +6,32 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from ..models import WebCards
-from ..serializers import WebCardSerializer
-from .helpers import include_error_detail
+from ...models import Decklist, LegacyDecklist
+from ...serializers import (
+    PublicDeckSerializer,
+    PublicLegacyDeckSerializer,
+)
+from ..helpers import include_error_detail
 
 
 logger = logging.getLogger(__name__)
 
 
-# ============================================================
-# CARD INFORMATION
-# ============================================================
-
 @api_view(["GET"])
-def card_info(request):
+def decklists(request):
     try:
-        cards = WebCards.objects.all()
+        decks = (
+            Decklist.objects
+            .all()
+            .order_by(
+                "side",
+                "hero",
+                "name",
+            )
+        )
 
-        serializer = WebCardSerializer(
-            cards,
+        serializer = PublicDeckSerializer(
+            decks,
             many=True,
         )
 
@@ -35,13 +42,12 @@ def card_info(request):
 
     except DatabaseError as exc:
         logger.exception(
-            "Card information query failed"
+            "Decklist query failed"
         )
 
         payload = {
             "error": (
-                "Database query failed for "
-                "card information."
+                "Database query failed for decklists."
             ),
             "error_type": exc.__class__.__name__,
         }
@@ -55,42 +61,38 @@ def card_info(request):
         )
 
 
-# ============================================================
-# HERO INFORMATION
-# ============================================================
-
 @api_view(["GET"])
-def heroinfo(request):
+def legacy_decklists(request):
     try:
-        heroes = (
-            WebCards.objects
-            .filter(
-                set_rarity__icontains="Hero"
+        decks = (
+            LegacyDecklist.objects
+            .all()
+            .order_by(
+                "side",
+                "hero",
+                "name",
             )
         )
 
-        serializer = WebCardSerializer(
-            heroes,
+        serializer = PublicLegacyDeckSerializer(
+            decks,
             many=True,
         )
 
         return Response(
-            {
-                "count": heroes.count(),
-                "results": serializer.data,
-            },
+            serializer.data,
             status=status.HTTP_200_OK,
         )
 
     except DatabaseError as exc:
         logger.exception(
-            "Hero information query failed"
+            "Legacy decklist query failed"
         )
 
         payload = {
             "error": (
                 "Database query failed for "
-                "hero information."
+                "legacy decklists."
             ),
             "error_type": exc.__class__.__name__,
         }
@@ -103,15 +105,10 @@ def heroinfo(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-
-# ============================================================
-# CARD COUNT
-# ============================================================
-
 @api_view(["GET"])
-def card_count(request):
+def decklist_count(request):
     try:
-        total = WebCards.objects.count()
+        total = Decklist.objects.count()
 
         return Response(
             {
@@ -122,13 +119,13 @@ def card_count(request):
 
     except DatabaseError as exc:
         logger.exception(
-            "Card count query failed"
+            "Decklist count query failed"
         )
 
         payload = {
             "error": (
                 "Database query failed for "
-                "card count."
+                "decklist count."
             ),
             "error_type": exc.__class__.__name__,
         }
@@ -141,38 +138,27 @@ def card_count(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-
-# ============================================================
-# HERO COUNT
-# ============================================================
-
 @api_view(["GET"])
-def hero_count(request):
+def legacy_decklist_count(request):
     try:
-        count = (
-            WebCards.objects
-            .filter(
-                set_rarity__icontains="Hero"
-            )
-            .count()
-        )
+        total = LegacyDecklist.objects.count()
 
         return Response(
             {
-                "count": count,
+                "count": total,
             },
             status=status.HTTP_200_OK,
         )
 
     except DatabaseError as exc:
         logger.exception(
-            "Hero count query failed"
+            "Legacy decklist count query failed"
         )
 
         payload = {
             "error": (
-                "Database error while "
-                "retrieving hero count."
+                "Database query failed for "
+                "legacy decklist count."
             ),
             "error_type": exc.__class__.__name__,
         }

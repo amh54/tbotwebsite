@@ -7,15 +7,15 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework.decorators import api_view
 
-from ..models import Decklist, LegacyDecklist, UserDeck
-
+from ...models import Decklist, LegacyDecklist, UserDeck
+CONTENT_TYPE = "text/plain"
 
 def _download_image(image_url, filename):
     if not image_url:
         return HttpResponse(
             "Deck image is missing.",
             status=404,
-            content_type="text/plain",
+            content_type=CONTENT_TYPE,
         )
 
     try:
@@ -28,7 +28,7 @@ def _download_image(image_url, filename):
         return HttpResponse(
             f"Unable to download deck image: {error}",
             status=502,
-            content_type="text/plain",
+            content_type=CONTENT_TYPE,
         )
 
     content_type = response.headers.get(
@@ -82,7 +82,7 @@ def download_deck_image(request, deckid):
         return HttpResponse(
             "Decklist not found.",
             status=404,
-            content_type="text/plain",
+            content_type=CONTENT_TYPE,
         )
 
     return _download_image(
@@ -101,7 +101,7 @@ def download_legacy_deck_image(request, deckid):
         return HttpResponse(
             "Legacy decklist not found.",
             status=404,
-            content_type="text/plain",
+            content_type=CONTENT_TYPE
         )
 
     return _download_image(

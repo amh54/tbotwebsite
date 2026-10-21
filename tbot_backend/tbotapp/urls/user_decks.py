@@ -1,16 +1,16 @@
 from django.urls import path
 
-from ..views.download_deck import download_user_deck_image
-from ..views.user_deck_suggestion_manage import (
+from ..views.decks.download_deck import download_user_deck_image
+from ..views.suggestions.user_deck_suggestion_manage import (
     admin_user_deck_suggestion_detail,
     admin_user_deck_suggestions,
     my_user_deck_suggestions,
 )
-from ..views.user_deck_suggestions import (
+from ..views.suggestions.user_deck_suggestions import (
     user_deck_suggestion_create,
     user_deck_suggestion_status,
 )
-from ..views.user_decks import (
+from ..views.decks.user_decks import (
     public_profile_decks_count,
     shared_user_deck,
     user_deck_create,

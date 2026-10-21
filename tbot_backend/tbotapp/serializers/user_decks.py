@@ -65,46 +65,78 @@ class UserDeckSerializer(serializers.ModelSerializer):
         ]
 
     def _get_profile(self, obj):
-        try:
-            return (
-                UserProfile.objects
-                .filter(id=obj.profile_id)
-                .first()
-            )
-        except Exception:
-            return None
+        if not hasattr(obj, "_serializer_profile"):
+            try:
+                obj._serializer_profile = (
+                    UserProfile.objects
+                    .filter(id=obj.profile_id)
+                    .first()
+                )
+            except Exception:
+                obj._serializer_profile = None
+
+        return obj._serializer_profile
 
     def get_username(self, obj):
         profile = self._get_profile(obj)
-
-        if not profile:
-            return ""
-
-        return profile.username or ""
+        return (profile.username or "") if profile else ""
 
     def get_display_name(self, obj):
         profile = self._get_profile(obj)
-
-        if not profile:
-            return ""
-
-        return profile.display_name or ""
+        return (profile.display_name or "") if profile else ""
 
     def get_profile_slug(self, obj):
         profile = self._get_profile(obj)
-
-        if not profile:
-            return ""
-
-        return profile.profile_slug or ""
+        return (profile.profile_slug or "") if profile else ""
 
     def get_avatar(self, obj):
         profile = self._get_profile(obj)
+        return (profile.avatar or "") if profile else ""
 
-        if not profile:
-            return ""
+    def _parse_card_line(self, line):
+        if isinstance(line, str):
+            parts = line.split("|", 1)
 
-        return profile.avatar or ""
+            if len(parts) != 2:
+                raise serializers.ValidationError({
+                    "cards": f"Invalid card ratio: {line}"
+                })
+
+            card_name = parts[0].strip()
+            ratio_value = parts[1].strip()
+
+        elif isinstance(line, dict):
+            card_name = str(
+                line.get("name") or line.get("card_name") or ""
+            ).strip()
+            ratio_value = line.get("count", 0)
+
+        else:
+            raise serializers.ValidationError({
+                "cards": "Invalid card ratio format."
+            })
+
+        if not card_name:
+            raise serializers.ValidationError({
+                "cards": "Every card must have a name."
+            })
+
+        try:
+            ratio = int(ratio_value)
+        except (TypeError, ValueError):
+            raise serializers.ValidationError({
+                "cards": f"Invalid ratio for {card_name}."
+            })
+
+        if not 1 <= ratio <= 4:
+            raise serializers.ValidationError({
+                "cards": (
+                    f"{card_name} must have a ratio "
+                    "between 1 and 4."
+                )
+            })
+
+        return ratio
 
     def validate(self, attrs):
         cards = attrs.get("cards")
@@ -121,62 +153,11 @@ class UserDeckSerializer(serializers.ModelSerializer):
                 "cards": "Cards must be a valid card ratio list."
             })
 
-        total = 0
-
-        for line in lines:
-            if not line:
-                continue
-
-            if isinstance(line, str):
-                parts = line.split("|", 1)
-
-                if len(parts) != 2:
-                    raise serializers.ValidationError({
-                        "cards": f"Invalid card ratio: {line}"
-                    })
-
-                card_name = parts[0].strip()
-
-                try:
-                    ratio = int(parts[1].strip())
-                except (TypeError, ValueError):
-                    raise serializers.ValidationError({
-                        "cards": f"Invalid ratio for {card_name}."
-                    })
-
-            elif isinstance(line, dict):
-                card_name = str(
-                    line.get("name")
-                    or line.get("card_name")
-                    or ""
-                ).strip()
-
-                try:
-                    ratio = int(line.get("count", 0))
-                except (TypeError, ValueError):
-                    raise serializers.ValidationError({
-                        "cards": f"Invalid ratio for {card_name}."
-                    })
-
-            else:
-                raise serializers.ValidationError({
-                    "cards": "Invalid card ratio format."
-                })
-
-            if not card_name:
-                raise serializers.ValidationError({
-                    "cards": "Every card must have a name."
-                })
-
-            if ratio < 1 or ratio > 4:
-                raise serializers.ValidationError({
-                    "cards": (
-                        f"{card_name} must have a ratio "
-                        "between 1 and 4."
-                    )
-                })
-
-            total += ratio
+        total = sum(
+            self._parse_card_line(line)
+            for line in lines
+            if line
+        )
 
         if total != 40:
             raise serializers.ValidationError({

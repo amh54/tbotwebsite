@@ -6,6 +6,7 @@ from ..models import UserProfile, UserSuggestion
 
 logger = logging.getLogger(__name__)
 
+UNKNOWN_USER = "Unknown User"
 
 class UserSuggestionSerializer(serializers.ModelSerializer):
     discord_username = serializers.SerializerMethodField()
@@ -49,19 +50,19 @@ class UserSuggestionSerializer(serializers.ModelSerializer):
                 ).first()
 
                 if profile:
-                    return (
-                        profile.display_name
-                        or profile.username
-                        or obj.discord_username
-                        or "Unknown User"
-                    )
+                  return (
+                    profile.display_name
+                    or profile.username
+                    or obj.discord_username
+                    or UNKNOWN_USER
+                )
             except Exception:
                 logger.exception(
                     "Failed to resolve UserSuggestion user %s",
                     discord_id,
                 )
 
-        return obj.discord_username or "Unknown User"
+        return obj.discord_username or UNKNOWN_USER
 
 
 class AdminUserSuggestionSerializer(serializers.ModelSerializer):
@@ -106,18 +107,18 @@ class AdminUserSuggestionSerializer(serializers.ModelSerializer):
 
                 if profile:
                     return (
-                        profile.display_name
-                        or profile.username
-                        or obj.discord_username
-                        or "Unknown User"
-                    )
+                profile.display_name
+                or profile.username
+                or obj.discord_username
+                or UNKNOWN_USER
+)
             except Exception:
                 logger.exception(
                     "Failed to resolve UserSuggestion user %s",
                     discord_id,
                 )
 
-        return obj.discord_username or "Unknown User"
+        return obj.discord_username or UNKNOWN_USER
 
     def validate_category(self, value):
         valid_categories = {

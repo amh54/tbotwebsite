@@ -13,10 +13,6 @@ from rest_framework.response import Response
 logger = logging.getLogger(__name__)
 
 
-# ============================================================
-# DISCORD OWNER CHECK
-# ============================================================
-
 def is_discord_owner(request):
     if not request.user.is_authenticated:
         return False
@@ -49,10 +45,6 @@ def is_discord_owner(request):
 
     return False
 
-
-# ============================================================
-# OWNER REQUIRED DECORATOR
-# ============================================================
 
 def owner_required(view_func):
     @wraps(view_func)
@@ -95,11 +87,6 @@ def owner_required(view_func):
 
     return wrapped_view
 
-
-# ============================================================
-# ADMIN CHECK
-# ============================================================
-
 @api_view(["GET"])
 @ensure_csrf_cookie
 def admin_check(request):
@@ -125,11 +112,6 @@ def admin_check(request):
         "authorized": True,
         "is_owner": True,
     })
-
-
-# ============================================================
-# OWNER ACTION
-# ============================================================
 
 @api_view(["POST"])
 @owner_required

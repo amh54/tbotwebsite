@@ -1,28 +1,28 @@
 from django.urls import path
 
-from ..views.cards import (
+from ..views.cards.cards import (
     card_count,
     card_info,
     hero_count,
     heroinfo,
 )
 from ..views.discord_servers import discord_servers, discord_server_count
-from ..views.decklists import (
+from ..views.decks.decklists import (
     decklist_count,
     decklists,
     legacy_decklist_count,
     legacy_decklists,
 )
-from ..views.download_deck import (
+from ..views.decks.download_deck import (
     download_deck_image,
     download_legacy_deck_image,
 )
-from ..views.keep_or_scrap import (
+from ..views.cards.keep_or_scrap import (
     keep_or_scrap,
     keep_or_scrap_count,
 )
 from ..views.site_updates import site_updates
-from ..views.user_decks import (
+from ..views.decks.user_decks import (
      public_user_decks,
      public_user_decks_count
      )

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from ..views.admin_bugs import (
+from ..views.admin.bugs import (
     admin_bug_report_detail,
     admin_bug_reports,
     bug_report_create,

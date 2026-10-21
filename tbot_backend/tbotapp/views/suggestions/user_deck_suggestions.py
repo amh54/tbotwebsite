@@ -1,0 +1,521 @@
+from datetime import timedelta
+
+from django.db import IntegrityError
+from django.utils import timezone
+from django.db import IntegrityError, connection
+from rest_framework import status
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
+from rest_framework.response import Response
+
+from ...models import (
+    UserProfile,
+    UserDeck,
+    UserDeckSuggestion,
+)
+from ..helpers import get_discord_user
+
+
+COOLDOWN_DAYS = 14
+
+
+
+def _suggestion_error(reason, message, status_code, **extra):
+    return Response(
+        {
+            "success": False,
+            "reason": reason,
+            "message": message,
+            **extra,
+        },
+        status=status_code,
+    )
+
+
+def _get_suggestion_profile(request):
+    discord_user = get_discord_user(request)
+
+    if not discord_user:
+        return None, None, Response(
+            {
+                "success": False,
+                "authenticated": False,
+                "reason": "authentication_required",
+                "message": (
+                    "You must be logged in with Discord "
+                    "to suggest a deck."
+                ),
+            },
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    discord_id = str(discord_user["id"])
+    profile = UserProfile.objects.filter(
+        discord_id=discord_id
+    ).first()
+
+    if not profile:
+        return None, None, Response(
+            {
+                "success": False,
+                "authenticated": True,
+                "reason": "profile_not_found",
+                "message": (
+                    "Your profile could not be found. "
+                    "Please log in with Discord again."
+                ),
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    return discord_id, profile, None
+
+
+def _validate_suggestion_request(request):
+    deck_id = request.data.get("deck_id")
+    suggestion_type = request.data.get("suggestion_type", "new")
+    published_deckid = request.data.get("published_deckid")
+
+    if deck_id is None:
+        return None, None, None, _suggestion_error(
+            "deck_id_required",
+            "A deck ID is required.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        deck_id = int(deck_id)
+    except (TypeError, ValueError):
+        return None, None, None, _suggestion_error(
+            "invalid_deck_id",
+            "The deck ID is invalid.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    if suggestion_type not in ("new", "update"):
+        return None, None, None, _suggestion_error(
+            "invalid_suggestion_type",
+            "Suggestion type must be new or update.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    if suggestion_type != "update":
+        return deck_id, suggestion_type, None, None
+
+    try:
+        published_deckid = int(published_deckid)
+    except (TypeError, ValueError):
+        return None, None, None, _suggestion_error(
+            "published_deck_required",
+            "Select a published deck to update.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    if published_deckid <= 0:
+        return None, None, None, _suggestion_error(
+            "invalid_published_deck",
+            "Select a valid published deck to update.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT deckid FROM web_decks WHERE deckid = %s LIMIT 1",
+            [published_deckid],
+        )
+        published_deck_exists = cursor.fetchone()
+
+    if not published_deck_exists:
+        return None, None, None, _suggestion_error(
+            "published_deck_not_found",
+            "The selected published deck could not be found.",
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    return deck_id, suggestion_type, published_deckid, None
+
+
+def _find_existing_deck_suggestion(
+    deck_id,
+    deck_name,
+    suggestion_type,
+    published_deckid,
+):
+    return (
+        UserDeckSuggestion.objects.filter(
+            deck_id=deck_id,
+            deck_name=deck_name,
+            suggestion_type=suggestion_type,
+            published_deckid=published_deckid,
+        )
+        .exclude(consent_status="denied")
+        .first()
+    )
+
+
+def _already_suggested_response(suggestion):
+    return Response(
+        {
+            "success": False,
+            "reason": "already_suggested",
+            "suggestion_id": suggestion.id,
+            "consent_status": suggestion.consent_status,
+            "status": suggestion.status,
+            "message": (
+                "This deck suggestion has already been submitted."
+            ),
+        },
+        status=status.HTTP_409_CONFLICT,
+    )
+
+
+def _check_suggestion_cooldown(discord_id):
+    previous_suggestion = (
+        UserDeckSuggestion.objects.filter(
+            suggested_by_discord_id=discord_id,
+        )
+        .exclude(consent_status="denied")
+        .order_by("-created_at")
+        .first()
+    )
+
+    if not previous_suggestion:
+        return None
+
+    cooldown_until = (
+        previous_suggestion.created_at
+        + timedelta(days=COOLDOWN_DAYS)
+    )
+
+    if timezone.now() >= cooldown_until:
+        return None
+
+    return Response(
+        {
+            "success": False,
+            "reason": "cooldown",
+            "suggestion_id": previous_suggestion.id,
+            "consent_status": previous_suggestion.consent_status,
+            "status": previous_suggestion.status,
+            "message": (
+                "You recently suggested a deck. You must wait "
+                "until your cooldown expires before suggesting "
+                "another deck."
+            ),
+            "cooldown_until": cooldown_until.isoformat(),
+        },
+        status=status.HTTP_429_TOO_MANY_REQUESTS,
+    )
+
+
+def _resolve_suggestion_consent(deck, profile, discord_id):
+    if str(deck.profile_id) == str(profile.id):
+        return (
+            "self_created",
+            "confirmed",
+            discord_id,
+            timezone.now(),
+            None,
+        )
+
+    creator_profile = UserProfile.objects.filter(
+        id=deck.profile_id
+    ).first()
+
+    if not creator_profile:
+        return None, None, None, None, _suggestion_error(
+            "creator_not_found",
+            "The deck creator's profile could not be found.",
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    creator_discord_id = str(
+        creator_profile.discord_id or ""
+    ).strip()
+
+    if not creator_discord_id:
+        return None, None, None, None, _suggestion_error(
+            "creator_not_connected",
+            (
+                "The deck creator does not have a Discord account "
+                "connected to Tbot."
+            ),
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    return (
+        "permission",
+        "awaiting_creator",
+        creator_discord_id,
+        None,
+        None,
+    )
+
+
+def _build_deck_suggestion(
+    deck,
+    profile,
+    discord_id,
+    suggestion_type,
+    published_deckid,
+    consent_type,
+    consent_status,
+    creator_discord_id,
+    consent_given_at,
+):
+    return UserDeckSuggestion(
+        deck_id=deck.id,
+        deck_name=deck.name,
+        hero=deck.hero,
+        side=deck.side,
+        category=deck.category,
+        archetype=deck.archetype,
+        creator=deck.creator,
+        description=deck.description,
+        image=deck.image,
+        cost=deck.cost,
+        aliases=deck.aliases,
+        cards=deck.cards,
+        inspiration=deck.inspiration,
+        optimization=deck.optimization,
+        suggested_date=deck.suggested_date,
+        updated_date=deck.updated_date,
+        deck_doc=deck.deck_doc,
+        suggestion_type=suggestion_type,
+        published_deckid=published_deckid,
+        suggested_by_discord_id=discord_id,
+        suggested_by_profile_id=profile.id,
+        suggested_by_username=profile.username,
+        suggested_by_display_name=profile.display_name,
+        suggested_by_profile_slug=profile.profile_slug,
+        suggested_by_avatar=profile.avatar,
+        status="pending",
+        consent_type=consent_type,
+        consent_status=consent_status,
+        consent_creator_discord_id=creator_discord_id,
+        consent_given_at=consent_given_at,
+    )
+
+
+def _save_deck_suggestion(suggestion):
+    try:
+        suggestion.save()
+    except IntegrityError:
+        existing_suggestion = _find_existing_deck_suggestion(
+            suggestion.deck_id,
+            suggestion.deck_name,
+            suggestion.suggestion_type,
+            suggestion.published_deckid,
+        )
+
+        if existing_suggestion:
+            return None, _already_suggested_response(
+                existing_suggestion
+            )
+
+        raise
+
+    return suggestion, None
+
+
+def _suggestion_success_message(suggestion_type, consent_status):
+    if consent_status != "confirmed":
+        return (
+            "The deck suggestion was created. The deck creator must "
+            "confirm permission through Discord before it is posted."
+        )
+
+    if suggestion_type == "new":
+        return "Your deck suggestion was submitted successfully!"
+
+    return (
+        "Your deck update suggestion was submitted successfully!"
+    )
+
+
+@api_view(["POST"])
+@authentication_classes([])
+@permission_classes([])
+def user_deck_suggestion_create(request):
+    discord_id, profile, error = _get_suggestion_profile(request)
+
+    if error:
+        return error
+
+    (
+        deck_id,
+        suggestion_type,
+        published_deckid,
+        error,
+    ) = _validate_suggestion_request(request)
+
+    if error:
+        return error
+
+    deck = UserDeck.objects.filter(id=deck_id).first()
+
+    if not deck:
+        return _suggestion_error(
+            "deck_not_found",
+            "That deck could not be found.",
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    existing_suggestion = _find_existing_deck_suggestion(
+        deck.id,
+        deck.name,
+        suggestion_type,
+        published_deckid,
+    )
+
+    if existing_suggestion:
+        return _already_suggested_response(existing_suggestion)
+
+    error = _check_suggestion_cooldown(discord_id)
+
+    if error:
+        return error
+
+    (
+        consent_type,
+        consent_status,
+        creator_discord_id,
+        consent_given_at,
+        error,
+    ) = _resolve_suggestion_consent(deck, profile, discord_id)
+
+    if error:
+        return error
+
+    suggestion = _build_deck_suggestion(
+        deck=deck,
+        profile=profile,
+        discord_id=discord_id,
+        suggestion_type=suggestion_type,
+        published_deckid=published_deckid,
+        consent_type=consent_type,
+        consent_status=consent_status,
+        creator_discord_id=creator_discord_id,
+        consent_given_at=consent_given_at,
+    )
+
+    suggestion, error = _save_deck_suggestion(suggestion)
+
+    if error:
+        return error
+
+    message = _suggestion_success_message(
+        suggestion_type,
+        consent_status,
+    )
+
+    return Response(
+        {
+            "success": True,
+            "suggestion_id": suggestion.id,
+            "suggestion_type": suggestion_type,
+            "published_deckid": published_deckid,
+            "consent_status": consent_status,
+            "status": suggestion.status,
+            "consent_type": consent_type,
+            "message": message,
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([])
+def user_deck_suggestion_status(request, suggestion_id):
+    discord_user = get_discord_user(request)
+
+    if not discord_user:
+        return Response(
+            {
+                "success": False,
+                "authenticated": False,
+                "reason": "authentication_required",
+                "message": (
+                    "You must be logged in with Discord "
+                    "to view this suggestion."
+                ),
+            },
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    discord_id = str(discord_user["id"])
+
+    suggestion = (
+        UserDeckSuggestion.objects
+        .filter(id=suggestion_id)
+        .first()
+    )
+
+    if not suggestion:
+        return Response(
+            {
+                "success": False,
+                "reason": "suggestion_not_found",
+                "message": "That suggestion could not be found.",
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+        
+    if str(suggestion.suggested_by_discord_id) != discord_id:
+        return Response(
+            {
+                "success": False,
+                "reason": "not_authorized",
+                "message": (
+                    "You are not authorized to view "
+                    "this suggestion."
+                ),
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    consent_status = suggestion.consent_status
+
+    if consent_status == "confirmed":
+        message = (
+            "The deck creator approved your suggestion. "
+            "The deck suggestion has been confirmed."
+        )
+
+    elif consent_status == "denied":
+        message = (
+            "The deck creator did not approve this suggestion."
+        )
+
+    elif consent_status == "awaiting_creator":
+        message = (
+            "The deck creator has not approved the suggestion yet."
+        )
+
+    else:
+        message = (
+            "The current suggestion status is unavailable."
+        )
+
+    return Response(
+        {
+            "success": True,
+            "suggestion_id": suggestion.id,
+            "deck_id": suggestion.deck_id,
+            "status": suggestion.status,
+            "consent_status": consent_status,
+            "consent_type": suggestion.consent_type,
+            "consent_given_at": (
+                suggestion.consent_given_at.isoformat()
+                if suggestion.consent_given_at
+                else None
+            ),
+
+            "message": message,
+        },
+        status=status.HTTP_200_OK,
+    )

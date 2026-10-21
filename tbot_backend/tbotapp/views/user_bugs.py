@@ -13,9 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 def _get_discord_id(request):
-    """
-    Get the logged-in Discord user's ID from the Django session.
-    """
 
     discord_id = request.session.get("discord_id")
 
@@ -30,10 +27,6 @@ def _get_discord_id(request):
 
 @api_view(["GET"])
 def user_bug_reports(request):
-    """
-    Return bug reports submitted by the currently logged-in user.
-    """
-
     discord_id = _get_discord_id(request)
 
     print("BUG REPORT REQUEST")
@@ -86,12 +79,6 @@ def user_bug_reports(request):
 
 @api_view(["GET"])
 def user_bug_report_detail(request, bug_id):
-    """
-    Return a single bug report belonging to the currently logged-in user.
-
-    Users can ONLY access their own bug reports.
-    """
-
     discord_id = _get_discord_id(request)
 
     if not discord_id:

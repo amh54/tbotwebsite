@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 
 
-def robots_txt(request):
+def robots_txt():
     return HttpResponse(
         "User-agent: *\n"
         "Allow: /\n"

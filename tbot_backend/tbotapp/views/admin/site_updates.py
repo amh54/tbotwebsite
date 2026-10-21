@@ -5,8 +5,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from ..models import SiteUpdate
-from .permissions import owner_required
+from ...models import SiteUpdate
+from ..permissions import owner_required
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +115,70 @@ def admin_site_update_create(request):
         )
 
 
+def update_site_text_field(update, data, field, error_message):
+    if field not in data:
+        return None
+
+    value = str(data.get(field, "")).strip()
+    if not value:
+        return error_message
+
+    setattr(update, field, value)
+    return None
+
+
+def update_site_category(update, data):
+    if "category" not in data:
+        return None
+
+    category = str(data.get("category", "")).strip()
+    if category not in dict(SiteUpdate.CATEGORY_CHOICES):
+        return "Invalid category."
+
+    update.category = category
+    return None
+
+
+def update_site_page_url(update, data):
+    if "page_url" in data:
+        page_url = data.get("page_url")
+        update.page_url = str(page_url).strip() or None if page_url is not None else None
+
+
+def update_site_published(update, data):
+    if "published" not in data:
+        return
+
+    published = bool(data.get("published"))
+    if published and not update.published:
+        update.published_at = timezone.now()
+
+    update.published = published
+
+
+def apply_site_update_changes(update, data):
+    error = update_site_text_field(
+        update, data, "title", "Title is required."
+    )
+    if error:
+        return error
+
+    error = update_site_text_field(
+        update, data, "content", "Content is required."
+    )
+    if error:
+        return error
+
+    error = update_site_category(update, data)
+    if error:
+        return error
+
+    update_site_page_url(update, data)
+    update_site_published(update, data)
+
+    return None
+
+
 @api_view(["PATCH"])
 @owner_required
 def admin_site_update_update(request, update_id):
@@ -127,54 +191,12 @@ def admin_site_update_update(request, update_id):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if "title" in request.data:
-            title = str(request.data.get("title", "")).strip()
-
-            if not title:
-                return Response(
-                    {"detail": "Title is required."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            update.title = title
-
-        if "content" in request.data:
-            content = str(request.data.get("content", "")).strip()
-
-            if not content:
-                return Response(
-                    {"detail": "Content is required."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            update.content = content
-
-        if "category" in request.data:
-            category = str(request.data.get("category", "")).strip()
-
-            if category not in dict(SiteUpdate.CATEGORY_CHOICES):
-                return Response(
-                    {"detail": "Invalid category."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            update.category = category
-
-        if "page_url" in request.data:
-            page_url = request.data.get("page_url")
-            update.page_url = (
-                str(page_url).strip()
-                if page_url is not None
-                else None
-            ) or None
-
-        if "published" in request.data:
-            published = bool(request.data.get("published"))
-
-            if published and not update.published:
-                update.published_at = timezone.now()
-
-            update.published = published
+        error = apply_site_update_changes(update, request.data)
+        if error:
+            return Response(
+                {"detail": error},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         update.save()
 

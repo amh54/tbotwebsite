@@ -1,28 +1,28 @@
 from django.urls import path
 
-from ..views.admin_decks import (
+from ..views.admin.decks import (
     admin_decklist_create,
     admin_decklist_delete,
     admin_decklist_update,
     admin_decklists,
 )
-from ..views.admin_site_updates import (
+from ..views.admin.site_updates import (
     admin_site_update_create,
     admin_site_update_delete,
     admin_site_update_update,
     admin_site_updates,
 )
-from ..views.admin_keep_or_scrap import (
+from ..views.admin.keep_or_scrap import (
     admin_keep_or_scrap,
     admin_keep_or_scrap_detail,
     admin_keep_or_scrap_image_upload,
 )
-from ..views.admin_legacy_decks import (
+from ..views.admin.legacy_decks import (
     admin_legacy_decklist_delete,
     admin_legacy_decklist_update,
     admin_legacy_decklists,
 )
-from ..views.admin_user_decks import (
+from ..views.admin.user_decks import (
     admin_user_deck_delete,
     admin_user_deck_update,
     admin_user_decks,

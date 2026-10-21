@@ -6,8 +6,8 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from rest_framework.decorators import api_view
 
-from ..models import UserProfile, UserCard, WebCards
-
+from ...models import UserProfile, UserCard, WebCards
+LOGGED_IN = "You must be logged in."
 EXCLUDED_CARD_TYPES = {
     "superpower",
     "superpowers",
@@ -166,7 +166,7 @@ def user_cards(request):
         return JsonResponse(
             {
                 "authenticated": False,
-                "error": "You must be logged in.",
+                "error": LOGGED_IN,
             },
             status=401,
         )
@@ -263,7 +263,128 @@ def user_cards(request):
         }
     )
 
-@require_http_methods(["POST"])
+
+def _user_card_error(message, status_code=400):
+    return JsonResponse(
+        {"error": message},
+        status=status_code,
+    )
+
+
+def _parse_user_card_request(request):
+    try:
+        data = json.loads(request.body)
+    except (TypeError, ValueError):
+        return None, _user_card_error("Invalid JSON.")
+
+    cards_data = data.get("cards")
+
+    if cards_data is None:
+        card_name = str(data.get("card_name", "")).strip()
+
+        if not card_name:
+            return None, _user_card_error("card_name is required.")
+
+        cards_data = [
+            {
+                "card_name": card_name,
+                "quantity": data.get("quantity", 1),
+            }
+        ]
+
+    if not isinstance(cards_data, list):
+        return None, _user_card_error("cards must be an array.")
+
+    if not cards_data:
+        return None, _user_card_error(
+            "At least one card is required."
+        )
+
+    return cards_data, None
+
+
+def _validate_user_card_item(
+    item,
+    index,
+    collectible_cards,
+    requested_names,
+):
+    if not isinstance(item, dict):
+        return None, _user_card_error(
+            f"Card at index {index} is invalid."
+        )
+
+    card_name = str(item.get("card_name", "")).strip()
+    quantity = item.get("quantity", 1)
+
+    if not card_name:
+        return None, _user_card_error(
+            f"Card at index {index} is missing card_name."
+        )
+
+    try:
+        quantity = int(quantity)
+    except (TypeError, ValueError):
+        return None, _user_card_error(
+            f"Quantity for '{card_name}' must be an integer."
+        )
+
+    if not 1 <= quantity <= 4:
+        return None, _user_card_error(
+            f"Quantity for '{card_name}' must be between 1 and 4."
+        )
+
+    normalized_name = card_name.casefold()
+
+    if normalized_name in requested_names:
+        return None, _user_card_error(
+            f"'{card_name}' was selected more than once."
+        )
+
+    try:
+        web_card = collectible_cards.get(card_name=card_name)
+    except WebCards.DoesNotExist:
+        return None, _user_card_error(
+            f"That card does not exist or is not a collectible card: "
+            f"{card_name}",
+            404,
+        )
+
+    requested_names.add(normalized_name)
+
+    return {
+        "web_card": web_card,
+        "quantity": quantity,
+    }, None
+
+
+def _serialize_user_card(user_card, web_card):
+    return {
+        "id": user_card.id,
+        "card_name": user_card.card_name,
+        "quantity": user_card.quantity,
+        "card": {
+            "cardid": web_card.cardid,
+            "card_type": web_card.card_type,
+            "card_name": web_card.card_name,
+            "side": web_card.side,
+            "title": web_card.title,
+            "stats": web_card.stats,
+            "description": web_card.description,
+            "ability": web_card.ability,
+            "thumbnail": web_card.thumbnail,
+            "traits": web_card.traits,
+            "set_rarity": web_card.set_rarity,
+            "flavor_text": web_card.flavor_text,
+            "aliases": web_card.aliases,
+            "button": web_card.button,
+            "button_emoji": web_card.button_emoji,
+            "button2": web_card.button2,
+            "button_emoji2": web_card.button_emoji2,
+        },
+    }
+
+
 def user_card_create(request):
     profile = get_current_profile(request)
 
@@ -271,189 +392,48 @@ def user_card_create(request):
         return JsonResponse(
             {
                 "authenticated": False,
-                "error": "You must be logged in.",
+                "error": LOGGED_IN,
             },
             status=401,
         )
 
-    try:
-        data = json.loads(request.body)
-    except (TypeError, ValueError):
-        return JsonResponse(
-            {"error": "Invalid JSON."},
-            status=400,
-        )
+    cards_data, error = _parse_user_card_request(request)
 
-    cards_data = data.get("cards")
+    if error:
+        return error
 
-    if cards_data is None:
-        card_name = str(
-            data.get("card_name", "")
-        ).strip()
-
-        quantity = data.get("quantity", 1)
-
-        if not card_name:
-            return JsonResponse(
-                {"error": "card_name is required."},
-                status=400,
-            )
-
-        cards_data = [
-            {
-                "card_name": card_name,
-                "quantity": quantity,
-            }
-        ]
-
-    if not isinstance(cards_data, list):
-        return JsonResponse(
-            {
-                "error": "cards must be an array."
-            },
-            status=400,
-        )
-
-    if not cards_data:
-        return JsonResponse(
-            {
-                "error": "At least one card is required."
-            },
-            status=400,
-        )
-
-    validated_cards = []
-    requested_names = set()
     collectible_cards = get_collectible_cards()
+    requested_names = set()
+    validated_cards = []
 
     for index, item in enumerate(cards_data):
-        if not isinstance(item, dict):
-            return JsonResponse(
-                {
-                    "error": (
-                        f"Card at index {index} is invalid."
-                    )
-                },
-                status=400,
-            )
-
-        card_name = str(
-            item.get("card_name", "")
-        ).strip()
-
-        quantity = item.get("quantity", 1)
-
-        if not card_name:
-            return JsonResponse(
-                {
-                    "error": (
-                        f"Card at index {index} "
-                        "is missing card_name."
-                    )
-                },
-                status=400,
-            )
-
-        try:
-            quantity = int(quantity)
-        except (TypeError, ValueError):
-            return JsonResponse(
-                {
-                    "error": (
-                        f"Quantity for '{card_name}' "
-                        "must be an integer."
-                    )
-                },
-                status=400,
-            )
-
-        if quantity < 1 or quantity > 4:
-            return JsonResponse(
-                {
-                    "error": (
-                        f"Quantity for '{card_name}' must be between 1 and 4."
-                    )
-                },
-                status=400,
-            )
-
-        normalized_name = card_name.casefold()
-
-        if normalized_name in requested_names:
-            return JsonResponse(
-                {
-                    "error": (
-                        f"'{card_name}' was selected "
-                        "more than once."
-                    )
-                },
-                status=400,
-            )
-
-        requested_names.add(normalized_name)
-
-        try:
-            web_card = collectible_cards.get(
-                card_name=card_name
-            )
-        except WebCards.DoesNotExist:
-            return JsonResponse(
-                {
-                    "error": (
-                        f"That card does not exist or "
-                        f"is not a collectible card: "
-                        f"{card_name}"
-                    )
-                },
-                status=404,
-            )
-
-        validated_cards.append(
-            {
-                "web_card": web_card,
-                "quantity": quantity,
-            }
+        validated_item, error = _validate_user_card_item(
+            item,
+            index,
+            collectible_cards,
+            requested_names,
         )
+
+        if error:
+            return error
+
+        validated_cards.append(validated_item)
 
     saved_cards = []
 
     for item in validated_cards:
         web_card = item["web_card"]
-        quantity = item["quantity"]
 
         user_card, _ = UserCard.objects.update_or_create(
             profile_id=profile.id,
             card_name=web_card.card_name,
             defaults={
-                "quantity": quantity,
+                "quantity": item["quantity"],
             },
         )
 
         saved_cards.append(
-            {
-                "id": user_card.id,
-                "card_name": user_card.card_name,
-                "quantity": user_card.quantity,
-                "card": {
-                    "cardid": web_card.cardid,
-                    "card_type": web_card.card_type,
-                    "card_name": web_card.card_name,
-                    "side": web_card.side,
-                    "title": web_card.title,
-                    "stats": web_card.stats,
-                    "description": web_card.description,
-                    "ability": web_card.ability,
-                    "thumbnail": web_card.thumbnail,
-                    "traits": web_card.traits,
-                    "set_rarity": web_card.set_rarity,
-                    "flavor_text": web_card.flavor_text,
-                    "aliases": web_card.aliases,
-                    "button": web_card.button,
-                    "button_emoji": web_card.button_emoji,
-                    "button2": web_card.button2,
-                    "button_emoji2": web_card.button_emoji2,
-                },
-            }
+            _serialize_user_card(user_card, web_card)
         )
 
     return JsonResponse(
@@ -465,13 +445,14 @@ def user_card_create(request):
         status=201,
     )
 
+
 @require_http_methods(["PATCH"])
 def user_card_update(request, card_id):
     profile = get_current_profile(request)
 
     if not profile:
         return JsonResponse(
-            {"error": "You must be logged in."},
+            {"error": LOGGED_IN},
             status=401,
         )
 
@@ -532,7 +513,7 @@ def user_card_delete(request, card_id):
 
     if not profile:
         return JsonResponse(
-            {"error": "You must be logged in."},
+            {"error": LOGGED_IN},
             status=401,
         )
 
@@ -564,7 +545,7 @@ def user_card_count(request):
         return JsonResponse(
             {
                 "authenticated": False,
-                "error": "You must be logged in.",
+                "error": LOGGED_IN,
             },
             status=401,
         )
@@ -609,7 +590,7 @@ def user_cards_available(request):
         return JsonResponse(
             {
                 "authenticated": False,
-                "error": "You must be logged in.",
+                "error": LOGGED_IN,
             },
             status=401,
         )

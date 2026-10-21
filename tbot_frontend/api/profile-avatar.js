@@ -32,11 +32,7 @@ export default async function handler(
     );
   }
 
-  if (
-    !/^[a-zA-Z0-9_]+$/.test(
-      avatar,
-    )
-  ) {
+ if (!/^\w+$/.test(avatar)){
     res.statusCode = 400;
 
     res.setHeader(

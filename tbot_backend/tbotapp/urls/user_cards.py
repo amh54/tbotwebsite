@@ -1,6 +1,6 @@
 from django.urls import path
 
-from ..views.user_cards import (
+from ..views.cards.user_cards import (
     user_card_count,
     user_card_create,
     user_card_delete,

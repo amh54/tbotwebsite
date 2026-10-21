@@ -2,17 +2,17 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from urllib.parse import unquote
-from ..models import (
+from ...models import (
     WebDeckbuilder,
     UserProfile,
     Decklist,
 )
 
-from ..serializers import (
+from ...serializers import (
     PublicDeckbuilderSerializer,
     PublicDeckSerializer,
 )
-
+NOT_FOUND = "Deckbuilder not found."
 
 
 def _normalize_deckbuilder_name(value):
@@ -27,9 +27,6 @@ def _normalize_deckbuilder_name(value):
 
 
 def _get_deckbuilder(deckbuilder_name):
-    """
-    Find a deckbuilder by name using normalized matching.
-    """
 
     target_name = _normalize_deckbuilder_name(deckbuilder_name)
 
@@ -196,7 +193,7 @@ def deckbuilder_detail(request, deckbuilder_name):
         return Response(
             {
                 "success": False,
-                "error": "Deckbuilder not found.",
+                "error": NOT_FOUND,
                 "requested_name": deckbuilder_name,
             },
             status=status.HTTP_404_NOT_FOUND,
@@ -234,7 +231,7 @@ def deckbuilder_decks(request, deckbuilder_name):
         return Response(
             {
                 "success": False,
-                "error": "Deckbuilder not found.",
+                "error": NOT_FOUND,
                 "requested_name": deckbuilder_name,
             },
             status=status.HTTP_404_NOT_FOUND,
@@ -289,7 +286,7 @@ def deckbuilder_deck_count(request, deckbuilder_name):
         return Response(
             {
                 "success": False,
-                "error": "Deckbuilder not found.",
+                "error": NOT_FOUND,
                 "requested_name": deckbuilder_name,
             },
             status=status.HTTP_404_NOT_FOUND,

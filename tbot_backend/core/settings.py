@@ -9,7 +9,7 @@ import os
 
 import dj_database_url
 
-
+LOCAL_FRONTEND_URL = "http://localhost:5173"
 
 # ============================================================
 # BASE DIRECTORY
@@ -140,7 +140,7 @@ if not DISCORD_OWNER_ID:
 
 FRONTEND_URL = os.getenv(
     "FRONTEND_URL",
-    "http://localhost:5173",
+    LOCAL_FRONTEND_URL,
 ).strip().rstrip("/")
 
 
@@ -228,12 +228,11 @@ if vercel_hostname:
 # VERCEL PREVIEWS
 # ============================================================
 
-if parse_bool_env(
-    os.getenv("VERCEL"),
-    default=False,
+if (
+    parse_bool_env(os.getenv("VERCEL"), default=False)
+    and ".vercel.app" not in ALLOWED_HOSTS
 ):
-    if ".vercel.app" not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(".vercel.app")
+    ALLOWED_HOSTS.append(".vercel.app")
 
 
 # ============================================================
@@ -296,13 +295,13 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = parse_csv_env(
     os.getenv("CORS_ALLOWED_ORIGINS"),
     default=[
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:4173",
-    "http://127.0.0.1:4173",
-    "https://pvzhtbot.com",
-    "https://www.pvzhtbot.com",
-],
+        LOCAL_FRONTEND_URL,
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+        "https://pvzhtbot.com",
+        "https://www.pvzhtbot.com",
+    ],
 )
 
 CORS_ALLOW_CREDENTIALS = True
@@ -322,7 +321,7 @@ if FRONTEND_URL:
 CSRF_TRUSTED_ORIGINS = parse_csv_env(
     os.getenv("CSRF_TRUSTED_ORIGINS"),
     default=[
-        "http://localhost:5173",
+        LOCAL_FRONTEND_URL,
         "http://127.0.0.1:5173",
         "http://localhost:4173",
         "http://127.0.0.1:4173",

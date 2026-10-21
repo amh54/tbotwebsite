@@ -8,14 +8,14 @@ from rest_framework.response import Response
 
 from rest_framework import status
 
-from ..models import UserDeck
+from ...models import UserDeck
 
-from ..serializers import UserDeckSerializer
+from ...serializers import UserDeckSerializer
 
-from .permissions import is_discord_owner
+from ..permissions import is_discord_owner
 
-from .helpers import save_deck_image
-
+from ..helpers import save_deck_image
+OWNER_REQUIRED = "Owner access required."
 
 @api_view(["GET"])
 def admin_user_decks(request):
@@ -23,7 +23,7 @@ def admin_user_decks(request):
         return Response(
             {
                 "authorized": False,
-                "error": "Owner access required.",
+                "error": OWNER_REQUIRED ,
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -68,7 +68,7 @@ def admin_user_deck_delete(request, deck_id):
         return Response(
             {
                 "authorized": False,
-                "error": "Owner access required.",
+                "error": OWNER_REQUIRED,
             },
             status=status.HTTP_403_FORBIDDEN,
         )

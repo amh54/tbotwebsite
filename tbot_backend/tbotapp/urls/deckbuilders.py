@@ -1,6 +1,6 @@
 from django.urls import path
 
-from ..views.deckbuilders import (
+from ..views.decks.deckbuilders import (
     deckbuilder_count,
     deckbuilder_deck_count,
     deckbuilder_decks,

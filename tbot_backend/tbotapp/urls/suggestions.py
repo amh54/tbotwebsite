@@ -1,6 +1,6 @@
 from django.urls import path
 
-from ..views.suggestions import (
+from ..views.suggestions.suggestions import (
     admin_suggestion_detail,
     admin_suggestions,
     suggestion_create,
