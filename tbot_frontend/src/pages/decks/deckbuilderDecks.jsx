@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import DeckCard from "../../components/modals/deckComponent.jsx";
@@ -15,11 +15,16 @@ import useTemporaryMessage from "../../utils/useTemporaryMessage";
 import Seo from "../../components/seo.jsx";
 import {
   normalizeText,
+  normalizeKey,
   normalizeSide,
   sortDecks,
   buildCollectionMap,
   getDeckKey,
   getFilterOptions,
+  getHeroOptions,
+  getCategoryOptions,
+  getArchetypeOptions,
+  COLLECTION_OPTIONS,
   filterDecks,
 } from "../../utils/deckFilters";
 
@@ -78,12 +83,56 @@ function DeckbuilderDecks() {
   const [deckCount, setDeckCount] = useState(null);
   const [allCards, setAllCards] = useState([]);
   const [shareLabel, setShareLabel] = useState("Share Deckbuilder");
-  const [search, setSearch] = useState("");
-  const [side, setSide] = useState("All");
-  const [hero, setHero] = useState([]);
-  const [category, setCategory] = useState([]);
-  const [archetype, setArchetype] = useState([]);
-  const [collection, setCollection] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const search = searchParams.get("search") || "";
+  const side = searchParams.get("side") || "All";
+
+  const selectedHeroValues = searchParams.getAll("hero");
+  const selectedCategoryValues = searchParams.getAll("category");
+  const selectedArchetypeValues = searchParams.getAll("archetype");
+  const selectedCollectionValues = searchParams.getAll("collection");
+
+  const updateFilters = (updates) => {
+    const replace = Object.keys(updates).length === 1 && "search" in updates;
+
+    setSearchParams(
+      (currentParams) => {
+        const nextParams = new URLSearchParams(currentParams);
+
+        Object.entries(updates).forEach(([key, value]) => {
+          nextParams.delete(key);
+
+          const values = Array.isArray(value) ? value : [value];
+
+          values.forEach((item) => {
+            const paramValue =
+              item && typeof item === "object" ? item.value : item;
+
+            if (
+              paramValue === null ||
+              paramValue === undefined ||
+              paramValue === "" ||
+              (key === "side" && paramValue === "All")
+            ) {
+              return;
+            }
+
+            nextParams.append(key, String(paramValue));
+          });
+        });
+
+        return nextParams;
+      },
+      { replace },
+    );
+  };
+
+  const setSearch = (value) => updateFilters({ search: value });
+  const setHero = (value) => updateFilters({ hero: value });
+  const setCategory = (value) => updateFilters({ category: value });
+  const setArchetype = (value) => updateFilters({ archetype: value });
+  const setCollection = (value) => updateFilters({ collection: value });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -445,7 +494,47 @@ function DeckbuilderDecks() {
   };
 
   const sortedDecks = useMemo(() => sortDecks(decks), [decks]);
+  const baseHeroOptions = useMemo(
+    () => getHeroOptions(sortedDecks, allCards),
+    [sortedDecks, allCards],
+  );
 
+  const baseCategoryOptions = useMemo(
+    () => getCategoryOptions(sortedDecks),
+    [sortedDecks],
+  );
+
+  const baseArchetypeOptions = useMemo(
+    () => getArchetypeOptions(sortedDecks),
+    [sortedDecks],
+  );
+
+  const resolveSelectedOptions = (values, options) => {
+    const optionsByValue = new Map(
+      options.map((option) => [normalizeKey(option.value), option]),
+    );
+
+    return values
+      .map((value) => optionsByValue.get(normalizeKey(value)))
+      .filter(Boolean);
+  };
+
+  const hero = resolveSelectedOptions(selectedHeroValues, baseHeroOptions);
+
+  const category = resolveSelectedOptions(
+    selectedCategoryValues,
+    baseCategoryOptions,
+  );
+
+  const archetype = resolveSelectedOptions(
+    selectedArchetypeValues,
+    baseArchetypeOptions,
+  );
+
+  const collection = resolveSelectedOptions(
+    selectedCollectionValues,
+    COLLECTION_OPTIONS,
+  );
   const collectionMap = useMemo(() => {
     if (!collectionLoaded || collectionLoading || !discordUser) {
       return new Map();
@@ -529,16 +618,24 @@ function DeckbuilderDecks() {
   };
 
   const clearFilters = () => {
-    setSearch("");
-    setHero([]);
-    setCategory([]);
-    setArchetype([]);
-    setCollection([]);
+    updateFilters({
+      search: "",
+      hero: [],
+      category: [],
+      archetype: [],
+      collection: [],
+    });
   };
 
   const handleSideChange = (newSide) => {
-    setSide(newSide);
-    clearFilters();
+    updateFilters({
+      side: newSide,
+      search: "",
+      hero: [],
+      category: [],
+      archetype: [],
+      collection: [],
+    });
   };
   let deckCountLabel;
 

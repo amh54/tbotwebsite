@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-
+import { useSearchParams } from "react-router-dom";
 import DeckCard from "../../components/modals/deckComponent.jsx";
 import RandomDeckButton from "../../components/decks/randomDeckButton.jsx";
 import FilterDropdown from "../../components/filterDropdown.jsx";
@@ -11,9 +11,14 @@ import Seo from "../../components/seo.jsx";
 import useTemporaryMessage from "../../utils/useTemporaryMessage.js";
 
 import {
+  normalizeKey,
   normalizeSide,
   buildCollectionMap,
   getFilterOptions,
+  getHeroOptions,
+  getCategoryOptions,
+  getArchetypeOptions,
+  COLLECTION_OPTIONS,
   sortDecks,
   filterDecks,
   getDeckKey,
@@ -136,17 +141,54 @@ function DecklistsPage() {
 
   const [error, setError] = useState("");
 
-  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [side, setSide] = useState("All");
+  const search = searchParams.get("search") || "";
+  const side = searchParams.get("side") || "All";
 
-  const [hero, setHero] = useState([]);
+  const selectedHeroValues = searchParams.getAll("hero");
+  const selectedCategoryValues = searchParams.getAll("category");
+  const selectedArchetypeValues = searchParams.getAll("archetype");
+  const selectedCollectionValues = searchParams.getAll("collection");
 
-  const [category, setCategory] = useState([]);
+  const updateFilters = (updates) => {
+    setSearchParams(
+      (currentParams) => {
+        const nextParams = new URLSearchParams(currentParams);
 
-  const [archetype, setArchetype] = useState([]);
+        Object.entries(updates).forEach(([key, value]) => {
+          nextParams.delete(key);
 
-  const [collection, setCollection] = useState(null);
+          const values = Array.isArray(value) ? value : [value];
+
+          values.forEach((item) => {
+            if (item !== null && item !== undefined && item !== "") {
+              const paramValue = typeof item === "object" ? item.value : item;
+
+              if (
+                paramValue !== null &&
+                paramValue !== undefined &&
+                paramValue !== ""
+              ) {
+                if (!(key === "side" && paramValue === "All")) {
+                  nextParams.append(key, String(paramValue));
+                }
+              }
+            }
+          });
+        });
+
+        return nextParams;
+      },
+      { replace: true },
+    );
+  };
+
+  const setSearch = (value) => updateFilters({ search: value });
+  const setHero = (value) => updateFilters({ hero: value });
+  const setCategory = (value) => updateFilters({ category: value });
+  const setArchetype = (value) => updateFilters({ archetype: value });
+  const setCollection = (value) => updateFilters({ collection: value });
 
   const [discordUser, setDiscordUser] = useState(null);
 
@@ -459,7 +501,47 @@ function DecklistsPage() {
   }, [discordUser, authLoading]);
 
   const sortedDecks = useMemo(() => sortDecks(decks), [decks]);
+  const baseHeroOptions = useMemo(
+    () => getHeroOptions(sortedDecks, allCards),
+    [sortedDecks, allCards],
+  );
 
+  const baseCategoryOptions = useMemo(
+    () => getCategoryOptions(sortedDecks),
+    [sortedDecks],
+  );
+
+  const baseArchetypeOptions = useMemo(
+    () => getArchetypeOptions(sortedDecks),
+    [sortedDecks],
+  );
+
+  const resolveSelectedOptions = (values, options) => {
+    const optionsByValue = new Map(
+      options.map((option) => [normalizeKey(option.value), option]),
+    );
+
+    return values
+      .map((value) => optionsByValue.get(normalizeKey(value)))
+      .filter(Boolean);
+  };
+
+  const hero = resolveSelectedOptions(selectedHeroValues, baseHeroOptions);
+
+  const category = resolveSelectedOptions(
+    selectedCategoryValues,
+    baseCategoryOptions,
+  );
+
+  const archetype = resolveSelectedOptions(
+    selectedArchetypeValues,
+    baseArchetypeOptions,
+  );
+
+  const collection = resolveSelectedOptions(
+    selectedCollectionValues,
+    COLLECTION_OPTIONS,
+  );
   const collectionMap = useMemo(() => {
     if (!collectionLoaded || collectionLoading || !discordUser) {
       return new Map();
@@ -551,16 +633,24 @@ function DecklistsPage() {
     }));
   };
   const clearFilters = () => {
-    setSearch("");
-    setHero([]);
-    setCategory([]);
-    setArchetype([]);
-    setCollection(null);
+    updateFilters({
+      search: "",
+      hero: [],
+      category: [],
+      archetype: [],
+      collection: [],
+    });
   };
 
   const handleSideChange = (newSide) => {
-    setSide(newSide);
-    clearFilters();
+    updateFilters({
+      side: newSide,
+      search: "",
+      hero: [],
+      category: [],
+      archetype: [],
+      collection: [],
+    });
   };
 
   if (loading) {
