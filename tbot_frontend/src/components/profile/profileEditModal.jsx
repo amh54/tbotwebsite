@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 function ProfileEditModal({
   open,
   saving,
@@ -25,17 +26,31 @@ function ProfileEditModal({
   onSubmit,
   onClose,
 }) {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+
+    if (!dialog) return;
+
+    if (open && !dialog.open) {
+      dialog.showModal();
+    } else if (!open && dialog.open) {
+      dialog.close();
+    }
+  }, [open]);
+
   if (!open) {
     return null;
   }
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className="profile-edit-modal-overlay"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
       }}
     >
       <div className="profile-edit-modal">
@@ -203,6 +218,7 @@ function ProfileEditModal({
                 checked={isPublic}
                 onChange={(event) => onPublicChange(event.target.checked)}
                 disabled={saving}
+                aria-label="Public Profile"
               />
 
               <span className="profile-switch-slider" />
@@ -229,7 +245,7 @@ function ProfileEditModal({
           </div>
         </form>
       </div>
-    </div>
+    </dialog>
   );
 }
 

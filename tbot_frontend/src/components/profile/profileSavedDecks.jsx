@@ -166,18 +166,15 @@ function ProfileSavedDecks({
 
     setCollection(value);
   };
-
+  const savedDeckCount = savedDecks.length;
+  const savedDeckLabel = savedDeckCount === 1 ? "saved deck" : "saved decks";
   return (
     <section className="profile-decks">
       <div className="profile-decks-header">
         <div>
           <h2>Saved Decks</h2>
           <p>
-            {savedDecks.length === 0
-              ? "0 saved decks"
-              : `${savedDecks.length} ${
-                  savedDecks.length === 1 ? "saved deck" : "saved decks"
-                }`}
+            {savedDeckCount} {savedDeckLabel}
           </p>
         </div>
       </div>
@@ -202,7 +199,7 @@ function ProfileSavedDecks({
               alt="Plants"
               className="tab-icon"
             />
-            Plants
+            <span>Plants</span>
           </button>
 
           <button
@@ -215,7 +212,7 @@ function ProfileSavedDecks({
               alt="Zombies"
               className="tab-icon"
             />
-            Zombies
+            <span>Zombies</span>
           </button>
         </div>
 

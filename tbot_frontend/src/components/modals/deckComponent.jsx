@@ -92,11 +92,11 @@ function DeckCard({
   const deckKey = String(deckId || deck.name || "").trim();
 
   const deckName = String(deck.name || "deck")
-  .trim()
-  .toLowerCase()
-  .replace(/[^a-z0-9]+/g, "-")
-  .replace(/^-/, "")
-  .replace(/-$/, "");
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-/, "")
+    .replace(/-$/, "");
 
   const shareDeckKey = deckName ? `${deckName}-${deckKey}` : deckKey;
 
@@ -285,11 +285,7 @@ function DeckCard({
     setOpen(true);
     setEditing(false);
 
-    if (autoOpen) {
-      return;
-    }
-
-    if (!deckKey) {
+    if (isAdmin || autoOpen || !deckKey) {
       return;
     }
 
@@ -328,7 +324,7 @@ function DeckCard({
     setEditImgError(false);
     setRandomOpen(false);
 
-    if (autoOpen) {
+    if (isAdmin || autoOpen) {
       return;
     }
 

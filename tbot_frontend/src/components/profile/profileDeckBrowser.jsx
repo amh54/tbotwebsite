@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import DeckCard from "../modals/deckComponent.jsx";
 
@@ -12,6 +13,10 @@ import {
   buildCollectionMap,
   sortDecks,
   getFilterOptions,
+  getHeroOptions,
+  getCategoryOptions,
+  getArchetypeOptions,
+  COLLECTION_OPTIONS,
   filterDecks,
 } from "../../utils/deckFilters";
 
@@ -27,12 +32,56 @@ function ProfileDeckBrowser({
   sharedDeckKey = "",
   isAuthenticated = false,
 }) {
-  const [search, setSearch] = useState("");
-  const [side, setSide] = useState("All");
-  const [hero, setHero] = useState([]);
-  const [category, setCategory] = useState([]);
-  const [archetype, setArchetype] = useState([]);
-  const [collection, setCollection] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const search = searchParams.get("search") || "";
+  const side = searchParams.get("side") || "All";
+
+  const selectedHeroValues = searchParams.getAll("hero");
+  const selectedCategoryValues = searchParams.getAll("category");
+  const selectedArchetypeValues = searchParams.getAll("archetype");
+  const selectedCollectionValues = searchParams.getAll("collection");
+
+  const updateFilters = (updates) => {
+    const replace = Object.keys(updates).length === 1 && "search" in updates;
+
+    setSearchParams(
+      (currentParams) => {
+        const nextParams = new URLSearchParams(currentParams);
+
+        Object.entries(updates).forEach(([key, value]) => {
+          nextParams.delete(key);
+
+          const values = Array.isArray(value) ? value : [value];
+
+          values.forEach((item) => {
+            const paramValue =
+              item && typeof item === "object" ? item.value : item;
+
+            if (
+              paramValue === null ||
+              paramValue === undefined ||
+              paramValue === "" ||
+              (key === "side" && paramValue === "All")
+            ) {
+              return;
+            }
+
+            nextParams.append(key, String(paramValue));
+          });
+        });
+
+        return nextParams;
+      },
+      { replace },
+    );
+  };
+
+  const setSearch = (value) => updateFilters({ search: value });
+  const setHero = (value) => updateFilters({ hero: value });
+  const setCategory = (value) => updateFilters({ category: value });
+  const setArchetype = (value) => updateFilters({ archetype: value });
+  const setCollection = (value) => updateFilters({ collection: value });
   const [randomSelection, setRandomSelection] = useState({
     deckKey: null,
     version: 0,
@@ -69,7 +118,44 @@ function ProfileDeckBrowser({
   }, [viewerCards, isAuthenticated]);
 
   const sortedDecks = useMemo(() => sortDecks(decks), [decks]);
+  const baseHeroOptions = useMemo(
+    () => getHeroOptions(sortedDecks, allCards),
+    [sortedDecks, allCards],
+  );
 
+  const baseCategoryOptions = useMemo(
+    () => getCategoryOptions(sortedDecks),
+    [sortedDecks],
+  );
+
+  const baseArchetypeOptions = useMemo(
+    () => getArchetypeOptions(sortedDecks),
+    [sortedDecks],
+  );
+
+  const resolveSelectedOptions = (values, options) => {
+    const optionsByValue = new Map(
+      options.map((option) => [normalizeKey(option.value), option]),
+    );
+
+    return values
+      .map((value) => optionsByValue.get(normalizeKey(value)))
+      .filter(Boolean);
+  };
+
+  const hero = resolveSelectedOptions(selectedHeroValues, baseHeroOptions);
+  const category = resolveSelectedOptions(
+    selectedCategoryValues,
+    baseCategoryOptions,
+  );
+  const archetype = resolveSelectedOptions(
+    selectedArchetypeValues,
+    baseArchetypeOptions,
+  );
+  const collection = resolveSelectedOptions(
+    selectedCollectionValues,
+    COLLECTION_OPTIONS,
+  );
   const { heroOptions, categoryOptions, archetypeOptions, collectionOptions } =
     useMemo(
       () =>
@@ -130,27 +216,47 @@ function ProfileDeckBrowser({
     ],
   );
 
-  const clearFilters = () => {
-    setSearch("");
-    setHero([]);
-    setCategory([]);
-    setArchetype([]);
-    setCollection([]);
-  };
+ const clearFilters = () => {
+  updateFilters({
+    search: "",
+    hero: [],
+    category: [],
+    archetype: [],
+    collection: [],
+  });
+};
 
-  const handleSideChange = (newSide) => {
-    setSide(newSide);
-    clearFilters();
-  };
+const handleSideChange = (newSide) => {
+  updateFilters({
+    side: newSide,
+    search: "",
+    hero: [],
+    category: [],
+    archetype: [],
+    collection: [],
+  });
+};
 
-  const handleCollectionChange = (value) => {
-    if (!isAuthenticated) {
-      showCollectionLoginMessage();
-      return;
-    }
+const handleCollectionChange = (value) => {
+  if (!isAuthenticated) {
+    showCollectionLoginMessage();
+    return;
+  }
 
-    setCollection(value);
-  };
+  setCollection(value);
+};
+
+  let deckLabel = "decklists";
+
+  if (decks.length === 1) {
+    deckLabel = "decklist";
+  }
+
+  let deckCountLabel = "0 decklists";
+
+  if (decks.length > 0) {
+    deckCountLabel = `${decks.length} ${deckLabel}`;
+  }
 
   return (
     <section className="profile-decks">
@@ -158,13 +264,7 @@ function ProfileDeckBrowser({
         <div>
           <h2>{profileName}'s Personal Decks</h2>
 
-          <p>
-            {decks.length === 0
-              ? "0 decklists"
-              : `${decks.length} ${
-                  decks.length === 1 ? "decklist" : "decklists"
-                }`}
-          </p>
+          <p>{deckCountLabel}</p>
         </div>
       </div>
 
@@ -188,7 +288,7 @@ function ProfileDeckBrowser({
               alt="Plants"
               className="tab-icon"
             />
-            Plants
+            <span>Plants</span>
           </button>
 
           <button
@@ -201,7 +301,7 @@ function ProfileDeckBrowser({
               alt="Zombies"
               className="tab-icon"
             />
-            Zombies
+            <span>Zombies</span>
           </button>
         </div>
 
@@ -305,8 +405,11 @@ function ProfileDeckBrowser({
             const deckName = String(deck.name || "deck")
               .trim()
               .toLowerCase()
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/^-+|-+$/g, "");
+              .split("")
+              .map((char) => (/[a-z0-9]/.test(char) ? char : "-"))
+              .join("")
+              .replace(/-+/, "-")
+              .replace(/^-|-$/g, "");
 
             const shareDeckKey = deckName
               ? `${deckName}-${deckId}`

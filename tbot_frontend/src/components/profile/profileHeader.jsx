@@ -2,7 +2,26 @@ import { useEffect, useState } from "react";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
+const ProfileLink = ({ node, ...props }) => (
+  <a
+    {...props}
+    target="_blank"
+    rel="noopener noreferrer"
+  />
+);
+function ProfileBio({ bio }) {
+  return (
+    <div className="profile-bio">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        skipHtml
+        components={{ a: ProfileLink }}
+      >
+        {bio}
+      </ReactMarkdown>
+    </div>
+  );
+}
 const normalizeText = (value) => String(value ?? "").trim();
 
 const getAvatarUrl = (profile) => {
@@ -239,25 +258,7 @@ function ProfileHeader({
           @{username}
         </div>
 
-        {profile.bio && (
-          <div className="profile-bio">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              skipHtml
-              components={{
-                a: ({ node, ...props }) => (
-                  <a
-                    {...props}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
-                ),
-              }}
-            >
-              {profile.bio}
-            </ReactMarkdown>
-          </div>
-        )}
+      {profile.bio && <ProfileBio bio={profile.bio} />}
 
         {availableSocialConnections.length > 0 && (
           <div className="profile-social-links">
