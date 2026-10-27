@@ -9,7 +9,41 @@
   width: 100%;
   margin: 0;
 }
+.profile-edit-modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  height: 100%;
+  margin: 0;
+  padding: 24px;
+  box-sizing: border-box;
+  border: none;
+  overflow: hidden;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+.profile-edit-modal-overlay::backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.profile-edit-modal {
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 28px;
+  box-sizing: border-box;
+  background: #15181b;
+  border: 1px solid #292e32;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
 .profile-header {
   position: relative;
   display: flex;
